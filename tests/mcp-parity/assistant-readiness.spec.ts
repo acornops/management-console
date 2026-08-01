@@ -38,6 +38,12 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.screenshot({ path: '/tmp/ai-readiness-desktop-light.png', fullPage: true });
 
+  await page.locator('[data-chat-history-trigger="chats"]').click();
+  await expect(page.getByRole('heading', { name: 'Chats' })).toBeVisible();
+  await page.getByRole('button', { name: 'Configure AI' }).click();
+  await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/ai-settings`));
+  await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/chat?session=fixture-session`);
+
   await page.evaluate(() => {
     window.localStorage.setItem('acornops_active_theme_preference', 'dark');
     window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:theme', 'dark');
@@ -51,6 +57,10 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await page.goto(`/workspaces/${workspaceId}/virtual-machines/${virtualMachineId}/chat`);
   await expect(page.getByText('Connect an AI model to continue')).toBeVisible();
   await expect(page.getByRole('textbox', { name: /Message .* assistant/ })).toHaveCount(0);
+  await page.locator('[data-chat-history-trigger="chats"]').click();
+  await expect(page.getByRole('dialog', { name: 'Chats' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Chats' })).toHaveCount(0);
   await page.screenshot({ path: '/tmp/ai-readiness-mobile-dark.png', fullPage: true });
 
   await page.setViewportSize({ width: 1440, height: 1000 });

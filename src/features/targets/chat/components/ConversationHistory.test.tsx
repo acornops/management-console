@@ -230,6 +230,7 @@ describe('ConversationHistory', () => {
     expect(markup).toContain('chat.chats');
     expect(markup).toContain('chat.newChat');
     expect(markup).toContain('max-w-3xl');
+    expect(markup).not.toContain('mx-auto');
     expect(markup).toContain('Check rollout');
     expect(markup).toContain('Inspect ingress');
     expect(markup).not.toContain('Target context: demo-target');

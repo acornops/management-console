@@ -1,6 +1,6 @@
-import type { ControlPlaneIssueItem, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { HealthStatus, type KubernetesCluster } from '@/types';
-import { getVmStatusLabel, statusTone } from '@/pages/virtual-machines/virtualMachineUi';
+import { getVmCatalogStatusLabel, getVmCatalogStatusTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { getEffectiveHealthStatus } from '@/utils/telemetry';
 
 export type WorkspaceOverviewSeverity = 'critical' | 'warning' | 'info';
@@ -64,12 +64,48 @@ function clusterPostureLabel(status: HealthStatus, t: OverviewTranslator): strin
 
 function clusterPostureTone(status: HealthStatus): string {
   if (status === HealthStatus.GREEN) return 'bg-status-success-soft text-status-success-text';
-  if (status === HealthStatus.YELLOW) return 'bg-status-warning-soft text-status-warning-text';
+  if (status === HealthStatus.YELLOW) return 'bg-accent-soft text-accent-readable';
   return 'bg-status-danger-soft text-status-danger-text';
+}
+
+function virtualMachinePostureTone(tone: ReturnType<typeof getVmCatalogStatusTone>): string {
+  if (tone === 'success') return 'bg-status-success-soft text-status-success-text';
+  if (tone === 'warning') return 'bg-accent-soft text-accent-readable';
+  if (tone === 'danger') return 'bg-status-danger-soft text-status-danger-text';
+  return 'bg-ui-bg text-ui-text-muted';
+}
+
+function summarizeVisibleTargetIssues(
+  issues: ControlPlaneIssueItem[],
+  targetId: string
+): ControlPlaneTargetIssueSummary | undefined {
+  const targetIssues = issues.filter((issue) => issue.targetId === targetId && issue.status !== 'resolved');
+  if (targetIssues.length === 0) return undefined;
+  return {
+    total: targetIssues.length,
+    active: targetIssues.filter((issue) => issue.status === 'active').length,
+    recovering: targetIssues.filter((issue) => issue.status === 'recovering').length,
+    critical: targetIssues.filter((issue) => issue.severity === 'critical').length,
+    warning: targetIssues.filter((issue) => issue.severity === 'warning').length,
+    info: targetIssues.filter((issue) => issue.severity === 'info').length
+  };
 }
 
 function compactText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizedCopy(value: unknown): string {
+  return compactText(value)
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function issueEvidence(item: ControlPlaneIssueItem): string {
+  const summary = compactText(item.summary);
+  if (!summary || normalizedCopy(summary) === normalizedCopy(item.title)) return '';
+  return summary;
 }
 
 export function isConnectedCluster(cluster: KubernetesCluster): boolean {
@@ -82,7 +118,7 @@ export function isConnectedVirtualMachine(virtualMachine: ControlPlaneVirtualMac
 
 function issueDetail(item: ControlPlaneIssueItem, t: OverviewTranslator): string {
   const object = [compactText(item.objectKind), compactText(item.objectName)].filter(Boolean).join(' ');
-  const defaultScope = item.targetType === 'kubernetes' ? t('overview.clusterWide') : t('overview.targetWide');
+  const defaultScope = item.targetType === 'kubernetes' ? t('overview.clusterWide') : t('overview.entireVirtualMachine');
   return [compactText(item.namespace || item.scopeName) || defaultScope, object].filter(Boolean).join(' · ');
 }
 
@@ -101,7 +137,7 @@ export function mapControlPlaneIssueToOverviewIssue(
     firstSeenAt: item.firstSeenAt,
     lastSeenAt: item.lastSeenAt,
     detail: issueDetail(item, t),
-    evidence: compactText(item.reason) || compactText(item.summary),
+    evidence: issueEvidence(item),
     ...(item.workflowActivity ? { workflowActivity: item.workflowActivity } : {}),
     ...(item.automaticInvestigation ? { automaticInvestigation: item.automaticInvestigation } : {})
   };
@@ -110,6 +146,7 @@ export function mapControlPlaneIssueToOverviewIssue(
 export function buildWorkspaceOverviewCards(args: {
   kubernetesClusters: KubernetesCluster[];
   issues: ControlPlaneIssueItem[];
+  virtualMachineIssueSummaryById?: Record<string, ControlPlaneTargetIssueSummary | undefined>;
   virtualMachines: ControlPlaneVirtualMachine[];
   t: OverviewTranslator;
 }): {
@@ -119,7 +156,7 @@ export function buildWorkspaceOverviewCards(args: {
   criticalIssueCount: number;
   warningIssueCount: number;
 } {
-  const { kubernetesClusters, issues, virtualMachines, t } = args;
+  const { kubernetesClusters, issues, virtualMachineIssueSummaryById = {}, virtualMachines, t } = args;
   const clustersById = new Map(kubernetesClusters.map((cluster) => [cluster.id, cluster]));
   const virtualMachinesById = new Map(virtualMachines.map((vm) => [vm.id, vm]));
 
@@ -143,12 +180,14 @@ export function buildWorkspaceOverviewCards(args: {
 
   for (const virtualMachine of virtualMachines) {
     if (!isConnectedVirtualMachine(virtualMachine)) continue;
+    const issueSummary = virtualMachineIssueSummaryById[virtualMachine.id]
+      ?? summarizeVisibleTargetIssues(issues, virtualMachine.id);
     const card: WorkspaceOverviewTargetCard = {
       targetId: virtualMachine.id,
       targetType: 'virtual_machine',
       name: virtualMachine.name,
-      postureLabel: getVmStatusLabel(virtualMachine.status, t),
-      postureTone: statusTone(virtualMachine.status)
+      postureLabel: getVmCatalogStatusLabel(virtualMachine, issueSummary, t),
+      postureTone: virtualMachinePostureTone(getVmCatalogStatusTone(virtualMachine, issueSummary))
     };
 
     connectedVirtualMachineCards.push(card);

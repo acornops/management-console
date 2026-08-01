@@ -391,15 +391,30 @@ for (const repoPath of resourceCardCatalogPaths) {
 
 const stylesPath = join(root, 'src/styles.css');
 const stylesSource = readFileSync(stylesPath, 'utf8');
+const resourceCardCatalogRule = stylesSource.match(/\.resource-card-catalog\s*\{([^}]*)\}/)?.[1] ?? '';
+for (const contractRule of ['container-name: resource-card-catalog', 'container-type: inline-size']) {
+  if (!resourceCardCatalogRule.includes(contractRule)) {
+    report(stylesPath, 'shared-resource-card-grid', `missing shared catalog rule ${contractRule}`);
+  }
+}
+const resourceCardGridRule = stylesSource.match(/\.resource-card-grid\s*\{([^}]*)\}/)?.[1] ?? '';
 for (const contractRule of [
-  'display: flex',
-  'flex-wrap: wrap',
-  'flex: 1 1 min(100%, 30rem)',
-  'max-width: 40rem'
+  'display: grid',
+  'grid-template-columns: repeat(auto-fill, minmax(min(100%, 27rem), 1fr))',
+  'align-items: stretch'
 ]) {
-  if (!stylesSource.includes(contractRule)) {
+  if (!resourceCardGridRule.includes(contractRule)) {
     report(stylesPath, 'shared-resource-card-grid', `missing shared layout rule ${contractRule}`);
   }
+}
+const resourceCardRule = stylesSource.match(/\.resource-card-grid > \*\s*\{([^}]*)\}/)?.[1] ?? '';
+for (const contractRule of ['width: 100%', 'min-width: 0']) {
+  if (!resourceCardRule.includes(contractRule)) {
+    report(stylesPath, 'shared-resource-card-grid', `missing shared card rule ${contractRule}`);
+  }
+}
+if (resourceCardRule.includes('max-width:')) {
+  report(stylesPath, 'shared-resource-card-grid', 'shared resource cards must fill their grid tracks without a fixed maximum');
 }
 if (/(?:cluster|vm|agent)-card-grid[^{]*\{[^}]*grid-template-columns/s.test(stylesSource)) {
   report(stylesPath, 'shared-resource-card-grid', 'resource-card catalogs must not define feature-specific column rules');

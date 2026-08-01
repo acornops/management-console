@@ -8,10 +8,11 @@ import {
   IconTile,
   InlineAlert,
   PageHeader,
-  PageShell
+  PageShell,
+  StatusBadge
 } from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { issueStatusTone, issueTargetScopeLabel, kubernetesIssueNamespace } from '@/pages/issues/issueUi';
+import { issueSeverityTone, issueStatusTone, issueSupportingText, issueTargetScopeLabel, kubernetesIssueNamespace, shouldShowIssueStatus } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
@@ -49,12 +50,6 @@ function severityRank(severity: ControlPlaneIssueItem['severity']): number {
   if (severity === 'critical') return 0;
   if (severity === 'warning') return 1;
   return 2;
-}
-
-function getSeverityTone(severity: ControlPlaneIssueItem['severity']): string {
-  if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
-  if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
-  return 'border border-ui-border bg-ui-surface-strong text-ui-text-muted';
 }
 
 function issueTimestamp(issue: ControlPlaneIssueItem): number {
@@ -246,7 +241,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       >
         <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 items-start gap-4">
-            <IconTile tone="warning" className="mt-1">
+            <IconTile tone="accent" className="mt-1 bg-accent-soft text-accent-readable">
               <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </IconTile>
             <div className="min-w-0">
@@ -264,13 +259,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
           </div>
           {hasIssueCounts && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="type-caption rounded-full bg-ui-surface px-3 py-1">{t('clusterOverview.issueCount', { count: issueCount })}</span>
-              <span className="type-caption rounded-full bg-status-danger-soft px-3 py-1 text-status-danger-text">
+              <StatusBadge tone="neutral" className="px-3 py-1 type-caption normal-case tracking-normal">{t('clusterOverview.issueCount', { count: issueCount })}</StatusBadge>
+              <StatusBadge tone="danger" className="px-3 py-1 type-caption normal-case tracking-normal">
                 {t('clusterOverview.criticalIssues', { count: criticalIssues })}
-              </span>
-              <span className="type-caption rounded-full bg-status-warning-soft px-3 py-1 text-status-warning-text">
+              </StatusBadge>
+              <StatusBadge tone="warning" className="px-3 py-1 type-caption normal-case tracking-normal">
                 {t('clusterOverview.warningIssues', { count: warningIssues })}
-              </span>
+              </StatusBadge>
             </div>
           )}
         </div>
@@ -299,15 +294,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                 <DataTableBody>
                   {reportedIssues.map((issue) => (
                     <DataTableRow key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                      <DataTableCell className="max-w-[34rem] px-5 py-4">
+                      <DataTableCell density="compact" className="max-w-[34rem]">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                          {shouldShowIssueStatus(issue.status) && (
+                            <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                          )}
                           <span className="type-caption text-ui-text-muted">
                             {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
                           </span>
                         </div>
                         <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
-                        <p className="type-body mt-1 break-words">{issue.reason || issue.summary}</p>
+                        {issueSupportingText(issue) && <p className="type-body mt-1 break-words">{issueSupportingText(issue)}</p>}
                         <IssueWorkflowActivity
                           workspaceId={cluster.workspaceId}
                           issueId={issue.id}
@@ -321,13 +318,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                           activity={issue.automaticInvestigation}
                         />
                       </DataTableCell>
-                      <DataTableCell className="px-5 py-4 align-top">
-                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                      <DataTableCell density="compact">
+                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
                       </DataTableCell>
-                      <DataTableCell className="type-caption break-words px-5 py-4 align-top">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</DataTableCell>
-                      <DataTableCell className="type-caption px-5 py-4 align-top">{formatRelativeTime(issueTimestamp(issue))}</DataTableCell>
+                      <DataTableCell density="compact" className="type-caption break-words">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</DataTableCell>
+                      <DataTableCell density="compact" className="type-caption">{formatRelativeTime(issueTimestamp(issue))}</DataTableCell>
                       {onOpenCopilot && (
-                        <DataTableCell className="px-5 py-4 align-top text-right">
+                        <DataTableCell density="compact" className="text-right">
                           {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
                             <Button
                               onClick={() => openIssueTriage(issue)}
@@ -351,11 +348,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
               {reportedIssues.map((issue) => (
                 <article key={issue.id} className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${getSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                    {shouldShowIssueStatus(issue.status) && (
+                      <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                    )}
                   </div>
                   <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>
-                  <p className="type-body mt-2 break-words">{issue.reason || issue.summary}</p>
+                  {issueSupportingText(issue) && <p className="type-body mt-2 break-words">{issueSupportingText(issue)}</p>}
                   <dl className="mt-4 grid gap-3 sm:grid-cols-3">
                     <div>
                       <dt className="type-micro-label text-ui-text-muted">{t('clusterOverview.namespace')}</dt>

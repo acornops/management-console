@@ -19,12 +19,12 @@ not drift.
 - Utilities contains Workspace Settings and Help and is visually separated from
   governance.
 - Account controls remain pinned outside the independently scrolling navigation.
-- At desktop viewport heights of `820px` or less, every permitted destination
-  remains visible while row gaps, group padding, and pinned shell padding become
-  denser. Destination rows and icons retain their standard sizes.
-- Navigation overflow remains available to wheel, touch, and keyboard input as
-  an extreme-height fallback, but desktop and mobile navigation do not display
-  scrollbar chrome.
+- Short desktop viewports preserve the same row, group, workspace-context,
+  header, and account rhythm as normal-height viewports. The independently
+  scrolling navigation region absorbs height pressure while account controls
+  remain pinned.
+- Navigation overflow remains available to wheel, touch, and keyboard input,
+  but desktop and mobile navigation do not display scrollbar chrome.
 
 ## Route and Link Rules
 
@@ -66,12 +66,16 @@ Desktop destination rows are 40px; mobile targets are at least 44px. Icons are
 ink-weight label, and orange icon. Hover is warm neutral; the orange ring is for
 keyboard focus.
 
-Short desktop viewports keep the same row and icon sizes while reducing the
-inter-row cadence from `44px` to `42px` and tightening group and shell spacing.
-Section titles use `12px` before and `8px` after spacing, separating them from
-the preceding group while keeping them associated with the destinations below.
-No destination moves behind a disclosure solely because viewport height is
-constrained.
+The collapsed desktop rail keeps the same 40px targets and reduces only the
+space between consecutive icons to 2px, producing a 42px cadence. Expanded
+navigation retains the standard 44px row cadence at every viewport height.
+
+Short desktop viewports keep the same row, icon, group, and shell spacing as
+normal-height viewports. The inter-row cadence remains `44px`; section titles
+retain their normal separation from both the preceding group and the
+destinations below. When the available height is insufficient, the center
+navigation region scrolls independently. No destination moves behind a
+disclosure solely because viewport height is constrained.
 
 State changes use a 160ms color transition. Sidebar width and drawer transforms
 use 160–200ms with the ease-out-quint curve. Reduced-motion users receive

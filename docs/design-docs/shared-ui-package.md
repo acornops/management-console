@@ -49,10 +49,10 @@ Use:
 
 ```bash
 npm run ui:check
-VITE_APP_DATA_MODE=control-plane npm run validate
+VITE_APP_DATA_MODE=control-plane npm run validate:full
 ```
 
 `ui:check` verifies the Changeset, package typecheck, ESM/declaration build,
-export map inputs, and `npm pack --dry-run`. The repository validation adds
-unit tests, design enforcement, visual catalog snapshots, fixture/contract
-checks, production build, and route smoke tests.
+export map inputs, and `npm pack --dry-run`. Full repository validation adds
+unit tests, design enforcement, visual catalog snapshots, repeated browser
+fixtures, contract checks, production build, and route smoke tests.

@@ -57,7 +57,7 @@ this remains an operational risk until a privacy-reviewed reporting path exists.
 Before release or deployment chart changes:
 
 ```bash
-npm run validate
+npm run validate:full
 ```
 
 The production-readiness release gate uses Node 22 and a clean install:

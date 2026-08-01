@@ -34,6 +34,7 @@ export const appTargetChatRuntime = readSource('src/app/AppClusterChatRuntime.ts
 export const appPageContent = readSource('src/app/AppPageContent.tsx');
 export const appDialogs = readSource('src/app/AppDialogs.tsx');
 export const agentChatPanel = readSource('src/pages/agents/AgentChatPanel.tsx');
+export const workspaceAgentDetailPanel = readSource('src/pages/WorkspaceAgentDetailPanel.tsx');
 export const workloadExplorerParts = readSource(
   'src/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts.tsx'
 );
@@ -66,6 +67,9 @@ export const targetSkillsInventory = readSource(
 );
 export const targetToolsView = readSource(
   'src/features/targets/admin/TargetToolsView.tsx'
+);
+export const targetInsightsDialog = readSource(
+  'src/features/targets/admin/TargetInsightsDialog.tsx'
 );
 export const targetSkillsView = readSource(
   'src/features/targets/admin/TargetSkillsView.tsx'

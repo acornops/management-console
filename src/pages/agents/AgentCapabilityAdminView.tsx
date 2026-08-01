@@ -2,7 +2,10 @@ import React from 'react';
 import { McpServersView } from '@/features/targets/admin/McpServersView';
 import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
 import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import type { CapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
+import type { TargetToolCatalog } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
+import type { ControlPlaneTargetSkillsCatalog, ControlPlaneTargetToolsCatalog } from '@/services/controlPlaneApi';
 import {
   countAgentCredentialModeScheduleImpact,
   createAgentMcpDataSource,
@@ -17,6 +20,10 @@ interface AgentCapabilityAdminViewProps {
   canManageMcp: boolean;
   canManageSkills: boolean;
   section: 'mcp' | 'skills' | 'tools';
+  cachedCatalogs?: CapabilityCatalogCache;
+  onMcpServersCatalogChange: (catalog: TargetToolCatalog) => void;
+  onSkillsCatalogChange: (catalog: ControlPlaneTargetSkillsCatalog) => void;
+  onToolsCatalogChange: (catalog: ControlPlaneTargetToolsCatalog) => void;
 }
 
 export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> = ({
@@ -24,7 +31,11 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
   canManageAgents,
   canManageMcp,
   canManageSkills,
-  section
+  section,
+  cachedCatalogs,
+  onMcpServersCatalogChange,
+  onSkillsCatalogChange,
+  onToolsCatalogChange
 }) => {
   const subject = React.useMemo(() => toAgentCapabilitySubject(agent), [agent]);
   const mcpDataSource = React.useMemo(
@@ -47,6 +58,8 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
         target={subject}
         canManageSkills={canManageSkills}
         dataSource={skillsDataSource}
+        initialCatalog={cachedCatalogs?.skills}
+        onCatalogChange={onSkillsCatalogChange}
       />
     );
   }
@@ -58,6 +71,8 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
         target={subject}
         canManageTools={canManageAgents}
         dataSource={toolsDataSource}
+        initialCatalog={cachedCatalogs?.tools}
+        onCatalogChange={onToolsCatalogChange}
       />
     );
   }
@@ -72,6 +87,8 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
       connectionDestination={{ kind: 'agent', id: agent.id }}
       catalogDestination={`agent:${agent.id}`}
       scheduleCount={countAgentCredentialModeScheduleImpact}
+      initialCatalog={cachedCatalogs?.mcpServers}
+      onCatalogChange={onMcpServersCatalogChange}
     />
   );
 };

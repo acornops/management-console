@@ -66,7 +66,7 @@ describe('target auto-triage settings draft', () => {
 
     expect(markup).toContain('autoTriage.title');
     expect(markup).toContain('app.experimental');
-    expect(markup).toContain('bg-status-warning-soft');
+    expect(markup).toContain('border-ui-border bg-ui-surface-strong text-ui-text');
   });
 
   it('copies only editable fields into one local draft', () => {

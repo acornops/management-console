@@ -109,6 +109,28 @@ export function clearRecentInvestigation(): void {
   safeStorage.removeItem(RECENT_INVESTIGATION_STORAGE_KEY);
 }
 
+export function clearRecentInvestigationForWorkspace(userId: string, workspaceId: string): void {
+  const raw = safeStorage.getItem(RECENT_INVESTIGATION_STORAGE_KEY);
+  const parsed = parseRecentInvestigation(raw);
+  if (!parsed) {
+    if (raw) clearRecentInvestigation();
+    return;
+  }
+
+  const { state, changed } = pruneRecentInvestigationState(parsed, Date.now());
+  const userEntries = state.entries[userId];
+  if (!userEntries?.[workspaceId]) {
+    if (changed) persistRecentInvestigationState(state);
+    return;
+  }
+
+  delete userEntries[workspaceId];
+  if (Object.keys(userEntries).length === 0) {
+    delete state.entries[userId];
+  }
+  persistRecentInvestigationState(state);
+}
+
 export function writeRecentInvestigation(context: RecentInvestigationWriteContext): void {
   const parsed = parseRecentInvestigation(safeStorage.getItem(RECENT_INVESTIGATION_STORAGE_KEY));
   const now = Date.now();

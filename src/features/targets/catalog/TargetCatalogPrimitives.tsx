@@ -4,6 +4,10 @@ import { ChevronRight, MoreHorizontal } from 'lucide-react';
 
 import { ActionMenu, Button, StatusBadge, type StatusBadgeTone } from '@acornops/ui';
 
+export function shouldShowResourceCatalogStatus(tone: StatusBadgeTone): boolean {
+  return tone !== 'success';
+}
+
 export type TargetCatalogKind = 'cluster' | 'vm';
 
 interface TargetCatalogCardProps {
@@ -49,7 +53,7 @@ export const ResourceCatalogCard: React.FC<{
         onClick={onActivate}
         className="control-target absolute inset-0 z-0 cursor-pointer rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary disabled:cursor-not-allowed"
       />
-      <div className="pointer-events-none relative z-10 flex min-w-0 flex-col">{children}</div>
+      <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col">{children}</div>
     </motion.article>
   );
 };

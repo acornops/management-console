@@ -31,7 +31,8 @@ describe('target chat polish contracts', () => {
     expect(approvalCheckpoint).toContain('interface ApprovalCheckpointProps');
     expect(approvalCheckpoint).toContain('data-chat-approval-checkpoint="true"');
     expect(approvalCheckpoint).toContain('const StatusIcon');
-    expect(approvalCheckpoint).toContain('const statusToneClass');
+    expect(approvalCheckpoint).toContain('<StatusBadge tone={statusTone}');
+    expect(approvalCheckpoint).not.toContain('const statusToneClass');
     expect(approvalCheckpoint).toContain("t(`chat.approvalStatusLabel.${approvalStatus}`)");
     expect(approvalCheckpoint).toContain('const approvalSummary = cleanText(approval.summary) || fallbackApprovalSummary(approval, t);');
     expect(approvalCheckpoint).toContain("String(value ?? '')");

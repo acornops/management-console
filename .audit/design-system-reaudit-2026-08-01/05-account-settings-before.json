@@ -1,0 +1,26 @@
+{
+  "phase": "before",
+  "violations": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": [
+        {
+          "target": [
+            ".bg-accent"
+          ],
+          "html": "<span class=\"flex h-8 w-8 shrink-0 items-center justify-center font-mono type-caption type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 rounded-full bg-accent text-control-activation-fg\">TU</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.29 (foreground color: #f1eada, background color: #ff703b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".leading-4"
+          ],
+          "html": "<span class=\"block truncate type-caption leading-4 text-ui-text-muted\">test-user@fixture.acornops.dev</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #7b6b61, background color: #ffecdd, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ]
+}

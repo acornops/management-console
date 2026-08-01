@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Button, Textarea, TextInput } from '@acornops/ui';
-import { ICONS } from '@/constants';
+import { Button, DangerZone, DangerZoneRow, Textarea, TextInput } from '@acornops/ui';
 import {
   WorkflowPanel,
   WorkflowSection
@@ -124,20 +123,18 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
             onRemove={onRemoveTag}
           />
         </WorkflowSection>
-        <details aria-label="Delete workflow" className="group min-w-0 border-t border-status-danger/25 pt-5">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-md text-status-danger-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-danger/25 [&::-webkit-details-marker]:hidden">
-            <span className="type-row-title">Danger zone</span>
-            <ICONS.ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
-          </summary>
-          <div className="mt-3 flex flex-col gap-3 rounded-lg bg-status-danger-soft px-4 py-3 text-status-danger-text sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h4 className="type-row-title">Delete workflow</h4>
-              <p className="type-caption mt-1 max-w-2xl">Permanently removes this workspace workflow definition. Past runs remain in audit history.</p>
-              {workflowDeleteBlocker && <p id="workflow-delete-blocker" className="type-caption mt-2 max-w-2xl type-emphasis">{workflowDeleteBlocker}</p>}
-            </div>
-            <Button variant="danger" size="sm" onClick={onRequestDelete} disabled={Boolean(workflowDeleteBlocker)} title={workflowDeleteBlocker || undefined} aria-describedby={workflowDeleteBlocker ? 'workflow-delete-blocker' : undefined}>Delete workflow</Button>
-          </div>
-        </details>
+        <DangerZone>
+          <DangerZoneRow
+            id="workflow-delete-title"
+            title="Delete workflow"
+            description="Permanently removes this workspace workflow definition. Past runs remain in audit history."
+            detail={workflowDeleteBlocker ? <p id="workflow-delete-blocker" className="type-caption mt-2 max-w-2xl type-emphasis text-status-warning-text">{workflowDeleteBlocker}</p> : undefined}
+            headingLevel="h4"
+            tone="danger"
+            actionClassName="sm:w-auto"
+            action={<Button variant="danger" size="sm" onClick={onRequestDelete} disabled={Boolean(workflowDeleteBlocker)} title={workflowDeleteBlocker || undefined} aria-describedby={workflowDeleteBlocker ? 'workflow-delete-blocker' : undefined}>Delete workflow</Button>}
+          />
+        </DangerZone>
     </WorkflowPanel>
   );
 };

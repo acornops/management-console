@@ -56,6 +56,8 @@ describe('ResourceStatusPill', () => {
     expect(html).not.toContain('truncate');
     expect(html).toContain('[overflow-wrap:anywhere]');
     expect(html).not.toContain('whitespace-nowrap');
+    expect(html).toContain('bg-status-warning-soft');
+    expect(html).not.toContain('border-status-warning');
   });
 });
 

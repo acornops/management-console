@@ -6,7 +6,7 @@ import { TelemetryTrendSummary } from '@/features/targets/catalog/TelemetryTrend
 import { ICONS } from '@/constants';
 import { KubernetesCluster } from '@/types';
 import { formatCompactRelativeTime } from '@/utils/dateTime';
-import { getAgentConnectionState } from '@/utils/telemetry';
+import { getAgentConnectionState, getTelemetryFreshness } from '@/utils/telemetry';
 
 type SparklinePoint = { timestamp: number; value: number };
 
@@ -121,6 +121,8 @@ export const ClusterTelemetryPanel: React.FC<{
   ) : null;
 
   if (compact) {
+    const telemetryFreshness = getTelemetryFreshness(cluster, now);
+    const telemetryIsStale = telemetryFreshness === 'stale' || telemetryFreshness === 'offline';
     const lastSignalLabel =
       getAgentConnectionState(cluster) === 'disconnected'
         ? t('dashboard.telemetryPaused')
@@ -128,7 +130,7 @@ export const ClusterTelemetryPanel: React.FC<{
         ? t('dashboard.telemetryRefreshFailed')
         : loadState === 'loading'
         ? t('dashboard.loadingTelemetry')
-        : t('dashboard.updatedTime', {
+        : t(telemetryIsStale ? 'dashboard.lastUpdatedTime' : 'dashboard.updatedTime', {
             time: formatCompactRelativeTime(cluster.lastUpdate, { now })
           });
 
@@ -149,7 +151,7 @@ export const ClusterTelemetryPanel: React.FC<{
           ))}
         </dl>
         <div>
-          <div className="relative h-[104px] min-w-0 overflow-hidden">
+          <div className="relative h-[88px] min-w-0 overflow-hidden">
             <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
               <line x1="0" x2="180" y1="20" y2="20" className="stroke-ui-border/55" strokeWidth="1" />
               <line x1="0" x2="180" y1="54" y2="54" className="stroke-ui-border/55" strokeWidth="1" />
@@ -190,17 +192,19 @@ export const ClusterTelemetryPanel: React.FC<{
             )}
           </div>
           {trendSummary}
-          <div className="type-caption mt-1 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-ui-text-muted">
-            <span>{axisStartLabel}</span>
-            <span
-              className="truncate text-center"
-              role={loadState === 'error' && hasTrend ? 'alert' : loadState === 'loading' ? 'status' : undefined}
-              aria-live={loadState !== 'ready' ? 'polite' : undefined}
-            >
-              {loadState === 'error' && hasTrend ? lastSignalLabel : t('dashboard.telemetryAxisLabel')}
-            </span>
-            {loadState === 'error' && hasTrend && retryButton ? retryButton : <span className="truncate text-right">{lastSignalLabel}</span>}
-          </div>
+          {hasTrend && (
+            <div className="type-caption mt-1 flex min-w-0 items-center justify-between gap-3 text-ui-text-muted">
+              <span>{axisStartLabel}</span>
+              <span
+                className={loadState === 'error' ? 'text-status-danger-text' : telemetryIsStale ? 'text-status-warning-text' : undefined}
+                role={loadState === 'error' ? 'alert' : loadState === 'loading' ? 'status' : undefined}
+                aria-live={loadState !== 'ready' ? 'polite' : undefined}
+              >
+                {lastSignalLabel}
+              </span>
+              {loadState === 'error' && retryButton}
+            </div>
+          )}
         </div>
       </section>
     );

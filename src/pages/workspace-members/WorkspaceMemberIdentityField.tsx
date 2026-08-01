@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Check, Loader2, Search, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CollectionState, ComboboxListbox, ComboboxOption } from '@acornops/ui';
+import { CollectionState, ComboboxListbox, ComboboxOption, StatusBadge } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceMemberCandidate, WorkspaceMemberDiscoveryMode } from '@/types';
@@ -229,7 +229,7 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
                     </span>
                     <span className="block truncate type-caption text-ui-text-muted">{candidate.email}</span>
                   </span>
-                  <span className="shrink-0 rounded-full border border-ui-border bg-ui-bg px-2 py-1 type-micro-label">{candidateStatusLabel(candidate.status, t)}</span>
+                  <StatusBadge tone="neutral" className="shrink-0 px-2 py-1">{candidateStatusLabel(candidate.status, t)}</StatusBadge>
                 </ComboboxOption>
               );
             })}

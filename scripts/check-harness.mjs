@@ -81,6 +81,14 @@ expectIncludes(packageJson.scripts.validate, 'npm run test', 'Canonical validate
 expectIncludes(packageJson.scripts.validate, 'npm run smoke:routes', 'Canonical validate script');
 expectIncludes(packageJson.scripts.validate, 'npm run contracts:check', 'Canonical validate script');
 expectIncludes(packageJson.scripts.validate, 'npm run harness:check', 'Canonical validate script');
+expect(!packageJson.scripts.validate.includes('npm run design:snapshots'), 'Canonical local validate script should not run browser snapshots');
+expect(!packageJson.scripts.validate.includes('npm run smoke:fixtures'), 'Canonical local validate script should not run repeated browser fixtures');
+expect(Boolean(packageJson.scripts?.['validate:full']), 'package.json should expose an explicit full validation script');
+expectIncludes(packageJson.scripts['validate:full'], 'npm run validate', 'Full validate script');
+expectIncludes(packageJson.scripts['validate:full'], 'npm run design:snapshots', 'Full validate script');
+expectIncludes(packageJson.scripts['validate:full'], 'npm run design:routes', 'Full validate script');
+expectIncludes(packageJson.scripts['validate:full'], 'npm run smoke:fixtures', 'Full validate script');
+expectIncludes(packageJson.scripts['validate:full'], 'npm run smoke:mcp-parity', 'Full validate script');
 expectIncludes(releaseWorkflow, 'IMAGE_NAME: acornops/management-console', 'Release workflow image name');
 expectIncludes(releaseWorkflow, 'provenance: true', 'Release workflow provenance');
 expectIncludes(releaseWorkflow, 'sbom: true', 'Release workflow SBOM');

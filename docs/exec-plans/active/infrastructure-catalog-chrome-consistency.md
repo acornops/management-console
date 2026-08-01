@@ -12,7 +12,7 @@ and keep resource-card catalog pages on stable, width-aware card tracks.
 - Preserve catalog counts, loading, error, empty, and destructive-action behavior.
 - Use the existing `PageShell`, `PageHeader`, and `ResourceCategoryTabs`
   vocabulary without introducing page-local spacing values.
-- Preserve the shared 30rem resource-card minimum and 1rem catalog gap.
+- Preserve the shared 27rem resource-card minimum and 1rem catalog gap.
 - Apply the same catalog-width contract to Kubernetes Clusters, Virtual
   Machines, and Agents.
 
@@ -36,6 +36,17 @@ and keep resource-card catalog pages on stable, width-aware card tracks.
 ## Validation Log
 
 - Focused catalog regression tests passed.
+- 2026-08-02 supplied-window proof:
+  - Replaced the misleading browser-zoom test title with an accurate usable-container-width contract.
+  - Added a three-real-card regression at a `1685px × 876px` CSS viewport and `1.1` device scale, equivalent to an approximately `1853px × 964px` physical capture.
+  - The rendered catalog measured `1329px` across three tracks of approximately `432.33px`; all three cards shared one row, no visible descendant crossed a card boundary, and neither the grid nor document had horizontal overflow.
+  - `FIXTURE_REUSE_SERVER=1 npx playwright test --config=playwright.fixtures.config.ts tests/fixtures/resource-card-grid.spec.ts --workers=1 --timeout=60000 --grep "three real cluster cards"` passed.
+- 2026-08-01 27rem card-density follow-up:
+  - Reduced the shared preferred minimum from `30rem` (`480px`) to `27rem` (`432px`) so the catalog reserves three tracks at the requested desktop width while retaining capacity-based `auto-fill` expansion.
+  - `npm run test -- src/resourceCardGrid.test.ts src/app/dockedPanelLayout.test.ts` passed (7 tests).
+  - `npx playwright test --config=playwright.fixtures.config.ts tests/fixtures/resource-card-grid.spec.ts --workers=1 --timeout=180000` passed (3 tests), covering two-column compact layout, three-column desktop layout, ultrawide expansion, sidebar reclamation, and docked-assistant card-width preservation across clusters, virtual machines, and agents.
+  - `npm run lint`, `npm run test` (818 tests), `npm run contracts:check`, `npm run harness:check`, and `npm run smoke:routes` passed.
+  - `npm run validate` passed the UI package checks, then stopped at the unrelated pre-existing `WorkspaceOverviewPage.tsx` heading-typography design-system violation.
 - 2026-08-01 collapsed-sidebar follow-up:
   - `npm run test -- src/styles.test.ts src/resourceCardGrid.test.ts src/app/dockedPanelLayout.test.ts packages/ui/src/PageComposition.test.tsx` passed (37 tests).
   - The resource-catalog responsive and sidebar browser regressions passed, confirming each route shell and catalog gain the sidebar's released 192px and ultrawide catalogs render more than three distributed card tracks.

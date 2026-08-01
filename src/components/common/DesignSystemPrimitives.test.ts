@@ -37,6 +37,7 @@ describe('design-system primitives', () => {
     expect(markup).toContain('href="/workspaces"');
     expect(markup).toContain('page-back-link');
     expect(markup).toContain('min-h-11');
+    expect(markup).not.toContain('px-1');
     expect(markup).toContain('focus-visible:ring-control-boundary');
     expect(markup).toContain('aria-hidden="true"');
     expect(markup).toContain('Back to workspaces');

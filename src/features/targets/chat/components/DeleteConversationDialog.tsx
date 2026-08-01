@@ -1,7 +1,7 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { Trash2 } from 'lucide-react';
-import { Button, IconTile } from '@acornops/ui';
+import { Button, IconTile, InlineAlert } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 
@@ -48,13 +48,13 @@ export const DeleteConversationDialog: React.FC<DeleteConversationDialogProps> =
 
     <div className="space-y-3 px-6 py-5">
       <p className="type-body">{t('chat.deleteConversationBody', { name: sessionName })}</p>
-      <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-status-warning-text">
+      <InlineAlert tone="warning">
         {t('chat.deleteConversationBoundary')}
-      </p>
+      </InlineAlert>
       {error && (
-        <div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">
+        <InlineAlert tone="danger" role="alert">
           {error}
-        </div>
+        </InlineAlert>
       )}
     </div>
     <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">

@@ -33,10 +33,11 @@ function metricPoint(
 }
 
 describe('VM metric timeline mapping', () => {
-  it('maps VM-native load and memory fields into chart timeline points', () => {
+  it('maps VM-native CPU, load, and memory fields into chart timeline points', () => {
     const points = getVmMetricTimeline([
       metricPoint({
         loadAverage1m: 0.24,
+        cpuUsagePercent: 31,
         memoryUsedPercent: 50,
         memoryUsedBytes: 2 * 1024 ** 3,
         memoryTotalBytes: 4 * 1024 ** 3,
@@ -46,6 +47,7 @@ describe('VM metric timeline mapping', () => {
       metricPoint({
         timestamp: '2026-05-25T00:01:00.000Z',
         loadAverage1m: 0.42,
+        cpuUsagePercent: 44,
         memoryUsedPercent: 60
       })
     ]);
@@ -53,6 +55,7 @@ describe('VM metric timeline mapping', () => {
     expect(points).toHaveLength(2);
     expect(points[0]).toMatchObject({
       loadAverage1m: 0.24,
+      cpuUsagePercent: 31,
       memoryUsedPercent: 50,
       memoryUsedBytes: 2 * 1024 ** 3,
       memoryTotalBytes: 4 * 1024 ** 3,
@@ -61,6 +64,7 @@ describe('VM metric timeline mapping', () => {
     });
     expect(points[1]).toMatchObject({
       loadAverage1m: 0.42,
+      cpuUsagePercent: 44,
       memoryUsedPercent: 60
     });
   });
@@ -74,6 +78,7 @@ describe('VM metric timeline mapping', () => {
       {
         ...metricPoint({}),
         loadAverage1m: -1,
+        cpuUsagePercent: 101,
         memoryUsedPercent: 101,
         memoryUsedBytes: Number.NEGATIVE_INFINITY,
         swapUsedPercent: -1,
@@ -84,6 +89,7 @@ describe('VM metric timeline mapping', () => {
     expect(points).toHaveLength(1);
     expect(points[0]).toMatchObject({
       loadAverage1m: null,
+      cpuUsagePercent: null,
       memoryUsedPercent: null,
       memoryUsedBytes: null,
       swapUsedPercent: null,
@@ -106,6 +112,7 @@ describe('VM metric timeline mapping', () => {
       metricPoint({
         timestamp: '2026-05-25T00:00:00.000Z',
         loadAverage1m: 0.24,
+        cpuUsagePercent: 31,
         memoryUsedPercent: 50,
         memoryUsedBytes: 2 * 1024 ** 3,
         memoryTotalBytes: 4 * 1024 ** 3
@@ -123,6 +130,7 @@ describe('VM metric timeline mapping', () => {
     expect(getLatestVmTelemetryPoint(points)).toMatchObject({
       timestamp: Date.parse('2026-05-25T00:02:00.000Z'),
       loadAverage1m: 0.24,
+      cpuUsagePercent: 31,
       memoryUsedPercent: 50,
       memoryUsedBytes: 2 * 1024 ** 3,
       memoryTotalBytes: 4 * 1024 ** 3,

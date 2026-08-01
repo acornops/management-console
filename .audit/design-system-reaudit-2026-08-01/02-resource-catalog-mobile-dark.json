@@ -1,0 +1,48 @@
+{
+  "number": "02",
+  "name": "resource-catalog-mobile-dark",
+  "route": "/workspaces/fixture-workspace/agents",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "theme": "dark",
+  "language": "en",
+  "kind": "resource",
+  "status": 200,
+  "title": "AcornOps",
+  "consoleErrors": [],
+  "evidence": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "documentOverflow": 0,
+    "display": "grid",
+    "columns": "358px",
+    "gridWidth": 358,
+    "cards": [
+      {
+        "width": 358,
+        "top": 458,
+        "maxWidth": "none"
+      },
+      {
+        "width": 358,
+        "top": 673,
+        "maxWidth": "none"
+      },
+      {
+        "width": 358,
+        "top": 888,
+        "maxWidth": "none"
+      },
+      {
+        "width": 358,
+        "top": 1103,
+        "maxWidth": "none"
+      }
+    ]
+  },
+  "screenshotPath": "/home/ning/acornops/management-console/.audit/design-system-reaudit-2026-08-01/02-resource-catalog-mobile-dark.png"
+}

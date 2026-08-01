@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, StatusBadge } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -177,16 +177,12 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
             <section className="border-t border-ui-border pt-5 first:border-t-0 first:pt-0">
               <div className="flex items-center justify-between">
                 <span className="type-label">{t('workloads.metadata')}</span>
-                <div
-                  className={classNames(
-                    'rounded-md px-2 py-1 type-label',
-                    selectedWorkload && isHealthyStatus(selectedWorkload.status)
-                      ? 'bg-status-success-soft text-status-success-text'
-                      : 'bg-status-warning-soft text-status-warning-text'
-                  )}
+                <StatusBadge
+                  tone={selectedWorkload && isHealthyStatus(selectedWorkload.status) ? 'success' : 'warning'}
+                  className="px-2 py-1"
                 >
                   {selectedWorkload?.status || t('common.unknown')}
-                </div>
+                </StatusBadge>
               </div>
               <div className="mt-3">
                 <DetailRow label={t('workloads.cluster')} value={selectedWorkload?.clusterName || '-'} />
@@ -251,14 +247,9 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                           </p>
                           <p className="mt-1 type-caption capitalize text-ui-text-muted">{getContainerStatusLabel(container)}</p>
                         </div>
-                        <span
-                          className={classNames(
-                            'shrink-0 rounded-full px-2.5 py-1 type-micro-label',
-                            container.ready ? 'bg-status-success-soft text-status-success-text' : 'bg-status-warning-soft text-status-warning-text'
-                          )}
-                        >
+                        <StatusBadge tone={container.ready ? 'success' : 'warning'} className="shrink-0 px-2.5 py-1">
                           {container.ready ? t('workloads.ready') : t('workloads.notReady')}
-                        </span>
+                        </StatusBadge>
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-3">
                         <ResourceMetricInline label={t('workloads.restarts')} value={String(container.restartCount ?? 0)} />

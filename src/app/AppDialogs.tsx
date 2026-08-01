@@ -4,7 +4,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { AddClusterModal } from '@/components/kubernetes-clusters/AddClusterModal';
 import { ClusterAgentInstallModal } from '@/components/kubernetes-clusters/ClusterAgentInstallModal';
 import { CreateWorkspaceModal } from '@/components/workspaces/CreateWorkspaceModal';
-import { Button, CloseButton, DialogFrame, formInputClassName, IconTile, TextInput } from '@acornops/ui';
+import { Button, CloseButton, DialogFrame, formInputClassName, IconTile, InlineAlert, TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import {
@@ -137,11 +137,11 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
               </div>
 
               <div className="space-y-4 p-5">
-                <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 type-ui leading-6 text-status-danger-text">
+                <InlineAlert tone="warning" className="type-ui leading-6">
                   {t('app.deleteWorkspaceWarning', {
                     name: deleteTargetWorkspace.name
                   })}
-                </div>
+                </InlineAlert>
                 <p className="type-caption leading-5 text-ui-text-muted">{t('app.deleteWorkspaceCleanup')}</p>
                 <div>
                   <label htmlFor="delete-workspace-confirmation-input" className="type-label mb-1.5 block px-1">

@@ -27,22 +27,24 @@ export const MetricChart: React.FC<{
   const numberFormatter = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 });
   const formatMetricValue = (value: number | string) => `${value}${unit === '%' ? unit : unit ? ` ${unit}` : ''}`;
   const accessibleDataTable = points.length > 0 ? (
-    <DataTable caption={t('common.chartData', { title })} className="sr-only">
-      <DataTableHeader>
-        <DataTableRow>
-          <DataTableHeaderCell scope="col">{t('common.time')}</DataTableHeaderCell>
-          <DataTableHeaderCell scope="col">{t('common.value')}</DataTableHeaderCell>
-        </DataTableRow>
-      </DataTableHeader>
-      <DataTableBody>
-        {points.map((point, index) => (
-          <DataTableRow key={`${point.label}-${index}-accessible`}>
-            <DataTableCell as="th" scope="row">{point.label}</DataTableCell>
-            <DataTableCell>{formatMetricValue(numberFormatter.format(point.value))}</DataTableCell>
+    <div className="sr-only">
+      <DataTable caption={t('common.chartData', { title })} className="min-w-0">
+        <DataTableHeader>
+          <DataTableRow>
+            <DataTableHeaderCell scope="col">{t('common.time')}</DataTableHeaderCell>
+            <DataTableHeaderCell scope="col">{t('common.value')}</DataTableHeaderCell>
           </DataTableRow>
-        ))}
-      </DataTableBody>
-    </DataTable>
+        </DataTableHeader>
+        <DataTableBody>
+          {points.map((point, index) => (
+            <DataTableRow key={`${point.label}-${index}-accessible`}>
+              <DataTableCell as="th" scope="row">{point.label}</DataTableCell>
+              <DataTableCell>{formatMetricValue(numberFormatter.format(point.value))}</DataTableCell>
+            </DataTableRow>
+          ))}
+        </DataTableBody>
+      </DataTable>
+    </div>
   ) : null;
 
   if (points.length < 2) {

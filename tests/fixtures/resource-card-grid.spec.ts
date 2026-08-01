@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { resourceCardMinimumWidth } from '../../src/app/dockedPanelLayout';
 
 const resourceCatalogRoutes = [
   '/workspaces/fixture-workspace/kubernetes-clusters',
@@ -55,7 +56,7 @@ async function expectUltrawideCatalogExpansion(page: Page, route: string) {
 
   expect(geometry.columns).toBeGreaterThan(3);
   for (const width of geometry.widths) {
-    expect(width).toBeGreaterThanOrEqual(480);
+    expect(width).toBeGreaterThanOrEqual(resourceCardMinimumWidth);
     expect(width).toBeCloseTo(geometry.widths[0], 0);
   }
 }
@@ -69,15 +70,15 @@ async function expectDistributedCardTracksInFullWidthCatalog(page: Page, route: 
 
   const shellBox = await shellContent.boundingBox();
   const catalogBox = await catalog.boundingBox();
-  const geometry = await grid.evaluate((element) => {
+  const geometry = await grid.evaluate((element, minimumWidth) => {
     const gridWidth = element.getBoundingClientRect().width;
     const widths = Array.from(element.children).map((item) => item.getBoundingClientRect().width);
-    const capacity = Math.max(1, Math.floor((gridWidth + 16) / (480 + 16)));
+    const capacity = Math.max(1, Math.floor((gridWidth + 16) / (minimumWidth + 16)));
     return {
       expectedCardWidth: (gridWidth - ((capacity - 1) * 16)) / capacity,
       widths
     };
-  });
+  }, resourceCardMinimumWidth);
 
   expect(shellBox).not.toBeNull();
   expect(catalogBox).not.toBeNull();
@@ -106,13 +107,13 @@ async function expectTwoBoundedCardTracks(page: Page, route: string) {
   });
 
   expect(geometry.cardWidths[0]).toBeCloseTo(geometry.cardWidths[1], 0);
-  expect(geometry.cardWidths[0]).toBeGreaterThanOrEqual(480);
+  expect(geometry.cardWidths[0]).toBeGreaterThanOrEqual(resourceCardMinimumWidth);
   expect(geometry.gap).toBeCloseTo(16, 0);
   expect(geometry.cardWidths[0] + geometry.cardWidths[1] + geometry.gap).toBeCloseTo(geometry.gridWidth, 0);
 }
 
-test('resource catalogs respond to usable width across browser zoom levels', async ({ page }) => {
-  await page.setViewportSize({ width: 1800, height: 1000 });
+test('resource catalogs respond to usable container width', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
 
   for (const route of resourceCatalogRoutes) {
     await expectResourceGridColumns(page, route, 2);
@@ -121,7 +122,7 @@ test('resource catalogs respond to usable width across browser zoom levels', asy
 
   const sidebar = page.locator('.management-console-desktop-sidebar');
   await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'expanded');
-  await page.setViewportSize({ width: 1850, height: 1000 });
+  await page.setViewportSize({ width: 1800, height: 1000 });
 
   for (const route of resourceCatalogRoutes) {
     await expectResourceGridColumns(page, route, 3);
@@ -132,6 +133,128 @@ test('resource catalogs respond to usable width across browser zoom levels', asy
   await page.setViewportSize({ width: 3600, height: 1000 });
   for (const route of resourceCatalogRoutes) {
     await expectUltrawideCatalogExpansion(page, route);
+  }
+});
+
+test('three real cluster cards fit the supplied window at 110% effective scale', async ({ browser }, testInfo) => {
+  const targetPhysicalViewport = { width: 1853, height: 964 };
+  const effectiveScale = 1.1;
+  const context = await browser.newContext({
+    viewport: {
+      width: Math.round(targetPhysicalViewport.width / effectiveScale),
+      height: Math.round(targetPhysicalViewport.height / effectiveScale)
+    },
+    deviceScaleFactor: effectiveScale,
+    reducedMotion: 'reduce'
+  });
+
+  try {
+    const page = await context.newPage();
+    await page.goto('http://127.0.0.1:4186/workspaces/fixture-workspace/kubernetes-clusters', {
+      waitUntil: 'domcontentloaded'
+    });
+    await expect(page.locator('[data-cluster-card="true"]')).toHaveCount(1);
+
+    for (const clusterName of ['Tokyo Staging', 'Frankfurt Edge']) {
+      await page.getByRole('button', { name: 'Connect Cluster' }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByLabel('Cluster Name').fill(clusterName);
+      await dialog.getByRole('button', { name: 'Continue to Install Agent' }).click();
+      await expect(dialog.getByText('Run this command in your terminal to install the AcornOps agent in your cluster.')).toBeVisible();
+      await dialog.getByRole('button', { name: 'Close connect cluster dialog' }).click();
+      await expect(dialog).toHaveCount(0);
+    }
+
+    const grid = page.locator('[data-cluster-card-grid="true"]');
+    const cards = grid.locator(':scope > [data-cluster-card="true"]');
+    await expect(cards).toHaveCount(3);
+    await expect(page.getByText('Singapore Production', { exact: true })).toBeVisible();
+    await expect(page.getByText('Tokyo Staging', { exact: true })).toBeVisible();
+    await expect(page.getByText('Frankfurt Edge', { exact: true })).toBeVisible();
+
+    const proof = await grid.evaluate((element) => {
+      const cardElements = Array.from(element.children) as HTMLElement[];
+      const cardRects = cardElements.map((card) => card.getBoundingClientRect());
+      const gridRect = element.getBoundingClientRect();
+      return {
+        cssViewport: { width: window.innerWidth, height: window.innerHeight },
+        devicePixelRatio: window.devicePixelRatio,
+        estimatedPhysicalViewport: {
+          width: window.innerWidth * window.devicePixelRatio,
+          height: window.innerHeight * window.devicePixelRatio
+        },
+        grid: {
+          width: gridRect.width,
+          columns: getComputedStyle(element).gridTemplateColumns.split(' ').filter(Boolean).length,
+          scrollWidth: element.scrollWidth,
+          clientWidth: element.clientWidth
+        },
+        cards: cardElements.map((card, index) => ({
+          width: cardRects[index].width,
+          top: cardRects[index].top,
+          scrollWidth: card.scrollWidth,
+          clientWidth: card.clientWidth,
+          visibleOverflowCandidates: Array.from(card.querySelectorAll<HTMLElement>('*'))
+            .map((descendant) => {
+              const rect = descendant.getBoundingClientRect();
+              const style = getComputedStyle(descendant);
+              return {
+                screenReaderOnly: Boolean(descendant.closest('.sr-only')),
+                tag: descendant.tagName.toLowerCase(),
+                className: descendant.className?.toString().slice(0, 180) || '',
+                text: descendant.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) || '',
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+                clientWidth: descendant.clientWidth,
+                scrollWidth: descendant.scrollWidth,
+                overflowX: style.overflowX,
+                position: style.position
+              };
+            })
+            .filter((descendant) => {
+              if (descendant.screenReaderOnly || descendant.width === 0) return false;
+              return descendant.left < cardRects[index].left - 1 || descendant.right > cardRects[index].right + 1;
+            })
+            .slice(0, 20)
+        })),
+        document: {
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth
+        }
+      };
+    });
+
+    const dismissNotifications = page.getByRole('button', { name: 'Dismiss notification' });
+    const visibleNotificationCount = Math.min(await dismissNotifications.count(), 8);
+    for (let index = 0; index < visibleNotificationCount; index += 1) {
+      await dismissNotifications.first().click({ timeout: 1_000 }).catch(() => undefined);
+    }
+    await page.waitForTimeout(250);
+
+    await testInfo.attach('three-card-window-geometry', {
+      body: Buffer.from(JSON.stringify(proof, null, 2)),
+      contentType: 'application/json'
+    });
+    const screenshotPath = testInfo.outputPath('three-card-window.png');
+    await page.screenshot({ path: screenshotPath });
+    await testInfo.attach('three-card-window-screenshot', {
+      path: screenshotPath,
+      contentType: 'image/png'
+    });
+
+    expect(Math.abs(proof.estimatedPhysicalViewport.width - targetPhysicalViewport.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(proof.estimatedPhysicalViewport.height - targetPhysicalViewport.height)).toBeLessThanOrEqual(1);
+    expect(proof.grid.columns).toBe(3);
+    expect(new Set(proof.cards.map((card) => Math.round(card.top))).size).toBe(1);
+    for (const card of proof.cards) {
+      expect(card.width).toBeGreaterThanOrEqual(resourceCardMinimumWidth);
+      expect(card.visibleOverflowCandidates).toEqual([]);
+    }
+    expect(proof.grid.scrollWidth).toBeLessThanOrEqual(proof.grid.clientWidth + 1);
+    expect(proof.document.scrollWidth).toBeLessThanOrEqual(proof.document.clientWidth + 1);
+  } finally {
+    await context.close();
   }
 });
 
@@ -196,5 +319,5 @@ test('a docked assistant preserves the sparse resource-card track width', async 
   expect(dockedCardBox).not.toBeNull();
   expect(fullCardBox).not.toBeNull();
   expect(dockedCardBox!.width).toBeCloseTo(fullCardBox!.width, 0);
-  expect(dockedCardBox!.width).toBeGreaterThanOrEqual(480);
+  expect(dockedCardBox!.width).toBeGreaterThanOrEqual(resourceCardMinimumWidth);
 });

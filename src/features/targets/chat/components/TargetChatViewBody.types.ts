@@ -134,6 +134,7 @@ export interface TargetChatViewBodyProps {
   title: string;
   traceExpandedByRunId: Record<string, boolean>;
   transcriptRef: (node: HTMLDivElement | null) => void;
+  usesOverlayHistory: boolean;
   userMarkdownComponents: Components;
   userTurnRunIdsByIndex: Map<number, string | undefined>;
   visibleMessages: ChatMessage[];

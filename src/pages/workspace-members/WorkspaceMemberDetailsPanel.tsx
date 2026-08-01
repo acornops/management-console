@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, InlineAlert, InlineConfirmation } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DangerZone, DangerZoneRow } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
@@ -94,28 +94,22 @@ export const WorkspaceMemberDetailsPanel: React.FC<WorkspaceMemberDetailsPanelPr
               )}
             </div>
 
-            {errorMessage && <div className="type-caption border-b border-status-danger/20 bg-status-danger-soft px-8 py-3 text-status-danger-text">{errorMessage}</div>}
+            {errorMessage && <InlineAlert tone="danger" role="alert" className="rounded-none border-x-0 border-t-0 px-8 py-3">{errorMessage}</InlineAlert>}
 
             <DangerZone className="m-5">
               {isConfirmingRemove ? (
-                <div className="space-y-4 bg-status-danger-soft px-5 py-5 text-status-danger-text">
-                  <div>
-                    <p className="type-row-title text-status-danger-text">{t('members.confirmRemoveAccess')}</p>
-                    <p className="type-caption mt-1 text-status-danger-text">
-                      {t('members.confirmRemoveAccessBody', {
-                        name: selectedMember.name
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button onClick={onCancelRemove} disabled={isSaving} variant="secondary" size="md" className="flex-1">
-                      {t('app.cancel')}
-                    </Button>
-                    <Button onClick={onRemoveMember} disabled={!canEditSelectedMember || isSaving} variant="danger" size="md" className="flex-1">
-                      {isSaving ? t('members.removing') : t('members.confirmRemove')}
-                    </Button>
-                  </div>
-                </div>
+                <InlineConfirmation
+                  id="member-remove-access-confirmation"
+                  title={t('members.confirmRemoveAccess')}
+                  description={t('members.confirmRemoveAccessBody', { name: selectedMember.name })}
+                  tone="warning"
+                  cancelLabel={t('app.cancel')}
+                  confirmLabel={isSaving ? t('members.removing') : t('members.confirmRemove')}
+                  confirmVariant="danger"
+                  confirmDisabled={!canEditSelectedMember || isSaving}
+                  onCancel={onCancelRemove}
+                  onConfirm={onRemoveMember}
+                />
               ) : (
                 <DangerZoneRow
                   id="member-remove-access-title"

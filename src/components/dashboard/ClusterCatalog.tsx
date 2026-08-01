@@ -7,7 +7,7 @@ import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
 import { ClusterTelemetryPanel } from '@/components/dashboard/ClusterTelemetryPanel';
 import { ICONS } from '@/constants';
-import { TargetCatalogActionHint, TargetCatalogActionMenu, TargetCatalogCard, TargetCatalogStatusPill } from '@/features/targets/catalog/TargetCatalogPrimitives';
+import { shouldShowResourceCatalogStatus, TargetCatalogActionHint, TargetCatalogActionMenu, TargetCatalogCard, TargetCatalogStatusPill } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import { useCatalogNow } from '@/features/targets/catalog/useCatalogNow';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { HealthStatus, KubernetesCluster } from '@/types';
@@ -58,7 +58,7 @@ function getClusterPriority(cluster: KubernetesCluster, issueSummary?: ControlPl
 
 function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall: boolean, issueSummary: ControlPlaneTargetIssueSummary | undefined, t: Translate): string {
   const status = getEffectiveHealthStatus(cluster);
-  if (requiresAgentInstall) return t('dashboard.setupRequired');
+  if (requiresAgentInstall) return t('dashboard.notConnected');
   if ((issueSummary?.critical ?? 0) > 0) return t('dashboard.criticalStatus', { count: issueSummary?.critical });
   if (getAgentConnectionState(cluster) === 'disconnected' || status === HealthStatus.RED) return t('dashboard.error');
   if ((issueSummary?.warning ?? 0) > 0) return t('dashboard.warningStatus', { count: issueSummary?.warning });
@@ -110,12 +110,6 @@ function getClusterScopeLabel(cluster: KubernetesCluster, t: Translate): string 
   if (includeCount > 0) return t('dashboard.clusterScopeIncluded', { count: includeCount });
   if (excludeCount > 0) return t('dashboard.clusterScopeExcluded', { count: excludeCount });
   return t('dashboard.clusterScopeAll');
-}
-
-function getClusterResourceCount(cluster: KubernetesCluster): number {
-  const summaryCount = cluster.resourceSummary?.resourceCount;
-  if (typeof summaryCount === 'number' && Number.isFinite(summaryCount)) return summaryCount;
-  return cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
 }
 
 const ClusterStatusPill: React.FC<{
@@ -214,6 +208,8 @@ function useClusterPresentation(
   const requiresAgentInstall = agentState === 'not_installed';
   const statusLabel = getClusterStatusLabel(cluster, requiresAgentInstall, issueSummary, t);
   const statusReason = getClusterStateReason(cluster, requiresAgentInstall, issueSummary, issueSummaryLoadState, t);
+  const statusTone = getClusterStatusTone(cluster, requiresAgentInstall, issueSummary);
+  const showStatus = shouldShowResourceCatalogStatus(statusTone);
   const actionLabel = requiresAgentInstall ? t('dashboard.setUp') : clusterNeedsAttention(cluster, issueSummary) ? t('dashboard.investigate') : t('dashboard.openCluster');
   return {
     t,
@@ -221,73 +217,39 @@ function useClusterPresentation(
     requiresAgentInstall,
     statusLabel,
     statusReason,
+    showStatus,
     actionLabel
   };
 }
 
-const ClusterSetupTelemetry: React.FC<{
+const ClusterConnectionSetup: React.FC<{
   cluster: KubernetesCluster;
   onInstallAgent?: (clusterId: string) => void;
 }> = ({ cluster, onInstallAgent }) => {
   const { t } = useTranslation();
-  const metrics = [
-    { label: t('dashboard.cpu'), Icon: ICONS.Cpu },
-    { label: t('dashboard.memory'), Icon: ICONS.HardDrive }
-  ];
   return (
-    <section data-cluster-setup-telemetry="true" aria-label={t('dashboard.installAgentNamed', { name: cluster.name })} className="shrink-0 px-4 pb-3">
-      <dl className="grid min-w-0 grid-cols-2 gap-4 border-t border-ui-border/60 py-3">
-        {metrics.map(({ label, Icon }) => (
-          <div key={label} className="min-w-0">
-            <dt className="type-micro-label flex min-w-0 items-center gap-1.5 text-ui-text-muted">
-              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{label}</span>
-            </dt>
-            <dd className="type-caption mt-1 type-emphasis text-ui-text-muted">{t('dashboard.unavailable')}</dd>
-          </div>
-        ))}
-      </dl>
-      <div>
-        <div className="relative h-[104px] overflow-hidden">
-          <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="absolute inset-0 h-full w-full text-ui-border/55" aria-hidden="true">
-            <line x1="0" x2="180" y1="20" y2="20" className="stroke-current" strokeWidth="1" />
-            <line x1="0" x2="180" y1="54" y2="54" className="stroke-current" strokeWidth="1" />
-            <line x1="0" x2="180" y1="88" y2="88" className="stroke-current" strokeWidth="1" />
-          </svg>
-          <div className="absolute inset-0 z-10 flex items-center justify-between gap-3 px-2">
-            <div className="min-w-0">
-              <p className="type-row-title text-ui-text">{t('dashboard.agentNotInstalled')}</p>
-              <p className="type-caption mt-1 line-clamp-2 text-ui-text-muted">{t('dashboard.telemetryUnavailableUntilAgentInstalled')}</p>
-            </div>
-            <Button
-              data-cluster-setup-action="install"
-              type="button"
-              variant="primary"
-              size="sm"
-              disabled={!onInstallAgent}
-              onClick={() => onInstallAgent?.(cluster.id)}
-              className="pointer-events-auto shrink-0"
-            >
-              <ICONS.Wrench className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden min-[1440px]:inline">{t('dashboard.installAgent')}</span>
-              <span className="min-[1440px]:hidden">{t('dashboard.setUp')}</span>
-            </Button>
-          </div>
+    <section
+      data-cluster-setup-telemetry="true"
+      aria-label={t('dashboard.installAgentNamed', { name: cluster.name })}
+      className="mx-4 flex min-h-[10rem] min-w-0 flex-1 items-center border-t border-ui-border/60 py-4"
+    >
+      <div className="mx-auto flex w-full max-w-sm min-w-0 flex-col items-center gap-3 text-center">
+        <div className="min-w-0">
+          <p className="type-row-title text-ui-text">{t('dashboard.agentNotInstalled')}</p>
+          <p className="type-caption mt-1 max-w-[36rem] text-ui-text-muted">{t('dashboard.telemetryUnavailableUntilAgentInstalled')}</p>
         </div>
-        <div className="type-caption mt-1.5 grid grid-cols-3 gap-2 text-ui-text-muted" aria-hidden="true">
-          <span className="truncate">
-            <span className="xl:hidden min-[1440px]:inline">{t('dashboard.clusterRegistered')}</span>
-            <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.clusterRegisteredShort')}</span>
-          </span>
-          <span className="truncate text-center">
-            <span className="xl:hidden min-[1440px]:inline">{t('dashboard.telemetryPending')}</span>
-            <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.telemetryPendingShort')}</span>
-          </span>
-          <span className="truncate text-right">
-            <span className="xl:hidden min-[1440px]:inline">{t('dashboard.agentRequired')}</span>
-            <span className="hidden xl:inline min-[1440px]:hidden">{t('dashboard.agentRequiredShort')}</span>
-          </span>
-        </div>
+        <Button
+          data-cluster-setup-action="install"
+          type="button"
+          variant="primary"
+          size="sm"
+          disabled={!onInstallAgent}
+          onClick={() => onInstallAgent?.(cluster.id)}
+          className="pointer-events-auto shrink-0"
+        >
+          <ICONS.Wrench className="h-3.5 w-3.5" aria-hidden="true" />
+          {t('dashboard.installAgent')}
+        </Button>
       </div>
     </section>
   );
@@ -295,39 +257,36 @@ const ClusterSetupTelemetry: React.FC<{
 
 const ClusterOperationalDetails: React.FC<{ cluster: KubernetesCluster }> = ({ cluster }) => {
   const { t } = useTranslation();
+  const readyNodeCount = cluster.nodes.filter((node) => node.status.toLowerCase() === 'ready').length;
+  const hasUnreadyNodes = cluster.nodes.length > 0 && readyNodeCount < cluster.nodes.length;
   const details = [
     {
       label: t('dashboard.scope'),
-      compactLabel: t('dashboard.scope'),
       value: getClusterScopeLabel(cluster, t),
-      Icon: ICONS.Layers
+      Icon: ICONS.Layers,
+      warning: false
     },
     {
-      label: t('dashboard.writeAccess'),
-      compactLabel: t('dashboard.writeAccessShort'),
+      label: t('dashboard.writeAccessShort'),
       value: getClusterWriteAccessLabel(cluster, t),
-      Icon: ICONS.Shield
+      Icon: ICONS.Shield,
+      warning: false
     },
-    {
-      label: t('resources.title'),
-      compactLabel: t('dashboard.resourceCountShort'),
-      value: String(getClusterResourceCount(cluster)),
-      Icon: ICONS.Box
-    }
+    ...(hasUnreadyNodes ? [{
+      label: t('dashboard.nodes'),
+      value: t('dashboard.nodesReady', { ready: readyNodeCount, total: cluster.nodes.length }),
+      Icon: ICONS.Server,
+      warning: true
+    }] : [])
   ];
 
   return (
-    <dl className="mx-4 grid grid-cols-3 gap-3 border-t border-ui-border/60 pb-4 pt-3">
-      {details.map(({ label, compactLabel, value, Icon }) => (
-        <div key={label} className="min-w-0">
-          <dt className="type-micro-label flex min-w-0 items-center gap-0.5 text-ui-text-muted" title={label}>
-            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span className="hidden truncate sm:inline">{label}</span>
-            <span className="truncate sm:hidden">{compactLabel}</span>
-          </dt>
-          <dd className="type-caption mt-1 break-words type-emphasis leading-4 text-ui-text [overflow-wrap:anywhere]" title={value}>
-            {value}
-          </dd>
+    <dl data-cluster-operational-details="true" className="mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-ui-border/60 pb-4 pt-3">
+      {details.map(({ label, value, Icon, warning }) => (
+        <div key={label} className="flex min-w-0 items-center gap-1.5" title={`${label}: ${value}`}>
+          <Icon className={`h-3.5 w-3.5 shrink-0 ${warning ? 'text-status-warning-text' : 'text-ui-text-muted'}`} aria-hidden="true" />
+          <dt className="type-caption shrink-0 text-ui-text-muted">{label}:</dt>
+          <dd className={`type-caption min-w-0 break-words type-emphasis leading-4 [overflow-wrap:anywhere] ${warning ? 'text-status-warning-text' : 'text-ui-text'}`}>{value}</dd>
         </div>
       ))}
     </dl>
@@ -361,9 +320,9 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <div className="xl:hidden 2xl:block">
+          {view.showStatus && <div className="xl:hidden 2xl:block">
             <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
-          </div>
+          </div>}
           <ClusterActionMenu
             cluster={cluster}
             isOpen={props.openClusterActionMenuId === cluster.id}
@@ -374,16 +333,16 @@ const ClusterCatalogCard: React.FC<ClusterItemProps> = (props) => {
           />
         </div>
       </div>
-      <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
+      {view.showStatus && <div className="-mt-4 hidden pb-3 pl-16 pr-4 xl:block 2xl:hidden">
         <ClusterStatusPill cluster={cluster} requiresAgentInstall={view.requiresAgentInstall} issueSummary={issueSummary} label={view.statusLabel} reason={view.statusReason} />
-      </div>
+      </div>}
 
       {view.requiresAgentInstall ? (
-        <ClusterSetupTelemetry cluster={cluster} onInstallAgent={props.onInstallAgent} />
+        <ClusterConnectionSetup cluster={cluster} onInstallAgent={props.onInstallAgent} />
       ) : (
         <ClusterTelemetryPanel cluster={cluster} now={now} compact loadState={props.metricLoadState} onRetry={props.onRetryTelemetry} />
       )}
-      <ClusterOperationalDetails cluster={cluster} />
+      {!view.requiresAgentInstall && <ClusterOperationalDetails cluster={cluster} />}
     </TargetCatalogCard>
   );
 };

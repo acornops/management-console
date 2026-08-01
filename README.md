@@ -196,7 +196,15 @@ npm run dev
 
 ## Validation
 
-Run the checks that match the change:
+For routine changes, run targeted checks while iterating and the local handoff
+gate when finished:
+
+```bash
+npm run validate
+```
+
+The local gate excludes repeated browser suites. Run checks that match the
+affected behavior as needed:
 
 - `npm run lint`
 - `npm run test`
@@ -204,5 +212,8 @@ Run the checks that match the change:
 - `npm run harness:check`
 - `npm run smoke:routes`
 - `npm run smoke:fixtures`
-- `npm run validate`
-- Run in `VITE_APP_DATA_MODE=control-plane` when validating contract-sensitive UI changes
+
+Use `npm run validate:full` only for PR/release readiness, broad or high-risk UI
+changes, browser-harness changes, large visual-baseline updates, or an explicit
+request. Run in `VITE_APP_DATA_MODE=control-plane` when validating
+contract-sensitive UI changes.

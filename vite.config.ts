@@ -39,6 +39,12 @@ export default defineConfig(({ command, mode }) => {
             if (id.includes('/src/i18n/locales/')) {
               return 'app-locales';
             }
+            if (id.includes('/src/features/targets/chat/')) {
+              return 'app-target-chat';
+            }
+            if (id.includes('/src/services/')) {
+              return 'app-control-plane';
+            }
             if (!id.includes('node_modules')) {
               return undefined;
             }

@@ -43,6 +43,7 @@ import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/p
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
+import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
 
 interface VirtualMachinesPageProps {
   workspace: Workspace;
@@ -126,6 +127,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
   const selectedTargetId = selected?.id || null;
+  const capabilityCatalogCache = useCapabilityCatalogCache(selectedId ? `${workspace.id}:${selectedId}` : '');
   const refreshVisibleVmIssues = React.useCallback(async () => {
     if (!selectedTargetId || view !== 'overview') return;
     try {
@@ -514,11 +516,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 
   if (view === 'mcpServers' || view === 'tools' || view === 'skills') {
     return (
-      <VirtualMachineAdminView
-        view={view}
-        virtualMachine={selected}
-        workspace={workspace}
-      />
+      <VirtualMachineAdminView view={view} virtualMachine={selected} workspace={workspace} {...capabilityCatalogCache} />
     );
   }
 

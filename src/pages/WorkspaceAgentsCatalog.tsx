@@ -16,7 +16,8 @@ import { Settings } from 'lucide-react';
 import { ICONS } from '@/constants';
 import {
   ResourceCatalogActionMenu,
-  ResourceCatalogCard
+  ResourceCatalogCard,
+  shouldShowResourceCatalogStatus
 } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
@@ -151,6 +152,8 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
             const readinessLabel = readinessBlocked
               ? agent.readiness.status === 'blocked' ? 'Blocked' : 'Needs setup'
               : 'Ready';
+            const readinessTone = readinessBlocked ? 'warning' : statusTone(agent.status);
+            const showReadinessStatus = shouldShowResourceCatalogStatus(readinessTone);
             const purpose = agent.description || agent.instructions || 'No purpose provided.';
             const capabilitySummary = getAgentCapabilitySummary(agent, t);
             const readinessWarning = agentReadinessWarning(agent);
@@ -167,7 +170,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <h3 className="type-panel-title min-w-0 truncate text-ui-text" title={agent.name}>{agent.name}</h3>
-                      <StatusBadge tone={readinessBlocked ? 'warning' : statusTone(agent.status)}>{readinessLabel}</StatusBadge>
+                      {showReadinessStatus && <StatusBadge tone={readinessTone}>{readinessLabel}</StatusBadge>}
                     </div>
                     <span aria-hidden="true" className="type-caption type-emphasis mt-1 inline-flex items-center gap-1 text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
                       {t('agentsWorkflows.agents.viewDetails')} <ICONS.ChevronRight className="h-3.5 w-3.5" />

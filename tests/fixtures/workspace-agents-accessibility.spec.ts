@@ -39,6 +39,14 @@ test('the base Agent URL opens Chat and browser history restores it', async ({ p
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
 });
 
+test('ready Agent cards omit routine positive status', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
+
+  const readyCard = page.locator('[data-agent-id="fixture-specialist"]');
+  await expect(readyCard).toBeVisible();
+  await expect(readyCard.getByText('Ready', { exact: true })).toHaveCount(0);
+});
+
 test('Agent cards open route-backed Chat and can maximize to full Chat', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
@@ -64,6 +72,7 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   );
 
   const card = page.locator('[data-agent-id="fixture-specialist"]');
+  await expect(card.getByText('Ready', { exact: true })).toHaveCount(0);
   await expect(card.locator('[data-agent-avatar="true"]')).toHaveText('☸️');
   await expect(card.getByText('Chat', { exact: true })).toBeVisible();
   await card.getByRole('button', { name: 'Chat with Kubernetes Specialist' }).click();
@@ -159,6 +168,7 @@ test('Agent creation persists the selected emoji identity', async ({ page }) => 
 
   const card = page.locator('[data-agent-card="true"]').filter({ hasText: 'Security Guide' });
   await expect(card).toBeVisible();
+  await expect(card.getByText('Needs setup', { exact: true })).toBeVisible();
   await expect(card.locator('[data-agent-avatar="true"]')).toHaveText('🛡️');
 });
 

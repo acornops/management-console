@@ -9,7 +9,7 @@ beforeAll(async () => {
 });
 
 describe('McpServersInventory', () => {
-  it('keeps the inventory summary and table shell around the embedded empty state', () => {
+  it('keeps the inventory summary and list shell around the embedded empty state', () => {
     const markup = renderToStaticMarkup(
       <McpServersInventory
         servers={[]}
@@ -38,7 +38,11 @@ describe('McpServersInventory', () => {
     expect(markup).toContain('data-mcp-server-list="true"');
     expect(markup).toContain('data-empty-state="true"');
     expect(markup).toContain('data-empty-state-surface="embedded"');
+    expect(markup).toContain('<h3');
     expect(markup).toContain('No MCP servers have been registered.');
+    expect(markup).not.toContain('<table');
+    expect(markup).not.toContain('lucide-plus');
+    expect(markup).toContain('lucide-server');
     expect(markup).not.toContain('id="mcp-server-search"');
     expect(markup).not.toContain('Showing 0 of 0');
   });

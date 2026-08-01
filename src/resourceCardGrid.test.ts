@@ -8,6 +8,8 @@ const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
 describe('resource card grid', () => {
   it('keeps clusters, virtual machines, and agents on one container-aware column contract', () => {
     const styles = readSource('src/styles.css');
+    const designCheck = readSource('scripts/check-design-system.mjs');
+    const designStandard = readSource('docs/design-docs/design-system-standardization.md');
     const agentCatalog = readSource('src/pages/WorkspaceAgentsCatalog.tsx');
     const catalogs = [
       readSource('src/components/dashboard/ClusterCatalog.tsx'),
@@ -23,13 +25,18 @@ describe('resource card grid', () => {
     }
 
     expect(styles).toContain('display: grid');
-    expect(styles).toContain('grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr))');
+    expect(styles).toContain('grid-template-columns: repeat(auto-fill, minmax(min(100%, 27rem), 1fr))');
     expect(styles).toMatch(/\.resource-card-grid > \* \{[\s\S]*?width: 100%;[\s\S]*?min-width: 0;/);
     expect(styles).not.toMatch(/\.resource-card-grid > \* \{[^}]*max-width:/);
     expect(styles).toContain('container-name: resource-card-catalog');
     expect(agentCatalog.match(/data-agent-card-grid="true"/g)).toHaveLength(2);
     expect(styles).not.toContain("[data-agent-catalog-layout='docked'] .resource-card-grid");
     expect(styles).not.toContain('container-name: cluster-catalog');
+    expect(designCheck).toContain("'display: grid'");
+    expect(designCheck).toContain("'grid-template-columns: repeat(auto-fill, minmax(min(100%, 27rem), 1fr))'");
+    expect(designCheck).not.toContain("'display: flex'");
+    expect(designStandard).toContain('Cards fill their tracks without a fixed maximum');
+    expect(designStandard).not.toContain('stop growing at `40rem`');
   });
 
   it('keeps route shells and catalog sections full width while bounding wide-layout cards', () => {
@@ -44,6 +51,17 @@ describe('resource card grid', () => {
     for (const route of [dashboard, virtualMachines, agents]) {
       expect(route).toContain('<PageShell>');
       expect(route).not.toContain('contentClassName="resource-catalog-rack"');
+    }
+  });
+
+  it('keeps screen-reader telemetry tables from widening their containing cards', () => {
+    const telemetrySummary = readSource('src/features/targets/catalog/TelemetryTrendSummary.tsx');
+    const metricChart = readSource('src/components/common/MetricChart.tsx');
+
+    for (const chart of [telemetrySummary, metricChart]) {
+      expect(chart).toContain('<div className="sr-only">');
+      expect(chart).toContain('className="min-w-0"');
+      expect(chart).not.toContain('className="sr-only min-w-0"');
     }
   });
 

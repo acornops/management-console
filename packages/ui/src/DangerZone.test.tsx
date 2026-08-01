@@ -29,6 +29,8 @@ describe('DangerZone', () => {
     expect(html).not.toContain('bg-status-danger-soft');
     expect(html).toContain('data-danger-zone-row="neutral"');
     expect(html).toContain('data-danger-zone-row="danger"');
+    expect(html).toContain('flex w-full shrink-0 justify-end sm:w-auto');
+    expect(html).not.toContain('sm:w-64');
   });
 
   it('keeps danger emphasis on the destructive title while descriptions remain neutral', () => {

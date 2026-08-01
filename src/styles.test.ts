@@ -99,7 +99,7 @@ describe('theme color contract', () => {
     expect(styles).toContain('--ao-status-success-text-rgb:');
     expect(styles).toContain('--ao-status-warning-text-rgb:');
     expect(styles).toContain('--ao-status-danger-text-rgb:');
-    expect(styles).toContain('--ao-status-warning-soft: oklch(0.955 0.035 108)');
+    expect(styles).toContain('--ao-status-warning-soft: oklch(0.96 0.035 52)');
     expect(styles).toContain('--ao-metric-blue: oklch(0.52 0.085 244)');
 
     expect(tailwindConfig).toContain("'accent-strong'");
@@ -313,8 +313,8 @@ describe('theme color contract', () => {
     expect(chatView).toContain('style={{ width: historyPanelWidth }}');
     expect(chatView).toContain('data-chat-history-resize-handle="true"');
     expect(chatView).toContain('setIsHistoryOpen(false)');
-    expect(chatView).toContain('lg:flex');
-    expect(chatView).toContain('<DrawerFrame');
+    expect(chatView).toContain('!isPanel && isHistoryOpen && !usesOverlayHistory');
+    expect(chatView).toContain('isOpen={!isPanel && isHistoryOpen && usesOverlayHistory}');
     expect(chatView).toContain('containerClassName="absolute z-[110] lg:hidden"');
     expect(chatView).toContain('overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"');
     expect(chatView).toContain('side="left"');
@@ -439,7 +439,8 @@ describe('theme color contract', () => {
     expect(workloadExplorerParts).toContain('flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end');
     expect(workloadsExplorerSurface).toContain('className={resourceRowActionClass}');
     expect(resourceExplorerLayout).toContain('className={resourceRowActionClass}');
-    expect(workloadExplorerParts).toContain('inline-flex min-w-0 max-w-full items-center gap-2 rounded-full');
+    expect(workloadExplorerParts).toContain('<StatusBadge');
+    expect(workloadExplorerParts).toContain('className="min-w-0 gap-2 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"');
     expect(workloadExplorerParts).toContain('[overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-ui inline-flex shrink-0 items-center gap-1');
     expect(resourceExplorerLayout).toContain('type-row-title break-words');
@@ -529,23 +530,21 @@ describe('theme color contract', () => {
     expect(buttonComponent).toContain('focus-visible:ring-control-boundary');
   });
 
-  it('separates warning severity color from the orange workflow accent', () => {
+  it('keeps warning semantics on the shared orange signal palette', () => {
     expect(lightTheme).toContain('--ao-brand-orange: oklch(0.712 0.187 39.7)');
-    expect(lightTheme).toContain('--ao-status-warning: oklch(0.58 0.115 105)');
-    expect(lightTheme).toContain('--ao-status-warning-soft: oklch(0.955 0.035 108)');
-    expect(lightTheme).toContain('--ao-status-warning-text: oklch(0.37 0.095 105)');
-    expect(darkTheme).toContain('--ao-status-warning: oklch(0.76 0.11 105)');
-    expect(darkTheme).toContain('--ao-status-warning-soft: oklch(0.32 0.04 105)');
-    expect(darkTheme).toContain('--ao-status-warning-text: oklch(0.83 0.095 105)');
-    expect(lightTheme).not.toContain('--ao-status-warning: oklch(0.6 0.135 76)');
-    expect(darkTheme).not.toContain('--ao-status-warning: oklch(0.76 0.13 78)');
+    expect(lightTheme).toContain('--ao-status-warning: oklch(0.651 0.179 38.9)');
+    expect(lightTheme).toContain('--ao-status-warning-soft: oklch(0.96 0.035 52)');
+    expect(lightTheme).toContain('--ao-status-warning-text: oklch(0.543 0.165 41.8)');
+    expect(darkTheme).toContain('--ao-status-warning: oklch(0.78 0.13 42)');
+    expect(darkTheme).toContain('--ao-status-warning-soft: oklch(0.29 0.055 38)');
+    expect(darkTheme).toContain('--ao-status-warning-text: oklch(0.82 0.12 42)');
   });
 
   it('keeps primary app actions at the medium size', () => {
     expect(dashboardPage).toContain('<Button onClick={onAddCluster} variant="primary" size="md" className="whitespace-nowrap">');
     expect(overviewPage).toContain('<Button type="button" onClick={onConnectCluster} variant="primary" size="md">');
     expect(mcpServersViewHeader).toContain('<AddMcpServerAction');
-    expect(addMcpServerAction).toContain('variant="secondary"');
+    expect(addMcpServerAction).toContain('variant="primary"');
     expect(addMcpServerAction).toContain("size = 'md'");
     expect(addMcpServerAction).toContain('size={size}');
   });

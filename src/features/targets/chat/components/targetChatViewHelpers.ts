@@ -99,18 +99,40 @@ export function shouldDismissHistoryOnKeyDown(key: string, usesOverlayHistory: b
   return usesOverlayHistory && key === 'Escape';
 }
 
+export const TARGET_CHAT_OVERLAY_HISTORY_QUERY = '(max-width: 1023px)';
+
+export function useTargetChatOverlayHistory(): boolean {
+  const [usesOverlayHistory, setUsesOverlayHistory] = React.useState(() =>
+    typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia(TARGET_CHAT_OVERLAY_HISTORY_QUERY).matches
+  );
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+
+    const mediaQuery = window.matchMedia(TARGET_CHAT_OVERLAY_HISTORY_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => setUsesOverlayHistory(event.matches);
+    setUsesOverlayHistory(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return usesOverlayHistory;
+}
+
 export function useTargetChatHistoryFocus(args: {
   isHistoryOpen: boolean;
   historyButtonRef: React.RefObject<HTMLButtonElement | null>;
   historyPanelRef: React.RefObject<HTMLElement | null>;
   onDismiss: () => void;
+  usesOverlayHistory: boolean;
 }): void {
-  const { isHistoryOpen, historyButtonRef, historyPanelRef, onDismiss } = args;
+  const { isHistoryOpen, historyButtonRef, historyPanelRef, onDismiss, usesOverlayHistory } = args;
 
   React.useEffect(() => {
     if (!isHistoryOpen) return;
 
-    const usesOverlayHistory = window.matchMedia('(max-width: 1023px)').matches;
     const focusTimer = usesOverlayHistory
       ? window.setTimeout(() => {
           const panel = historyPanelRef.current;
@@ -157,7 +179,7 @@ export function useTargetChatHistoryFocus(args: {
         }, 0);
       }
     };
-  }, [historyButtonRef, historyPanelRef, isHistoryOpen, onDismiss]);
+  }, [historyButtonRef, historyPanelRef, isHistoryOpen, onDismiss, usesOverlayHistory]);
 }
 
 function getFileExtension(fileName: string): string {

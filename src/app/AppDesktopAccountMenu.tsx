@@ -81,11 +81,11 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
           >
             <span className="flex min-w-0 items-center gap-3">
               <span data-rail-align={collapsed ? 'true' : undefined} className={`flex h-8 w-8 shrink-0 items-center justify-center font-mono type-caption type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${collapsed ? 'rounded-md' : 'rounded-full'} ${
-                isActive ? 'bg-accent text-control-activation-fg' : 'bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
+                isActive ? 'bg-accent-soft text-accent-readable' : 'bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
               }`}>{userInitials}</span>
               <span className={collapsed ? 'sr-only' : 'min-w-0'}>
                 <span className="block truncate type-body type-emphasis leading-5 text-ui-text">{user.name}</span>
-                <span className="block truncate type-caption leading-4 text-ui-text-muted">{user.email}</span>
+                <span className={`block truncate type-caption leading-4 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`}>{user.email}</span>
               </span>
             </span>
             <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.18 }} className={collapsed ? 'sr-only' : 'shrink-0'}>

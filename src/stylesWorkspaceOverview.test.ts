@@ -55,7 +55,7 @@ describe('workspace overview style contract', () => {
     expect(overviewPage).toContain('w-full px-5 py-4 text-left');
     expect(overviewPage).toContain('data-attention-issue-meta="true"');
     expect(overviewPage).toContain('data-attention-issue-row="true"');
-    expect(overviewPage).toContain("issue.status !== 'active'");
+    expect(overviewPage).toContain('shouldShowIssueStatus(issue.status)');
     expect(overviewPage).toContain('data-target-type-icon="true"');
     expect(overviewPage).toContain("item.targetType === 'kubernetes' ? ICONS.Layers : ICONS.Server");
     expect(overviewPage).toContain('<Clock3 className="h-3.5 w-3.5"');

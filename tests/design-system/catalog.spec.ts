@@ -149,6 +149,17 @@ test('overlay frames isolate, contain, nest, restore, and reflow accessibly', as
   if (dark) await page.close();
 });
 
+test('status pills stay borderless while semantic callouts retain their boundary', async ({ page }) => {
+  await page.goto('/design-system.html');
+  const section = page.getByRole('heading', { name: 'Status and messages' }).locator('xpath=ancestor::section[1]');
+  const warningPill = section.getByText('Pending', { exact: true });
+  const warningCallout = section.getByRole('status').filter({ hasText: 'This workflow can write to live systems.' });
+
+  await expect(warningPill).toHaveCSS('border-top-width', '0px');
+  await expect(warningCallout).toHaveCSS('border-top-width', '1px');
+  await expect(warningCallout.locator('svg')).toHaveCount(1);
+});
+
 test('collection discovery supports responsive layouts, keyboard filters, and no-match recovery', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
   await page.goto('/design-system.html');

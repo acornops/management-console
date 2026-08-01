@@ -91,7 +91,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                 </Button>
                 <Button
                   type="submit"
-                  variant="secondary"
+                  variant="primary"
                   size="sm"
                   disabled={!editValue.trim() || isSubmittingEdit}
                   className="border-ui-bg/30 bg-ui-bg text-ui-text hover:bg-ui-bg/90"

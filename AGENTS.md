@@ -50,13 +50,11 @@ validation helpers, and PR coordination workflow.
 
 ## Required Validation
 
-- `npm run lint`
-- `npm run test`
-- `npm run contracts:check`
-- `npm run harness:check`
-- `npm run smoke:routes`
-- `npm run validate`
-- Run in `VITE_APP_DATA_MODE=control-plane` when validating contract-sensitive UI changes
+- Use targeted tests while iterating, then run `npm run validate` before handoff.
+- For a visual change, run only the affected Playwright spec or design route while iterating.
+- Do not run `npm run validate:full` by default. Reserve it for PR/release readiness,
+  broad or high-risk UI changes, browser-harness changes, or an explicit user request.
+- Run validation in `VITE_APP_DATA_MODE=control-plane` for contract-sensitive UI changes.
 
 ## High-Risk Areas
 

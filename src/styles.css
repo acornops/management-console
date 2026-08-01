@@ -486,53 +486,13 @@ select {
 
 .resource-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 30rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 27rem), 1fr));
   align-items: stretch;
 }
 
 .resource-card-grid > * {
   width: 100%;
   min-width: 0;
-}
-
-@media (min-width: 1200px) and (max-height: 820px) {
-  .management-console-desktop-sidebar [data-sidebar-header='true'],
-  .management-console-desktop-sidebar [data-sidebar-account='true'] {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-workspace-context='true'] {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-section='true'] {
-    padding-bottom: 0.25rem;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-section-titled='true'] {
-    padding-top: 0.5rem;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-section='true'] > div:last-child > :not([hidden]) ~ :not([hidden]),
-  .management-console-desktop-sidebar [data-sidebar-settings-divider='true'] > div > :not([hidden]) ~ :not([hidden]) {
-    margin-top: 0.125rem;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-density-nav='true'] > div > :not([hidden]) ~ :not([hidden]) {
-    margin-top: 0;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-settings-divider='true'] {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-  }
-
-  .management-console-desktop-sidebar [data-sidebar-target-context='true'] {
-    margin-bottom: 0.5rem;
-    padding-top: 0;
-  }
 }
 
 .workspace-overview-page {

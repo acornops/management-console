@@ -10,6 +10,10 @@
 ## Required Validation
 
 - Run `npm run validate` for every substantive change.
+- Do not run `npm run validate:full` by default for routine UI work. Reserve it
+  for PR/release readiness, broad or high-risk behavior, browser-harness
+  changes, large visual-baseline updates, or an explicit user request.
+- During iteration, prefer the smallest affected Vitest or Playwright command.
 - Validate in control-plane mode when changing real API integrations.
 - Preserve route stability for workspace and cluster deep links.
 - Keep v1 console payloads bounded: lists use `{ items, nextCursor? }`, large routes lazy-load pages, and cluster detail exposes summary counts instead of full snapshot JSON.

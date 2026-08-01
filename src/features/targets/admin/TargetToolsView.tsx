@@ -2,10 +2,11 @@ import React from 'react';
 import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
+import { CollectionState } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
-import { InlineLoadingIndicator, PageShell } from '@acornops/ui';
+import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { InlineLoadingIndicator, PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -273,21 +274,17 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
   return (
     <PageShell>
-      <header className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <h1 className="type-route-title">{t('tools.title')}</h1>
-          <p className="type-body mt-2">
-            {t('tools.description', { name: target.name })}
-          </p>
-        </div>
-        {showPermissionNotice && (
-          <p className="type-caption lg:max-w-xs">
+      <PageHeader
+        title={t('tools.title')}
+        description={t('tools.description', { name: target.name })}
+        actions={showPermissionNotice ? (
+          <p className="type-caption max-w-xs type-emphasis text-ui-text-muted sm:text-right">
             {catalog?.permissions?.editableRoles?.length
               ? t('tools.manageNoAccessWithRoles', { roles: catalog.permissions.editableRoles.join(', ') })
               : t('tools.manageNoAccess')}
           </p>
-        )}
-      </header>
+        ) : undefined}
+      />
 
       {catalogError && (
         <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
@@ -364,50 +361,52 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </div>
             )}
             <div className="min-w-0">
-              <DataTable caption={t('tools.title')} className="w-full table-fixed text-left" aria-label={t('tools.title')}>
-                <colgroup>
-                  <col className="w-[34%]" />
-                  <col className="w-[23%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[21%]" />
-                  <col className="w-[11%]" />
-                </colgroup>
-                <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredTools.length }}>
-                  <DataTableRow>
-                    <DataTableHeaderCell>{t('tools.toolColumn')}</DataTableHeaderCell>
-                    <DataTableHeaderCell>{t('tools.capabilityColumn')}</DataTableHeaderCell>
-                    <DataTableHeaderCell>{t('tools.enabledColumn')}</DataTableHeaderCell>
-                    <DataTableHeaderCell className="hidden md:table-cell">{t('tools.runtimeColumn')}</DataTableHeaderCell>
-                    <DataTableHeaderCell numeric>{t('tools.actionsColumn')}</DataTableHeaderCell>
-                  </DataTableRow>
-                </DataTableHeader>
-                <DataTableBody>
-                  {filteredTools.map((tool) => (
-                    <TargetToolRow
-                      key={tool.id}
-                      tool={tool}
-                      runtimeLabel={toolRuntimeLabel(tool, t)}
-                      capabilityLabel={toolCapabilityLabel(tool, t)}
-                      capability={toolCapability(tool)}
-                      canEditTools={canEditTools}
-                      pendingToolId={pendingToolId}
-                      onConfigure={openConfigure}
-                      onTargetInsightsAction={openTargetInsightsAction}
-                      onToggleTool={(nextTool, enabled) => void toggleTool(nextTool, enabled)}
-                    />
-                  ))}
-                  <DataTableStateRow
-                    columns={5}
-                    phase="ready"
-                    itemCount={filteredTools.length}
-                    filtered={catalog.items.length > 0}
-                    loading={null}
-                    empty={<EmptyState embedded headingLevel={3} icon={<Wrench />} title={t('tools.empty')} description={t('tools.emptyHelp')} />}
-                    filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
-                    error={null}
-                  />
-                </DataTableBody>
-              </DataTable>
+              <CollectionState
+                phase="ready"
+                itemCount={filteredTools.length}
+                filtered={catalog.items.length > 0}
+                loading={null}
+                empty={<EmptyState embedded headingLevel={3} icon={<Wrench />} title={t('tools.empty')} description={t('tools.emptyHelp')} />}
+                filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
+                error={null}
+              >
+                <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
+                  <DataTable caption={t('tools.title')} className="w-full table-fixed text-left" aria-label={t('tools.title')}>
+                    <colgroup>
+                      <col className="w-[34%]" />
+                      <col className="w-[23%]" />
+                      <col className="w-[11%]" />
+                      <col className="w-[21%]" />
+                      <col className="w-[11%]" />
+                    </colgroup>
+                    <DataTableHeader collectionState={{ phase: 'ready', itemCount: filteredTools.length }}>
+                      <DataTableRow>
+                        <DataTableHeaderCell>{t('tools.toolColumn')}</DataTableHeaderCell>
+                        <DataTableHeaderCell>{t('tools.capabilityColumn')}</DataTableHeaderCell>
+                        <DataTableHeaderCell>{t('tools.enabledColumn')}</DataTableHeaderCell>
+                        <DataTableHeaderCell className="hidden md:table-cell">{t('tools.runtimeColumn')}</DataTableHeaderCell>
+                        <DataTableHeaderCell numeric>{t('tools.actionsColumn')}</DataTableHeaderCell>
+                      </DataTableRow>
+                    </DataTableHeader>
+                    <DataTableBody className="divide-ui-bg">
+                      {filteredTools.map((tool) => (
+                        <TargetToolRow
+                          key={tool.id}
+                          tool={tool}
+                          runtimeLabel={toolRuntimeLabel(tool, t)}
+                          capabilityLabel={toolCapabilityLabel(tool, t)}
+                          capability={toolCapability(tool)}
+                          canEditTools={canEditTools}
+                          pendingToolId={pendingToolId}
+                          onConfigure={openConfigure}
+                          onTargetInsightsAction={openTargetInsightsAction}
+                          onToggleTool={(nextTool, enabled) => void toggleTool(nextTool, enabled)}
+                        />
+                      ))}
+                    </DataTableBody>
+                  </DataTable>
+                </DataTableFrame>
+              </CollectionState>
             </div>
           </section>
         </>

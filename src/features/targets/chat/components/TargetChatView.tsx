@@ -23,8 +23,7 @@ import {
   REASONING_OPTIONS,
   resolveComposerRuntimeSelection,
   revokeAttachmentPreview,
-  SUGGESTION_KEYS,
-  useTargetChatHistoryFocus
+  SUGGESTION_KEYS, useTargetChatOverlayHistory, useTargetChatHistoryFocus
 } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ReasoningEffort } from '@/types';
 import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
@@ -129,6 +128,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const modelMenuPanelId = `${modelMenuId}-panel`;
   const modelSubmenuButtonId = `${modelMenuId}-model-button`;
   const modelSubmenuPanelId = `${modelMenuId}-model-panel`;
+  const usesOverlayHistory = useTargetChatOverlayHistory();
   const {
     availableComposerReferences, clearComposerReferences, composerReferences, dismissReferenceMenu,
     handleComposerInputChange, handleReferenceKeyDown, isReferenceMenuOpen, referenceActiveIndex,
@@ -622,7 +622,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     isHistoryOpen,
     historyButtonRef,
     historyPanelRef,
-    onDismiss: closeHistory
+    onDismiss: closeHistory, usesOverlayHistory
   });
 
   return (
@@ -641,7 +641,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
         resolvedNoChatAccessKey, resolvedPromptBodyKey, resolvedPromptTitleKey, resolvedSuggestionKeys, runTracesByRunId, selectSession, selectedEffort, selectedEffortLabel,
         selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessionDeepLinkError, sessions, setEditingMessageValue, setIsHistoryOpen,
         selectComposerReference, setIsModelMenuOpen, setIsModelSubmenuOpen, setReferenceActiveIndex, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
-        transcriptRef, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
+        transcriptRef, usesOverlayHistory, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
         confirmDeleteSession, editingMessageId, editingMessageValue, isInFlightAssistantPlaceholder, openDeleteSessionModal, submitEditedMessage
       }}
     />

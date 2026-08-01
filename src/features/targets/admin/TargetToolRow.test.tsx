@@ -54,5 +54,6 @@ describe('TargetToolRow', () => {
     expect(markup).toContain('Requires the OpenAI Responses API');
     expect(markup).toContain('role="switch"');
     expect(markup).toContain('aria-checked="true"');
+    expect(markup).not.toContain('border-b border-ui-bg');
   });
 });
