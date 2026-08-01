@@ -315,9 +315,7 @@ const App: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (route.kind !== 'kubernetesClusters') {
-      return;
-    }
+    if (route.kind !== 'kubernetesClusters') return;
 
     const targetWorkspaceId =
       (selectedWorkspaceId && workspaceById.has(selectedWorkspaceId))
