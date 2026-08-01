@@ -84,7 +84,8 @@ point. The Settings and Agents tabs open directly in actionable form for
 authorized operators. These surfaces retain Cancel or Back actions without
 nesting a second edit mode inside a task drawer.
 Workflow prompts are plain text: workflow authoring and launch do not provide
-runtime template parameters or prompt-reference insertion. Schedule and incoming
+runtime template parameters or bound prompt-reference insertion. Workflow prompt
+fields may insert plain-text `@target[Target name]` mentions through autocomplete. Schedule and incoming
 webhook creation use compact, medium-width modal forms above their parent drawer
 so operators retain the selected workflow as context.
 

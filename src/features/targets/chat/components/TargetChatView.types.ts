@@ -15,6 +15,7 @@ export interface TargetChatViewProps {
   headerLeading?: React.ReactNode;
   automaticInvestigationsEnabled?: boolean;
   capabilityPreviewEnabled?: boolean;
+  targetMentionsEnabled?: boolean;
   isDark: boolean;
   title?: string; titleKey?: string;
   descriptionKey?: string;

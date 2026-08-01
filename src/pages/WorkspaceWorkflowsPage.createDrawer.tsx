@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, InlineAlert, Textarea } from '@acornops/ui';
+import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
@@ -8,6 +8,7 @@ import { DrawerFrame } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import { createWorkflowDraft, type CreateWorkflowDraft } from '@/pages/workflows/workflowPageHelpers';
+import { TargetMentionTextarea } from '@/features/targets/mentions/TargetMentionAutocomplete';
 
 export type CreateWorkflowStep = 1 | 2;
 
@@ -28,6 +29,7 @@ export const WorkflowCreateDrawer: React.FC<{
   canManageWorkflows: boolean;
   workflowOptionsReady: boolean;
   workflowOptions: WorkflowOptionsCatalog;
+  workspaceId: string;
   onClose: () => void;
   onCreate: () => void;
 }> = ({
@@ -40,6 +42,7 @@ export const WorkflowCreateDrawer: React.FC<{
   canManageWorkflows,
   workflowOptionsReady,
   workflowOptions,
+  workspaceId,
   onClose,
   onCreate
 }) => {
@@ -117,11 +120,12 @@ export const WorkflowCreateDrawer: React.FC<{
             </label>
             <div className="block">
               <label htmlFor="create-workflow-prompt" className="type-micro-label">Workflow prompt</label>
-              <Textarea
+              <TargetMentionTextarea
                 id="create-workflow-prompt"
                 aria-label="Workflow prompt"
                 value={createDraft.starterPrompt}
-                onChange={(event) => setCreateDraft((draft) => ({ ...draft, starterPrompt: event.target.value }))}
+                workspaceId={workspaceId}
+                onValueChange={(starterPrompt) => setCreateDraft((draft) => ({ ...draft, starterPrompt }))}
                 className="mt-2 min-h-32"
               />
             </div>

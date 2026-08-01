@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, DangerZone, DangerZoneRow, Textarea, TextInput } from '@acornops/ui';
+import { Button, DangerZone, DangerZoneRow, TextInput } from '@acornops/ui';
 import {
   WorkflowPanel,
   WorkflowSection
@@ -10,6 +10,7 @@ import type {
   WorkflowDefinition
 } from '@/pages/workflows/workflowModel';
 import { WorkflowAvailabilitySwitch, type WorkflowEditDraft } from '@/pages/workflows/workflowPageHelpers';
+import { TargetMentionTextarea } from '@/features/targets/mentions/TargetMentionAutocomplete';
 
 interface WorkflowSettingsPanelProps {
   canManage: boolean;
@@ -95,10 +96,11 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
                 </label>
                 <div className="block">
                   <label htmlFor="workflow-edit-prompt" className="type-micro-label text-ui-text-muted">Workflow prompt</label>
-                  <Textarea
+                  <TargetMentionTextarea
                     id="workflow-edit-prompt"
                     value={editDraft.starterPrompt}
-                    onChange={(event) => onUpdateDraft({ starterPrompt: event.target.value })}
+                    workspaceId={workflow.workspaceId}
+                    onValueChange={(starterPrompt) => onUpdateDraft({ starterPrompt })}
                     className="mt-2 min-h-32"
                   />
                 </div>

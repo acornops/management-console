@@ -1360,8 +1360,8 @@ export const en = {
     noWorkspaceBody: 'Select or create a workspace before editing workspace settings.'
   },
   workspaceWebhooks: {
-    title: 'Outbound webhooks',
-    subtitle: 'Send selected workspace events from {{workspace}} to external HTTP endpoints and inspect delivery attempts.',
+    title: 'Webhooks',
+    subtitle: 'Send {{workspace}} events to external HTTP endpoints and inspect deliveries.',
     createTitle: 'Create webhook',
     editTitle: 'Edit {{name}}',
     editorDescription: 'Choose an HTTPS endpoint and the workspace events AcornOps should deliver.',
@@ -2051,6 +2051,20 @@ export const en = {
     referenceBuiltIn: 'Built-in',
     referenceImportedSkill: 'Imported skill',
     referenceSkill: 'Skill',
+    targetMentionPickerLabel: 'Select a target',
+    targetMentionLoading: 'Loading targets…',
+    targetMentionNoMatches: 'No matching targets',
+    targetMentionLoadFailed: 'Targets could not be loaded',
+    targetMentionTypes: {
+      kubernetes: 'Kubernetes',
+      virtual_machine: 'Virtual machine'
+    },
+    targetMentionStatuses: {
+      online: 'Online',
+      offline: 'Offline',
+      degraded: 'Degraded',
+      unknown: 'Unknown'
+    },
     attachments: 'Attached files',
     attachFiles: 'Attach files',
     attachmentIncluded: 'Included',

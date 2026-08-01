@@ -1360,8 +1360,8 @@ export const zh = {
     noWorkspaceBody: '请先选择或创建工作区，然后再编辑工作区设置。'
   },
   workspaceWebhooks: {
-    title: '出站 Webhook',
-    subtitle: '将 {{workspace}} 中选定的工作区事件发送到外部 HTTP 端点，并检查投递记录。',
+    title: 'Webhook',
+    subtitle: '将 {{workspace}} 事件发送到外部 HTTP 端点，并检查投递记录。',
     createTitle: '创建 Webhook',
     editTitle: '编辑 {{name}}',
     editorDescription: '选择 HTTPS 端点以及 AcornOps 应投递的工作区事件。',
@@ -2051,6 +2051,20 @@ export const zh = {
     referenceBuiltIn: '内置',
     referenceImportedSkill: '导入的技能',
     referenceSkill: '技能',
+    targetMentionPickerLabel: '选择目标',
+    targetMentionLoading: '正在加载目标…',
+    targetMentionNoMatches: '没有匹配的目标',
+    targetMentionLoadFailed: '无法加载目标',
+    targetMentionTypes: {
+      kubernetes: 'Kubernetes',
+      virtual_machine: '虚拟机'
+    },
+    targetMentionStatuses: {
+      online: '在线',
+      offline: '离线',
+      degraded: '性能下降',
+      unknown: '未知'
+    },
     attachments: '已附加文件',
     attachFiles: '附加文件',
     attachmentIncluded: '已包含',

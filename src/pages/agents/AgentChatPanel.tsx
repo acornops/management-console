@@ -314,6 +314,7 @@ export const AgentChatPanel: React.FC<{
         title={title}
         automaticInvestigationsEnabled={false}
         capabilityPreviewEnabled={false}
+        targetMentionsEnabled
         isDark={isDark}
         titleKey="agentChat.title"
         descriptionKey="agentChat.description"

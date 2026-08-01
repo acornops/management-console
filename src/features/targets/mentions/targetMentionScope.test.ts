@@ -1,0 +1,22 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const root = process.cwd();
+const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
+
+describe('target mention surface scope', () => {
+  it('enables target mentions in Agent chat and leaves target chat disabled by default', () => {
+    const agentChat = readSource('src/pages/agents/AgentChatPanel.tsx');
+    const chatView = readSource('src/features/targets/chat/components/TargetChatView.tsx');
+    expect(agentChat).toContain('targetMentionsEnabled');
+    expect(chatView).toContain('targetMentionsEnabled = false');
+  });
+
+  it('uses the target mention textarea only for workflow prompt fields', () => {
+    const createDrawer = readSource('src/pages/WorkspaceWorkflowsPage.createDrawer.tsx');
+    const settingsPanel = readSource('src/pages/WorkflowSettingsPanel.tsx');
+    expect(createDrawer).toMatch(/<TargetMentionTextarea[\s\S]*id="create-workflow-prompt"/);
+    expect(settingsPanel).toMatch(/<TargetMentionTextarea[\s\S]*id="workflow-edit-prompt"/);
+  });
+});

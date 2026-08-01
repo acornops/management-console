@@ -407,6 +407,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
           createError={createError} creatingWorkflow={creatingWorkflow}
           canManageWorkflows={canManageWorkflows} workflowOptions={effectiveWorkflowOptions}
           workflowOptionsReady={workflowOptionsReady}
+          workspaceId={workspace.id}
           onClose={workflowActions.closeCreateWorkflowPanel} onCreate={() => void workflowActions.createNewWorkflow()}
         />}
         <div className={`mb-4 ${hasExplicitWorkflowSelection ? 'hidden lg:block' : ''}`}>

@@ -20,6 +20,7 @@ export interface TargetChatViewBodyProps {
   assistantCapabilitiesPreviewError: string;
   automaticInvestigationsEnabled: boolean;
   capabilityPreviewEnabled: boolean;
+  targetMentionsEnabled: boolean;
   canApproveWriteActions: boolean;
   canCancelActiveRun: boolean;
   canChat: boolean;
