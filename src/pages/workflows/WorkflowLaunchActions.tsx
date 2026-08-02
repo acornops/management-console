@@ -1,8 +1,7 @@
 import React from 'react';
-import { Webhook } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { WorkflowPrimaryAction } from '@/pages/workflows/workflowModel';
 
@@ -14,8 +13,7 @@ export const WorkflowLaunchActions: React.FC<{
   onActivate: () => void;
   onEdit: () => void;
   onLaunch: () => void;
-  onSchedule: () => void;
-  onWebhooks: () => void;
+  onReviewReadiness: () => void;
   primaryAction: WorkflowPrimaryAction;
 }> = ({
   activating,
@@ -25,41 +23,46 @@ export const WorkflowLaunchActions: React.FC<{
   onActivate,
   onEdit,
   onLaunch,
-  onSchedule,
-  onWebhooks,
+  onReviewReadiness,
   primaryAction
 }) => {
   const { t } = useTranslation();
+  const launchBlocked = primaryAction === 'launch' && Boolean(launchBlocker);
 
   return (
-    <div className="mt-3 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end" aria-label="Workflow actions">
-      <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflows}>
-        <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-        {t('workflows.actions.edit')}
-      </Button>
-      {primaryAction === 'launch' && (
-        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onSchedule} disabled={!canManageWorkflows}>
-          <ICONS.Clock className="h-4 w-4" aria-hidden="true" />
-          {t('workflows.actions.schedules')}
-        </Button>
+    <div className="mt-3 flex w-full flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between" aria-label="Selected workflow actions">
+      {(primaryAction === 'activate' || launchBlocked) && (
+        <div className="flex min-w-0 items-center gap-2" role="status" aria-live="polite" aria-atomic="true">
+          <StatusBadge tone="warning">
+            {primaryAction === 'activate' ? 'Inactive' : 'Blocked'}
+          </StatusBadge>
+          <span className="type-caption min-w-0 max-w-2xl break-words text-ui-text-muted">
+            {primaryAction === 'activate' ? 'Activate this workflow before starting a run.' : launchBlocker}
+          </span>
+        </div>
       )}
-      {primaryAction === 'launch' && (
-        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onWebhooks} disabled={!canManageWorkflows}>
-          <Webhook className="h-4 w-4" aria-hidden="true" />
-          {t('workflows.actions.webhooks')}
+      <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:justify-end 2xl:ml-auto 2xl:w-auto 2xl:shrink-0">
+        <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onEdit} disabled={!canManageWorkflows}>
+          <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
+          {t('workflows.actions.edit')}
         </Button>
-      )}
-      {primaryAction === 'activate' ? (
-        <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflows || activating}>
-          <ICONS.Zap className="h-4 w-4" aria-hidden="true" />
-          {activating ? t('workflows.actions.activating') : t('workflows.actions.activate')}
-        </Button>
-      ) : (
-        <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching} title={launchBlocker || undefined}>
-          <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-          {launching ? t('workflows.actions.starting') : t('workflows.actions.launch')}
-        </Button>
-      )}
+        {primaryAction === 'activate' ? (
+          <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onActivate} disabled={!canManageWorkflows || activating}>
+            <ICONS.Zap className="h-4 w-4" aria-hidden="true" />
+            {activating ? t('workflows.actions.activating') : t('workflows.actions.activate')}
+          </Button>
+        ) : launchBlocked ? (
+          <Button className="w-full whitespace-nowrap sm:w-auto" variant="secondary" size="md" onClick={onReviewReadiness}>
+            <ICONS.Shield className="h-4 w-4" aria-hidden="true" />
+            {t('workflows.actions.reviewReadiness')}
+          </Button>
+        ) : (
+          <Button className="w-full whitespace-nowrap sm:w-auto" variant="activation" size="md" onClick={onLaunch} disabled={launching} aria-keyshortcuts="Control+Enter Meta+Enter">
+            <ICONS.Send className="h-4 w-4" aria-hidden="true" />
+            {launching ? t('workflows.actions.starting') : t('workflows.actions.launch')}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

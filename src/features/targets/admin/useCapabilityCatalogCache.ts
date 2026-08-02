@@ -4,6 +4,7 @@ import type {
   ControlPlaneTargetSkillsCatalog,
   ControlPlaneTargetToolsCatalog
 } from '@/services/controlPlaneApi';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 export interface CapabilityCatalogCache {
   mcpServers?: TargetToolCatalog;
@@ -30,7 +31,7 @@ export function cacheCapabilityCatalog<K extends keyof CapabilityCatalogCache>(
 }
 
 export function useCapabilityCatalogCache(subjectKey: string) {
-  const [catalogsBySubject, setCatalogsBySubject] = React.useState<CapabilityCatalogsBySubject>({});
+  const [catalogsBySubject, setCatalogsBySubject] = useSessionCachedState<CapabilityCatalogsBySubject>('target-capability-catalogs', {});
   const catalogs = subjectKey ? catalogsBySubject[subjectKey] : undefined;
   const cacheCatalog = React.useCallback(<K extends keyof CapabilityCatalogCache>(
     kind: K,

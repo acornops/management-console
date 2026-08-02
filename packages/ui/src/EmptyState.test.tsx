@@ -29,6 +29,8 @@ describe('EmptyState', () => {
     expect(markup).not.toContain('text-accent-strong');
     expect(markup).toContain('type-panel-title');
     expect(markup).toContain('type-body');
+    expect(markup).toContain('w-full max-w-lg');
+    expect(markup).not.toContain('w-full max-w-md');
     expect(markup).toContain('Cluster inventory');
     expect(markup).toContain('Connect, install, verify.');
     expect(markup).toContain('Connect cluster');

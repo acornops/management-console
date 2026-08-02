@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, InlineAlert } from '@acornops/ui';
+import { Button, InlineAlert, SegmentedTabs } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { DestructiveConfirmationDialog } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
@@ -15,19 +15,26 @@ import { controlPlaneApi, type ControlPlaneWebhookHistory, type ControlPlaneWebh
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { Workspace } from '@/types';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface WorkspaceWebhooksPageProps {
   workspace: Workspace;
   canManageWebhooks: boolean;
   showToast: (message: string) => void;
+  navigate: (path: string) => void;
 }
 
 type WebhookStatusFilter = 'all' | 'enabled' | 'disabled';
+type WebhookDirection = 'inbound' | 'outbound';
 
-export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ workspace, canManageWebhooks, showToast }) => {
+const WorkspaceIncomingWebhooksPage = React.lazy(() => import('@/pages/WorkspaceIncomingWebhooksPage').then((module) => ({ default: module.WorkspaceIncomingWebhooksPage })));
+
+export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ workspace, canManageWebhooks, showToast, navigate }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
-  const [webhooks, setWebhooks] = React.useState<ControlPlaneWebhookSubscription[]>([]);
+  const activeDirection: WebhookDirection = urlSearch.get('direction') === 'inbound' ? 'inbound' : 'outbound';
+  const webhookCacheKey = `workspace:${workspace.id}:webhooks`;
+  const [webhooks, setWebhooks] = useSessionCachedState<ControlPlaneWebhookSubscription[]>(webhookCacheKey, []);
   const [draft, setDraft] = React.useState<WebhookDraft>(emptyWebhookDraft);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editorOpen, setEditorOpen] = React.useState(false);
@@ -37,7 +44,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
   } | null>(null);
   const [historyWebhookId, setHistoryWebhookId] = React.useState<string | null>(null);
   const [history, setHistory] = React.useState<ControlPlaneWebhookHistory[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = React.useState(true);
+  const [isInitialLoading, setIsInitialLoading] = React.useState(() => !hasSessionDataCacheValue(webhookCacheKey));
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
@@ -61,7 +68,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
       const requestedWorkspaceId = workspace.id;
       const requestSequence = ++webhookRequestSequence.current;
       const isCurrentRequest = () => currentWorkspaceId.current === requestedWorkspaceId && webhookRequestSequence.current === requestSequence;
-      if (initial) setIsInitialLoading(true);
+      if (initial && !hasSessionDataCacheValue(webhookCacheKey)) setIsInitialLoading(true);
       else setIsRefreshing(true);
       setLoadError(null);
       try {
@@ -77,7 +84,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
         setIsRefreshing(false);
       }
     },
-    [t, workspace.id]
+    [t, webhookCacheKey, workspace.id]
   );
 
   React.useEffect(() => {
@@ -86,7 +93,6 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
     saveRequestSequence.current += 1;
     deleteRequestSequence.current += 1;
     setStateWorkspaceId(workspace.id);
-    setWebhooks([]);
     setDraft(emptyWebhookDraft());
     setEditingId(null);
     setEditorOpen(false);
@@ -96,14 +102,14 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
     setMutationError(null);
     setHistoryError(null);
     setLoadError(null);
-    setIsInitialLoading(true);
+    setIsInitialLoading(!hasSessionDataCacheValue(webhookCacheKey));
     setIsRefreshing(false);
     setIsSaving(false);
     setDeletingId(null);
     setDeleteTargetId(null);
     setIsHistoryLoading(false);
-    void loadWebhooks(true);
-  }, [loadWebhooks]);
+    if (activeDirection === 'outbound') void loadWebhooks(true);
+  }, [activeDirection, loadWebhooks]);
 
   const resetForm = () => {
     setDraft(emptyWebhookDraft());
@@ -261,7 +267,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
         description={t('workspaceWebhooks.subtitle', {
           workspace: workspace.name
         })}
-        actions={
+        actions={activeDirection === 'outbound' ? (
           <>
             <Button size="md" variant="secondary" onClick={() => void loadWebhooks()} disabled={!workspaceStateCurrent || isInitialLoading || isRefreshing}>
               <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
@@ -278,8 +284,37 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
               {t('workspaceWebhooks.create')}
             </Button>
           </>
-        }
+        ) : undefined}
       />
+
+      <SegmentedTabs<WebhookDirection>
+        activeValue={activeDirection}
+        allPanelsMounted={false}
+        ariaLabel={t('workspaceWebhooks.directions.label')}
+        className="mb-5"
+        idBase="webhook-direction"
+        items={[
+          { value: 'outbound', label: t('workspaceWebhooks.directions.outbound') },
+          { value: 'inbound', label: t('workspaceWebhooks.directions.inbound') }
+        ]}
+        onValueChange={(direction) => updateUrlSearch({
+          direction: direction === 'inbound' ? 'inbound' : null,
+          q: null,
+          status: null,
+          workflow: null
+        })}
+      />
+
+      <div
+        id={`webhook-direction-${activeDirection}-panel`}
+        role="tabpanel"
+        aria-labelledby={`webhook-direction-${activeDirection}-tab`}
+      >
+      {activeDirection === 'inbound' ? (
+        <React.Suspense fallback={<p className="type-body text-ui-text-muted" role="status">{t('eventTriggers.loading')}</p>}>
+          <WorkspaceIncomingWebhooksPage hub workspace={workspace} navigate={navigate} />
+        </React.Suspense>
+      ) : <>
 
       {workspaceStateCurrent && mutationError && !deleteTargetWebhook && (
         <InlineAlert tone="danger" className="mb-5 type-body type-emphasis">
@@ -467,6 +502,8 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
       >
         <WebhookEditor draft={visibleDraft} formId={editorFormId} isSaving={workspaceStateCurrent && isSaving} onChange={setDraft} onSave={() => void saveWebhook()} />
       </DrawerFrame>
+      </>}
+      </div>
     </PageShell>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActionMenu, IconTile, MenuItem, Switch } from '@acornops/ui';
+import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
 import { Edit3, Loader2, Link2, MoreVertical, RefreshCcw, Server, Settings2, Trash2, Unlink2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
@@ -72,13 +72,6 @@ export function getMcpServerStatusDisplay(
   return { labelKey: 'mcpServers.statusNotChecked', tone: 'muted' };
 }
 
-const statusToneClasses: Record<ServerStatusTone, { dot: string; text: string }> = {
-  success: { dot: 'bg-status-success', text: 'text-status-success-text' },
-  warning: { dot: 'bg-status-warning', text: 'text-status-warning-text' },
-  danger: { dot: 'bg-status-danger', text: 'text-status-danger-text' },
-  muted: { dot: 'bg-ui-text-muted/35', text: 'text-ui-text-muted' }
-};
-
 export const McpServerCard: React.FC<McpServerCardProps> = ({
   server,
   canEditServers,
@@ -119,7 +112,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     ? `Platform default · ${server.url}`
     : server.url;
   const status = getMcpServerStatusDisplay(server, testResult);
-  const statusTone = statusToneClasses[status.tone];
   const writeConfiguredTools = server.toolCounts.writeConfigured;
   const readConfiguredTools = Math.max(0, server.toolCounts.total - writeConfiguredTools);
   const statusDetail = !server.canToggle
@@ -374,10 +366,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
       </DataTableCell>
 
       <DataTableCell data-mcp-server-secondary-context="true" className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={`h-2 w-2 shrink-0 rounded-full ${statusTone.dot}`} />
-          <span className={`type-label truncate ${statusTone.text}`}>{t(status.labelKey)}</span>
-        </div>
+        <StatusBadge tone={status.tone === 'muted' ? 'neutral' : status.tone}>{t(status.labelKey)}</StatusBadge>
         <p className={`type-caption mt-0.5 truncate ${statusDetailClassName}`} title={statusDetail}>
           {statusDetail}
         </p>

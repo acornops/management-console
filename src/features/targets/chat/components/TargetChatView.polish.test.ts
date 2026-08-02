@@ -129,8 +129,8 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('<ChatTranscriptSkeleton isPanel={isPanel} label={t(\'chat.loadingConversation\')} />');
     expect(chatView).toContain('<ChatTranscriptLoadError');
     expect(chatSessionSync).toContain('const sessionListKey = `${target.workspaceId}:${target.id}`;');
-    expect(chatSessionSync).toContain('const [isSessionListRequestInFlight, setIsSessionListRequestInFlight] = useState(true);');
-    expect(chatSessionSync).toContain('const [loadedSessionListKey, setLoadedSessionListKey] = useState<string | null>(null);');
+    expect(chatSessionSync).toContain('const [isSessionListRequestInFlight, setIsSessionListRequestInFlight] = useState(() => !hasSessionDataCacheValue(loadedSessionListCacheKey));');
+    expect(chatSessionSync).toContain('const [loadedSessionListKey, setLoadedSessionListKey] = useSessionCachedState<string | null>(loadedSessionListCacheKey, null);');
     expect(chatSessionSync).toContain('const isSessionsLoading = isSessionListRequestInFlight || loadedSessionListKey !== sessionListKey;');
     expect(chatSessionSync).toContain('const activeHydrationSession = sessions.find((item) => item.id === activeSessionId) || null;');
     expect(chatSessionSync).toContain('const activeHydrationSessionKey = activeHydrationSession');
@@ -521,7 +521,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';");
     expect(traceFooter).toContain('const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;');
     expect(traceFooter).toContain("${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}");
-    expect(traceFooter).toContain('group min-h-10 items-center gap-2 py-2 pl-0 pr-2.5');
+    expect(traceFooter).toContain('group min-h-10 items-center justify-start gap-2 py-2 pl-0 pr-2.5');
     expect(traceFooter).toContain('className={`-ml-1 shrink-0 text-ui-text-muted group-hover:text-ui-text');
     expect(traceFooter).toContain("'flex w-full rounded-md bg-ui-surface/45 text-ui-text hover:bg-ui-surface/75'");
     expect(traceFooter).toContain("'flex w-full rounded-md bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text'");
@@ -584,14 +584,14 @@ describe('target chat polish contracts', () => {
     expect(markdownComponents).toContain("rel={isInternalRoute ? undefined : 'noreferrer'}");
     expect(assistantTurn).toContain('remarkPlugins={markdownRemarkPlugins}');
     expect(userMessageTurn).toContain('remarkPlugins={markdownRemarkPlugins}');
-    expect(enLocale).toContain("thinking: 'Thinking...'");
+    expect(enLocale).toContain("thinking: 'Thinking…'");
     expect(enLocale).toContain("copyMessage: 'Copy message'");
     expect(enLocale).toContain("copiedMessage: 'Copied'");
     expect(enLocale).toContain("editMessage: 'Edit message'");
     expect(enLocale).toContain("saveEdit: 'Send'");
     expect(enLocale).toContain("cancelEdit: 'Cancel'");
     expect(zhLocale).toContain("newConversation: '新会话'");
-    expect(zhLocale).toContain("thinking: '思考中...'");
+    expect(zhLocale).toContain("thinking: '思考中…'");
     expect(zhLocale).toContain("copyMessage: '复制消息'");
     expect(zhLocale).toContain("copiedMessage: '已复制'");
     expect(zhLocale).toContain("editMessage: '编辑消息'");

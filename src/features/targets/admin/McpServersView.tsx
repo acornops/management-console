@@ -30,7 +30,6 @@ import {
 import { resolveMcpCatalogPhase, targetMcpServersDataSource, type McpServersViewProps } from '@/features/targets/admin/McpServersView.data';
 
 export type { McpServersDataSource } from '@/features/targets/admin/McpServersView.data';
-
 export const McpServersView: React.FC<McpServersViewProps> = ({
   subject,
   canManageMcp = false,
@@ -105,6 +104,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     }
   }, [dataSource, subject.id, subject.workspaceId, t]);
   const serverToolsCollection = useCursorCollection({
+    cacheKey: `workspace:${subject.workspaceId}:target:${subject.id}:mcp-server-tools`,
     filters: { serverId: toolsServerId },
     getKey: (tool: TargetToolCatalogItem) => tool.name,
     loadPage: loadServerToolsPage,

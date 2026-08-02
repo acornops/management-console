@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 import { useTranslation } from 'react-i18next';
 import Dashboard from '@/components/dashboard/Dashboard';
 import { Button } from '@acornops/ui';
@@ -95,8 +96,9 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     status: undefined as string | undefined,
     workspaceId
   });
-  const [metricHistoryByClusterId, setMetricHistoryByClusterId] = useState<Record<string, ClusterMetricHistoryPoint[]>>({});
-  const [metricLoadStateByClusterId, setMetricLoadStateByClusterId] = useState<Record<string, 'loading' | 'ready' | 'error'>>({});
+  const clusterMetricCacheScope = `workspace:${workspaceId || 'none'}:cluster-card-metrics`;
+  const [metricHistoryByClusterId, setMetricHistoryByClusterId] = useSessionCachedState<Record<string, ClusterMetricHistoryPoint[]>>(`${clusterMetricCacheScope}:history`, {});
+  const [metricLoadStateByClusterId, setMetricLoadStateByClusterId] = useSessionCachedState<Record<string, 'loading' | 'ready' | 'error'>>(`${clusterMetricCacheScope}:states`, {});
   const [metricHistoryRetryNonce, setMetricHistoryRetryNonce] = useState(0);
   const { summaryByTargetId: issueSummaryByClusterId, loadStateByTargetId: issueSummaryLoadStateByClusterId } = useTargetIssueSummaries(kubernetesClusters);
   const activeCatalogState = catalogState ?? localCatalogState;
@@ -194,6 +196,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     [workspaceId]
   );
   const clusterCollection = useCursorCollection({
+    cacheKey: `workspace:${workspaceId || 'none'}:kubernetes-clusters`,
     filters: catalogRequestFilters,
     getKey: (cluster: KubernetesCluster) => cluster.id,
     loadPage: loadClusterPage,
@@ -205,7 +208,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     [clusterCollection.items, deletedClusterIds]
   );
   const nextCursor = clusterCollection.nextCursor;
-  const isLoading = clusterCollection.phase === 'loading' || clusterCollection.phase === 'refreshing';
+  const isLoading = clusterCollection.phase === 'loading';
   const isLoadingMore = clusterCollection.phase === 'loadingMore';
   const catalogLoadError = clusterCollection.phase === 'error';
 

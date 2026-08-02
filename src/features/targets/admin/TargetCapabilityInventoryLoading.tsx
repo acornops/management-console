@@ -33,6 +33,13 @@ export const TargetCapabilityInventoryLoading: React.FC<TargetCapabilityInventor
   <section data-target-capability-inventory-loading="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
     <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
       <DataTable caption={caption} className="w-full table-fixed text-left" aria-label={caption}>
+        <colgroup>
+          <col className="w-[34%]" />
+          <col className="w-[23%]" />
+          <col className="w-[11%]" />
+          <col className="w-[21%]" />
+          <col className="w-[11%]" />
+        </colgroup>
         <DataTableHeader collectionState={{ phase: 'loading', itemCount: 0, showDuringInitialLoading: true }}>
           <DataTableRow>
             {columns.map((column, index) => (

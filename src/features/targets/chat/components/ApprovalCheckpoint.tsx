@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
 import { Button, IconTile, StatusBadge } from '@acornops/ui';
 import { PendingApproval } from '@/types';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 interface ApprovalCheckpointProps {
   approval: PendingApproval;
@@ -95,7 +96,7 @@ function patchChangeSummary(change: unknown, t: TFunction): { text: string; roll
 }
 
 function fallbackApprovalSummary(approval: PendingApproval, t: TFunction): string {
-  const toolName = cleanText(approval.toolName || approval.action).replace(/[_.]+/g, ' ');
+  const toolName = formatIdentifierLabel(cleanText(approval.toolName || approval.action));
   if (approval.toolName === 'restart_workload') {
     return t('chat.approvalFallbackSummary.restart', {
       target: targetLabel(t, approval.arguments, t('chat.approvalFallbackTarget.workload'))

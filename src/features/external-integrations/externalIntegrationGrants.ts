@@ -1,4 +1,5 @@
 import type { ControlPlaneWorkspaceCapability } from '@/services/controlPlaneApi';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 const externalIntegrationCapabilities: ControlPlaneWorkspaceCapability[] = [
   'read_workspace_data',
@@ -92,11 +93,7 @@ export function toggleExternalIntegrationCapability(
 }
 
 export function formatExternalIntegrationCapability(capability: ControlPlaneWorkspaceCapability): string {
-  return capability
-    .split('_')
-    .filter(Boolean)
-    .join(' ')
-    .replace(/^./, (character) => character.toUpperCase());
+  return formatIdentifierLabel(capability);
 }
 
 export function buildExternalIntegrationWorkspaceGrants(

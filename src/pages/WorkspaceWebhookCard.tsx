@@ -1,12 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, buttonClassName } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
 import { InlineConfirmation } from '@acornops/ui';
 import { OverflowActionMenu } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
+import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { WorkspaceWebhookExecutionFacts } from '@/pages/WorkspaceWebhookExecutionFacts';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
 
@@ -24,6 +25,9 @@ interface WorkspaceWebhookCardProps {
   onCancelRotate: () => void;
   onConfirmRotate: () => void;
   onRequestDelete: () => void;
+  workflowActionLabel?: string;
+  workflowPath?: string;
+  navigate?: (path: string) => void;
 }
 
 export const WorkspaceWebhookActionMenu: React.FC<WorkspaceWebhookCardProps> = ({
@@ -101,7 +105,10 @@ export const WorkspaceWebhookCard: React.FC<WorkspaceWebhookCardProps> = ({
   onRequestRotate,
   onCancelRotate,
   onConfirmRotate,
-  onRequestDelete
+  onRequestDelete,
+  workflowActionLabel,
+  workflowPath,
+  navigate
 }) => {
   const { t } = useTranslation();
   const needsFailureReview = trigger.lastStatus === 'failed'
@@ -142,9 +149,6 @@ export const WorkspaceWebhookCard: React.FC<WorkspaceWebhookCardProps> = ({
                 </Button>
               </div>
             )}
-            <p className="mt-2 type-caption text-ui-text-muted">
-              {t('eventTriggers.contextGrantCount', { count: trigger.approvedContextGrants.length })}
-            </p>
           </div>
 
           <div className="col-span-2 min-w-0 xl:col-span-1">
@@ -152,7 +156,18 @@ export const WorkspaceWebhookCard: React.FC<WorkspaceWebhookCardProps> = ({
             <WorkspaceWebhookExecutionFacts trigger={trigger} ledger />
           </div>
 
-          {canManage ? (
+          {workflowPath && workflowActionLabel ? (
+            <div className="col-start-2 row-start-1 flex shrink-0 justify-end xl:col-start-auto xl:row-start-auto">
+              <a
+                href={appHref(workflowPath)}
+                onClick={navigate ? (event) => handleAppLinkClick(event, workflowPath, navigate) : undefined}
+                className={buttonClassName({ variant: 'secondary', size: 'sm' })}
+              >
+                {workflowActionLabel}
+                <ICONS.ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </div>
+          ) : canManage ? (
             <div className="col-start-2 row-start-1 flex shrink-0 flex-wrap items-center justify-end gap-2 xl:col-start-auto xl:row-start-auto">
               {needsFailureReview && (
                 <Button size="sm" variant="primary" onClick={onEdit} disabled={busy}>

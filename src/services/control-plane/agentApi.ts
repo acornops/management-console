@@ -16,7 +16,6 @@ export interface WorkspaceNativeToolApi {
   authorizationClass: 'internal_artifact' | 'external_http_read';
   auditOperation: 'read' | 'write';
   approvalOperation: 'read' | 'write';
-  requiredContextGrant?: string;
   configSchema?: Record<string, unknown>;
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
@@ -24,7 +23,7 @@ export interface WorkspaceNativeToolApi {
 export interface AgentSkillApi { id: string; name: string; description: string; enabled: boolean; revision: number; contentDigest: string; source: { type: 'manual' | 'git' | 'template'; provider?: 'github' | 'gitlab'; url?: string; apiBaseUrl?: string; ref?: string; path?: string; pinnedCommit?: string }; files: Array<{ path: string; content: string; contentDigest: string }>; inherited?: boolean }
 export interface ServiceIdentityApi { id: string; workspaceId: string; name: string; status: 'active' | 'disabled'; role: string; createdBy: string; createdAt: string; updatedAt: string }
 export interface AgentCapability {
-  source: 'builtin_tool' | 'mcp_tool' | 'skill' | 'context';
+  source: 'builtin_tool' | 'mcp_tool' | 'skill';
   providerAgentId?: string;
   resourceType: string;
   resourceScope: string;
@@ -103,8 +102,6 @@ export interface AgentDefinitionApi {
   skillInstallations?: AgentSkillApi[];
   permissionMode?: RunPermissionMode;
   semanticCapabilityIds?: string[];
-  contextScope?: string[];
-  contextGrants?: string[];
   approvalPolicy?: Record<string, unknown>;
   trustPolicy?: Record<string, unknown>;
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };

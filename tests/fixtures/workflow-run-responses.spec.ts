@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('saved workflow responses render as Markdown in the run summary and discussion', async ({ page }) => {
+test('saved workflow responses render as Markdown in the read-only run summary', async ({ page }) => {
   await page.addInitScript(() => {
     const originalFetch = window.fetch.bind(window);
     window.fetch = (input, init) => {
@@ -33,11 +33,23 @@ test('saved workflow responses render as Markdown in the run summary and discuss
 
   await expect(page.getByRole('heading', { level: 2, name: 'Findings' })).toHaveCount(1);
   await expect(page.getByText('Scope mismatch', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Show run details' }).click();
-
-  const discussion = page.getByRole('region', { name: 'Run discussion' });
-  await expect(discussion).toContainText('Workflow response');
-  await expect(discussion.getByRole('heading', { level: 2, name: 'Findings' })).toBeVisible();
-  await expect(discussion.getByRole('list')).toContainText('Retry with the authorized namespace');
-  await expect(discussion.locator('code')).toHaveText('default');
+  const runSummary = page.getByText('Run summary', { exact: true });
+  await runSummary.click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Findings' })).toBeHidden();
+  await runSummary.click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Findings' })).toBeVisible();
+  const runCard = page.locator('article').filter({ hasText: 'fixture-workflow-run' }).first();
+  const disclosure = page.getByRole('button', { name: 'Show run details' });
+  await disclosure.click();
+  await expect(page.getByRole('button', { name: 'Hide run details' })).toHaveClass(/justify-start/);
+  const runCardClass = await runCard.getAttribute('class');
+  expect(runCardClass).toMatch(/(?:^|\s)border-ui-border(?:\s|$)/);
+  expect(runCardClass).not.toMatch(/(?:^|\s)border-control-boundary(?:\s|$)/);
+  const runCardBox = await runCard.boundingBox();
+  const disclosureBox = await page.getByRole('button', { name: 'Hide run details' }).boundingBox();
+  expect(runCardBox).not.toBeNull();
+  expect(disclosureBox).not.toBeNull();
+  expect((disclosureBox?.x || 0) - (runCardBox?.x || 0)).toBeCloseTo(17, 0);
+  await expect(page.getByRole('region', { name: 'Run discussion' })).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Send instruction' })).toHaveCount(0);
 });

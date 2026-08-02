@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, DangerZone, DangerZoneRow, TextInput } from '@acornops/ui';
+import { Button, DangerZone, DangerZoneRow, InlineAlert, TextInput } from '@acornops/ui';
 import {
   WorkflowPanel,
   WorkflowSection
@@ -26,7 +26,6 @@ interface WorkflowSettingsPanelProps {
   onUpdateDraft: (update: Partial<WorkflowEditDraft>) => void;
   tagDraft: string;
   updateError: string;
-  updateResult: string;
   updating: boolean;
   workflow: WorkflowDefinition;
   workflowDeleteBlocker: string;
@@ -46,27 +45,25 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
   onUpdateDraft,
   tagDraft,
   updateError,
-  updateResult,
   updating,
   workflow,
   workflowDeleteBlocker
 }) => {
   const error = updateError || deleteError;
-  const feedback = error || updateResult;
   return (
     <WorkflowPanel
       title="Settings"
       description="Edit saved defaults, pause new runs, manage tags, or delete this workspace workflow with confirmation."
     >
-        {feedback && (
-          <div
-            role={error ? 'alert' : 'status'}
-            aria-live={error ? 'assertive' : 'polite'}
-            aria-atomic="true"
-            className={`rounded-md border px-3 py-2 type-caption type-emphasis ${error ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}
-          >
-            {feedback}
-          </div>
+        {!canManage && (
+          <InlineAlert tone="neutral">
+            You can inspect workflow settings. Ask a workspace manager for manage_workflows to change this workflow.
+          </InlineAlert>
+        )}
+        {error && (
+          <InlineAlert tone="danger" role="alert" aria-live="assertive" aria-atomic="true">
+            {error}
+          </InlineAlert>
         )}
         <WorkflowSection title="Availability">
           <div className="mt-3 flex items-center justify-between gap-4 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
@@ -88,11 +85,11 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
               <>
                 <label className="block">
                   <span className="type-micro-label text-ui-text-muted">Workflow name</span>
-                  <TextInput value={editDraft.name} onChange={(event) => onUpdateDraft({ name: event.target.value })} className="mt-2" />
+                  <TextInput value={editDraft.name} onChange={(event) => onUpdateDraft({ name: event.target.value })} className="mt-2" disabled={!canManage || updating} />
                 </label>
                 <label className="block">
                   <span className="type-micro-label text-ui-text-muted">Description</span>
-                  <TextInput value={editDraft.description} onChange={(event) => onUpdateDraft({ description: event.target.value })} className="mt-2" />
+                  <TextInput value={editDraft.description} onChange={(event) => onUpdateDraft({ description: event.target.value })} className="mt-2" disabled={!canManage || updating} />
                 </label>
                 <div className="block">
                   <label htmlFor="workflow-edit-prompt" className="type-micro-label text-ui-text-muted">Workflow prompt</label>
@@ -102,10 +99,11 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
                     workspaceId={workflow.workspaceId}
                     onValueChange={(starterPrompt) => onUpdateDraft({ starterPrompt })}
                     className="mt-2 min-h-32"
+                    disabled={!canManage || updating}
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="secondary" size="sm" onClick={onCancelEditing}>Cancel</Button>
+                  <Button variant="secondary" size="sm" onClick={onCancelEditing} disabled={updating}>Reset changes</Button>
                   <Button variant="primary" size="sm" onClick={onSave} disabled={!canManage || updating || !editDraft.name.trim()}>Save workflow</Button>
                 </div>
               </>
@@ -118,7 +116,7 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
           <WorkflowTagsEditor
             tags={workflow.tags}
             tagDraft={tagDraft}
-            readOnly={false}
+            readOnly={!canManage}
             pending={updating}
             onTagDraftChange={onTagDraftChange}
             onAdd={onAddTag}

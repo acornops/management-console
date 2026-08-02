@@ -182,8 +182,11 @@ export function classNames(...values: Array<string | false | undefined>): string
   return values.filter(Boolean).join(' ');
 }
 
+export const resourceLedgerGridClass =
+  'xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
+
 export const resourceRowGridClass =
-  'group grid w-full min-w-0 max-w-full grid-cols-1 items-center gap-3 border-b border-ui-border px-4 py-5 text-left transition-colors last:border-b-0 hover:bg-ui-bg/70 sm:px-6 lg:px-8 lg:py-6 xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5';
+  `group grid w-full min-w-0 max-w-full grid-cols-1 items-center gap-3 border-b border-ui-border px-4 py-5 text-left transition-colors last:border-b-0 hover:bg-ui-bg/70 sm:px-6 lg:px-8 lg:py-6 ${resourceLedgerGridClass}`;
 
 export const resourceRowActionClass =
   'flex min-w-0 flex-wrap items-center justify-start gap-3 xl:flex-nowrap xl:justify-end xl:justify-self-end';
@@ -355,12 +358,8 @@ export const ResourceStatusPill: React.FC<{ status: string; healthy: boolean }> 
     tone={healthy ? 'success' : 'warning'}
     title={status}
     aria-label={`Status: ${status}`}
-    className="min-w-0 gap-2 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"
+    className="min-w-0 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"
   >
-    <span
-      aria-hidden="true"
-      className={classNames('h-2 w-2 shrink-0 rounded-full', healthy ? 'bg-status-success' : 'bg-status-warning')}
-    />
     <span className="min-w-0 break-words text-left [overflow-wrap:anywhere]">{status}</span>
   </StatusBadge>
 );

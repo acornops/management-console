@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { AppDesktopSidebar } from '@/app/AppDesktopSidebar';
 import { AppMobileNavigation } from '@/app/AppMobileNavigation';
 import { AppPageContent } from '@/app/AppPageContent';
@@ -25,11 +24,10 @@ import {
   WorkspaceWorkflowActivityProvider,
   useWorkspaceWorkflowActivityStore
 } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
-import { PageLoadingFallback } from '@acornops/ui';
 import { ToastViewport } from '@acornops/ui';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { KubernetesCluster, Workspace } from '@/types';
+import { KubernetesCluster } from '@/types';
 import { AppPaths, assistantSessionFromLocation, type AppRoute } from '@/utils/routes';
 import { useTargetPromptLauncher } from '@/app/useTargetPromptLauncher';
 import { getTargetReturnContext, type TargetReturnContext } from '@/app/targetReturnContext';
@@ -121,7 +119,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   onRemoveWorkspaceVirtualMachine,
   setClusterCopilotInitialPrompt,
   setClusterCopilotWidth,
-  setClusterCreationStep,
   setDeleteWorkspaceId,
   setExcludeNamespaces,
   setIncludeNamespaces,
@@ -153,7 +150,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaceContextId,
   workspaces
 }) => {
-  const { t } = useTranslation();
   const { loadWorkspaceRoles, addOrInviteWorkspaceMember } = useCreateWorkspaceInviteSetup({
     invitationTokenMissingMessage,
     setWorkspaces,

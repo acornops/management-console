@@ -13,7 +13,7 @@ import {
   StatusBadge,
   type DiscoveryFilterOption
 } from '@acornops/ui';
-import { Settings } from 'lucide-react';
+import { Copy, Settings } from 'lucide-react';
 import { ICONS } from '@/constants';
 import {
   ResourceCatalogActionMenu,
@@ -71,10 +71,12 @@ interface WorkspaceAgentsCatalogProps {
   onQueryChange: (query: string) => void;
   catalogFilters: AgentCatalogFilters;
   dockedQuickChatOpen: boolean;
+  duplicatingAgentId: string;
   onCatalogFiltersChange: (filters: AgentCatalogFilters) => void;
   onClearFilters: () => void;
   onOpenManagement: (agent: AgentDefinition) => void;
   onQuickChat: (agent: AgentDefinition) => void;
+  onDuplicate: (agent: AgentDefinition) => void;
   onOpenSettings?: (agent: AgentDefinition) => void;
 }
 
@@ -87,10 +89,12 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   onQueryChange,
   catalogFilters,
   dockedQuickChatOpen,
+  duplicatingAgentId,
   onCatalogFiltersChange,
   onClearFilters,
   onOpenManagement,
   onQuickChat,
+  onDuplicate,
   onOpenSettings
 }) => {
   const { t } = useTranslation();
@@ -201,6 +205,13 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                         onOpenChange={(open) => setOpenMenuId(open ? agent.id : null)}
                         triggerAttribute={{ 'data-agent-overflow-action': 'toggle' }}
                       >
+                        <MenuItem
+                          disabled={Boolean(duplicatingAgentId)}
+                          onClick={() => { setOpenMenuId(null); onDuplicate(agent); }}
+                        >
+                          <Copy className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
+                          {duplicatingAgentId === agent.id ? t('agentsWorkflows.duplicating') : t('agentsWorkflows.duplicate')}
+                        </MenuItem>
                         <MenuItem onClick={() => { setOpenMenuId(null); onOpenSettings(agent); }}>
                           <Settings className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
                           {t('agentChat.tabs.settings')}

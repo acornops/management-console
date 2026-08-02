@@ -33,6 +33,7 @@ export const WorkspaceSchedulesPageChrome: React.FC<WorkspaceSchedulesPageChrome
   return (
     <>
       {!embedded && <PageHeader
+        className="mb-5"
         title={t('schedules.title')}
         description={t('schedules.subtitle', { workspace: workspaceName })}
         actions={<>

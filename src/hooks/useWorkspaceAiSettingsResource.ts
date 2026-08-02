@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceAiSettings } from '@/types';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface WorkspaceAiSettingsCacheEntry {
   settings: WorkspaceAiSettings | null;
@@ -26,7 +27,7 @@ export function useWorkspaceAiSettingsResource(
   enabled: boolean
 ): WorkspaceAiSettingsResource {
   const { t } = useTranslation();
-  const [entries, setEntries] = React.useState<Record<string, WorkspaceAiSettingsCacheEntry>>({});
+  const [entries, setEntries] = useSessionCachedState<Record<string, WorkspaceAiSettingsCacheEntry>>('workspace-ai-settings', {});
   const activeWorkspaceIdRef = React.useRef(workspaceId);
   const requestSequenceRef = React.useRef(0);
   const inFlightRequestsRef = React.useRef(new Map<string, number>());
@@ -87,11 +88,12 @@ export function useWorkspaceAiSettingsResource(
   }, [t]);
 
   const entry = workspaceId ? entries[workspaceId] : undefined;
+  const requestInFlight = Boolean(workspaceId && inFlightRequestsRef.current.has(workspaceId));
 
   React.useEffect(() => {
-    if (!enabled || !workspaceId || entry?.settings || entry?.isLoading || entry?.error) return;
+    if (!enabled || !workspaceId || entry?.settings || requestInFlight || entry?.error) return;
     load(workspaceId);
-  }, [enabled, entry?.error, entry?.isLoading, entry?.settings, load, workspaceId]);
+  }, [enabled, entry?.error, entry?.settings, load, requestInFlight, workspaceId]);
 
   const retry = React.useCallback(() => {
     if (workspaceId) load(workspaceId);

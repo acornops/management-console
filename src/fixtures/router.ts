@@ -1,7 +1,7 @@
 import { FIXTURE_IDS, getFixtureState, resetFixtureStore } from './store';
 import { routeAutomationTemplateFixtureRequest } from './automationTemplateRoutes';
 import { routeCatalogFixtureRequest } from './catalogRoutes';
-import { mcpConnection, routeMcpParityConnection } from './mcpParity';
+import { routeMcpParityConnection } from './mcpParity';
 import { targetSummary, targetToolCatalog, workflowOptions } from './presenters';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
@@ -416,7 +416,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.agents) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, avatarEmoji: input.avatarEmoji || '🤖', description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], contextScope: input.contextScope || [], contextGrants: input.contextGrants || [], readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
+      const agent = { id: id('fixture-agent'), workspaceId: decode(match[1]), name: input.name, avatarEmoji: input.avatarEmoji || '🤖', description: input.description || '', instructions: input.instructions || '', status: input.status || 'draft', reviewState: input.reviewState || 'draft', providerType: 'internal', createdBy: FIXTURE_IDS.user, permissionMode: input.permissionMode || 'read_only', semanticCapabilityIds: input.semanticCapabilityIds || [], readiness: { status: 'ready', reasons: [] }, createdAt: NOW, updatedAt: NOW };
       state.agents.push(agent);
       return json({ agent }, 201);
     }
@@ -506,7 +506,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.workflowSchedules), summary: { total: state.workflowSchedules.length, active: state.workflowSchedules.filter((item) => item.status === 'enabled').length, paused: state.workflowSchedules.filter((item) => item.status === 'paused').length, approvalGated: 0 } });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), status: input.enabled === false ? 'paused' : 'enabled', approvedContextGrants: [], createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
+      const schedule = { id: id('fixture-schedule'), workspaceId: decode(match[1]), status: input.enabled === false ? 'paused' : 'enabled', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW, ...input };
       state.workflowSchedules.push(schedule);
       return json({ schedule }, 201);
     }

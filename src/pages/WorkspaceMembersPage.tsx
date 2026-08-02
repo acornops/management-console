@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Mail, MoreVertical, Search, UserPlus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, CollectionResultSummary, StatusBadge } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow, TableLoadingRows } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
@@ -19,6 +19,7 @@ import { MemberRoleCell } from '@/pages/workspace-members/MemberRoleCell';
 import { WorkspaceMemberDetailsPanel } from '@/pages/workspace-members/WorkspaceMemberDetailsPanel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 import { TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -54,8 +55,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | ProjectMember['role']>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | ProjectMember['source']>('all');
-  const [roleTemplates, setRoleTemplates] = useState<WorkspaceRoleTemplate[]>([]);
-  const [invitations, setInvitations] = useState<WorkspaceInvitation[]>(workspace.invitations || []);
+  const [roleTemplates, setRoleTemplates] = useSessionCachedState<WorkspaceRoleTemplate[]>(`workspace:${workspace.id}:role-templates`, []);
+  const [invitations, setInvitations] = useSessionCachedState<WorkspaceInvitation[]>(`workspace:${workspace.id}:member-invitations`, workspace.invitations || []);
   const [roleLoadError, setRoleLoadError] = useState<string | null>(null);
   const [pendingRole, setPendingRole] = useState<ProjectMember['role']>('viewer');
   const [isSaving, setIsSaving] = useState(false);
@@ -82,6 +83,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     [t, workspace.id]
   );
   const memberCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:members`,
     filters: appliedMemberFilters,
     getKey: (member: ProjectMember) => member.userId || member.email,
     loadPage: loadMemberPage,
@@ -116,6 +118,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     [t, workspace.id]
   );
   const invitationCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:invitations`,
     filters: { workspaceId: workspace.id },
     getKey: (invitation: WorkspaceInvitation) => invitation.id,
     loadPage: loadInvitationPage,
@@ -123,7 +126,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     strategy: 'sentinel'
   });
   const { items: members, nextCursor, phase: memberPhase, error: listError = null } = memberCollection;
-  const isLoadingInitial = memberPhase === 'loading' || memberPhase === 'refreshing';
+  const isLoadingInitial = memberPhase === 'loading';
   const membersPending = isLoadingInitial && members.length === 0;
   const isLoadingMore = memberPhase === 'loadingMore';
   const canManageOwners = currentUserRole === 'owner';
@@ -365,7 +368,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
           </div>
           <Select<typeof roleFilter> value={roleFilter} options={roleFilterOptions} onChange={setRoleFilter} className="min-w-40" ariaLabel={t('members.filterRole')} />
           <Select<typeof sourceFilter> value={sourceFilter} options={sourceFilterOptions} onChange={setSourceFilter} className="min-w-36" ariaLabel={t('members.filterSource')} />
-          <span className="type-label rounded-full border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">{memberCountLabel}</span>
+          <CollectionResultSummary className="xl:justify-end">{memberCountLabel}</CollectionResultSummary>
           {hasMemberFilters && (
             <Button type="button" variant="tertiary" size="sm" onClick={clearMemberFilters} className="w-full sm:w-auto">
               <X className="h-4 w-4" aria-hidden="true" />
@@ -417,26 +420,20 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                             <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                             <span className="min-w-0 truncate">{member.email}</span>
                           </p>
-                          <p className="type-caption mt-2 flex items-center gap-2 text-ui-text-muted xl:hidden">
-                            <span className="type-label">{member.source}</span>
+                          <div className="mt-2 flex items-center gap-2 xl:hidden">
+                            <span className="type-ui text-ui-text-muted">{member.source}</span>
                             <span aria-hidden="true">·</span>
-                            <span className="inline-flex items-center gap-1.5 text-ui-text">
-                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
-                              {t('members.active')}
-                            </span>
-                          </p>
+                            <StatusBadge tone="success" size="compact">{t('members.active')}</StatusBadge>
+                          </div>
                         </div>
                       </div>
                     </DataTableCell>
                     <DataTableCell className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
                       <MemberRoleCell member={member} roleTemplate={roleTemplate} />
                     </DataTableCell>
-                    <DataTableCell className="type-label hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</DataTableCell>
+                    <DataTableCell className="type-ui hidden break-words px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">{member.source}</DataTableCell>
                     <DataTableCell className="hidden px-4 py-5 sm:px-6 lg:px-8 lg:py-6 xl:table-cell">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="h-2 w-2 shrink-0 rounded-full bg-status-success" aria-hidden="true" />
-                        <span className="type-row-title min-w-0 break-words">{t('members.active')}</span>
-                      </div>
+                      <StatusBadge tone="success">{t('members.active')}</StatusBadge>
                     </DataTableCell>
                     <DataTableCell className="px-2 py-4 text-right sm:px-3 lg:px-3">
                       <Tooltip

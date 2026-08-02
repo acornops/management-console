@@ -49,9 +49,10 @@ export const AppDesktopSidebarHeader: React.FC<AppDesktopSidebarHeaderProps> = (
           aria-label={t(collapsed ? 'app.expandSidebar' : 'app.collapseSidebar')}
           onClick={() => onSetMode(collapsed ? 'expanded' : 'collapsed')}
         >
-          {collapsed
-            ? <ICONS.PanelLeftOpen data-rail-align="true" className="h-[18px] w-[18px]" />
-            : <ICONS.PanelLeftClose className="h-[18px] w-[18px]" />}
+          <ICONS.PanelLeft
+            data-rail-align={collapsed ? 'true' : undefined}
+            className="h-[18px] w-[18px]"
+          />
         </Button>
       </Tooltip>
     </div>

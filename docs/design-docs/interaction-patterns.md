@@ -63,7 +63,13 @@ Every modal overlay provides:
 
 Closing may be disabled only when interruption of an active mutation would be unsafe. The disabled state applies consistently to the close button, Escape, and backdrop interaction.
 
-Destructive confirmation always uses the `confirmation` dialog. The explanation stays in the body and uses `InlineAlert` when warning emphasis is needed. Production code does not use `window.confirm`.
+Irreversible resource deletion, credential removal, access revocation, integration
+unlinking, and destructive reset always use the `confirmation` dialog. The
+explanation stays in the body and uses `InlineAlert` when warning emphasis is
+needed. Inline confirmation is reserved for reversible or local state changes,
+including disable, credential-mode changes, secret rotation, and draft discard
+inside an already-open modal surface. Production code does not use
+`window.confirm`.
 
 `DrawerFrame` owns modal side sheets. `PersistentDetailPanel` is a nonmodal layout composition: it leaves background controls available, does not trap focus, and does not expose modal semantics. `RightSidePanel` is retired from the feature import boundary.
 

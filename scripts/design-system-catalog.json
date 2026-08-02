@@ -34,6 +34,7 @@
   },
   "composedModules": {
     "ActiveTabIndicator": "Rendered inside the catalog's SegmentedTabs example, which owns its positioning contract.",
+    "CollectionResultSummary": "Rendered through each DiscoveryFilterBar example so result feedback keeps its integrated live-region placement.",
     "Dialog": "Rendered through DialogFrame, the public composition that supplies the catalog dialog anatomy.",
     "OverflowActionMenu": "Rendered as the compatibility action-menu composition in the catalog's composite patterns.",
     "PageSearchInput": "Rendered through each DiscoveryFilterBar example so search and recovery behavior stay integrated.",

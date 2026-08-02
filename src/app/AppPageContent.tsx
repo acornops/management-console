@@ -16,8 +16,8 @@ import {
   shouldPreflightWorkspaceOwnerLeave,
   workspacesAfterLeave
 } from '@/app/workspaceLeave';
-import { AppRoute, AppPaths, ClusterCatalogReturnState, ClusterCatalogRouteState, ClusterSubview, VmSubview, getCurrentAppPath } from '@/utils/routes';
-import { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
+import { AppRoute, AppPaths, ClusterCatalogReturnState, ClusterCatalogRouteState, getCurrentAppPath } from '@/utils/routes';
+import { KubernetesCluster, Workspace, WorkspaceInvitation } from '@/types';
 
 const loadKubernetesClustersPage = () => import('@/pages/KubernetesClustersPage').then((module) => ({ default: module.KubernetesClustersPage }));
 const loadKubernetesClusterDetailPage = () => import('@/pages/KubernetesClusterDetailPage').then((module) => ({ default: module.KubernetesClusterDetailPage }));
@@ -436,7 +436,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               workspace={workspaceContext}
               create={route.create}
               createWorkflowId={route.createWorkflowId}
-              navigate={navigate}
             />
           )}
 
@@ -553,7 +552,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           )}
 
           {route.kind === 'workspaceWebhooks' && workspaceContext && <WorkspaceWebhooksPage
-            workspace={workspaceContext} canManageWebhooks={getWorkspacePermission(workspaceContext.id, 'manage_webhooks')} showToast={showToast}
+            workspace={workspaceContext} canManageWebhooks={getWorkspacePermission(workspaceContext.id, 'manage_webhooks')} showToast={showToast} navigate={navigate}
           />}
 
           {route.kind === 'workspaceAuditLog' && workspaceContext && (

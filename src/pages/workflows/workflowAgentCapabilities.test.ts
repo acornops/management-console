@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
-import { getWorkflowAgentCapabilityReview } from '@/pages/workflows/workflowAgentCapabilities';
+import { getWorkflowAgentCapabilityReview, getWorkflowCapabilityOverviewSummary } from '@/pages/workflows/workflowAgentCapabilities';
 
 const agent: AgentDefinition = {
   id: 'agent-cluster-triage',
@@ -21,7 +21,6 @@ const agent: AgentDefinition = {
   nativeToolConfigs: {},
   skills: ['acornops-observability', 'acornops-infrastructure-boundary-design'],
   semanticCapabilityIds: ['infrastructure.diagnostics.read'],
-  contextScope: ['workspace_metadata'],
   permissionMode: 'read_only',
   trustPolicy: {
     boundary: 'Workspace',
@@ -57,7 +56,6 @@ const workflow: WorkflowDefinition = {
     role: 'Direct',
     required: true
   }],
-  contextGrants: ['workspace_metadata'],
   policy: {
     mode: 'read_only',
     approvals: []
@@ -72,17 +70,20 @@ describe('workflowAgentCapabilities', () => {
 
     expect(review).toHaveLength(1);
     expect(review[0].agentId).toBe('agent-cluster-triage');
+    expect(review[0].avatarEmoji).toBe('🔎');
     expect(review[0].mcpServers).toEqual(['Targets']);
-    expect(review[0].semanticCapabilityIds).toEqual(['infrastructure.diagnostics.read']);
-    expect(review[0].skills).toEqual(['Acornops Observability', 'Acornops Infrastructure Boundary Design']);
+    expect(review[0].skills).toEqual(['AcornOps Observability', 'AcornOps Infrastructure Boundary Design']);
     expect(review[0].tools).toEqual([
       { id: 'get_resource', label: 'get_resource', access: 'unknown', requiresApproval: false },
       { id: 'get_resource_logs', label: 'get_resource_logs', access: 'unknown', requiresApproval: false },
       { id: 'list_resources', label: 'list_resources', access: 'read', requiresApproval: false }
     ]);
     expect(review[0].tools.map((tool) => tool.id)).not.toContain('infrastructure.diagnostics.read');
-    expect(review[0].writeAccess).toBe('Writes are disabled');
-    expect(review[0].capabilityRules).toContain('read kubernetes infrastructure_inventory via list_resources');
+    expect(review[0].writeAccess).toBe('Writes disabled');
+    expect(review[0]).not.toHaveProperty('semanticCapabilityIds');
+    expect(review[0]).not.toHaveProperty('capabilityRules');
+    expect(review[0]).not.toHaveProperty('role');
+    expect(review[0]).not.toHaveProperty('required');
   });
 
   it('reviews every coordinated Agent as a peer so their ceilings can be combined', () => {
@@ -111,7 +112,6 @@ describe('workflowAgentCapabilities', () => {
     const review = getWorkflowAgentCapabilityReview(coordinated, [repositoryAgent, agent]);
 
     expect(review.map((item) => item.agentId)).toEqual([agent.id, repositoryAgent.id]);
-    expect(review.every((item) => item.role === 'AcornOps-coordinated' && item.required)).toBe(true);
     expect(new Set(review.flatMap((item) => item.tools.map((tool) => tool.id)))).toEqual(new Set([
       'get_resource', 'get_resource_logs', 'list_resources', 'repository.read'
     ]));
@@ -127,8 +127,8 @@ describe('workflowAgentCapabilities', () => {
       permissionMode: 'auto_allowed_changes'
     }]);
 
-    expect(askBeforeChanges[0].writeAccess).toBe('Approval required before every write-capable tool');
-    expect(automaticRoutineChanges[0].writeAccess).toBe('Routine writes run automatically; approval is required for high-risk or destructive writes');
+    expect(askBeforeChanges[0].writeAccess).toBe('Approval required for writes');
+    expect(automaticRoutineChanges[0].writeAccess).toBe('Routine writes automatic; high-risk changes require approval');
   });
 
   it('labels write tools with their runtime approval behavior', () => {
@@ -152,5 +152,32 @@ describe('workflowAgentCapabilities', () => {
       access: 'write',
       requiresApproval: true
     }]);
+  });
+
+  it('summarizes the loaded Agent catalog without a capability preview request', () => {
+    const summary = getWorkflowCapabilityOverviewSummary(workflow, [agent]);
+
+    expect(summary).toEqual({
+      agentCount: 1,
+      missingAgentCount: 0,
+      tools: { read: 1, write: 0, unknown: 2 },
+      mcpServers: ['Targets'],
+      skills: ['AcornOps Observability', 'AcornOps Infrastructure Boundary Design']
+    });
+  });
+
+  it('reports incomplete Agent catalog coverage instead of inventing capability data', () => {
+    const summary = getWorkflowCapabilityOverviewSummary({
+      ...workflow,
+      agentIds: [agent.id, 'agent-missing'],
+      agents: [
+        ...workflow.agents,
+        { agentId: 'agent-missing', name: 'Unavailable Agent', role: 'Peer', required: true }
+      ]
+    }, [agent]);
+
+    expect(summary.agentCount).toBe(2);
+    expect(summary.missingAgentCount).toBe(1);
+    expect(summary.tools).toEqual({ read: 1, write: 0, unknown: 2 });
   });
 });

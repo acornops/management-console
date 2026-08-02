@@ -5,6 +5,7 @@ import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import type { Workspace } from '@/types';
 import type { AgentSubview } from '@/utils/routes';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 import { Button } from '@acornops/ui';
 
 export interface WorkspaceAgentsPageProps {
@@ -29,7 +30,6 @@ export type AgentEditDraft = AgentDraft & {
   mcpServers: string;
   tools: string;
   skills: string;
-  contextScope: string;
   allowExternalData: boolean;
 };
 
@@ -68,7 +68,7 @@ const listValuesChanged = (left: string[], right: string): boolean => {
 
 const trustPolicyFor = (policy: AgentDefinitionApi['trustPolicy']): AgentDefinition['trustPolicy'] => ({
   boundary: typeof policy?.level === 'string' ? `${policy.level} trust boundary` : 'Restricted workspace trust boundary',
-  dataEgress: policy?.allowExternalData === true ? 'Additional data access allowed by policy' : 'Workspace approved context only'
+  dataEgress: policy?.allowExternalData === true ? 'Additional data access allowed by policy' : 'External data access disabled'
 });
 
 export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, ownerLabelsByUserId: Map<string, string> = new Map()): AgentDefinition => {
@@ -97,7 +97,6 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     skills: item.skillInstallations?.map((skill) => skill.name) || item.skills || [],
     skillInstallations: item.skillInstallations || [],
     semanticCapabilityIds: item.semanticCapabilityIds || [],
-    contextScope: item.contextGrants || item.contextScope || [],
     permissionMode: item.permissionMode || 'ask_before_changes',
     trustPolicy: trustPolicyFor(item.trustPolicy),
     capabilities: item.capabilities || [],
@@ -130,7 +129,7 @@ export function filterVisibleAgents(agents: AgentDefinition[], query: string, fi
 export const formatAgentTimestamp = (value: string | undefined, fallback = '-', locale?: Intl.LocalesArgument): string =>
   formatUserDateTime(value, { fallback: value || fallback, locale });
 
-export const formatAgentDisplayValue = (value: string): string => value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+export const formatAgentDisplayValue = (value: string): string => formatIdentifierLabel(value, 'title');
 export const statusOptions: Array<SelectOption<AgentDefinition['status']>> = [
   { value: 'draft', label: 'Draft' },
   { value: 'active', label: 'Active' },
@@ -148,7 +147,6 @@ export const createAgentEditDraft = (agent: AgentDefinition): AgentEditDraft => 
   mcpServers: joinInput(agent.mcpServers),
   tools: joinInput(agent.tools),
   skills: joinInput(agent.skills),
-  contextScope: joinInput(agent.contextScope),
   allowExternalData: agent.trustPolicy.dataEgress.toLowerCase().includes('external')
 });
 

@@ -60,6 +60,27 @@ describe('SearchFilterFrame', () => {
     expect(markup).toContain('2xl:w-44 2xl:flex-none');
   });
 
+  it('can settle a compact dense toolbar into one row at xl', () => {
+    const markup = renderToStaticMarkup(
+      <SearchFilterFrame
+        denseBreakpoint="xl"
+        filterWidth="compact"
+        search={<input aria-label="Search" />}
+        filterControls={[
+          <button key="state">State</button>,
+          <button key="origin">Origin</button>,
+          <button key="workflow">Workflow</button>
+        ]}
+        resultSummary={<span role="status">3 results</span>}
+      />
+    );
+
+    expect(markup).toContain('xl:flex-nowrap');
+    expect(markup).toContain('lg:grid-cols-3 xl:contents');
+    expect(markup).toContain('xl:w-44 xl:flex-none');
+    expect(markup).toContain('xl:w-auto xl:flex-none');
+  });
+
   it('can embed its controls inside a parent toolbar without nesting another frame', () => {
     const markup = renderToStaticMarkup(
       <SearchFilterFrame embedded search={<input aria-label="Search" />} resultSummary={<span>2 results</span>} />

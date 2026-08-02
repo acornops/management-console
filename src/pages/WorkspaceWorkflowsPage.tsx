@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Button, DrawerFrame, InlineAlert, SegmentedTabs } from '@acornops/ui';
-import { PageHeader, PageShell } from '@acornops/ui';
+import { Button, CloseButton, InlineAlert } from '@acornops/ui';
+import { PageShell } from '@acornops/ui';
 import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -9,44 +9,30 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import type { ProjectMember, Workspace } from '@/types';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { mapApiAgent } from '@/pages/WorkspaceAgentsPage.helpers';
-import { findWorkflowByRouteSelection, filterWorkflowDefinitions, getWorkflowDeleteBlocker, getWorkflowLaunchBlocker, getWorkflowPrimaryAction, getWorkflowRouteQuery, getWorkflowRouteSelection, type WorkflowDefinition, type WorkflowRunMessage, type WorkflowView } from '@/pages/workflows/workflowModel';
+import { findWorkflowByRouteSelection, filterWorkflowDefinitions, getWorkflowDeleteBlocker, getWorkflowLaunchBlocker, getWorkflowPrimaryAction, getWorkflowRouteQuery, getWorkflowRouteSelection, type WorkflowDefinition, type WorkflowView } from '@/pages/workflows/workflowModel';
 import { listWorkflowOptions, listWorkflowRunEvents, listWorkflowRunApprovals, listWorkflowSessions, listWorkspaceWorkflows, type WorkflowOptionsCatalog, type WorkflowRunApproval, type WorkflowRunEvent } from '@/services/control-plane/workflowApi';
 import { listWorkspaceAgents } from '@/services/control-plane/agentApi';
 import { createAgentSelectionDraft, createFallbackWorkflowOptions, createWorkflowDraft, createWorkflowEditDraft, isRunActive, mapApiWorkflowToDefinition, mapWorkflowRunSummary, mergeWorkflowRunsWithLocalDispatches, normalizeWorkflowOptionsCatalog, uniqueValues, workflowStatusTone, workflowViews, type AgentSelectionDraft, type CreateWorkflowDraft, type WorkflowEditDraft } from '@/pages/workflows/workflowPageHelpers';
 import { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
-import { WorkflowDeleteDialog, WorkflowDiscovery, WorkflowLaunchActions, WorkflowLibraryList, WorkflowLoadErrorNotice, WorkflowModeBadge } from '@/pages/WorkspaceWorkflowsPage.components';
+import { WorkflowDeleteDialog, WorkflowDiscovery, WorkflowLaunchActions, WorkflowLibraryList } from '@/pages/WorkspaceWorkflowsPage.components';
+import { WorkflowLoadErrorNotice, WorkflowModeLabel } from '@/pages/WorkflowStatusUi';
 import { WorkflowCreateDrawer, type CreateWorkflowStep } from '@/pages/WorkspaceWorkflowsPage.createDrawer';
-import { WorkflowAgentsPanel, WorkflowCapabilitiesPanel, WorkflowRunsPanel } from '@/pages/WorkspaceWorkflowsPage.panels';
+import { WorkflowAgentAssignmentSection, WorkflowCapabilitiesPanel, WorkflowRunsPanel } from '@/pages/WorkspaceWorkflowsPage.panels';
 import { WorkflowOverviewPanel } from '@/pages/WorkspaceWorkflowOverviewPanel';
 import { WorkflowSettingsPanel } from '@/pages/WorkflowSettingsPanel';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { useWorkspaceWorkflowsUrlState } from '@/pages/workflows/useWorkspaceWorkflowsUrlState';
 import { useWorkflowCapabilityPreview } from '@/pages/workflows/useWorkflowCapabilityPreview';
-import { indexPersistedWorkflowRunResponses, mergePersistedWorkflowRunResponses } from '@/pages/workflows/workflowRunSync';
 import { isServerWorkflowRunId, serverWorkflowRunIds } from '@/pages/workflows/workflowRunIdentity';
 import { useWorkflowExecutionDeepLink } from '@/pages/workflows/useWorkflowExecutionDeepLink';
 import type { McpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
-import { WorkflowRecommendationActions } from '@/pages/WorkflowRecommendationActions';
 import { WorkflowRunDrawer } from '@/pages/WorkflowRunDrawer';
-import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
-
-const workflowViewIcons: Record<WorkflowView, React.ElementType> = {
-  overview: ICONS.LayoutGrid,
-  agents: ICONS.Bot,
-  capabilities: ICONS.Shield,
-  runs: ICONS.Activity,
-  settings: ICONS.Settings
-};
-
-const workflowViewLabels: Record<WorkflowView, string> = {
-  overview: 'Overview',
-  agents: 'Agents',
-  capabilities: 'Capabilities',
-  runs: 'Runs',
-  settings: 'Settings'
-};
-const WorkspaceSchedulesPage = React.lazy(() => import('@/pages/WorkspaceSchedulesPage').then((module) => ({ default: module.WorkspaceSchedulesPage })));
-const WorkspaceIncomingWebhooksPage = React.lazy(() => import('@/pages/WorkspaceIncomingWebhooksPage').then((module) => ({ default: module.WorkspaceIncomingWebhooksPage })));
+import { WorkspaceWorkflowsChrome } from '@/pages/WorkspaceWorkflowsChrome';
+import { WorkflowDetailTabs } from '@/pages/workflows/WorkflowDetailTabs';
+import { WorkflowHelpDrawer } from '@/pages/WorkflowHelpDrawer';
+import { useWorkflowLaunchShortcut, useWorkflowSearchShortcut } from '@/pages/workflows/useWorkflowKeyboardShortcuts';
+import { WorkflowTriggerPanel } from '@/pages/WorkflowTriggerPanel';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 export const WorkspaceWorkflowsPage: React.FC<{
   workspace: Workspace;
   navigate: (path: string) => void;
@@ -55,13 +41,18 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const initialWorkflowSelection = useMemo(() => getWorkflowRouteSelection(window.location.search), []);
   const workflowUrlSearch = useUrlSearchState();
   const managementPanel = workflowUrlSearch.get('panel');
-  const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
-  const [workflowAgents, setWorkflowAgents] = useState<AgentDefinition[]>([]);
-  const [workflowOptions, setWorkflowOptions] = useState<WorkflowOptionsCatalog>(() => createFallbackWorkflowOptions([]));
-  const [workflowOwnerMembers, setWorkflowOwnerMembers] = useState<ProjectMember[]>(workspace.members || []);
-  const [workflowOwnerCatalogWorkspaceId, setWorkflowOwnerCatalogWorkspaceId] = useState('');
-  const [workflowAgentCatalogWorkspaceId, setWorkflowAgentCatalogWorkspaceId] = useState('');
-  const [workflowOptionsCatalogWorkspaceId, setWorkflowOptionsCatalogWorkspaceId] = useState('');
+  const workflowCachePrefix = `workspace:${workspace.id}:workflow-page:`;
+  const workflowsCacheKey = `${workflowCachePrefix}workflows`;
+  const workflowAgentsCacheKey = `${workflowCachePrefix}agents`;
+  const workflowOptionsCacheKey = `${workflowCachePrefix}options`;
+  const workflowOwnersCacheKey = `${workflowCachePrefix}owners`;
+  const [workflows, setWorkflows] = useSessionCachedState<WorkflowDefinition[]>(workflowsCacheKey, []);
+  const [workflowAgents, setWorkflowAgents] = useSessionCachedState<AgentDefinition[]>(workflowAgentsCacheKey, []);
+  const [workflowOptions, setWorkflowOptions] = useSessionCachedState<WorkflowOptionsCatalog>(workflowOptionsCacheKey, () => createFallbackWorkflowOptions([]));
+  const [workflowOwnerMembers, setWorkflowOwnerMembers] = useSessionCachedState<ProjectMember[]>(workflowOwnersCacheKey, workspace.members || []);
+  const [workflowOwnerCatalogWorkspaceId, setWorkflowOwnerCatalogWorkspaceId] = useState(() => hasSessionDataCacheValue(workflowOwnersCacheKey) ? workspace.id : '');
+  const [workflowAgentCatalogWorkspaceId, setWorkflowAgentCatalogWorkspaceId] = useState(() => hasSessionDataCacheValue(workflowAgentsCacheKey) ? workspace.id : '');
+  const [workflowOptionsCatalogWorkspaceId, setWorkflowOptionsCatalogWorkspaceId] = useState(() => hasSessionDataCacheValue(workflowOptionsCacheKey) ? workspace.id : '');
   const workflowOwnerLabelsByUserId = useMemo(() => new Map(workflowOwnerMembers.filter((member) => member.userId).map((member) => [member.userId as string, member.name || member.email])), [workflowOwnerMembers]);
   const effectiveWorkflowOptions = useMemo<WorkflowOptionsCatalog>(() => {
     const agentOptions = workflowAgents.map((agent) => ({
@@ -78,15 +69,15 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const workflowSearchTags = useMemo(() => uniqueValues(workflows.flatMap((workflow) => workflow.tags)), [workflows]);
   const filteredWorkflows = useMemo(() => filterWorkflowDefinitions(workflows, query), [query, workflows]);
   const visibleWorkflows = filteredWorkflows;
+  useWorkflowSearchShortcut();
   const [selectedWorkflowId, setSelectedWorkflowId] = useState(initialWorkflowSelection);
   const initialView = new URLSearchParams(window.location.search).get('tab') as WorkflowView | null;
   const [activeView, setActiveView] = useState<WorkflowView>(initialView && workflowViews.includes(initialView) ? initialView : 'overview');
   const [workflowLoadError, setWorkflowLoadError] = useState('');
-  const [workflowCatalogReady, setWorkflowCatalogReady] = useState(false);
+  const [workflowCatalogReady, setWorkflowCatalogReady] = useState(() => hasSessionDataCacheValue(workflowsCacheKey));
   const [workflowCatalogReloadKey, setWorkflowCatalogReloadKey] = useState(0);
   const [workflowOptionsError, setWorkflowOptionsError] = useState('');
   const [workflowOptionsReloadKey, setWorkflowOptionsReloadKey] = useState(0);
-  const [workflowSessionIds, setWorkflowSessionIds] = useState<Record<string, string>>({});
   const [launchDrawerWorkflowId, setLaunchDrawerWorkflowId] = useState('');
   const [launchingWorkflowId, setLaunchingWorkflowId] = useState('');
   const [launchAcknowledgedId, setLaunchAcknowledgedId] = useState('');
@@ -95,30 +86,20 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const [pendingWorkflowRuns, setPendingWorkflowRunsState] = useState<Record<string, WorkflowDefinition['runs']>>({});
   const pendingWorkflowRunsRef = React.useRef(pendingWorkflowRuns);
   const workflowRowRefs = React.useRef(new Map<string, HTMLButtonElement>());
-  const [approvalRecords, setApprovalRecords] = useState<Record<string, WorkflowRunApproval[]>>({});
+  const [approvalRecords, setApprovalRecords] = useSessionCachedState<Record<string, WorkflowRunApproval[]>>(`${workflowCachePrefix}run-approvals`, {});
   const [approvalAction, setApprovalAction] = useState('');
   const [approvalError, setApprovalError] = useState('');
-  const [runEventsByRunId, setRunEventsByRunId] = useState<Record<string, WorkflowRunEvent[]>>({});
+  const [runEventsByRunId, setRunEventsByRunId] = useSessionCachedState<Record<string, WorkflowRunEvent[]>>(`${workflowCachePrefix}run-events`, {});
   const [expandedRunLogId, setExpandedRunLogId] = useState('');
   const [runLogError, setRunLogError] = useState('');
   const [cancelRunAction, setCancelRunAction] = useState('');
   const [cancelRunError, setCancelRunError] = useState('');
-  const [workflowRunMessages, setWorkflowRunMessages] = useState<Record<string, WorkflowRunMessage[]>>({});
-  const [workflowRunMessageDrafts, setWorkflowRunMessageDrafts] = useState<Record<string, string>>({});
-  const [workflowRunMessageSendingId, setWorkflowRunMessageSendingId] = useState('');
-  const [workflowRunMessageErrorByRunId, setWorkflowRunMessageErrorByRunId] = useState<Record<string, string>>({});
-  const [workflowRunMessageRecoveryByRunId, setWorkflowRunMessageRecoveryByRunId] = useState<Record<string, McpReadinessRecovery>>({});
   const [agentSelectionDrafts, setAgentSelectionDrafts] = useState<Record<string, AgentSelectionDraft>>({});
   const [editingAgentSelectionId, setEditingAgentSelectionId] = useState('');
   const [agentSelectionError, setAgentSelectionError] = useState('');
-  const [agentSelectionResult, setAgentSelectionResult] = useState('');
   const [savingAgentSelectionId, setSavingAgentSelectionId] = useState('');
   const [newWorkflowTag, setNewWorkflowTag] = useState('');
   const [createPanelOpen, setCreatePanelOpen] = useState(new URLSearchParams(window.location.search).get('panel') === 'create');
-  const initialPanel = new URLSearchParams(window.location.search).get('panel');
-  const [recommendationsOpen, setRecommendationsOpen] = useState(
-    initialPanel === 'recommendations' || initialPanel === 'templates'
-  );
   const [createWorkflowStep, setCreateWorkflowStep] = useState<CreateWorkflowStep>(1);
   const [createDraft, setCreateDraft] = useState<CreateWorkflowDraft>(() => createWorkflowDraft());
   const [createError, setCreateError] = useState('');
@@ -126,6 +107,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const [workflowEditDrafts, setWorkflowEditDrafts] = useState<Record<string, WorkflowEditDraft>>({});
   const [workflowUpdateError, setWorkflowUpdateError] = useState('');
   const [workflowUpdateResult, setWorkflowUpdateResult] = useState('');
+  const [workflowUndoCheckpoint, setWorkflowUndoCheckpoint] = useState<WorkflowDefinition | null>(null);
   const [updatingWorkflowId, setUpdatingWorkflowId] = useState('');
   const [deleteWorkflowId, setDeleteWorkflowId] = useState('');
   const [deleteWorkflowConfirmation, setDeleteWorkflowConfirmation] = useState('');
@@ -145,8 +127,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const selectedWorkflow = (hasExplicitWorkflowSelection ? workflows : visibleWorkflows).find((workflow) => workflow.id === selectedWorkflowId) || visibleWorkflows[0] || (!query.trim() ? workflows[0] : undefined);
   React.useEffect(() => {
     let mounted = true;
-    setWorkflowOwnerCatalogWorkspaceId('');
-    setWorkflowOwnerMembers(workspace.members || []);
+    setWorkflowOwnerMembers((current) => current.length > 0 ? current : workspace.members || []);
     if (workspace.permissions?.read_members !== true) {
       setWorkflowOwnerCatalogWorkspaceId(workspace.id);
       return () => { mounted = false; };
@@ -165,8 +146,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
   React.useEffect(() => {
     if (workflowOwnerCatalogWorkspaceId !== workspace.id) return;
     let mounted = true;
-    setWorkflowAgentCatalogWorkspaceId('');
-    setWorkflowAgents([]);
     listWorkspaceAgents(workspace.id, { includeInactive: true })
       .then((items) => {
         if (!mounted) return;
@@ -186,7 +165,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
     ) return;
     let mounted = true;
     setWorkflowLoadError('');
-    setWorkflowCatalogReady(false);
     listWorkspaceWorkflows(workspace.id)
       .then((items) => {
         if (!mounted) return;
@@ -218,7 +196,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
   }, [initialWorkflowSelection, workspace.id, workflowAgentCatalogWorkspaceId, workflowCatalogReloadKey, workflowOptionsCatalogWorkspaceId, workflowOwnerCatalogWorkspaceId]);
   React.useEffect(() => {
     let mounted = true;
-    setWorkflowOptionsCatalogWorkspaceId('');
     setWorkflowOptionsError('');
     listWorkflowOptions(workspace.id)
       .then((catalog) => {
@@ -242,7 +219,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
       [selectedWorkflow.id]: current[selectedWorkflow.id] || createAgentSelectionDraft(selectedWorkflow)
     }));
     setAgentSelectionError('');
-    setAgentSelectionResult('');
     setEditingAgentSelectionId('');
   }, [selectedWorkflow?.id, effectiveWorkflowOptions]);
   const selectedWorkflowHasActiveRuns = Boolean(selectedWorkflow?.runs.some((run) => isRunActive(run.status)));
@@ -255,19 +231,9 @@ export const WorkspaceWorkflowsPage: React.FC<{
       try {
         const sessions = await listWorkflowSessions(workspace.id, selectedWorkflow.id);
         if (!mounted) return;
-        setWorkflowSessionIds((current) => ({
-          ...current,
-          ...Object.fromEntries(sessions.flatMap((session) => (
-            (session.runs || []).map((run) => [run.id, session.id])
-          )))
-        }));
         const serverRuns = sessions.flatMap((session) => session.runs || []).map(mapWorkflowRunSummary);
         const pendingRuns = pendingWorkflowRunsRef.current[workflowId] || [];
         const runs = mergeWorkflowRunsWithLocalDispatches(serverRuns, pendingRuns);
-        setWorkflowRunMessages((current) => mergePersistedWorkflowRunResponses(
-          current,
-          indexPersistedWorkflowRunResponses(sessions)
-        ));
         if (pendingRuns.length > 0) {
           const serverRunKeys = new Set(serverRuns.flatMap((run) => [run.id, run.runId].filter((value): value is string => Boolean(value))));
           setPendingWorkflowRuns((current) => {
@@ -340,10 +306,21 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const isEditingAgentSelection = Boolean(selectedWorkflow && editingAgentSelectionId === selectedWorkflow.id);
   const activeAgentOptions = effectiveWorkflowOptions.agents.filter((agent) => !agent.disabled || selectedAgentSelectionDraft?.agentIds.includes(agent.value));
   const baseLaunchBlocker = selectedWorkflow ? getWorkflowLaunchBlocker(selectedWorkflow, selectedWorkflow.starterPrompt, workspace.permissions) : 'Select a workflow before launching.';
-  const capabilityPreviewState = useWorkflowCapabilityPreview({ workspaceId: workspace.id, workflow: selectedWorkflow });
+  const capabilityPreviewEnabled = Boolean(selectedWorkflow && launchDrawerWorkflowId === selectedWorkflow.id);
+  const capabilityPreviewState = useWorkflowCapabilityPreview({ workspaceId: workspace.id, workflow: selectedWorkflow, enabled: capabilityPreviewEnabled });
   const launchBlocker = !workflowOptionsReady
     ? 'Workflow options must load before launching a workflow.'
-    : baseLaunchBlocker || capabilityPreviewState.blocker;
+    : baseLaunchBlocker || (capabilityPreviewEnabled ? capabilityPreviewState.blocker : null);
+  useWorkflowLaunchShortcut({
+    blocked: Boolean(launchBlocker),
+    workflowId: selectedWorkflow?.id,
+    onOpen: () => {
+      if (!selectedWorkflow) return;
+      setLaunchError('');
+      setLaunchRecovery(null);
+      setLaunchDrawerWorkflowId(selectedWorkflow.id);
+    }
+  });
   const workflowPrimaryAction = selectedWorkflow ? getWorkflowPrimaryAction(selectedWorkflow) : 'launch';
   const workflowDeleteBlocker = getWorkflowDeleteBlocker(selectedWorkflow, canManageWorkflows);
   const selectedWorkflowEditDraft = selectedWorkflow
@@ -352,7 +329,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const workflowToDelete = deleteWorkflowId
     ? workflows.find((workflow) => workflow.id === deleteWorkflowId)
     : undefined;
-  const usesBoundedWorkflowDetail = activeView !== 'runs';
   const closeDeleteWorkflowDialog = () => {
     if (deletingWorkflowId) return;
     setDeleteWorkflowId('');
@@ -360,45 +336,39 @@ export const WorkspaceWorkflowsPage: React.FC<{
   };
   const workflowActions = useWorkspaceWorkflowActions({
     workspace, workflows, setWorkflows,
-    selectedWorkflow, selectedWorkflowEditDraft, workflowSessionIds, setWorkflowSessionIds,
+    selectedWorkflow, selectedWorkflowEditDraft,
     setLaunchDrawerWorkflowId,
     setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setActiveView: (view: WorkflowView) => selectWorkflowView(view, selectedWorkflow?.id), setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns,
     setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setCancelRunError, setCancelRunAction,
-    workflowRunMessageDrafts, setWorkflowRunMessageDrafts, setWorkflowRunMessages,
-    setWorkflowRunMessageSendingId, setWorkflowRunMessageErrorByRunId, setWorkflowRunMessageRecoveryByRunId,
      setNewWorkflowTag, newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
+     workflowUndoCheckpoint, setWorkflowUndoCheckpoint,
      setDeleteWorkflowId, setUpdatingWorkflowId, selectResultingWorkflow: selectWorkflow, setDeletingWorkflowId,
       createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
       canManageWorkflows, workflowOptionsReady, launchBlocker, workflowOptions: effectiveWorkflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
-     setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
+     setEditingAgentSelectionId, setAgentSelectionError, setSavingAgentSelectionId,
      ownerLabelsByUserId: workflowOwnerLabelsByUserId, workflowAgents
   });
   return (
     <PageShell
-      className={usesBoundedWorkflowDetail ? 'lg:overflow-y-hidden' : undefined}
-      contentClassName={usesBoundedWorkflowDetail ? 'lg:flex lg:h-full lg:min-h-0 lg:flex-col' : undefined}
+      className="min-[1440px]:overflow-y-hidden"
+      contentClassName="min-[1440px]:flex min-[1440px]:h-full min-[1440px]:min-h-0 min-[1440px]:flex-col"
     >
-      <PageHeader
-        title="Workflows"
-        description="Create, launch, and audit governed workspace automations with visible Agent capabilities and write policy."
-        actions={<div className="flex flex-col items-start gap-2 lg:items-end">
-          <div className="flex flex-wrap gap-2">
-            <WorkflowRecommendationActions workspace={workspace} open={recommendationsOpen} focusWorkflowId={selectedWorkflow?.id} onOpenChange={setRecommendationsOpen} onChanged={(workflowId) => { setWorkflowCatalogReloadKey((value) => value + 1); capabilityPreviewState.retry(); if (workflowId) selectWorkflow(workflowId); }} />
-            <Button type="button" variant="primary" size="md" className="whitespace-nowrap self-start lg:self-auto" onClick={() => { updateUrlSearch({ panel: 'create' }); setCreateWorkflowStep(1); }} disabled={!canManageWorkflows || !workflowOptionsReady} title={!canManageWorkflows ? 'You need manage_workflows to create workflows.' : !workflowOptionsReady ? 'Workflow options must load before creating a workflow.' : undefined}>
-              <ICONS.Plus className="h-4 w-4" aria-hidden="true" /> Create workflow
-            </Button>
-          </div>
-          {!canManageWorkflows && <span className="type-caption max-w-64 type-emphasis text-ui-text-muted lg:text-right">Ask a workspace manager for manage_workflows to create or edit workflow definitions.</span>}
-        </div>}
+      <WorkspaceWorkflowsChrome
+        canManageWorkflows={canManageWorkflows}
+        hiddenOnCompact={hasExplicitWorkflowSelection}
+        navigate={navigate}
+        onCreate={() => { updateUrlSearch({ panel: 'create' }); setCreateWorkflowStep(1); }}
+        onOpenHelp={() => updateUrlSearch({ panel: 'help', topic: 'overview' })}
+        workflowOptionsReady={workflowOptionsReady}
+        workspace={workspace}
       />
-      <WorkflowSections activeSection="all" navigate={navigate} workspaceId={workspace.id} />
       <div
         id="workflow-section-all-panel"
         role="tabpanel"
         aria-labelledby="workflow-section-all-tab"
-        className={usesBoundedWorkflowDetail ? 'lg:flex lg:min-h-0 lg:flex-1 lg:flex-col' : undefined}
+        className="min-[1440px]:flex min-[1440px]:min-h-0 min-[1440px]:flex-1 min-[1440px]:flex-col"
       >
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
       {workflowOptionsError && <InlineAlert tone="danger" className="mb-4 type-body" title="Workflow options could not be loaded." action={<Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>}>
@@ -413,24 +383,39 @@ export const WorkspaceWorkflowsPage: React.FC<{
           workspaceId={workspace.id}
           onClose={workflowActions.closeCreateWorkflowPanel} onCreate={() => void workflowActions.createNewWorkflow()}
         />}
-        <div className={`mb-4 ${hasExplicitWorkflowSelection ? 'hidden lg:block' : ''}`}>
+        <div className={`mb-4 min-[1440px]:hidden ${hasExplicitWorkflowSelection ? 'hidden' : ''}`}>
           <WorkflowDiscovery
+            idPrefix="workflow-library-mobile"
             ready={workflowCatalogReady} query={query} totalCount={workflows.length} visibleCount={visibleWorkflows.length} workflowSearchTags={workflowSearchTags}
             withSpacing={false}
             onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
           />
         </div>
         <MasterDetailLayout
-        boundedOnDesktop={usesBoundedWorkflowDetail}
+        boundedOnDesktop
+        desktopBreakpoint="wide"
+        listWidth="wide"
         showDetailOnCompact={hasExplicitWorkflowSelection}
         compactBackLabel="Back to workflows"
         onCompactBack={() => { const workflowId = selectedWorkflow?.id; clearWorkflowSelection(); if (workflowId) window.requestAnimationFrame(() => workflowRowRefs.current.get(workflowId)?.focus()); }}
-        list={<WorkflowLibraryList workflows={workflows} visibleWorkflows={visibleWorkflows} selectedWorkflow={selectedWorkflow} ready={workflowCatalogReady} loadError={workflowLoadError} onSelectWorkflow={selectWorkflow} registerWorkflowRow={(workflowId, node) => { if (node) workflowRowRefs.current.set(workflowId, node); else workflowRowRefs.current.delete(workflowId); }} />}
+        list={<WorkflowLibraryList
+          discovery={<WorkflowDiscovery
+            embedded
+            idPrefix="workflow-library-desktop"
+            ready={workflowCatalogReady} query={query} totalCount={workflows.length} visibleCount={visibleWorkflows.length} workflowSearchTags={workflowSearchTags}
+            withSpacing={false}
+            onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
+          />}
+          workflows={workflows} visibleWorkflows={visibleWorkflows} selectedWorkflow={selectedWorkflow} selectedWorkflowIsExplicit={hasExplicitWorkflowSelection} ready={workflowCatalogReady} loadError={workflowLoadError} onSelectWorkflow={selectWorkflow} registerWorkflowRow={(workflowId, node) => { if (node) workflowRowRefs.current.set(workflowId, node); else workflowRowRefs.current.delete(workflowId); }}
+        />}
         detail={selectedWorkflow ? (
-          <section className={usesBoundedWorkflowDetail ? 'min-w-0 overflow-hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col' : 'min-w-0'}>
+          <section className="min-w-0 overflow-hidden min-[1440px]:flex min-[1440px]:h-full min-[1440px]:min-h-0 min-[1440px]:flex-col">
             <MasterDetailPaneHeader
-              badges={<><StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge><WorkflowModeBadge mode={selectedWorkflow.policy.mode} /><span className="type-caption type-emphasis text-ui-text-muted">{selectedWorkflow.owner}</span></>}
+              badges={selectedWorkflow.status !== 'active' ? (
+                <StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge>
+              ) : null}
               title={selectedWorkflow.name}
+              titleMeta={<WorkflowModeLabel mode={selectedWorkflow.policy.mode} />}
               description={selectedWorkflow.description}
               actions={<WorkflowLaunchActions
                   activating={updatingWorkflowId === selectedWorkflow.id}
@@ -447,65 +432,83 @@ export const WorkspaceWorkflowsPage: React.FC<{
                     setLaunchRecovery(null);
                     setLaunchDrawerWorkflowId(selectedWorkflow.id);
                   }}
-                  onSchedule={() => updateUrlSearch({ workflow: selectedWorkflow.id, panel: 'schedules', tab: null })}
-                  onWebhooks={() => updateUrlSearch({ workflow: selectedWorkflow.id, panel: 'webhooks', tab: null })}
+                  onReviewReadiness={() => {
+                    if (capabilityPreviewState.blocker) {
+                      selectWorkflowView('capabilities', selectedWorkflow.id);
+                      return;
+                    }
+                    setLaunchError('');
+                    setLaunchRecovery(null);
+                    setLaunchDrawerWorkflowId(selectedWorkflow.id);
+                  }}
                   primaryAction={workflowPrimaryAction}
                 />}
             />
+            {workflowUndoCheckpoint?.id === selectedWorkflow.id && workflowUpdateResult && (
+              <InlineAlert
+                tone="success"
+                className="items-center rounded-none border-x-0 border-status-success/20 bg-status-success-soft/40 px-6"
+                action={(
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => void workflowActions.undoLastWorkflowMutation()}>Undo</Button>
+                    <CloseButton
+                      label="Dismiss workflow update notification"
+                      onClick={() => {
+                        setWorkflowUpdateResult('');
+                        setWorkflowUndoCheckpoint(null);
+                      }}
+                    />
+                  </div>
+                )}
+              >
+                {workflowUpdateResult}
+              </InlineAlert>
+            )}
 
             <div className="bg-ui-surface px-3">
-              <SegmentedTabs<WorkflowView>
-                activeValue={activeView}
-                allPanelsMounted={false}
-                ariaLabel="Workflow detail sections"
-                className="gap-0"
-                idBase="workflow-detail-section"
-                items={workflowViews.map((view) => {
-                  const Icon = workflowViewIcons[view];
-                  return {
-                    value: view,
-                    label: workflowViewLabels[view],
-                    icon: <Icon className="h-4 w-4" aria-hidden="true" />
-                  };
-                })}
-                onValueChange={(view) => selectWorkflowView(view, selectedWorkflow.id)}
-              />
+              {activeView === 'settings' ? (
+                <div className="flex min-h-11 items-center justify-between gap-3 border-b border-ui-border">
+                  <Button variant="tertiary" size="sm" onClick={() => selectWorkflowView('overview', selectedWorkflow.id)}>
+                    <ICONS.ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                    Back to workflow
+                  </Button>
+                  <span id="workflow-detail-section-settings-tab" className="type-micro-label pr-2 text-ui-text-muted">Workflow settings</span>
+                </div>
+              ) : (
+                <WorkflowDetailTabs activeView={activeView} workflowName={selectedWorkflow.name} onChange={(view) => selectWorkflowView(view, selectedWorkflow.id)} />
+              )}
             </div>
 
             <MasterDetailPaneBody
               id={`workflow-detail-section-${activeView}-panel`}
               role="tabpanel"
               aria-labelledby={`workflow-detail-section-${activeView}-tab`}
-              className={usesBoundedWorkflowDetail ? 'lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:custom-scrollbar lg:stable-scrollbar-gutter' : undefined}
+              className="min-[1440px]:min-h-0 min-[1440px]:flex-1 min-[1440px]:overflow-y-auto min-[1440px]:overscroll-contain min-[1440px]:custom-scrollbar min-[1440px]:stable-scrollbar-gutter"
             >
               {activeView === 'overview' && (
                 <WorkflowOverviewPanel
-                  workflow={selectedWorkflow} workspaceId={workspace.id} canManageWorkflow={canManageWorkflows}
-                  preview={capabilityPreviewState.preview} previewLoading={capabilityPreviewState.loading} previewError={capabilityPreviewState.error}
-                  onRetryPreview={capabilityPreviewState.retry} onReviewAgents={() => {
-                    if (canManageWorkflows) workflowActions.startEditingAgentSelection(selectedWorkflow);
-                    selectWorkflowView('agents', selectedWorkflow.id);
-                  }}
-                  onReviewCapabilities={() => selectWorkflowView('capabilities', selectedWorkflow.id)}
-                />
-              )}
-
-              {activeView === 'agents' && (
-                <WorkflowAgentsPanel
+                  showHeader={false}
                   workflow={selectedWorkflow}
-                  selectedAgentSelectionDraft={selectedAgentSelectionDraft}
-                  activeAgentOptions={activeAgentOptions}
-                  isEditingAgentSelection={isEditingAgentSelection}
-                  canManageWorkflows={canManageWorkflows}
-                  savingAgentSelectionId={savingAgentSelectionId}
-                  agentSelectionError={agentSelectionError}
-                  agentSelectionResult={agentSelectionResult}
-                  workflowActions={workflowActions}
+                  agentAssignment={(
+                    <WorkflowAgentAssignmentSection
+                      workflow={selectedWorkflow}
+                      agents={workflowAgents}
+                      selectedAgentSelectionDraft={selectedAgentSelectionDraft}
+                      activeAgentOptions={activeAgentOptions}
+                      isEditingAgentSelection={isEditingAgentSelection}
+                      canManageWorkflows={canManageWorkflows}
+                      savingAgentSelectionId={savingAgentSelectionId}
+                      agentSelectionError={agentSelectionError}
+                      onReviewCapabilities={() => selectWorkflowView('capabilities', selectedWorkflow.id)}
+                      workflowActions={workflowActions}
+                    />
+                  )}
                 />
               )}
 
               {activeView === 'capabilities' && (
                 <WorkflowCapabilitiesPanel
+                  showHeader={false}
                   workflow={selectedWorkflow}
                   agents={workflowAgents}
                   catalogFailures={['error', 'unavailable'].includes(workflowOptions.sourceAvailability.agents?.status) ? [workflowOptions.sourceAvailability.agents?.message || 'agents'] : []}
@@ -513,18 +516,21 @@ export const WorkspaceWorkflowsPage: React.FC<{
                 />
               )}
 
+              {(activeView === 'schedules' || activeView === 'webhooks') && (
+                <WorkflowTriggerPanel
+                  activeView={activeView}
+                  workflow={selectedWorkflow}
+                  workspace={workspace}
+                />
+              )}
+
               {activeView === 'runs' && (
                 <WorkflowRunsPanel
+                  showHeader={false}
                   workflow={selectedWorkflow}
                   approvalError={approvalError} runLogError={runLogError} cancelRunError={cancelRunError}
                   approvalRecords={approvalRecords} expandedRunLogId={expandedRunLogId} runEventsByRunId={runEventsByRunId}
                   cancelRunAction={cancelRunAction} workflowActions={workflowActions} approvalAction={approvalAction}
-                  workflowSessionIds={workflowSessionIds}
-                  runMessagesByRunId={workflowRunMessages}
-                  runMessageDrafts={workflowRunMessageDrafts}
-                  runMessageSendingId={workflowRunMessageSendingId}
-                  runMessageErrorByRunId={workflowRunMessageErrorByRunId}
-                  runMessageRecoveryByRunId={workflowRunMessageRecoveryByRunId}
                   setExpandedRunLogId={setExpandedRunLogId}
                 />
               )}
@@ -536,7 +542,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
                   editDraft={selectedWorkflowEditDraft}
                   updating={updatingWorkflowId === selectedWorkflow.id}
                   updateError={workflowUpdateError}
-                  updateResult={workflowUpdateResult}
                   deleteError={deleteWorkflowError}
                   tagDraft={newWorkflowTag}
                   workflowDeleteBlocker={workflowDeleteBlocker}
@@ -558,47 +563,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
         ) : null}
         />
       </div>
-      {selectedWorkflow && (
-        <>
-          <DrawerFrame
-            open={managementPanel === 'schedules' || managementPanel === 'schedule'}
-            width="xl"
-            title="Schedules"
-            titleId="workflow-schedules-drawer-title"
-            description={`Manage recurring runs for ${selectedWorkflow.name}.`}
-            bodyClassName="p-0"
-            onClose={() => updateUrlSearch({ panel: null })}
-          >
-            <React.Suspense fallback={null}>
-              <WorkspaceSchedulesPage
-                embedded
-                constrainedWorkflowId={selectedWorkflow.id}
-                create={managementPanel === 'schedule'}
-                createWorkflowId={managementPanel === 'schedule' ? selectedWorkflow.id : undefined}
-                workspace={workspace}
-              />
-            </React.Suspense>
-          </DrawerFrame>
-
-          <DrawerFrame
-            open={managementPanel === 'webhooks'}
-            width="xl"
-            title="Webhooks"
-            titleId="workflow-webhooks-drawer-title"
-            description={`Manage incoming webhook triggers for ${selectedWorkflow.name}.`}
-            bodyClassName="p-0"
-            onClose={() => updateUrlSearch({ panel: null })}
-          >
-            <React.Suspense fallback={null}>
-              <WorkspaceIncomingWebhooksPage
-                embedded
-                constrainedWorkflowId={selectedWorkflow.id}
-                workspace={workspace}
-              />
-            </React.Suspense>
-          </DrawerFrame>
-        </>
-      )}
       <WorkflowDeleteDialog
         workflowToDelete={workflowToDelete}
         deleteWorkflowConfirmation={deleteWorkflowConfirmation}
@@ -624,6 +588,11 @@ export const WorkspaceWorkflowsPage: React.FC<{
           setLaunchAcknowledgedId('');
         }}
         onLaunch={() => void workflowActions.launchSelectedWorkflow()}
+      />
+      <WorkflowHelpDrawer
+        open={managementPanel === 'help'}
+        initialTopic={workflowUrlSearch.get('topic') || undefined}
+        onClose={() => updateUrlSearch({ panel: null, topic: null })}
       />
     </PageShell>
   );

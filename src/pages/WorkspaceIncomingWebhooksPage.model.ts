@@ -8,7 +8,6 @@ export interface WebhookDraft {
   workflowId: string;
   name: string;
   enabled: boolean;
-  approvedContextGrants: string;
   principalId?: string;
 }
 
@@ -20,8 +19,7 @@ export function emptyWebhookDraft(): WebhookDraft {
   return {
     workflowId: '',
     name: '',
-    enabled: true,
-    approvedContextGrants: ''
+    enabled: true
   };
 }
 
@@ -33,11 +31,6 @@ export function draftFromWebhook(
     workflowId: webhook.workflowId,
     name: webhook.name,
     enabled: webhook.status === 'enabled',
-    approvedContextGrants: webhook.approvedContextGrants.join('\n'),
     principalId: webhook.principal.id
   };
-}
-
-export function parseContextGrants(value: string): string[] {
-  return value.split(/\n|,/).map((grant) => grant.trim()).filter(Boolean);
 }

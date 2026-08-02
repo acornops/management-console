@@ -114,7 +114,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                     <DataTableCell density="compact" className="max-w-[34rem]">
                       <div className="flex flex-wrap items-center gap-2">
                         {shouldShowIssueStatus(issue.status) && (
-                          <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                          <StatusBadge tone={issueStatusTone(issue.status)}>{t(`issues.status.${issue.status}`)}</StatusBadge>
                         )}
                         <span className="type-caption text-ui-text-muted">
                           <IssueTime label={t('overview.firstSeenLabel')} timestamp={issueFirstSeenTimestamp(issue)} visibleLabel />
@@ -131,7 +131,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
                       />
                     </DataTableCell>
                     <DataTableCell density="compact">
-                      <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                      <StatusBadge tone={issueSeverityTone(issue.severity)}>{t(`issues.severity.${issue.severity}`)}</StatusBadge>
                     </DataTableCell>
                     <DataTableCell density="compact" className="type-caption break-words">
                       {issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource')}
@@ -162,9 +162,9 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             {reportedIssues.map((issue) => (
               <article key={issue.id} className="p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                  <StatusBadge tone={issueSeverityTone(issue.severity)}>{t(`issues.severity.${issue.severity}`)}</StatusBadge>
                   {shouldShowIssueStatus(issue.status) && (
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                    <StatusBadge tone={issueStatusTone(issue.status)}>{t(`issues.status.${issue.status}`)}</StatusBadge>
                   )}
                 </div>
                 <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>

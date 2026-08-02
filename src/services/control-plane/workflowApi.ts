@@ -232,7 +232,6 @@ export interface WorkflowSchedule {
   status: 'enabled' | 'paused';
   cron: string;
   timezone: string;
-  approvedContextGrants: string[];
   principal: { type: 'user'; id: string };
   createdBy?: { userId: string; displayName?: string };
   updatedBy?: { userId: string; displayName?: string };
@@ -266,7 +265,6 @@ export interface WorkflowScheduleInput {
   enabled?: boolean;
   cron: string;
   timezone: string;
-  approvedContextGrants?: string[];
   principal: { type: 'user'; id: string };
 }
 
@@ -518,17 +516,13 @@ export function listWorkflowSessions(
 
 export function createWorkflowSession(
   workspaceId: string,
-  workflowId: string,
-  input: { approvedContextGrants?: string[] } = {}
+  workflowId: string
 ): Promise<WorkflowSessionResponse> {
   return requestJson<WorkflowSessionResponse>(
     `/api/v1/workflows/${encodeURIComponent(workflowId)}/sessions`,
     {
       method: 'POST',
-      body: JSON.stringify({
-        workspaceId,
-        approvedContextGrants: input.approvedContextGrants || []
-      })
+      body: JSON.stringify({ workspaceId })
     }
   );
 }
@@ -537,26 +531,22 @@ export function previewWorkflowCapabilities(
   workspaceId: string,
   workflowId: string,
   input: {
-    approvedContextGrants?: string[];
+    signal?: AbortSignal;
   } = {}
 ): Promise<WorkflowCapabilitiesPreview> {
   return requestJson<Partial<WorkflowCapabilitiesPreview>>(
     `/api/v1/workflows/${encodeURIComponent(workflowId)}/capabilities-preview`,
     {
       method: 'POST',
-      body: JSON.stringify({
-        workspaceId,
-        approvedContextGrants: input.approvedContextGrants || []
-      })
+      signal: input.signal,
+      body: JSON.stringify({ workspaceId })
     }
   ).then(normalizeWorkflowCapabilitiesPreview);
 }
 
 export function postWorkflowSessionMessage(
   sessionId: string,
-  input:
-    | { kind: 'launch'; clientRequestId?: string }
-    | { kind: 'follow_up'; content: string; clientRequestId?: string }
+  input: { kind: 'launch'; clientRequestId?: string }
 ): Promise<WorkflowMessageAccepted> {
   return requestJson<WorkflowMessageAccepted>(
     `/api/v1/workflow-sessions/${encodeURIComponent(sessionId)}/messages`,

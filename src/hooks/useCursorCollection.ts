@@ -1,10 +1,12 @@
 import React from 'react';
 import type { PagedResult } from '@/services/control-plane/types';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
+import { readSessionDataCache, writeSessionDataCache } from '@/hooks/sessionDataCache';
 
 export type CursorCollectionStrategy = 'manual' | 'sentinel' | 'drain';
 
 export interface CursorCollectionOptions<T, TFilters> {
+  cacheKey?: string;
   filters: TFilters;
   getKey: (item: T) => string;
   loadPage: (request: {
@@ -61,7 +63,8 @@ function stableFilterKey(value: unknown): string {
  */
 export class CursorCollectionController<T, TFilters> {
   private options: CursorCollectionOptions<T, TFilters>;
-  private state: CursorCollectionState<T> = { items: [], phase: 'loading' };
+  private state: CursorCollectionState<T>;
+  private scopeKey: string;
   private listeners = new Set<Listener<T>>();
   private abortController?: AbortController;
   private requestVersion = 0;
@@ -70,6 +73,8 @@ export class CursorCollectionController<T, TFilters> {
 
   constructor(options: CursorCollectionOptions<T, TFilters>) {
     this.options = options;
+    this.scopeKey = this.getScopeKey();
+    this.state = this.readCachedState() ?? { items: [], phase: 'loading' };
   }
 
   updateOptions(options: CursorCollectionOptions<T, TFilters>): void {
@@ -88,8 +93,14 @@ export class CursorCollectionController<T, TFilters> {
   reset(): Promise<void> {
     this.abort();
     this.requestedCursors.clear();
-    this.setState({ items: [], phase: 'loading' });
-    return this.request('initial');
+    const nextScopeKey = this.getScopeKey();
+    const scopeChanged = nextScopeKey !== this.scopeKey;
+    this.scopeKey = nextScopeKey;
+    const cachedState = this.readCachedState();
+    if (scopeChanged || cachedState) {
+      this.setState(cachedState ?? { items: [], phase: 'loading' });
+    }
+    return this.request(cachedState ? 'refresh' : 'initial', Boolean(cachedState));
   }
 
   refresh(): Promise<void> {
@@ -118,10 +129,33 @@ export class CursorCollectionController<T, TFilters> {
 
   private setState(state: CursorCollectionState<T>): void {
     this.state = state;
+    if (this.options.cacheKey && (state.phase === 'ready' || state.items.length > 0)) {
+      writeSessionDataCache(this.scopeKey, {
+        items: state.items,
+        nextCursor: state.nextCursor,
+        phase: 'ready' as const
+      });
+    }
     this.listeners.forEach((listener) => listener(state));
   }
 
-  private async request(mode: RequestMode): Promise<void> {
+  private getScopeKey(): string {
+    if (!this.options.cacheKey) return '';
+    return [
+      'cursor-collection',
+      this.options.cacheKey,
+      stableFilterKey(this.options.filters),
+      this.options.pageSize,
+      this.options.strategy
+    ].join(':');
+  }
+
+  private readCachedState(): CursorCollectionState<T> | undefined {
+    if (!this.options.cacheKey) return undefined;
+    return readSessionDataCache<CursorCollectionState<T>>(this.scopeKey)?.value;
+  }
+
+  private async request(mode: RequestMode, preserveCachedEmpty = false): Promise<void> {
     this.abort();
     const version = this.requestVersion;
     const controller = new AbortController();
@@ -129,7 +163,9 @@ export class CursorCollectionController<T, TFilters> {
     const retainedItems = mode === 'initial' ? [] : this.state.items;
     const phase: CursorCollectionPhase = mode === 'append'
       ? 'loadingMore'
-      : retainedItems.length > 0
+      : preserveCachedEmpty && retainedItems.length === 0
+        ? 'ready'
+      : mode === 'refresh' || retainedItems.length > 0
         ? 'refreshing'
         : 'loading';
     this.setState({

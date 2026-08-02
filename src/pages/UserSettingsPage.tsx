@@ -17,6 +17,7 @@ import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
 import { TextInput } from '@acornops/ui';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface UserSettingsPageProps {
   user: User;
@@ -127,7 +128,7 @@ const SecurityDialog: React.FC<{
 
 export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, language, languageOptions, onGoToWorkspaces, onLogout, onSetLanguage, embedded = false }) => {
   const { t } = useTranslation();
-  const [authMethods, setAuthMethods] = React.useState<ControlPlaneAuthMethods | null>(null);
+  const [authMethods, setAuthMethods] = useSessionCachedState<ControlPlaneAuthMethods | null>(`user:${user.id}:auth-methods`, null);
   const [securityError, setSecurityError] = React.useState<string | null>(null);
   const [securityNotice, setSecurityNotice] = React.useState<string | null>(null);
   const [activeDialog, setActiveDialog] = React.useState<'password' | 'sso' | null>(null);

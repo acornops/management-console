@@ -13,7 +13,7 @@ Page code supplies content and semantic intent through typed shared primitives:
 - `PageShell`, `PageBackLink`, `PageHeader`, and `PageSection` compose routes and embedded sections.
 - `DataSurface` and `TableToolbar` compose framed operational data and its loading, empty, and error states.
 - `DataTableHeader`, `DataTableHeaderCell`, `DataTableGridHeader`, and `DataTableGridHeaderCell` provide one header anatomy for semantic tables and responsive grid ledgers.
-- `SearchFilterFrame`, `DiscoveryFilterBar`, and typed definitions from `createDiscoveryFilterGroup` compose the canonical framed collection search, visible categorical filters, result feedback, and no-match recovery.
+- `SearchFilterFrame`, `DiscoveryFilterBar`, `CollectionResultSummary`, and typed definitions from `createDiscoveryFilterGroup` compose the canonical framed collection search, visible categorical filters, result feedback, and no-match recovery.
 - `DialogFrame` and `DrawerFrame` provide the canonical overlay header, body, footer, close control, width presets, focus containment, Escape behavior, and focus restoration.
 - `Button`, `Select`, `Checkbox`, `Radio`, `Switch`, `ActionMenu`,
   `MenuSurface`, `MenuItem`, `MenuLink`, `SegmentedTabs`, `ComboboxListbox`,
@@ -32,7 +32,7 @@ Persistent lifecycle controls use the shared neutral, divided `DangerZone` surfa
 
 Agents, Workflows, MCP Catalog, Kubernetes clusters, and virtual machines use `DiscoveryFilterBar` as the standard discovery surface. Nested Kubernetes resource search and `DiscoveryFilterBar` both compose `SearchFilterFrame`, which owns the bordered paper surface, `16px` padding, restrained shadow, `12px` gaps, dominant flexible search slot, and consistent `44px` control geometry. Feature code supplies typed filter-group definitions with IDs, labels, current and default values, options, optional stable counts, and typed route-backed change handlers.
 
-Categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. When a feature supplies stable option counts, the selected control and listbox options show those counts. Below `sm`, search, selects, trailing actions, and result feedback stack full-width. From `sm` to below `lg`, search owns the first row and multiple selects share equal columns. At `lg` and wider, the toolbar becomes one balanced row: search grows, selects remain approximately `11rem` to `14rem` wide, and the polite result summary holds the trailing edge without overflow. Unfiltered summaries use the direct collection count; filtered summaries show the visible count against the total. Result counts belong in the bar rather than being repeated in catalog headings. Pages omit the bar only when the collection is known to be empty and no discovery state is active; an active search or filter that returns zero items keeps the bar visible.
+Categorical groups render as always-visible shared `Select` controls. Clusters, virtual machines, and agents expose Status; MCP Catalog exposes Source and Compatibility; Workflows uses the search-only composition. When a feature supplies stable option counts, the selected control and listbox options show those counts. Below `sm`, search, selects, trailing actions, and result feedback stack full-width. From `sm` to below `lg`, search owns the first row and multiple selects share equal columns. At `lg` and wider, the toolbar becomes one balanced row: search grows, selects remain approximately `11rem` to `14rem` wide, and the polite result summary holds the trailing edge without overflow. Unfiltered summaries use the direct collection count; filtered summaries show the visible count against the total. `CollectionResultSummary` owns the same quiet `type-caption` live-region treatment when a count sits outside `DiscoveryFilterBar`; result feedback is never an uppercase, outlined capsule. Result counts belong in the bar rather than being repeated in catalog headings. Pages omit the bar only when the collection is known to be empty and no discovery state is active; an active search or filter that returns zero items keeps the bar visible.
 
 Each Select applies its typed route-owned `onChange` handler and restores focus to its trigger after selection. Choosing the default option resets only that group. Search clear and Escape remove only the query and retain search focus. Clear all appears when the query plus non-default groups total at least two, clears route-backed discovery state atomically, and restores search focus. Warm neutral tokens carry the frame and controls; orange is limited to focus and selected state.
 
@@ -48,7 +48,40 @@ The standard header uses `16px`, `24px`, and `32px` horizontal padding across co
 
 Column labels, metric values, and leading row identities use the semantic typography roles supplied by the design system. Feature code uses `type-label`, `type-data`, and `type-row-title` rather than reconstructing those roles with font-size and weight utilities. Visible application column headers compose through `DataTableHeaderCell` or `DataTableGridHeaderCell`; raw table headers remain limited to documented content or screen-reader-only data tables.
 
-Responsive ledgers keep one shared grid-template constant for header and rows. Activity, Incoming Webhooks, and Outbound Webhooks reveal that grid only at `xl`, after the workspace content area can support all columns; below `xl`, their rows keep identity and actions together on the first row, then stack labeled metadata across the full card width. Compact rows do not retain desktop minimum column widths. Schedules keeps its compact ledger through widths below `2xl` because its seven columns cannot remain legible beside the desktop sidebar. Members and Audit Log similarly withhold secondary columns until `xl` and repeat those values inside the primary compact row, preventing clipped or broken metadata without losing information.
+### Column sizing contract
+
+Choose the sizing mode from the row behavior, not from a page-local visual
+preference:
+
+- **Content-sized table:** This is the `DataTable` default. Keep browser
+  `table-layout: auto` when a small table should adapt to translated labels and
+  variable cell content. The shared `44rem` minimum width and `DataTableFrame`
+  overflow boundary protect the table before columns become unreadable.
+- **Fixed comparison table:** Add `table-fixed` only when stable vertical
+  comparison matters more than intrinsic content width. Declare every track in
+  one `colgroup` immediately inside `DataTable`. At each breakpoint, the widths
+  of the visible columns account for the complete table width. Cells may own
+  alignment, wrapping, or visibility, but not a second competing width model.
+- **Responsive grid ledger:** Use a grid ledger when the compact row is a
+  labeled card composition rather than a horizontally scrolling table. Export
+  one named grid-template class and reuse it in `DataTableGridHeader` and every
+  desktop row. Do not copy the same arbitrary grid template into separate
+  header and row strings.
+
+Allocate width by information role. The leading identity or description track
+gets the flexible remainder and uses `minmax(0, 1fr)` when it may shrink.
+Bounded metadata such as actor, source, or timestamps uses a reviewed minimum
+and maximum. Status, toggle, count, and action tracks stay compact and stable;
+an action track must not expand merely because the table grows. Responsive
+column hiding updates the track declaration at the same breakpoint and repeats
+the hidden facts as labeled compact metadata when they remain necessary.
+
+`src/tableColumnSizingContracts.test.ts` enforces the structural parts of this
+policy. Content-specific proportions remain feature-owned and are reviewed at
+the affected route widths, including enlarged text and the sidebar-constrained
+desktop layout.
+
+Responsive ledgers keep one shared grid-template constant for header and rows. Activity, Inbound Webhooks, and Outbound Webhooks reveal that grid only at `xl`, after the workspace content area can support all columns; below `xl`, their rows keep identity and actions together on the first row, then stack labeled metadata across the full card width. Compact rows do not retain desktop minimum column widths. Schedules keeps its compact ledger through widths below `2xl` because its seven columns cannot remain legible beside the desktop sidebar. Members and Audit Log similarly withhold secondary columns until `xl` and repeat those values inside the primary compact row, preventing clipped or broken metadata without losing information.
 
 The shared headers also own zero-row visibility. Ready, refreshing, and loading-more collections with rows keep their column headers. Terminal empty, filtered-empty, error, and permission states replace the table anatomy, so they do not sit beneath orphaned labels. Initial loading with generic progress is headerless; only a column-aligned table skeleton may opt into headers through `showDuringInitialLoading`.
 
@@ -56,11 +89,15 @@ Horizontally scrollable tab strips preserve route resumability by revealing the 
 
 ## Catalog master-detail layout
 
-Workflows and MCP Catalog use `MasterDetailLayout` for list-to-detail inspection. The component owns one bordered surface, a `32rem` minimum height, no column gap, and a vertical divider. At `lg` and wider, its grid is `minmax(18rem, 22rem) minmax(0, 1fr)` so the library remains stable while detail consumes the available width.
+Workflows and MCP Catalog use `MasterDetailLayout` for list-to-detail inspection. The component owns one bordered surface, a `32rem` minimum height, no column gap, and a vertical divider. Its default `lg` grid is `minmax(18rem, 22rem) minmax(0, 1fr)` so the library remains stable while detail consumes the available width. Task-heavy routes can choose a wider threshold; Workflows activates its split at `1440px` with a `minmax(20rem, 24rem)` library, keeping narrower desktop widths in the single-pane, page-scrolled flow.
 
-Below `lg`, the route controls which pane is visible. An unselected route shows the library; selecting a row shows detail with a compact Back action. Back removes only the resource and detail-tab parameters, preserves discovery and unrelated panel state, and returns focus to the selected row. Desktop may preview the first visible result, but a preview is not serialized until the operator selects it or interacts with its detail tabs.
+Below the route's configured split threshold, the route controls which pane is visible. An unselected route shows the library; selecting a row shows detail with a compact Back action. Back removes only the resource and detail-tab parameters, preserves discovery and unrelated panel state, and returns focus to the selected row. Desktop may preview the first visible result, but a preview is not serialized until the operator selects it or interacts with its detail tabs.
 
 The shared family also owns the `24px` discovery-to-surface gap, list heading, resource-row anatomy, loading and empty states, detail header, and tinted detail body. Rows use the same title, description, status, and metadata structure with common padding and selection treatment. Feature pages supply the values and retain task-specific controls such as workflow tabs and launch actions or MCP source filters and installation fields.
+
+Textual lifecycle and health states use `StatusBadge` at default or compact size.
+Unlabeled semantic dots remain valid for presence indicators and labeled metric
+legends, but they do not sit beside a separate status word.
 
 ## Theme interface
 

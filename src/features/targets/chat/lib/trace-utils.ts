@@ -1,6 +1,7 @@
 import { LiveRunTrace, RunTraceReasoningSummary, RunTraceSkillLoad, RunTraceStatus, RunTraceStep, RunTraceTimelineEvent, RunTraceToolCall, RunTraceUsage } from '@/features/targets/chat/types';
 import { createLocalMessageId } from '@/features/targets/chat/lib/helpers';
 import { formatRunFailureMessage } from '@/features/targets/chat/lib/session-utils';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 const MAX_TRACE_STEPS = 200;
 const MAX_REASONING_SUMMARIES = 50;
@@ -190,7 +191,7 @@ export function appendReasoningUnavailable(
   provider?: string,
   model?: string
 ): LiveRunTrace {
-  const detail = reason.replace(/_/g, ' ');
+  const detail = formatIdentifierLabel(reason);
   const summary: RunTraceReasoningSummary = {
     id: createLocalMessageId(),
     text: `Reasoning summary unavailable: ${detail}`,

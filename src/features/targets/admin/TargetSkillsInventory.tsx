@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
+import { ActionMenu, CollectionResultSummary, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
@@ -238,12 +238,12 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
               />
             </div>
             <Select<typeof skillFilter> value={skillFilter} options={filterOptions} onChange={setSkillFilter} className="w-full" ariaLabel={t('targetSkills.filterSkills')} />
-            <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+            <CollectionResultSummary className="xl:justify-end">
               {t('targetSkills.showingItems', {
                 count: filteredSkills.length,
                 total: skills.length
               })}
-            </span>
+            </CollectionResultSummary>
           </div>
         )}
         <div className="min-w-0">

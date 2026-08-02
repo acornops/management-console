@@ -6,7 +6,7 @@ import { Tooltip } from '@acornops/ui';
 import { AssistantCapabilityPreviewControl } from '@/features/targets/chat/components/AssistantCapabilityPreviewControl';
 import { TargetChatReferenceChips, TargetChatReferenceMenu } from '@/features/targets/chat/components/TargetChatReferencePicker';
 import { TargetMentionMenu, useTargetMentionAutocomplete } from '@/features/targets/mentions/TargetMentionAutocomplete';
-import { formatAttachmentSize, providerLabel } from '@/features/targets/chat/components/targetChatViewHelpers';
+import { providerLabel } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { TargetChatViewBodyProps } from '@/features/targets/chat/components/TargetChatViewBody.types';
 import type { ReasoningEffort } from '@/types';
 import { FileInput, Textarea } from '@acornops/ui';

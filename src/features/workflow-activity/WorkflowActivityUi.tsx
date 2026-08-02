@@ -56,6 +56,16 @@ export function workflowExecutionActionKey(
     : 'openRun';
 }
 
+export function workflowExecutionActorLabel(
+  createdBy: string | undefined,
+  actorLabelsByUserId: ReadonlyMap<string, string>,
+  labels: { acornOps: string; unavailable: string }
+): string {
+  if (!createdBy) return labels.unavailable;
+  if (createdBy === 'system') return labels.acornOps;
+  return actorLabelsByUserId.get(createdBy) || createdBy;
+}
+
 export function WorkflowExecutionLink({
   execution
 }: {
@@ -135,9 +145,11 @@ export function executionTimestamp(execution: WorkflowExecutionSummary): {
 
 export function WorkflowExecutionRow({
   execution,
+  actorLabel,
   navigate
 }: {
   execution: WorkflowExecutionSummary;
+  actorLabel: string;
   navigate: (path: string) => void;
 }) {
   const { t } = useTranslation();
@@ -152,7 +164,7 @@ export function WorkflowExecutionRow({
     <a
       href={appHref(path)}
       onClick={(event) => handleAppLinkClick(event, path, navigate)}
-      className={`control-target grid w-full min-w-0 gap-3 px-4 py-4 text-left outline-none transition-colors hover:bg-ui-bg focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary sm:grid-cols-2 sm:gap-x-6 sm:px-6 xl:items-center xl:px-8 xl:py-6 ${workflowExecutionLedgerGridClass}`}
+      className={`control-target grid w-full min-w-0 gap-3 px-4 py-4 text-left outline-none transition-colors hover:bg-ui-bg focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-control-boundary sm:grid-cols-2 sm:gap-x-6 xl:items-center xl:gap-x-3 ${workflowExecutionLedgerGridClass}`}
     >
       <span className="min-w-0 sm:col-span-2 xl:col-span-1">
         <span className="flex flex-wrap items-center gap-2">
@@ -164,9 +176,9 @@ export function WorkflowExecutionRow({
         </span>
       </span>
       <span className="min-w-0">
-        <span className="type-micro-label block text-ui-text-muted xl:hidden">{t('workflowActivity.scope')}</span>
+        <span className="type-micro-label block text-ui-text-muted xl:hidden">{t('workflowActivity.runBy')}</span>
         <span className="type-caption mt-1 block truncate text-ui-text xl:mt-0">
-          {t('workflowActivity.workspaceScope')}
+          {actorLabel}
         </span>
       </span>
       <span className="min-w-0">

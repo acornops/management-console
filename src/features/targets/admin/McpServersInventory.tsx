@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { CollectionResultSummary, DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
@@ -11,7 +11,7 @@ import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcp
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
 import { TextInput } from '@acornops/ui';
-import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
 
 interface McpServersInventoryProps {
   servers: TargetToolCatalogServer[];
@@ -166,9 +166,9 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               className="w-full"
               ariaLabel={t('mcpServers.filterServers')}
             />
-            <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+            <CollectionResultSummary className="xl:justify-end">
               {t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })}
-            </span>
+            </CollectionResultSummary>
           </div>
         )}
         <div className="min-w-0">

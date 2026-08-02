@@ -34,6 +34,7 @@ import {
 } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { formatRelativeTime } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
 import {
@@ -92,16 +93,17 @@ export const TargetAutoTriageSettingsSection: React.FC<{
   canCreateReadWriteRuns: boolean;
 }> = ({ workspaceId, targetId, targetType, canManageTargets, canCreateReadWriteRuns }) => {
   const { t } = useTranslation();
-  const [settings, setSettings] = React.useState<TargetAutoTriageSettings | null>(null);
-  const [draft, setDraft] = React.useState<AutoTriageDraft | null>(null);
-  const [status, setStatus] = React.useState<'loading' | 'ready' | 'saving' | 'starting' | 'error'>('loading');
+  const settingsCacheKey = `workspace:${workspaceId}:target:${targetId}:auto-triage-settings`;
+  const [settings, setSettings] = useSessionCachedState<TargetAutoTriageSettings | null>(settingsCacheKey, null);
+  const [draft, setDraft] = React.useState<AutoTriageDraft | null>(() => settings ? toAutoTriageDraft(settings) : null);
+  const [status, setStatus] = React.useState<'loading' | 'ready' | 'saving' | 'starting' | 'error'>(() => hasSessionDataCacheValue(settingsCacheKey) ? 'ready' : 'loading');
   const [error, setError] = React.useState<string | null>(null);
   const [isConflict, setIsConflict] = React.useState(false);
   const [showExistingIssuePrompt, setShowExistingIssuePrompt] = React.useState(false);
   const [startResult, setStartResult] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
-    setStatus('loading');
+    if (!hasSessionDataCacheValue(settingsCacheKey)) setStatus('loading');
     setError(null);
     setIsConflict(false);
     try {
@@ -113,9 +115,9 @@ export const TargetAutoTriageSettingsSection: React.FC<{
       setStatus('ready');
     } catch (loadError) {
       setError(formatControlPlaneError(loadError, t('autoTriage.loadFailed'), { area: 'cluster' }));
-      setStatus('error');
+      setStatus(hasSessionDataCacheValue(settingsCacheKey) ? 'ready' : 'error');
     }
-  }, [targetId, t, workspaceId]);
+  }, [settingsCacheKey, targetId, t, workspaceId]);
 
   React.useEffect(() => {
     void load();

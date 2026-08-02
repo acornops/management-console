@@ -10,7 +10,6 @@ export interface WorkflowWebhook {
   workflowId: string;
   name: string;
   status: WorkflowWebhookStatus;
-  approvedContextGrants: string[];
   principal: { type: 'user'; id: string };
   endpointUrl: string;
   lastReceivedAt?: string | null;
@@ -29,7 +28,6 @@ export interface WorkflowWebhookInput {
   workflowId: string;
   name: string;
   enabled?: boolean;
-  approvedContextGrants?: string[];
 }
 
 export type WorkflowWebhookUpdateInput = Partial<Omit<

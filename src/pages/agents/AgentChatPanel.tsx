@@ -8,6 +8,7 @@ import {
 } from '@/features/conversations/presentation';
 import { buildTargetChatAutoScrollSignature } from '@/features/targets/chat/hooks/targetChatState';
 import { useTargetChatScrollAnchor } from '@/features/targets/chat/hooks/useTargetChatScrollAnchor';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, Workspace } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
@@ -23,6 +24,7 @@ import {
 } from '@/services/control-plane/agentApi';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 const activeRunStatuses = new Set(['queued', 'dispatching', 'running', 'waiting_for_approval', 'cancelling']);
 
@@ -40,7 +42,7 @@ function runTrace(run: AgentConversationRunApi): LiveRunTrace {
     status: traceStatus(run.status),
     steps: (run.events || []).slice(-40).map((event) => ({
       id: `${run.id}:${event.seq}`,
-      label: event.type.replaceAll('_', ' '),
+      label: formatIdentifierLabel(event.type),
       detail: typeof event.payload?.message === 'string' ? event.payload.message : undefined,
       status: event.type.includes('failed') ? 'error' : event.type.includes('completed') ? 'success' : 'info',
       timestamp: Date.parse(event.ts) || Date.now()
@@ -135,15 +137,17 @@ export const AgentChatPanel: React.FC<{
   onOpenAiSettings
 }) => {
   const { t } = useTranslation();
-  const [summaries, setSummaries] = React.useState<AgentConversationSummaryApi[]>([]);
-  const [sessions, setSessions] = React.useState<ChatSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = React.useState<string | null>(null);
+  const agentChatCachePrefix = `workspace:${agent.workspaceId}:agent:${agent.id}:chat:`;
+  const summariesCacheKey = `${agentChatCachePrefix}summaries`;
+  const [summaries, setSummaries] = useSessionCachedState<AgentConversationSummaryApi[]>(summariesCacheKey, []);
+  const [sessions, setSessions] = useSessionCachedState<ChatSession[]>(`${agentChatCachePrefix}sessions`, []);
+  const [activeSessionId, setActiveSessionId] = useSessionCachedState<string | null>(`${agentChatCachePrefix}active-session`, null);
   const [inputValue, setInputValue] = React.useState('');
-  const [isSessionsLoading, setIsSessionsLoading] = React.useState(true);
+  const [isSessionsLoading, setIsSessionsLoading] = React.useState(() => !hasSessionDataCacheValue(summariesCacheKey));
   const [isSending, setIsSending] = React.useState(false);
   const [isCancellingRun, setIsCancellingRun] = React.useState(false);
-  const [runTracesByRunId, setRunTracesByRunId] = React.useState<Record<string, LiveRunTrace>>({});
-  const [workspaceAiSettings, setWorkspaceAiSettings] = React.useState<Awaited<ReturnType<typeof controlPlaneApi.getWorkspaceAiSettings>> | null>(null);
+  const [runTracesByRunId, setRunTracesByRunId] = useSessionCachedState<Record<string, LiveRunTrace>>(`${agentChatCachePrefix}run-traces`, {});
+  const [workspaceAiSettings, setWorkspaceAiSettings] = useSessionCachedState<Awaited<ReturnType<typeof controlPlaneApi.getWorkspaceAiSettings>> | null>(`workspace:${agent.workspaceId}:ai-settings`, null);
   const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
   const [accessBusy, setAccessBusy] = React.useState(false);
   const [operationError, setOperationError] = React.useState('');
@@ -249,11 +253,10 @@ export const AgentChatPanel: React.FC<{
 
   React.useEffect(() => {
     let cancelled = false;
-    setIsSessionsLoading(true);
+    setIsSessionsLoading(!hasSessionDataCacheValue(summariesCacheKey));
     refreshSummaries()
       .catch(() => {
         if (!cancelled) {
-          setSessions([]);
           setOperationError('Agent conversation history could not be loaded.');
         }
       })
@@ -264,7 +267,7 @@ export const AgentChatPanel: React.FC<{
       .then((settings) => { if (!cancelled) setWorkspaceAiSettings(settings); })
       .catch((error) => { if (!cancelled) setWorkspaceAiSettingsError(error instanceof Error ? error.message : 'AI settings are unavailable.'); });
     return () => { cancelled = true; };
-  }, [agent.workspaceId, refreshSummaries]);
+  }, [agent.workspaceId, refreshSummaries, summariesCacheKey]);
 
   React.useEffect(() => {
     if (!activeSessionId) return;
