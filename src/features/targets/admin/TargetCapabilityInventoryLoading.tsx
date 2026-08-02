@@ -49,3 +49,27 @@ export const TargetCapabilityInventoryLoading: React.FC<TargetCapabilityInventor
     </DataTableFrame>
   </section>
 );
+
+export const McpServersCatalogLoading: React.FC<{
+  caption: string;
+  labels: {
+    server: string;
+    status: string;
+    enabled: string;
+    tools: string;
+    actions: string;
+  };
+  label: string;
+}> = ({ caption, labels, label }) => (
+  <TargetCapabilityInventoryLoading
+    caption={caption}
+    label={label}
+    columns={[
+      { label: labels.server },
+      { label: labels.status },
+      { label: labels.enabled },
+      { label: labels.tools, className: 'hidden md:table-cell' },
+      { label: labels.actions, numeric: true }
+    ]}
+  />
+);

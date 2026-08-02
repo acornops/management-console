@@ -43,11 +43,12 @@ describe('initial collection loading continuity', () => {
   it('keeps capability, embedded-table, and resource collections structurally loaded', () => {
     for (const path of [
       'src/features/targets/admin/TargetToolsView.tsx',
-      'src/features/targets/admin/TargetSkillsView.tsx',
-      'src/features/targets/admin/McpServersView.tsx'
+      'src/features/targets/admin/TargetSkillsView.tsx'
     ]) {
       expect(readSource(path), path).toContain('<TargetCapabilityInventoryLoading');
     }
+
+    expect(readSource('src/features/targets/admin/McpServersView.tsx')).toContain('<McpServersCatalogLoading');
 
     expect(readSource('src/features/targets/admin/McpServerToolsDialog.tsx')).toContain('<CollectionLoadingSkeleton');
     expect(readSource('src/pages/WorkspaceCatalogSources.tsx')).toContain('<CollectionLoadingSkeleton');

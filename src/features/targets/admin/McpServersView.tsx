@@ -6,7 +6,7 @@ import { Button, CollectionState, PageShell } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
-import { TargetCapabilityInventoryLoading } from '@/features/targets/admin/TargetCapabilityInventoryLoading';
+import { McpServersCatalogLoading } from '@/features/targets/admin/TargetCapabilityInventoryLoading';
 import { DeleteMcpServerDialog, McpServerFormDialog } from '@/features/targets/admin/McpServersDialogs';
 import { McpServerToolsDialog } from '@/features/targets/admin/McpServerToolsDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
@@ -537,19 +537,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       <CollectionState
         phase={catalogPhase}
         itemCount={servers.length}
-        loading={(
-          <TargetCapabilityInventoryLoading
-            caption={t('mcpServers.title')}
-            label={t('mcpServers.loadingCatalog')}
-            columns={[
-              { label: t('mcpServers.server') },
-              { label: t('mcpServers.status') },
-              { label: t('mcpServers.enabled') },
-              { label: t('mcpServers.tools'), className: 'hidden md:table-cell' },
-              { label: t('mcpServers.actions'), numeric: true }
-            ]}
-          />
-        )}
+        loading={<McpServersCatalogLoading caption={t('mcpServers.title')} label={t('mcpServers.loadingCatalog')}
+          labels={{ server: t('mcpServers.server'), status: t('mcpServers.status'), enabled: t('mcpServers.enabled'), tools: t('mcpServers.tools'), actions: t('mcpServers.actions') }}
+        />}
         empty={inventory}
         error={(
           <div className="type-caption mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
