@@ -5,6 +5,7 @@ Place active multi-step plans in this directory.
 - [Agent Contextual Navigation and Quick Chat](agent-contextual-navigation-and-quick-chat.md)
 - [Agents and Workflows UX Hardening](agents-workflows-ux-hardening.md)
 - [Automatic MCP OAuth](automatic-mcp-oauth.md)
+- [CI Runtime Optimization](ci-runtime-optimization.md)
 - [Contextual Help Copy](contextual-help-copy.md)
 - [Design system 20/20 hardening](design-system-20-of-20.md)
 - [Design-System Adoption Completion](design-system-adoption-completion.md)

@@ -7,7 +7,7 @@ const source = readFileSync(resolve(process.cwd(), 'src/app/AppDesktopAccountMen
 describe('AppDesktopAccountMenu selected-state contrast', () => {
   it('uses the same quiet selected-state surface as peer sidebar destinations', () => {
     expect(source).toContain("isActive ? 'border-transparent bg-ui-bg text-ui-text'");
-    expect(source).toContain("isActive ? 'bg-ui-surface text-accent-strong'");
+    expect(source).toContain("isActive ? 'bg-ui-surface text-accent-readable'");
     expect(source).toContain("isActive ? 'bg-ui-bg text-ui-text'");
     expect(source).not.toContain("isActive ? 'bg-accent text-control-activation-fg'");
     expect(source).not.toContain("isActive ? 'bg-accent-soft text-accent-strong'");

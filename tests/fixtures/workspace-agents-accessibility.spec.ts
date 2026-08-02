@@ -52,7 +52,7 @@ test('Agent lifecycle uses inline confirmation for disable and a modal for delet
 
   const disableButton = page.getByRole('button', { name: 'Disable agent' });
   await disableButton.click();
-  const disableConfirmation = page.locator('#agent-disable-confirmation');
+  const disableConfirmation = page.getByRole('alert', { name: 'Disable this Agent?' });
   await expect(disableConfirmation).toHaveAttribute('role', 'alert');
   await expect(disableConfirmation.getByText('Disable this Agent?')).toBeVisible();
   await expect(page.getByRole('dialog', { name: 'Disable this Agent?' })).toHaveCount(0);

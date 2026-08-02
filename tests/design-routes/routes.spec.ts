@@ -24,6 +24,18 @@ async function prepareRoute(
   await expect(page.locator('#root')).not.toContainText('Management console could not start');
   await expect(page.locator(route.ready).first()).toBeVisible({ timeout: 45_000 });
   await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark).*$/);
+  // Let route scroll effects settle before normalizing routes whose baseline is the origin.
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+  }));
+  await page.evaluate((preserveScroll) => {
+    window.scrollTo(0, 0);
+    if (!preserveScroll) {
+      document.querySelectorAll<HTMLElement>('.page-shell').forEach((shell) => {
+        shell.scrollTop = 0;
+      });
+    }
+  }, route.preserveScroll === true);
 }
 
 function formatViolations(violations: Awaited<ReturnType<AxeBuilder['analyze']>>['violations']) {

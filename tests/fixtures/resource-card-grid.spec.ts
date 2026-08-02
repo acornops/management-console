@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { resourceCardMinimumWidth } from '../../src/app/dockedPanelLayout';
 
 const resourceCatalogRoutes = [
@@ -7,6 +7,13 @@ const resourceCatalogRoutes = [
   '/workspaces/fixture-workspace/agents'
 ];
 
+async function expectResourceGridReady(grid: Locator) {
+  await expect(grid).toBeVisible();
+  await expect.poll(() => grid.evaluate((element) => (
+    element.firstElementChild?.getBoundingClientRect().width ?? 0
+  ))).toBeGreaterThanOrEqual(resourceCardMinimumWidth);
+}
+
 async function expectResourceGridColumns(page: Page, route: string, count: number) {
   try {
     await page.goto(route, { waitUntil: 'domcontentloaded' });
@@ -14,9 +21,13 @@ async function expectResourceGridColumns(page: Page, route: string, count: numbe
     if (!(error instanceof Error) || !error.message.includes('ERR_ABORTED')) throw error;
     await page.goto(route, { waitUntil: 'domcontentloaded' });
   }
+  await expect(page.locator('.management-console-desktop-sidebar')).toHaveAttribute(
+    'data-desktop-sidebar-mode',
+    'expanded'
+  );
   const grid = page.locator('[data-resource-card-grid="true"]').last();
-  await expect(grid).toBeVisible();
-  const renderedColumns = await grid.evaluate((element) => {
+  await expectResourceGridReady(grid);
+  const renderedColumns = () => grid.evaluate((element) => {
     const item = element.firstElementChild;
     if (!item) throw new Error('Resource-card grid requires at least one fixture item');
     while (element.childElementCount < 3) {
@@ -31,13 +42,13 @@ async function expectResourceGridColumns(page: Page, route: string, count: numbe
     }
     return Math.max(...rows.values());
   });
-  expect(renderedColumns).toBe(count);
+  await expect.poll(renderedColumns).toBe(count);
 }
 
 async function expectUltrawideCatalogExpansion(page: Page, route: string) {
   await page.goto(route, { waitUntil: 'domcontentloaded' });
   const grid = page.locator('[data-resource-card-grid="true"]').last();
-  await expect(grid).toBeVisible();
+  await expectResourceGridReady(grid);
   const geometry = await grid.evaluate((element) => {
     const item = element.firstElementChild;
     if (!item) throw new Error('Resource-card grid requires at least one fixture item');
@@ -66,7 +77,7 @@ async function expectDistributedCardTracksInFullWidthCatalog(page: Page, route: 
   const shellContent = page.locator('.page-shell > div').first();
   const catalog = page.locator('[data-resource-card-catalog="true"]').last();
   const grid = page.locator('[data-resource-card-grid="true"]').last();
-  await expect(grid).toBeVisible();
+  await expectResourceGridReady(grid);
 
   const shellBox = await shellContent.boundingBox();
   const catalogBox = await catalog.boundingBox();
@@ -90,7 +101,7 @@ async function expectDistributedCardTracksInFullWidthCatalog(page: Page, route: 
 async function expectTwoBoundedCardTracks(page: Page, route: string) {
   await page.goto(route, { waitUntil: 'domcontentloaded' });
   const grid = page.locator('[data-resource-card-grid="true"]').last();
-  await expect(grid).toBeVisible();
+  await expectResourceGridReady(grid);
 
   const geometry = await grid.evaluate((element) => {
     const firstItem = element.firstElementChild;

@@ -78,7 +78,7 @@ jobs:
       - name: Skip expensive CI
         run: echo "Only Markdown/docs files changed; expensive CI jobs skipped."
 
-  validate:
+  preflight:
     needs: changes
     if: needs.changes.outputs.run_full == 'true'
     runs-on: ubuntu-latest
@@ -91,19 +91,10 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: npm ci
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-      - name: Run validation
+      - name: Run preflight validation
         env:
           CHANGESET_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: npm run validate:ci
-      - name: Upload browser failure artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-test-results
-          path: test-results
-          if-no-files-found: ignore
+        run: npm run validate:ci:preflight
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
@@ -116,3 +107,56 @@ jobs:
           files: coverage/lcov.info
           flags: frontend
           fail_ci_if_error: false
+
+  browser:
+    name: browser / ${{ matrix.name }}
+    needs: preflight
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: snapshots
+            command: npm run design:snapshots
+            results: test-results
+          - name: fixtures
+            command: npm run smoke:fixtures
+            results: test-results/fixtures
+          - name: mcp-parity
+            command: npm run smoke:mcp-parity
+            results: test-results/mcp-parity
+          - name: routes-desktop-light
+            command: npm run design:routes -- --project=desktop-light
+            results: test-results/design-routes
+          - name: routes-desktop-dark
+            command: npm run design:routes -- --project=desktop-dark
+            results: test-results/design-routes
+          - name: routes-mobile-light
+            command: npm run design:routes -- --project=mobile-light
+            results: test-results/design-routes
+          - name: routes-mobile-dark
+            command: npm run design:routes -- --project=mobile-dark
+            results: test-results/design-routes
+          - name: routes-sidebar-constrained
+            command: npm run design:routes -- --project=sidebar-constrained
+            results: test-results/design-routes
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run browser validation
+        run: ${{ matrix.command }}
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-${{ matrix.name }}-failure
+          path: ${{ matrix.results }}
+          if-no-files-found: ignore

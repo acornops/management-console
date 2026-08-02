@@ -28,8 +28,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "smoke:routes": "node scripts/smoke-routes.mjs",
-    "smoke:fixtures": "playwright test --config=playwright.fixtures.config.ts --retries=0 --repeat-each=3",
-    "smoke:mcp-parity": "playwright test --config=playwright.mcp-parity.config.ts --retries=0 --repeat-each=3",
+    "smoke:fixtures": "playwright test --config=playwright.fixtures.config.ts --retries=0",
+    "smoke:mcp-parity": "playwright test --config=playwright.mcp-parity.config.ts --retries=0",
     "smoke:nginx": "node scripts/smoke-nginx-headers.mjs",
     "membership:check": "node scripts/check-workspace-membership.mjs",
     "contracts:check": "node scripts/check-contracts.mjs",
@@ -45,7 +45,9 @@
     "release:packages": "changeset publish",
     "validate": "npm run ui:check && npm run design:check && npm run design:adoption && npm run app:typecheck && npm run test && npm run membership:check && npm run contracts:check && npm run harness:check && vite build && npm run bundle:check && npm run smoke:routes",
     "validate:full": "npm run validate && npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity",
-    "validate:ci": "npm run ui:check && npm run design:check && npm run design:adoption && npm run lint && npm run test:coverage && npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity && npm run membership:check && npm run contracts:check && npm run harness:check && npm run build && npm run bundle:check && npm run smoke:routes"
+    "validate:ci:preflight": "npm run lint && npm run changeset:check && npm run ui:build && npm run ui:exports && npm run ui:pack && npm run design:check && npm run design:adoption && npm run test:coverage && npm run membership:check && npm run contracts:check && npm run harness:check && vite build && npm run bundle:check && npm run smoke:routes",
+    "validate:ci:browser": "npm run design:snapshots && npm run design:routes && npm run smoke:fixtures && npm run smoke:mcp-parity",
+    "validate:ci": "npm run validate:ci:preflight && npm run validate:ci:browser"
   },
   "dependencies": {
     "@acornops/ui": "workspace:*",

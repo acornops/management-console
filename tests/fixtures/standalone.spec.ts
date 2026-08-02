@@ -53,7 +53,9 @@ test('webhooks hub aggregates inbound endpoints and returns configuration to the
 
   await inboundWebhook.getByRole('link', { name: 'Manage in workflow' }).click();
   await expect(page).toHaveURL(/\/workspaces\/fixture-workspace\/workflows\?workflow=fixture-workflow&tab=webhooks/);
-  await expect(page.getByRole('tab', { name: 'Inbound Webhooks' })).toHaveAttribute('aria-selected', 'true');
+  await expect(
+    page.getByRole('tablist', { name: 'Workflow detail sections' }).getByRole('tab', { name: 'Webhooks' })
+  ).toHaveAttribute('aria-selected', 'true');
 });
 
 test('outbound webhooks expose history, confirmation, and one-time secret flows', async ({ page }) => {
@@ -254,12 +256,15 @@ test('automation ledgers replace column headings with filtered-empty states', as
   await expect(scheduleLedger.getByRole('columnheader')).toHaveCount(0);
 
   await page.goto('/workspaces/fixture-workspace/workflows/incoming-webhooks', { waitUntil: 'domcontentloaded' });
-  const incomingWebhookLedger = page.getByRole('region', { name: 'Incoming workflow webhooks' });
-  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toBeVisible();
-  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Workflow$/ })).toBeVisible();
-  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Configuration$/ })).toBeVisible();
-  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Activity$/ })).toBeVisible();
-  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Actions$/ })).toBeVisible();
+  const incomingWebhookLedger = page.getByRole('region', { name: 'Inbound workflow webhooks' });
+  const incomingWebhookColumns = incomingWebhookLedger.locator('.type-label');
+  await expect(incomingWebhookColumns).toHaveText([
+    'Webhook',
+    'Workflow',
+    'Configuration',
+    'Activity',
+    'Actions'
+  ]);
   const incomingWebhookArticle = incomingWebhookLedger.getByRole('article').filter({
     hasText: 'External production review'
   });
@@ -274,7 +279,7 @@ test('automation ledgers replace column headings with filtered-empty states', as
   await expect(incomingWebhookActions).toBeFocused();
   await page.getByRole('searchbox', { name: 'Search inbound webhooks' }).fill('not configured');
   await expect(page.getByText('No webhooks match these filters', { exact: true })).toBeVisible();
-  await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toHaveCount(0);
+  await expect(incomingWebhookColumns).toHaveCount(0);
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
   const webhookLedger = page.getByRole('region', { name: 'Configured webhooks' });

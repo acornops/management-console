@@ -347,8 +347,9 @@ test('workflow workspace routes preserve stable scope and responsive geometry', 
   expect(scheduleTableGeometry.scrollWidth).toBeLessThanOrEqual(scheduleTableGeometry.clientWidth + 1);
 
   await workflowSections.getByRole('tab', { name: /^Runs/ }).click();
-  const runsFrame = page.locator('[data-search-filter-frame="true"]:visible');
-  const runsLedger = page.getByRole('region', { name: 'Workflow runs' });
+  const runsPanel = page.locator('#workflow-section-activity-panel');
+  const runsFrame = runsPanel.locator('[data-search-filter-frame="true"]');
+  const runsLedger = runsPanel.getByRole('region', { name: 'Workflow runs' });
   await expect(runsFrame).toBeVisible();
   const [runsFrameBox, runsSearchBox, runsFiltersBox, runsSummaryBox, runsLedgerBox, runRowPadding] = await Promise.all([
     runsFrame.boundingBox(),
