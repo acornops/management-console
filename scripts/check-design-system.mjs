@@ -156,7 +156,7 @@ const canonicalHeadingRole = /(?:^|[\s'"`])type-(?:route-title|section-title|pan
 const prohibitedActionTypography = /(?:^|[\s'"`])(?:type-(?:body|caption|label|micro-label|emphasis)|font-(?:bold|extrabold)|uppercase|tracking-(?:wide|wider|widest))(?=$|[\s'"`}])/;
 const approvedButtonSizingHelpers = /(?:buttonClassName|closeButtonClassName|menuOptionClassName|navigationItemClassName|segmentedTabButtonClassName|filterToggleButtonClassName)\s*\(/;
 const canonicalButtonTarget = /(?:^|[\s'"`])(?:control-target|min-h-11|h-11|min-h-12|h-12|min-h-control|h-control)(?=$|[\s'"`])/;
-const semanticTextRole = /(?:^|[\s'"`])type-(?:body|caption|ui|label|micro-label|emphasis|row-title)(?=$|[\s'"`}])/;
+const semanticTextRole = /(?:^|[\s'"`])type-(?:body|caption|ui|compact-ui|label|micro-label|emphasis|row-title)(?=$|[\s'"`}])/;
 const typographyRoleUse = /(?:^|[\s'"`])(?<role>type-[a-z0-9-]+)(?=$|[\s'"`}])/g;
 const canonicalTypographyRoles = new Set([
   'type-route-title',
@@ -165,6 +165,7 @@ const canonicalTypographyRoles = new Set([
   'type-row-title',
   'type-body',
   'type-ui',
+  'type-compact-ui',
   'type-emphasis',
   'type-wordmark',
   'type-caption',
@@ -181,6 +182,7 @@ const completeTypographyRoles = new Set([
   'type-row-title',
   'type-body',
   'type-ui',
+  'type-compact-ui',
   'type-caption',
   'type-label',
   'type-micro-label',
@@ -318,7 +320,7 @@ for (const path of files) {
     const tagName = opening.source.match(/^<([A-Za-z][A-Za-z0-9.]*)/)?.[1];
     if (!tagName || ['button', 'motion.button', 'Button', 'MotionButton', 'IconTile'].includes(tagName)) continue;
     const classNameSource = topLevelClassNameValues(opening.source).map(({ value }) => value).join(' ');
-    if (!classNameSource || classNameSource.includes('pending-agent-step-pulse')) continue;
+    if (!classNameSource) continue;
     const isCenteredSquare = /(?:^|\s)(?:flex|inline-flex)(?:\s|$)/.test(classNameSource)
       && /(?:^|\s)items-center(?:\s|$)/.test(classNameSource)
       && /(?:^|\s)justify-center(?:\s|$)/.test(classNameSource)

@@ -39,4 +39,26 @@ describe('initial collection loading continuity', () => {
       'state?.isLoading && cards.length === 0'
     );
   });
+
+  it('keeps capability, embedded-table, and resource collections structurally loaded', () => {
+    for (const path of [
+      'src/features/targets/admin/TargetToolsView.tsx',
+      'src/features/targets/admin/TargetSkillsView.tsx'
+    ]) {
+      expect(readSource(path), path).toContain('<TargetCapabilityInventoryLoading');
+    }
+
+    expect(readSource('src/features/targets/admin/McpServersView.tsx')).toContain('<McpServersCatalogLoading');
+
+    expect(readSource('src/features/targets/admin/McpServerToolsDialog.tsx')).toContain('<CollectionLoadingSkeleton');
+    expect(readSource('src/pages/WorkspaceCatalogSources.tsx')).toContain('<CollectionLoadingSkeleton');
+    expect(readSource('src/pages/WorkspaceOverviewPage.tsx')).toContain('<CollectionLoadingSkeleton');
+    expect(readSource('src/pages/virtual-machines/VirtualMachineResourcesView.tsx')).toContain('<CollectionLoadingSkeleton');
+    expect(readSource('src/pages/WorkspaceWebhookDrawerTable.tsx')).toContain('<TableLoadingRows columns={5}');
+    expect(readSource('src/pages/WorkspaceScheduleDrawerTable.tsx')).toContain('<TableLoadingRows columns={5}');
+    expect(readSource('src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer.tsx')).toContain(
+      'shouldShowInitialCollectionLoading'
+    );
+    expect(readSource('src/features/targets/admin/McpServersDialogs.tsx')).toContain('<CollectionLoadingSkeleton');
+  });
 });

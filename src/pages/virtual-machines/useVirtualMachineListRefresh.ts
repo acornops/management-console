@@ -29,6 +29,7 @@ export function useVirtualMachineListRefresh({
     controlPlaneApi.listVirtualMachinesForWorkspace(workspaceId, { limit, cursor, signal })
   ), [workspaceId]);
   const collection = useCursorCollection({
+    cacheKey: `workspace:${workspaceId}:virtual-machines`,
     filters: { workspaceId },
     getKey: (virtualMachine: ControlPlaneVirtualMachine) => virtualMachine.id,
     loadPage: loadVirtualMachinePage,

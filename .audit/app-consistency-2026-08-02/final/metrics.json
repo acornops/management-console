@@ -1,0 +1,607 @@
+[
+  {
+    "profile": "desktop-light",
+    "route": "workspace-overview",
+    "path": "/workspaces/fixture-workspace/overview",
+    "file": "desktop-light--workspace-overview.png",
+    "title": "Workspace Overview",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "agents",
+    "path": "/workspaces/fixture-workspace/agents",
+    "file": "desktop-light--agents.png",
+    "title": "Agents",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "4 of 4 agents",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "workflows",
+    "path": "/workspaces/fixture-workspace/workflows",
+    "file": "desktop-light--workflows.png",
+    "title": "Workflows",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "3 workflows",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      },
+      {
+        "text": "3 workflows",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "activity",
+    "path": "/workspaces/fixture-workspace/activity",
+    "file": "desktop-light--activity.png",
+    "title": "Workflows",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "4 open · 2 need attention",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "members",
+    "path": "/workspaces/fixture-workspace/members",
+    "file": "desktop-light--members.png",
+    "title": "Workspace Settings",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 3 of 3 members",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      },
+      {
+        "text": "1 loaded links",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "ai-settings",
+    "path": "/workspaces/fixture-workspace/ai-settings",
+    "file": "desktop-light--ai-settings.png",
+    "title": "Workspace Settings",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "The selected default provider is ready for new assistant runs.",
+        "className": "type-caption flex items-start gap-3 rounded-lg border px-4 py-3 border-ui-border bg-ui-bg text-ui-text-muted min-h-14"
+      }
+    ],
+    "errors": [
+      "Failed loading workspace invitations TypeError: Failed to fetch\n    at requestJson (http://127.0.0.1:4188/src/services/control-plane/http.ts:125:26)\n    at Object.listWorkspaceInvitationsPage (http://127.0.0.1:4188/src/services/controlPlaneApi.ts:136:78)\n    at Object.listWorkspaceInvitations (http://127.0.0.1:4188/src/services/controlPlaneApi.ts:126:29)\n    at refreshWorkspaceInvitations (http://127.0.0.1:4188/src/app/useAppSupport.ts:136:47)\n    at http://127.0.0.1:4188/src/app/useAppSupport.ts:147:10\n    at Object.react_stack_bottom_frame (http://127.0.0.1:4188/node_modules/.vite/deps/react-dom_client.js?v=2e7b4b30:18567:20)\n    at runWithFiberInDEV (http://127.0.0.1:4188/node_modules/.vite/deps/react-dom_client.js?v=2e7b4b30:997:72)\n    at commitHookEffectListMount (http://127.0.0.1:4188/node_modules/.vite/deps/react-dom_client.js?v=2e7b4b30:9411:163)\n    at commitHookPassiveMountEffects (http://127.0.0.1:4188/node_modules/.vite/deps/react-dom_client.js?v=2e7b4b30:9465:60)\n    at commitPassiveMountOnFiber (http://127.0.0.1:4188/node_modules/.vite/deps/react-dom_client.js?v=2e7b4b30:11040:29)"
+    ]
+  },
+  {
+    "profile": "desktop-light",
+    "route": "workspace-settings",
+    "path": "/workspaces/fixture-workspace/settings?section=mcp-registries",
+    "file": "desktop-light--workspace-settings.png",
+    "title": "Workspace Settings",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "cluster-overview",
+    "path": "/kubernetes-clusters/fixture-cluster/overview",
+    "file": "desktop-light--cluster-overview.png",
+    "title": "Cluster Overview",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "cluster-resources",
+    "path": "/kubernetes-clusters/fixture-cluster/resources",
+    "file": "desktop-light--cluster-resources.png",
+    "title": "Resources",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "cluster-mcp-servers",
+    "path": "/kubernetes-clusters/fixture-cluster/mcp-servers",
+    "file": "desktop-light--cluster-mcp-servers.png",
+    "title": "MCP Servers",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 1 of 1",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "cluster-skills",
+    "path": "/kubernetes-clusters/fixture-cluster/skills",
+    "file": "desktop-light--cluster-skills.png",
+    "title": "Skills",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 1 of 1",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "cluster-tools",
+    "path": "/kubernetes-clusters/fixture-cluster/tools",
+    "file": "desktop-light--cluster-tools.png",
+    "title": "Tools",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 3 of 3",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "vm-overview",
+    "path": "/workspaces/fixture-workspace/virtual-machines/fixture-vm/overview",
+    "file": "desktop-light--vm-overview.png",
+    "title": "Overview",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "vm-mcp-servers",
+    "path": "/workspaces/fixture-workspace/virtual-machines/fixture-vm/mcp-servers",
+    "file": "desktop-light--vm-mcp-servers.png",
+    "title": "MCP Servers",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 1 of 1",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-light",
+    "route": "account-settings",
+    "path": "/account",
+    "file": "desktop-light--account-settings.png",
+    "title": "Account Settings",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 422 ()"
+    ]
+  },
+  {
+    "profile": "desktop-dark",
+    "route": "workspace-overview",
+    "path": "/workspaces/fixture-workspace/overview",
+    "file": "desktop-dark--workspace-overview.png",
+    "title": "Workspace Overview",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-dark",
+    "route": "members",
+    "path": "/workspaces/fixture-workspace/members",
+    "file": "desktop-dark--members.png",
+    "title": "Workspace Settings",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 3 of 3 members",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      },
+      {
+        "text": "1 loaded links",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-dark",
+    "route": "cluster-overview",
+    "path": "/kubernetes-clusters/fixture-cluster/overview",
+    "file": "desktop-dark--cluster-overview.png",
+    "title": "Cluster Overview",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-dark",
+    "route": "cluster-mcp-servers",
+    "path": "/kubernetes-clusters/fixture-cluster/mcp-servers",
+    "file": "desktop-dark--cluster-mcp-servers.png",
+    "title": "MCP Servers",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 1 of 1",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "desktop-dark",
+    "route": "vm-overview",
+    "path": "/workspaces/fixture-workspace/virtual-machines/fixture-vm/overview",
+    "file": "desktop-dark--vm-overview.png",
+    "title": "Overview",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "desktop-dark",
+    "route": "account-settings",
+    "path": "/account",
+    "file": "desktop-dark--account-settings.png",
+    "title": "Account Settings",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 422 ()"
+    ]
+  },
+  {
+    "profile": "mobile-light",
+    "route": "workspace-overview",
+    "path": "/workspaces/fixture-workspace/overview",
+    "file": "mobile-light--workspace-overview.png",
+    "title": "Workspace Overview",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "mobile-light",
+    "route": "members",
+    "path": "/workspaces/fixture-workspace/members",
+    "file": "mobile-light--members.png",
+    "title": "Workspace Settings",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 3 of 3 members",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      },
+      {
+        "text": "1 loaded links",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "mobile-light",
+    "route": "cluster-overview",
+    "path": "/kubernetes-clusters/fixture-cluster/overview",
+    "file": "mobile-light--cluster-overview.png",
+    "title": "Cluster Overview",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "mobile-light",
+    "route": "cluster-mcp-servers",
+    "path": "/kubernetes-clusters/fixture-cluster/mcp-servers",
+    "file": "mobile-light--cluster-mcp-servers.png",
+    "title": "MCP Servers",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 1 of 1",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "mobile-light",
+    "route": "vm-overview",
+    "path": "/workspaces/fixture-workspace/virtual-machines/fixture-vm/overview",
+    "file": "mobile-light--vm-overview.png",
+    "title": "Overview",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "mobile-light",
+    "route": "account-settings",
+    "path": "/account",
+    "file": "mobile-light--account-settings.png",
+    "title": "Account Settings",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 422 ()"
+    ]
+  },
+  {
+    "profile": "mobile-dark",
+    "route": "members",
+    "path": "/workspaces/fixture-workspace/members",
+    "file": "mobile-dark--members.png",
+    "title": "Workspace Settings",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [
+      {
+        "text": "Showing 3 of 3 members",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap xl:justify-end"
+      },
+      {
+        "text": "1 loaded links",
+        "className": "type-caption inline-flex min-h-11 min-w-0 items-center text-ui-text-muted tabular-nums lg:whitespace-nowrap"
+      }
+    ],
+    "errors": []
+  },
+  {
+    "profile": "mobile-dark",
+    "route": "cluster-mcp-servers",
+    "path": "/kubernetes-clusters/fixture-cluster/mcp-servers",
+    "file": "mobile-dark--cluster-mcp-servers.png",
+    "title": "",
+    "htmlDark": false,
+    "horizontalOverflow": 0,
+    "headingStyle": null,
+    "summaries": [],
+    "errors": []
+  },
+  {
+    "profile": "mobile-dark",
+    "route": "account-settings",
+    "path": "/account",
+    "file": "mobile-dark--account-settings.png",
+    "title": "Account Settings",
+    "htmlDark": true,
+    "horizontalOverflow": 0,
+    "headingStyle": {
+      "fontFamily": "Outfit, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px"
+    },
+    "summaries": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 422 ()"
+    ]
+  }
+]

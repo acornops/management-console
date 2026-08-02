@@ -44,6 +44,7 @@ import {
 } from '@/features/targets/chat/hooks/chatDraftSession';
 import { isInFlightAssistantMessage } from '@/features/targets/chat/hooks/chatMessageVisibility';
 import { useTargetChatSessionDeepLink } from '@/features/targets/chat/hooks/useTargetChatSessionDeepLink';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 export type { TargetChatController } from '@/features/targets/chat/hooks/targetChatControllerTypes';
 export function useTargetChat({
   target,
@@ -59,13 +60,14 @@ export function useTargetChat({
   const { t } = useTranslation();
   const sessions = sortSessionsByTimestamp(target.chatSessions);
   const defaultSessionId = selectDefaultChatSessionId(sessions);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(initialActiveSessionId || defaultSessionId);
+  const chatCachePrefix = `workspace:${target.workspaceId}:target:${target.id}:chat:`;
+  const [activeSessionId, setActiveSessionId] = useSessionCachedState<string | null>(`${chatCachePrefix}active-session`, initialActiveSessionId || defaultSessionId);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [isCancellingRun, setIsCancellingRun] = useState(false);
   const [isLoadingEarlierMessages, setIsLoadingEarlierMessages] = useState(false);
-  const [runTracesByRunId, setRunTracesByRunId] = useState<Record<string, LiveRunTrace>>({});
+  const [runTracesByRunId, setRunTracesByRunId] = useSessionCachedState<Record<string, LiveRunTrace>>(`${chatCachePrefix}run-traces`, {});
   const runTracesByRunIdRef = useRef<Record<string, LiveRunTrace>>({});
   const [traceExpandedByRunId, setTraceExpandedByRunId] = useState<Record<string, boolean>>({});
   const loadingEarlierMessagesRef = useRef(false);
@@ -174,7 +176,6 @@ export function useTargetChat({
   }, [target.id]);
   useEffect(() => { runTracesByRunIdRef.current = runTracesByRunId; }, [runTracesByRunId]);
   useEffect(() => { latestSessionsRef.current = sessions; }, [sessions]);
-
   const { isSessionsLoading, clearHydratingSession } = useControlPlaneChatSessionSync({
     target,
     activeSessionId,
@@ -221,7 +222,6 @@ export function useTargetChat({
   });
   const isInFlightAssistantPlaceholder = (message: ChatMessage): boolean =>
     isInFlightAssistantMessage(message, isRunActive, runTracesByRunId);
-
   const visibleMessages = filterMessagesByRunIds(sanitizeChatMessages(messages), suppressedHydrationRunIdsRef.current)
     .filter((message) => !isBlankAssistantMessage(message) || isInFlightAssistantPlaceholder(message));
   const hasEarlierMessages = Boolean(activeSession.backendSessionId && activeSession.messagesNextCursor);

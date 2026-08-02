@@ -16,6 +16,7 @@ import type {
   ControlPlaneWebhookSubscription
 } from '@/services/controlPlaneApi';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 interface WebhookListProps {
   webhooks: ControlPlaneWebhookSubscription[];
@@ -231,7 +232,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                             {entry.terminalReason && (
                               <span className="mt-1 block text-ui-text">
                                 {t(`workspaceWebhooks.terminalReason.${entry.terminalReason}`, {
-                                  defaultValue: entry.terminalReason.replaceAll('_', ' ')
+                                  defaultValue: formatIdentifierLabel(entry.terminalReason)
                                 })}
                               </span>
                             )}

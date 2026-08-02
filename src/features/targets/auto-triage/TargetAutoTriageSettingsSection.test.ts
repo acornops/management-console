@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
   isSameAutoTriageDraft,
@@ -17,6 +17,7 @@ import {
   validateAutoTriageNamespaceList
 } from '@/features/targets/auto-triage/autoTriageNamespaceValidation';
 import type { TargetAutoTriageSettings } from '@/services/controlPlaneApi';
+import { clearSessionDataCache, writeSessionDataCache } from '@/hooks/sessionDataCache';
 
 function settings(): TargetAutoTriageSettings {
   return {
@@ -53,6 +54,8 @@ function settings(): TargetAutoTriageSettings {
 }
 
 describe('target auto-triage settings draft', () => {
+  beforeEach(() => clearSessionDataCache());
+
   it('marks the settings section with the shared experimental treatment', () => {
     const markup = renderToStaticMarkup(
       React.createElement(TargetAutoTriageSettingsSection, {
@@ -79,6 +82,23 @@ describe('target auto-triage settings draft', () => {
       namespaceExcludeText: '',
       includeClusterScopedIssues: true
     });
+  });
+
+  it('renders a cached target snapshot immediately on revisit', () => {
+    writeSessionDataCache('workspace:workspace-1:target:target-1:auto-triage-settings', settings());
+
+    const markup = renderToStaticMarkup(
+      React.createElement(TargetAutoTriageSettingsSection, {
+        workspaceId: 'workspace-1',
+        targetId: 'target-1',
+        targetType: 'kubernetes',
+        canManageTargets: true,
+        canCreateReadWriteRuns: true
+      })
+    );
+
+    expect(markup).toContain('autoTriage.enabledLabel');
+    expect(markup).not.toContain('autoTriage.loading');
   });
 
   it('normalizes comma and newline separated namespace eligibility', () => {

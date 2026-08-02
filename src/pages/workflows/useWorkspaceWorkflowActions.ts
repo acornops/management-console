@@ -1,4 +1,4 @@
-import { getOptimisticWorkflowRunStatus, type WorkflowDefinition, type WorkflowRunMessage } from '@/pages/workflows/workflowModel';
+import { getOptimisticWorkflowRunStatus, type WorkflowDefinition } from '@/pages/workflows/workflowModel';
 import {
   cancelWorkflowRun,
   createWorkflow,
@@ -7,8 +7,7 @@ import {
   deleteWorkflow,
   listWorkflowRunEvents,
   postWorkflowSessionMessage,
-  updateWorkflow,
-  type WorkflowRunEvent
+  updateWorkflow
 } from '@/services/control-plane/workflowApi';
 import {
   agentIdsFromDraft,
@@ -28,19 +27,18 @@ type WorkflowActionsContext = Record<string, any>;
 export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   const {
     workspace, workflows, setWorkflows,
-    selectedWorkflow, selectedWorkflowEditDraft, setWorkflowSessionIds,
+    selectedWorkflow, selectedWorkflowEditDraft,
     setLaunchDrawerWorkflowId,
     setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setActiveView, setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns, setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setCancelRunError, setCancelRunAction,
-    workflowRunMessageDrafts, setWorkflowRunMessageDrafts, setWorkflowRunMessages,
-    setWorkflowRunMessageSendingId, setWorkflowRunMessageErrorByRunId, setWorkflowRunMessageRecoveryByRunId,
     setNewWorkflowTag,
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
+    workflowUndoCheckpoint, setWorkflowUndoCheckpoint,
     setDeleteWorkflowId, setUpdatingWorkflowId, selectResultingWorkflow, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
     canManageWorkflows, workflowOptionsReady, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
-    setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
+    setEditingAgentSelectionId, setAgentSelectionError, setSavingAgentSelectionId,
     ownerLabelsByUserId: providedOwnerLabelsByUserId, workflowAgents
   } = ctx;
   const ownerLabelEntries: Array<[string, string]> = (workspace.members || [])
@@ -92,9 +90,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       : workflow));
     setLaunchingWorkflowId(selectedWorkflow.id);
     try {
-      const sessionResponse = await createWorkflowSession(workspace.id, selectedWorkflow.id, {
-        approvedContextGrants: selectedWorkflow.contextGrants
-      });
+      const sessionResponse = await createWorkflowSession(workspace.id, selectedWorkflow.id);
       const effectiveSessionId = sessionResponse.session.id;
       const result = await postWorkflowSessionMessage(effectiveSessionId, {
         kind: 'launch'
@@ -103,7 +99,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         throw new Error('The control plane accepted the workflow message without returning a run ID.');
       }
       const runId = result.run_id;
-      setWorkflowSessionIds((current) => ({ ...current, [runId]: effectiveSessionId }));
       setLaunchDrawerWorkflowId('');
       const confirmedRun: WorkflowDefinition['runs'][number] = {
         ...optimisticRun,
@@ -127,38 +122,12 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
             runs: workflow.runs.map((run) => run.id === optimisticRunId || run.runId === optimisticRunId ? confirmedRun : run)
           }
         : workflow));
-      const confirmedMessageRunId = confirmedRun.runId || confirmedRun.id;
-      setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => {
-        const localMessages = current[optimisticRunId] || [];
-        if (localMessages.length === 0) return current;
-        const next = {
-          ...current,
-          [confirmedMessageRunId]: [
-            ...(current[confirmedMessageRunId] || []),
-            ...localMessages.map((message) => ({ ...message, runId: confirmedMessageRunId }))
-          ]
-        };
-        delete next[optimisticRunId];
-        return next;
-      });
-      setWorkflowRunMessageDrafts((current: Record<string, string>) => {
-        if (!current[optimisticRunId]) return current;
-        const next = { ...current, [confirmedMessageRunId]: current[confirmedMessageRunId] || current[optimisticRunId] };
-        delete next[optimisticRunId];
-        return next;
-      });
-      setWorkflowRunMessageErrorByRunId((current: Record<string, string>) => {
-        if (!current[optimisticRunId]) return current;
-        const next = { ...current, [confirmedMessageRunId]: current[confirmedMessageRunId] || current[optimisticRunId] };
-        delete next[optimisticRunId];
-        return next;
-      });
     } catch (error) {
       const recoveryAgentId = selectedWorkflow.agentIds[0];
       const recovery = recoveryAgentId
         ? resolveMcpReadinessRecovery(error, { workspaceId: workspace.id, scopeType: 'agent', agentId: recoveryAgentId })
         : null;
-      const message = recovery?.message || (error instanceof Error ? error.message : 'Unable to launch workflow');
+      const message = recovery?.message || 'The workflow could not be launched. Review readiness and try again.';
       setLaunchRecovery(recovery);
       const failedRun: WorkflowDefinition['runs'][number] = {
         ...optimisticRun,
@@ -185,86 +154,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }
   }
 
-  function updateWorkflowRunMessageDraft(runId: string, value: string): void {
-    setWorkflowRunMessageErrorByRunId((current: Record<string, string>) => {
-      if (!current[runId]) return current;
-      const next = { ...current };
-      delete next[runId];
-      return next;
-    });
-    setWorkflowRunMessageRecoveryByRunId((current: Record<string, unknown>) => {
-      if (!current[runId]) return current;
-      const next = { ...current };
-      delete next[runId];
-      return next;
-    });
-    setWorkflowRunMessageDrafts((current: Record<string, string>) => ({ ...current, [runId]: value }));
-  }
-
-  async function sendWorkflowRunMessage(runId: string, sessionId: string): Promise<void> {
-    const content = (workflowRunMessageDrafts[runId] || '').trim();
-    if (!content) return;
-    if (!sessionId) {
-      setWorkflowRunMessageErrorByRunId((current: Record<string, string>) => ({ ...current, [runId]: 'Workflow session is not ready yet.' }));
-      return;
-    }
-    const messageId = `workflow-run-message-${Date.now()}`;
-    const optimisticMessage: WorkflowRunMessage = {
-      id: messageId,
-      runId,
-      role: 'operator',
-      author: 'You',
-      content,
-      createdAt: 'Just now',
-      status: 'sending'
-    };
-    setWorkflowRunMessageErrorByRunId((current: Record<string, string>) => {
-      if (!current[runId]) return current;
-      const next = { ...current };
-      delete next[runId];
-      return next;
-    });
-    setWorkflowRunMessageDrafts((current: Record<string, string>) => ({ ...current, [runId]: '' }));
-    setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({
-      ...current,
-      [runId]: [
-        ...(current[runId] || []),
-        optimisticMessage
-      ]
-    }));
-    setWorkflowRunMessageSendingId(runId);
-    try {
-      await postWorkflowSessionMessage(sessionId, {
-        kind: 'follow_up',
-        content
-      });
-      setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({
-        ...current,
-        [runId]: (current[runId] || []).map((message) => message.id === messageId
-          ? { ...message, status: 'sent' }
-          : message)
-      }));
-    } catch (error) {
-      const recoveryAgentId = selectedWorkflow?.agentIds[0];
-      const recovery = recoveryAgentId
-        ? resolveMcpReadinessRecovery(error, { workspaceId: workspace.id, scopeType: 'agent', agentId: recoveryAgentId })
-        : null;
-      const message = recovery?.message || (error instanceof Error ? error.message : 'Unable to send workflow message');
-      setWorkflowRunMessageErrorByRunId((current: Record<string, string>) => ({ ...current, [runId]: message }));
-      if (recovery) {
-        setWorkflowRunMessageRecoveryByRunId((current: Record<string, unknown>) => ({ ...current, [runId]: recovery }));
-      }
-      setWorkflowRunMessages((current: Record<string, WorkflowRunMessage[]>) => ({
-        ...current,
-        [runId]: (current[runId] || []).map((item) => item.id === messageId
-          ? { ...item, status: 'failed' }
-          : item)
-      }));
-    } finally {
-      setWorkflowRunMessageSendingId('');
-    }
-  }
-
   async function decideApproval(runId: string, approvalId: string, decision: 'approved' | 'rejected'): Promise<void> {
     if (!isServerWorkflowRunId(runId)) return;
     setApprovalError('');
@@ -275,8 +164,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         ...current,
         [runId]: (current[runId] || []).map((item) => item.id === approval.id ? approval : item)
       }));
-    } catch (error) {
-      setApprovalError(error instanceof Error ? error.message : 'Unable to decide workflow approval');
+    } catch {
+      setApprovalError('The approval decision could not be saved. No decision was recorded; try again.');
     } finally {
       setApprovalAction('');
     }
@@ -294,8 +183,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     try {
       const events = await listWorkflowRunEvents(runId);
       setRunEventsByRunId((current) => ({ ...current, [runId]: events }));
-    } catch (error) {
-      setRunLogError(error instanceof Error ? error.message : 'Unable to load workflow run logs');
+    } catch {
+      setRunLogError('Run details could not be loaded. Retry from this run.');
     }
   }
 
@@ -325,8 +214,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
           }
         ]
       }));
-    } catch (error) {
-      setCancelRunError(error instanceof Error ? error.message : 'Unable to stop workflow run');
+    } catch {
+      setCancelRunError('The stop request could not be sent. Check the run status and try again.');
     } finally {
       setCancelRunAction('');
     }
@@ -335,7 +224,12 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   async function persistWorkflowTags(workflow: WorkflowDefinition, tags: string[]): Promise<boolean> {
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
+    if (!canManageWorkflows) {
+      setWorkflowUpdateError('You need manage_workflows to update workflow tags.');
+      return false;
+    }
     setUpdatingWorkflowId(workflow.id);
+    setWorkflowUndoCheckpoint(workflow);
     try {
       const updated = await updateWorkflow(workspace.id, workflow.id, {
         agentIds: workflow.agentIds,
@@ -348,8 +242,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       setWorkflowEditDrafts((current) => ({ ...current, [workflow.id]: createWorkflowEditDraft(mapped) }));
       setWorkflowUpdateResult('Workflow tags updated.');
       return true;
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow tags');
+    } catch {
+      setWorkflowUpdateError('Workflow tags could not be saved. Your current tags are unchanged. Try again.');
       return false;
     } finally {
       setUpdatingWorkflowId('');
@@ -398,7 +292,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   function startEditingAgentSelection(workflow: WorkflowDefinition): void {
     setAgentSelectionDrafts((current) => ({ ...current, [workflow.id]: current[workflow.id] || createAgentSelectionDraft(workflow) }));
     setAgentSelectionError('');
-    setAgentSelectionResult('');
     setEditingAgentSelectionId(workflow.id);
   }
 
@@ -409,7 +302,6 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   }
 
   function updateAgentSelectionDraft(workflowId: string, update: Partial<ReturnType<typeof createAgentSelectionDraft>>): void {
-    setAgentSelectionResult('');
     setAgentSelectionDrafts((current) => {
       const workflow = workflows.find((item) => item.id === workflowId);
       const currentDraft = current[workflowId] || (workflow ? createAgentSelectionDraft(workflow) : undefined);
@@ -423,8 +315,9 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     const draft = agentSelectionDrafts[selectedWorkflow.id] || createAgentSelectionDraft(selectedWorkflow);
     const selectedAgentIds = agentIdsFromDraft(draft);
     setAgentSelectionError('');
-    setAgentSelectionResult('');
+    setWorkflowUpdateResult('');
     setSavingAgentSelectionId(selectedWorkflow.id);
+    setWorkflowUndoCheckpoint(selectedWorkflow);
     try {
       const updated = await updateWorkflow(workspace.id, selectedWorkflow.id, {
         agentIds: selectedAgentIds
@@ -434,10 +327,10 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
         : workflow));
       setAgentSelectionDrafts((current) => ({ ...current, [selectedWorkflow.id]: createAgentSelectionDraft(mapped) }));
-      setAgentSelectionResult('Selected Agents saved. Future workflow sessions will use the updated execution mode.');
+      setWorkflowUpdateResult('Agent assignment updated.');
       setEditingAgentSelectionId('');
-    } catch (error) {
-      setAgentSelectionError(error instanceof Error ? error.message : 'Unable to save workflow agents');
+    } catch {
+      setAgentSelectionError('Agent assignments could not be saved. Your selection is still here. Try again.');
     } finally {
       setSavingAgentSelectionId('');
     }
@@ -450,6 +343,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
     setUpdatingWorkflowId(selectedWorkflow.id);
+    setWorkflowUndoCheckpoint(selectedWorkflow);
     try {
       const updated = await updateWorkflow(workspace.id, selectedWorkflow.id, {
         agentIds: selectedWorkflow.agentIds,
@@ -464,8 +358,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         : workflow));
       setWorkflowEditDrafts((current) => ({ ...current, [selectedWorkflow.id]: createWorkflowEditDraft(mapped) }));
       setWorkflowUpdateResult('Workflow updated.');
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow');
+    } catch {
+      setWorkflowUpdateError('Workflow could not be saved. Your edits are still here. Try again.');
     } finally {
       setUpdatingWorkflowId('');
     }
@@ -475,6 +369,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
     setUpdatingWorkflowId(workflow.id);
+    setWorkflowUndoCheckpoint(workflow);
     try {
       const updated = await updateWorkflow(workspace.id, workflow.id, {
         agentIds: workflow.agentIds,
@@ -485,8 +380,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         ? { ...mapped, runs: item.runs, lastRun: item.lastRun }
         : item));
       setWorkflowUpdateResult(active ? 'Workflow activated.' : 'Workflow deactivated.');
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow status');
+    } catch {
+      setWorkflowUpdateError('Workflow availability could not be changed. The previous state is preserved. Try again.');
     } finally {
       setUpdatingWorkflowId('');
     }
@@ -501,10 +396,38 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       setWorkflows(nextWorkflows);
       selectResultingWorkflow(nextWorkflows[0]?.id || '', { replace: true });
       setDeleteWorkflowId('');
-    } catch (error) {
-      setDeleteWorkflowError(error instanceof Error ? error.message : 'Unable to delete workflow');
+    } catch {
+      setDeleteWorkflowError('The workflow could not be deleted. It remains unchanged; try again.');
     } finally {
       setDeletingWorkflowId('');
+    }
+  }
+
+  async function undoLastWorkflowMutation(): Promise<void> {
+    const previous = workflowUndoCheckpoint as WorkflowDefinition | null;
+    if (!previous) return;
+    setWorkflowUpdateError('');
+    setUpdatingWorkflowId(previous.id);
+    try {
+      const updated = await updateWorkflow(workspace.id, previous.id, {
+        agentIds: previous.agentIds,
+        tags: previous.tags,
+        name: previous.name,
+        description: previous.description,
+        prompt: previous.starterPrompt,
+        status: previous.status
+      });
+      const mapped = mapApiWorkflowToDefinition(updated, previous, workspace.id, workflowOptions, ownerLabelsByUserId);
+      setWorkflows((current) => current.map((workflow) => workflow.id === previous.id
+        ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
+        : workflow));
+      setWorkflowEditDrafts((current) => ({ ...current, [previous.id]: createWorkflowEditDraft(mapped) }));
+      setWorkflowUndoCheckpoint(null);
+      setWorkflowUpdateResult('Previous workflow settings restored.');
+    } catch {
+      setWorkflowUpdateError('Undo could not be applied. The current workflow is unchanged. Try again.');
+    } finally {
+      setUpdatingWorkflowId('');
     }
   }
 
@@ -528,8 +451,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       selectResultingWorkflow(mapped.id);
       setCreateDraft(createWorkflowDraft());
       setCreatePanelOpen(false);
-    } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Unable to create workflow');
+    } catch {
+      setCreateError('The workflow could not be created. Your draft is still here; review it and try again.');
     } finally {
       setCreatingWorkflow(false);
     }
@@ -547,14 +470,13 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     removeWorkflowTag,
     saveAgentSelection,
     saveWorkflowDefinition,
+    undoLastWorkflowMutation,
     startEditingAgentSelection,
     startEditingWorkflow,
-    sendWorkflowRunMessage,
     stopWorkflowRun,
     toggleRunLogs,
     toggleWorkflowActive,
     updateAgentSelectionDraft,
-    updateWorkflowRunMessageDraft,
     updateWorkflowEditDraft
   };
 }

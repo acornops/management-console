@@ -251,7 +251,7 @@ describe('workflow control-plane api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/sessions?workspaceId=workspace-1');
   });
 
-  it('creates a workflow session with approved context grants without exposing compiled access scope', async () => {
+  it('creates a workflow session without exposing compiled access scope', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.endsWith('/api/v1/auth/csrf')) {
         return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
@@ -264,9 +264,7 @@ describe('workflow control-plane api', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(createWorkflowSession('workspace-1', 'workflow-1', {
-      approvedContextGrants: ['workspace_metadata']
-    })).resolves.toEqual({
+    await expect(createWorkflowSession('workspace-1', 'workflow-1')).resolves.toEqual({
       session: { id: 'workflow-session-1' }
     });
 
@@ -274,10 +272,7 @@ describe('workflow control-plane api', () => {
     expect(sessionCall?.[0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/sessions');
     const init = sessionCall?.[1];
     expect(init).toMatchObject({ method: 'POST', credentials: 'include' });
-    expect(JSON.parse(init?.body as string)).toEqual({
-      workspaceId: 'workspace-1',
-      approvedContextGrants: ['workspace_metadata']
-    });
+    expect(JSON.parse(init?.body as string)).toEqual({ workspaceId: 'workspace-1' });
   });
 
   it('previews workflow capabilities without creating a session or run', async () => {
@@ -292,15 +287,11 @@ describe('workflow control-plane api', () => {
     ));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(previewWorkflowCapabilities('workspace-1', 'workflow-1', {
-      approvedContextGrants: ['target_inventory']
-    })).resolves.toEqual({ ...payload, mcpRequirements: [] });
+    await expect(previewWorkflowCapabilities('workspace-1', 'workflow-1')).resolves.toEqual({ ...payload, mcpRequirements: [] });
 
     const previewCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v1/workflows/workflow-1/capabilities-preview'))!;
     expect(previewCall[0]).toBe('http://localhost:8081/api/v1/workflows/workflow-1/capabilities-preview');
-    expect(JSON.parse(previewCall[1]?.body as string)).toEqual({
-      workspaceId: 'workspace-1', approvedContextGrants: ['target_inventory']
-    });
+    expect(JSON.parse(previewCall[1]?.body as string)).toEqual({ workspaceId: 'workspace-1' });
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/sessions'))).toBe(false);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/messages'))).toBe(false);
   });
@@ -497,16 +488,14 @@ describe('workflow control-plane api', () => {
       workflowId: 'workflow-1',
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
-      timezone: 'UTC',
-      approvedContextGrants: ['workspace_metadata']
+      timezone: 'UTC'
     })).resolves.toMatchObject({ id: 'schedule-1' });
     await expect(previewWorkflowSchedule('workspace-1', {
       principal: { type: 'user', id: 'user-1' },
       workflowId: 'workflow-1',
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
-      timezone: 'UTC',
-      approvedContextGrants: ['workspace_metadata']
+      timezone: 'UTC'
     })).resolves.toMatchObject({ valid: true, summary: 'Weekdays at 09:00 (UTC)' });
     await expect(updateWorkflowSchedule('workspace-1', 'schedule-1', { enabled: false })).resolves.toMatchObject({
       id: 'schedule-1',
@@ -521,8 +510,7 @@ describe('workflow control-plane api', () => {
       workflowId: 'workflow-1',
       name: 'Daily triage',
       cron: '0 9 * * 1-5',
-      timezone: 'UTC',
-      approvedContextGrants: ['workspace_metadata']
+      timezone: 'UTC'
     });
     const patchCall = fetchMock.mock.calls.find((call) => call[1]?.method === 'PATCH');
     expect(JSON.parse(patchCall?.[1]?.body as string)).toEqual({ workspaceId: 'workspace-1', enabled: false });

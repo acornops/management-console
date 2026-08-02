@@ -129,7 +129,7 @@ export function useFloatingActionMenu({
         close(true);
         return;
       }
-      if (event.key === 'Tab' && menuRef.current?.contains(event.target as Node)) close();
+      if (event.key === 'Tab') close();
     };
     document.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('keydown', handleKeyDown, true);

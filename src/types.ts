@@ -42,6 +42,7 @@ export interface KubernetesCluster {
     criticalFindingCount: number;
     namespaceCount: number;
     nodeCount: number;
+    readyNodeCount?: number;
     resourceFamilyCounts?: {
       workloads: number;
       network: number;

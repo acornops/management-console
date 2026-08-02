@@ -49,20 +49,20 @@ describe('kubernetesIssueNamespace', () => {
 
 describe('issueSeverityTone', () => {
   it('uses the shared warning treatment for warning pills', () => {
-    expect(issueSeverityTone('warning')).toBe('bg-status-warning-soft text-status-warning-text');
+    expect(issueSeverityTone('warning')).toBe('warning');
   });
 
   it('keeps critical and informational severities semantically distinct', () => {
-    expect(issueSeverityTone('critical')).toBe('bg-status-danger-soft text-status-danger-text');
-    expect(issueSeverityTone('info')).toBe('bg-ui-surface-strong text-ui-text-muted');
+    expect(issueSeverityTone('critical')).toBe('danger');
+    expect(issueSeverityTone('info')).toBe('neutral');
   });
 });
 
 describe('issueStatusTone', () => {
   it('keeps issue status pills borderless across semantic tones', () => {
-    expect(issueStatusTone('active')).toBe('bg-ui-surface-strong text-ui-text-muted');
-    expect(issueStatusTone('recovering')).toBe('bg-status-warning-soft text-status-warning-text');
-    expect(issueStatusTone('resolved')).toBe('bg-status-success-soft text-status-success-text');
+    expect(issueStatusTone('active')).toBe('neutral');
+    expect(issueStatusTone('recovering')).toBe('warning');
+    expect(issueStatusTone('resolved')).toBe('success');
   });
 });
 

@@ -1,4 +1,4 @@
-import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, KubernetesCluster, UserQuota, WorkspaceAuditEvent } from '@/types';
+import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, UserQuota, WorkspaceAuditEvent } from '@/types';
 import type { AutomaticInvestigationSessionContext } from './autoTriageTypes';
 import type { ControlPlaneCluster } from './clusterTypes';
 export type { ControlPlaneCluster, ControlPlaneClusterSummary } from './clusterTypes';

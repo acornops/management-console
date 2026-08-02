@@ -8,6 +8,7 @@ export const FIXTURE_IDS = {
   workflowAnalystAgent: 'fixture-workflow-analyst',
   specialistAgent: 'fixture-specialist',
   kubernetesAgent: 'fixture-kubernetes-agent',
+  targetsMcpServer: 'fixture-agent-targets-mcp',
   virtualMachineAgent: 'fixture-virtual-machine-agent',
   workflow: 'fixture-workflow',
   session: 'fixture-session',
@@ -159,7 +160,7 @@ export function createFixtureState(): FixtureState {
     writeConfirmationPolicy: { effectiveRequired: true, overrideRequired: null, source: 'deployment_default' },
     agentAccessMode: 'read_write',
     summary: {
-      resourceCount: 13, findingCount: 3, criticalFindingCount: 1, namespaceCount: 2, nodeCount: 1,
+      resourceCount: 13, findingCount: 3, criticalFindingCount: 1, namespaceCount: 2, nodeCount: 1, readyNodeCount: 1,
       resourceFamilyCounts: { workloads: 7, network: 3, storage: 1, cluster: 2 },
       resourceKindCounts: { Pod: 3, Deployment: 2, Service: 1, Ingress: 1, PersistentVolumeClaim: 1, Node: 1, Namespace: 2 }
     },
@@ -183,6 +184,26 @@ export function createFixtureState(): FixtureState {
     { id: 'get_resource', name: 'get_resource', description: 'Read a Kubernetes resource', capability: 'read', enabledConfigured: true, enabledEffective: true, effectiveDisabledReason: null, source: 'builtin', version: '1.0.0' },
     { id: 'patch_resource', name: 'patch_resource', description: 'Patch a Kubernetes resource after approval', capability: 'write', enabledConfigured: true, enabledEffective: true, effectiveDisabledReason: null, source: 'builtin', version: '1.0.0' }
   ];
+  const agentTargetsMcpServer = {
+    id: FIXTURE_IDS.targetsMcpServer,
+    name: 'AcornOps Targets',
+    url: 'http://control-plane:8081/internal/v1/mcp',
+    enabled: true,
+    isSystem: true,
+    canDelete: false,
+    canEditConnection: false,
+    canToggle: true,
+    credentialMode: 'none',
+    authType: 'none',
+    revision: 1,
+    connectionStatus: 'ok',
+    lastDiscoveryError: null,
+    tools: [
+      { name: 'list_targets', serverId: FIXTURE_IDS.targetsMcpServer, alias: 'list_targets', description: 'List targets available to this Agent.', capability: 'read', enabled: true, reviewState: 'approved', riskLevel: 'read_only', autoAllowed: false },
+      { name: 'get_target', serverId: FIXTURE_IDS.targetsMcpServer, alias: 'get_target', description: 'Get one target available to this Agent.', capability: 'read', enabled: true, reviewState: 'approved', riskLevel: 'read_only', autoAllowed: false },
+      { name: 'list_target_issues', serverId: FIXTURE_IDS.targetsMcpServer, alias: 'list_target_issues', description: 'List issues for one target available to this Agent.', capability: 'read', enabled: true, reviewState: 'approved', riskLevel: 'read_only', autoAllowed: false }
+    ]
+  };
   const agents = [
     {
       id: FIXTURE_IDS.workflowAnalystAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Workflow Analyst',
@@ -193,7 +214,6 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['workspace.audit.read', 'issue.read'],
-      contextScope: ['workspace'], contextGrants: ['workspace.summary'],
       readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Repository inspection and issue triage', createdAt: EARLIER, updatedAt: NOW
     },
@@ -206,7 +226,6 @@ export function createFixtureState(): FixtureState {
       createdBy: FIXTURE_IDS.user, ownerUserId: FIXTURE_IDS.user,
       tools: [], skills: ['fixture-kubernetes-triage'],
       permissionMode: 'ask_before_changes', semanticCapabilityIds: ['infrastructure.diagnostics.read'],
-      contextScope: [], contextGrants: [],
       readiness: { status: 'ready', reasons: [] }, capabilitySummary: 'Kubernetes inspection and diagnostics', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -218,8 +237,9 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
-      tools: ['documents.create'],
-      contextScope: [], contextGrants: [], readiness: { status: 'ready', reasons: [] },
+      mcpInstallations: [agentTargetsMcpServer],
+      targetAccessPolicy: { mode: 'all', targetIds: [] },
+      tools: ['documents.create'], readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Kubernetes MCP tools', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -232,8 +252,7 @@ export function createFixtureState(): FixtureState {
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read'],
       tools: ['documents.create'],
-      contextScope: [],
-      contextGrants: [], readiness: { status: 'ready', reasons: [] },
+      readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Virtual-machine MCP tools', createdAt: EARLIER, updatedAt: NOW
     }
   ];
@@ -450,13 +469,13 @@ export function createFixtureState(): FixtureState {
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
-      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
+      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
     ],
     workflowWebhooks: [
       {
         id: 'fixture-workflow-webhook', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
-        name: 'External production review', status: 'paused', approvedContextGrants: ['workspace.summary'],
+        name: 'External production review', status: 'paused',
         principal: { type: 'user', id: FIXTURE_IDS.user },
         endpointUrl: '/api/v1/workflow-webhooks/fixture-workflow-webhook/events',
         lastReceivedAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'
@@ -561,7 +580,7 @@ export function createFixtureState(): FixtureState {
         { name: 'restart_service', description: 'Restart a Linux service after approval', capability: 'write', version: '1.0.0', source: 'builtin', enabled: true, mcp_server_url: 'builtin://agentk', timeout_ms: 10000 }
       ] }
     ],
-    agentMcpServers: [],
+    agentMcpServers: [{ ...agentTargetsMcpServer, agentId: FIXTURE_IDS.kubernetesAgent }],
     mcpConnections: {}
   };
 }

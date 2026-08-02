@@ -36,8 +36,13 @@ test('authenticated target creation enters credential verification before pendin
   await page.getByRole('menuitem', { name: /Connect by URL/ }).click();
   await page.getByLabel('Server Name').fill('Target credential server');
   await page.getByLabel('Server URL').fill('https://mcp.fixture.acornops.dev/target');
-  await selectOption(page, 'Auth Type', 'Bearer Token');
-  await page.getByRole('button', { name: 'Continue to credentials' }).click();
+  await selectOption(page, 'Auth Type', 'Custom Header');
+  const headerName = page.getByLabel('Header Name');
+  await headerName.fill('X-API-Key');
+  await expect(headerName).toHaveAttribute('aria-describedby', 'mcp-header-name-help');
+  await expect(page.getByText('You’ll enter the secret header value in the next step.')).toBeVisible();
+  await expect(page.getByText('Add credential', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue to add credential' }).click();
 
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toBeVisible();
   await expect(page.getByText('fixture_discovered_tool')).toHaveCount(0);
@@ -54,7 +59,7 @@ test('Agent credential refresh, disconnect/reconnect, and rate limit countdown a
   await page.getByLabel('Server Name').fill('Agent credential server');
   await page.getByLabel('Server URL').fill('https://mcp.fixture.acornops.dev/agent');
   await selectOption(page, 'Auth Type', 'Bearer Token');
-  await page.getByRole('button', { name: 'Continue to credentials' }).click();
+  await page.getByRole('button', { name: 'Continue to add credential' }).click();
 
   await expect(page.getByRole('heading', { name: 'Connect your credential' })).toBeVisible();
   await submitAndVerifyCredential(page, 'fixture-valid');

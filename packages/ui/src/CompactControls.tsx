@@ -29,10 +29,19 @@ export function getSegmentedTabModel<T extends string>({ items, activeValue }: {
   }));
 }
 
-export function segmentedTabButtonClassName({ isActive, className }: { isActive: boolean; className?: string }): string {
+export function segmentedTabButtonClassName({
+  isActive,
+  labelSize = 'default',
+  className
+}: {
+  isActive: boolean;
+  labelSize?: 'default' | 'compact';
+  className?: string;
+}): string {
   return twMerge(
     clsx(
-      'type-ui relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
+      labelSize === 'compact' ? 'type-compact-ui' : 'type-ui',
+      'relative -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25',
       isActive ? 'border-transparent text-ui-text' : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text',
       className
     )
@@ -57,10 +66,11 @@ export interface SegmentedTabsProps<T extends string> {
   className?: string;
   idBase?: string;
   items: ReadonlyArray<CompactControlItem<T>>;
+  labelSize?: 'default' | 'compact';
   onValueChange: (value: T) => void;
 }
 
-export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted = true, ariaLabel, className, idBase, items, onValueChange }: SegmentedTabsProps<T>) => {
+export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted = true, ariaLabel, className, idBase, items, labelSize = 'default', onValueChange }: SegmentedTabsProps<T>) => {
   const layoutGroupId = React.useId();
   const tablistRef = React.useRef<HTMLDivElement>(null);
   const tabs = getSegmentedTabModel({ items, activeValue });
@@ -132,7 +142,8 @@ export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted 
               }
             }}
             className={segmentedTabButtonClassName({
-              isActive: tab.isActive
+              isActive: tab.isActive,
+              labelSize
             })}
           >
             {tab.icon && (

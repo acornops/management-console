@@ -1,5 +1,5 @@
 import React from 'react';
-import { Archive, CheckCircle2, ChevronDown, FilePlus2, FileText, Folder, Search, X } from 'lucide-react';
+import { Archive, CheckCircle2, ChevronDown, FilePlus2, FileText, Folder, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';

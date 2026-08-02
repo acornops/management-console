@@ -339,7 +339,7 @@ export function createAgentToolsDataSource(agent: AgentDefinition, canManageTool
   let toolConfigs = { ...(agent.nativeToolConfigs || {}) };
   let nativeTools: WorkspaceNativeToolApi[] = [];
   return {
-    async listTools(workspaceId, subjectId): Promise<CapabilityToolsCatalog> {
+    async listTools(workspaceId, _subjectId): Promise<CapabilityToolsCatalog> {
       const loadedNativeTools = await listWorkspaceNativeTools(workspaceId).catch(() => assignedToolIds.map<WorkspaceNativeToolApi>((toolId) => ({
         id: toolId,
         modelAlias: toolId,

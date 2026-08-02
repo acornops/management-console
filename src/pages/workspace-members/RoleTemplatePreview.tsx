@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { WorkspaceCapability, WorkspaceRoleCapabilityGroupKey, WorkspaceRoleTemplate } from '@/types';
 import { formatRole } from './memberUtils';
 import { Button, IconTile } from '@acornops/ui';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 interface RoleTemplatePreviewProps {
   roleTemplate?: WorkspaceRoleTemplate;
@@ -20,8 +21,8 @@ export type DisplayCapabilityGroup = {
   sortOrder: number;
 };
 
-export const formatCapability = (capability: string) => capability.replaceAll('_', ' ');
-export const formatGroupLabel = (key: string) => key.replaceAll('_', ' ').replaceAll('-', ' ');
+export const formatCapability = (capability: string) => formatIdentifierLabel(capability);
+export const formatGroupLabel = (key: string) => formatIdentifierLabel(key);
 
 export function getRoleCapabilityGroups(role: WorkspaceRoleTemplate): DisplayCapabilityGroup[] {
   const fallbackGroup: DisplayCapabilityGroup = {

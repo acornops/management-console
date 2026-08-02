@@ -30,6 +30,7 @@ import type { TargetMcpServer } from '@/services/control-plane/targetMcpTypes';
 import type { Workspace } from '@/types';
 import { AppPaths, type McpCatalogRouteState } from '@/utils/routes';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { TextInput } from '@acornops/ui';
 
 type Navigate = (path: string, options?: { replace?: boolean }) => void;
@@ -112,14 +113,16 @@ function normalizeTargetServer(server: TargetMcpServer): InstalledServer {
 
 export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ workspace, routeState, navigate }) => {
   const { t } = useTranslation();
-  const [sources, setSources] = React.useState<CatalogSource[]>([]);
-  const [sourcesLoaded, setSourcesLoaded] = React.useState(false);
-  const [sourceCapabilities, setSourceCapabilities] = React.useState({
+  const catalogPageCachePrefix = `workspace:${workspace.id}:catalog-page:`;
+  const [sources, setSources] = useSessionCachedState<CatalogSource[]>(`${catalogPageCachePrefix}sources`, []);
+  const [sourcesLoaded, setSourcesLoaded] = React.useState(() => hasSessionDataCacheValue(`${catalogPageCachePrefix}sources`));
+  const [sourceCapabilities, setSourceCapabilities] = useSessionCachedState(`${catalogPageCachePrefix}source-capabilities`, {
     workspaceManagedSourcesEnabled: false,
     supportedNetworkRoutes: ['direct'] as ['direct']
   });
-  const [destinations, setDestinations] = React.useState<Destination[]>([]);
-  const [installedServers, setInstalledServers] = React.useState<InstalledServer[]>([]);
+  const [destinations, setDestinations] = useSessionCachedState<Destination[]>(`${catalogPageCachePrefix}destinations`, []);
+  const installedServersCacheKey = `${catalogPageCachePrefix}installed:${routeState.destination || 'none'}`;
+  const [installedServers, setInstalledServers] = useSessionCachedState<InstalledServer[]>(installedServersCacheKey, []);
   const [loadingDestination, setLoadingDestination] = React.useState(false);
   const [synchronizing, setSynchronizing] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -156,6 +159,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
     return catalogApi.listCatalogArtifacts(workspace.id, { ...filters, cursor, limit, refresh, signal });
   }, [workspace.id]);
   const catalogCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:mcp-catalog`,
     filters: catalogFilters,
     getKey: (artifact: CatalogArtifact) => artifact.id,
     loadPage: loadCatalogPage,
@@ -235,7 +239,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
       return;
     }
     let cancelled = false;
-    setLoadingDestination(true);
+    setLoadingDestination(!hasSessionDataCacheValue(installedServersCacheKey));
     const request = selectedDestination.scopeType === 'agent'
       ? listAgentMcpServers(workspace.id, selectedDestination.id).then((servers) => servers.map(normalizeAgentServer))
       : controlPlaneApi.listTargetMcpServers(workspace.id, selectedDestination.id).then((servers) => servers.map(normalizeTargetServer));
@@ -243,7 +247,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
       .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : 'Destination capabilities could not be loaded.'))
       .finally(() => !cancelled && setLoadingDestination(false));
     return () => { cancelled = true; };
-  }, [selectedDestination?.key, workspace.id]);
+  }, [installedServersCacheKey, selectedDestination?.key, workspace.id]);
 
   const matchingInstallation = selectedArtifact
     ? installedServers.find((server) => server.provenance?.sourceId === selectedArtifact.sourceId

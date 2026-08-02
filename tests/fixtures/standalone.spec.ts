@@ -15,6 +15,7 @@ const routes = [
   { path: '/workspaces/fixture-workspace/catalog?destination=target%3Afixture-cluster', text: 'Destination: Singapore Production' },
   { path: '/workspaces/fixture-workspace/settings?section=mcp-registries', text: 'MCP registries' },
   { path: '/workspaces/fixture-workspace/webhooks', text: 'Mattermost operations' },
+  { path: '/workspaces/fixture-workspace/webhooks?direction=inbound', text: 'External production review' },
   { path: '/workspaces/fixture-workspace/settings', text: 'AcornOps Fixture Lab' }
 ];
 
@@ -37,6 +38,23 @@ for (const route of routes) {
     )).toEqual([]);
   });
 }
+
+test('webhooks hub aggregates inbound endpoints and returns configuration to the owning workflow', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/webhooks?direction=inbound', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: 'Webhooks' })).toBeVisible();
+  await expect(page.getByRole('tab')).toHaveText(['Outbound', 'Inbound']);
+  await expect(page.getByRole('tab', { name: 'Inbound' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Outbound' })).toHaveAttribute('aria-selected', 'false');
+
+  const inboundWebhook = page.getByRole('article').filter({ hasText: 'External production review' });
+  await expect(inboundWebhook).toContainText('Production health review');
+  await expect(inboundWebhook.getByRole('button', { name: 'Webhook actions for External production review' })).toHaveCount(0);
+
+  await inboundWebhook.getByRole('link', { name: 'Manage in workflow' }).click();
+  await expect(page).toHaveURL(/\/workspaces\/fixture-workspace\/workflows\?workflow=fixture-workflow&tab=webhooks/);
+  await expect(page.getByRole('tab', { name: 'Inbound Webhooks' })).toHaveAttribute('aria-selected', 'true');
+});
 
 test('outbound webhooks expose history, confirmation, and one-time secret flows', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
@@ -161,7 +179,7 @@ test('automation collection search is clear and usable on compact layouts', asyn
   expect(incomingWebhookActionBox?.x).toBeGreaterThanOrEqual(incomingWebhookArticleBox?.x || 0);
   expect((incomingWebhookActionBox?.x || 0) + (incomingWebhookActionBox?.width || 0))
     .toBeLessThanOrEqual((incomingWebhookArticleBox?.x || 0) + (incomingWebhookArticleBox?.width || 0));
-  const incomingWebhookSearch = page.getByRole('searchbox', { name: 'Search incoming webhooks' });
+  const incomingWebhookSearch = page.getByRole('searchbox', { name: 'Search inbound webhooks' });
   await expect(incomingWebhookSearch).toBeVisible();
   await incomingWebhookSearch.fill('production health');
   await expect(page.getByText('External production review', { exact: true })).toBeVisible();
@@ -254,7 +272,7 @@ test('automation ledgers replace column headings with filtered-empty states', as
   await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(incomingWebhookActions).toBeFocused();
-  await page.getByRole('searchbox', { name: 'Search incoming webhooks' }).fill('not configured');
+  await page.getByRole('searchbox', { name: 'Search inbound webhooks' }).fill('not configured');
   await expect(page.getByText('No webhooks match these filters', { exact: true })).toBeVisible();
   await expect(incomingWebhookLedger.locator('span').filter({ hasText: /^Webhook$/ })).toHaveCount(0);
 
@@ -287,62 +305,22 @@ test('Agent detail scopes lifecycle actions to Settings', async ({ page }) => {
 
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Delete agent', exact: true })).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Agent Settings' }).click();
   await expect(page).toHaveURL('/workspaces/fixture-workspace/agents/fixture-specialist/settings');
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Disable', exact: true }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Disable agent', exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete agent', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Disable Agent' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Delete Agent' })).toBeVisible();
 });
 
-test('recommended workflows can be added and activated without entering the library first', async ({ page }) => {
-  await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Browse templates' }).click();
-  await expect(page).toHaveURL(/panel=recommendations/);
+test('provisioned workflows are managed directly without a template picker', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/workflows?panel=recommendations', { waitUntil: 'domcontentloaded' });
 
-  const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
-  await expect(drawer).toBeVisible();
-  await expect(drawer).toBeFocused();
-  await expect(drawer.getByRole('button', { name: /Kubernetes health check/ })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: /Infrastructure remediation/ })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: /Virtual machine health check/ })).toBeVisible();
-  await expect(drawer.getByRole('button', { name: /Incident investigation/ })).toBeVisible();
-
-  await drawer.getByRole('button', { name: /Infrastructure remediation/ }).click();
-  await expect(drawer.getByRole('button', { name: 'Add workflow' })).toBeEnabled();
-  await drawer.getByRole('button', { name: 'Add workflow' }).click();
-  await expect(drawer.getByRole('button', { name: 'Activate workflow' })).toBeEnabled();
-  await drawer.getByRole('button', { name: 'Activate workflow' }).click();
-  await expect(drawer.getByText('Active', { exact: true })).toBeVisible();
-});
-
-test('recommended workflow catalog failure is retryable without leaving the page', async ({ page }) => {
-  await page.addInitScript(() => {
-    const originalFetch = window.fetch.bind(window);
-    let rejectTemplateRequests = true;
-    Object.defineProperty(window, '__allowFixtureTemplateRequests', {
-      value: () => { rejectTemplateRequests = false; }
-    });
-    window.fetch = (input, init) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-      if (rejectTemplateRequests && new URL(url, window.location.href).pathname.endsWith('/automation-templates')) {
-        return Promise.resolve(new Response(JSON.stringify({ error: { code: 'FIXTURE_TEMPLATE_FAILURE', message: 'Recommendation catalog is temporarily unavailable.' } }), {
-          status: 503,
-          headers: { 'content-type': 'application/json' }
-        }));
-      }
-      return originalFetch(input, init);
-    };
-  });
-
-  await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Browse templates' }).click();
-  const drawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
-  await expect(drawer.getByRole('alert')).toContainText('Recommendation catalog is temporarily unavailable.');
-  await page.evaluate(() => (window as typeof window & { __allowFixtureTemplateRequests: () => void }).__allowFixtureTemplateRequests());
-  await drawer.getByRole('button', { name: 'Retry' }).click();
-  await expect(drawer.getByRole('button', { name: /Infrastructure remediation/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Browse templates' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Add recommended workflows' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add workflow' })).toBeVisible();
+  await expect(page.getByText('Kubernetes health check', { exact: true }).first()).toBeVisible();
 });

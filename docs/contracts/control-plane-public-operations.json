@@ -55,6 +55,7 @@
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/conversations",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/connection",
+  "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/target-access",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/tools",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills/{skillId}",
@@ -217,6 +218,7 @@
   "POST /api/v1/workspaces/{workspaceId}/workflow-schedules/preview",
   "POST /api/v1/workspaces/{workspaceId}/workflows",
   "PUT /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/connection",
+  "PUT /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/target-access",
   "PUT /api/v1/workspaces/{workspaceId}/agents/{agentId}/native-tools/{toolId}",
   "PUT /api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}",
   "PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection"

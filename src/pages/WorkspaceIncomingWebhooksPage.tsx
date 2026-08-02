@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
-import { Button } from '@acornops/ui';
+import { Button, buttonClassName } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
@@ -13,33 +13,35 @@ import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { DataSurface, PageHeader, PageShell } from '@acornops/ui';
 import { Select, type SelectOption } from '@acornops/ui';
-import { formInputClassName, formTextareaClassName } from '@acornops/ui';
+import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
-import { listWorkspaceWorkflows, type WorkflowApiDefinition } from '@/services/control-plane/workflowApi';
+import { listWorkspaceWorkflows } from '@/services/control-plane/workflowApi';
 import {
   createWorkflowWebhook,
   deleteWorkflowWebhook,
   listWorkspaceWorkflowWebhooks,
   rotateWorkflowWebhookSecret,
   updateWorkflowWebhook,
-  type WorkflowWebhook,
-  type WorkflowWebhookListResponse
+  type WorkflowWebhook
 } from '@/services/control-plane/workflowWebhookApi';
 import type { Workspace } from '@/types';
 import { WorkspaceWebhookCard, workspaceWebhookLedgerGridClass } from '@/pages/WorkspaceWebhookCard';
 import { WorkspaceWebhookDrawerTable } from '@/pages/WorkspaceWebhookDrawerTable';
 import { WorkspaceWebhookDeleteDialog } from '@/pages/WorkspaceWebhookDeleteDialog';
-import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
+import { WorkflowTriggerToolbar } from '@/pages/workflows/WorkflowTriggerToolbar';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import {
   draftFromWebhook,
   emptyWebhookDraft,
-  parseContextGrants,
   type SecretDisclosure,
   type WebhookDraft
 } from '@/pages/WorkspaceIncomingWebhooksPage.model';
-import { TextInput, Textarea } from '@acornops/ui';
+import { TextInput } from '@acornops/ui';
+import { hasSessionDataCacheValue } from '@/hooks/sessionDataCache';
+import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
+import { AppPaths } from '@/utils/routes';
+import { useWorkspaceIncomingWebhookDataCache } from '@/pages/useWorkspaceIncomingWebhookDataCache';
 
 interface WorkspaceIncomingWebhooksPageProps {
   workspace: Workspace;
@@ -47,13 +49,12 @@ interface WorkspaceIncomingWebhooksPageProps {
   createWorkflowId?: string;
   constrainedWorkflowId?: string;
   embedded?: boolean;
+  hub?: boolean;
   navigate?: (path: string) => void;
 }
 
 type TriggerStatusFilter = 'all' | 'enabled' | 'paused';
-
 const inputClassName = formInputClassName('mt-2');
-const eventTriggerTextareaClassName = formTextareaClassName('mt-2');
 
 export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPageProps> = ({
   workspace,
@@ -61,14 +62,14 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
   createWorkflowId,
   constrainedWorkflowId,
   embedded = false,
+  hub = false,
   navigate
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
-  const [triggerPage, setTriggerPage] = useState<WorkflowWebhookListResponse | null>(null);
-  const [workflows, setWorkflows] = useState<WorkflowApiDefinition[]>([]);
+  const { triggerPage, setTriggerPage, workflows, setWorkflows, triggerPageCacheKey } = useWorkspaceIncomingWebhookDataCache(workspace.id);
   const [stateWorkspaceId, setStateWorkspaceId] = useState(workspace.id);
-  const [phase, setPhase] = useState<CursorCollectionPhase>('loading');
+  const [phase, setPhase] = useState<CursorCollectionPhase>(() => hasSessionDataCacheValue(triggerPageCacheKey) ? 'ready' : 'loading');
   const [loadError, setLoadError] = useState('');
   const [mutationError, setMutationError] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -103,10 +104,10 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       setTriggerPage(loadedTriggers);
       setWorkflows(loadedWorkflows);
       setPhase('ready');
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setLoadError(error instanceof Error ? error.message : t('eventTriggers.loadError'));
-      setPhase('error');
+      setLoadError('Inbound webhooks could not be loaded. Retry to reconnect to the control plane.');
+      setPhase(triggerPage === null ? 'error' : 'ready');
     }
   };
 
@@ -114,7 +115,6 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
     refreshSequence.current += 1;
     mutationSequence.current += 1;
     setStateWorkspaceId(workspace.id);
-    setTriggerPage(null);
     setSecretDisclosure(null);
     setDrawerOpen(false);
     setDraft(emptyWebhookDraft());
@@ -147,18 +147,21 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
     })) : [],
     [workflows, workspaceStateCurrent]
   );
+  const workflowNamesById = useMemo(
+    () => new Map(workflows.map((workflow) => [workflow.id, workflow.name])),
+    [workflows]
+  );
   const searchLabel = t('eventTriggers.filters.searchIncomingWebhooks');
   const visibleTriggers = useMemo(() => triggers.filter((trigger) => {
     if (status !== 'all' && trigger.status !== status) return false;
     if (workflowFilter !== 'all' && trigger.workflowId !== workflowFilter) return false;
     if (!normalizedQuery) return true;
-    const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
     return [
       trigger.name,
-      workflow?.name,
+      workflowNamesById.get(trigger.workflowId),
       trigger.endpointUrl
     ].some((value) => value?.toLowerCase().includes(normalizedQuery));
-  }), [normalizedQuery, status, workflowFilter, workflows, triggers]);
+  }), [normalizedQuery, status, workflowFilter, workflowNamesById, triggers]);
   const hasActiveFilters = Boolean(normalizedQuery || status !== 'all' || workflowFilter !== 'all');
   const clearFilters = () => {
     updateUrlSearch(
@@ -178,7 +181,6 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
     setDraft({
       ...emptyWebhookDraft(),
       workflowId: workflow?.id || '',
-      approvedContextGrants: ''
     });
     setMutationError('');
     setDrawerOpen(true);
@@ -186,11 +188,11 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
 
   useEffect(() => {
     const intent = createWorkflowId ? `workflow:${createWorkflowId}` : create ? 'webhook' : '';
-    if (!intent || phase !== 'ready' || !canManage || !activeWorkflows.length
+    if (hub || !intent || phase !== 'ready' || !canManage || !activeWorkflows.length
       || consumedCreateIntentRef.current === intent) return;
     consumedCreateIntentRef.current = intent;
     openCreate(createWorkflowId);
-  }, [activeWorkflows.length, canManage, create, createWorkflowId, phase]);
+  }, [activeWorkflows.length, canManage, create, createWorkflowId, hub, phase]);
 
   const openEdit = (trigger: WorkflowWebhook) => {
     setDraft(draftFromWebhook(trigger));
@@ -216,15 +218,13 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       if (draft.id) {
         await updateWorkflowWebhook(requestedWorkspaceId, draft.id, {
           name: draft.name.trim(),
-          enabled: draft.enabled,
-          approvedContextGrants: parseContextGrants(draft.approvedContextGrants)
+          enabled: draft.enabled
         });
       } else {
         const created = await createWorkflowWebhook(requestedWorkspaceId, {
           workflowId: draft.workflowId,
           name: draft.name.trim(),
-          enabled: draft.enabled,
-          approvedContextGrants: parseContextGrants(draft.approvedContextGrants)
+          enabled: draft.enabled
         });
         if (!isCurrentRequest()) return;
         setSecretDisclosure({ ...created.signingSecret, name: created.webhook.name });
@@ -232,9 +232,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       if (!isCurrentRequest()) return;
       setDrawerOpen(false);
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.saveError'));
+      setMutationError('The webhook could not be saved. Your changes are still here; review them and try again.');
     } finally {
       if (isCurrentRequest()) setSaving(false);
     }
@@ -252,9 +252,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       await updateWorkflowWebhook(requestedWorkspaceId, trigger.id, { enabled: trigger.status !== 'enabled' });
       if (!isCurrentRequest()) return;
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.updateError'));
+      setMutationError('The webhook status could not be changed. Refresh the list and try again.');
     } finally {
       if (isCurrentRequest()) setMutatingId('');
     }
@@ -273,9 +273,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       if (!isCurrentRequest()) return;
       setPendingDeleteId('');
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.deleteError'));
+      setMutationError('The webhook could not be deleted. It remains unchanged; try again.');
     } finally {
       if (isCurrentRequest()) setMutatingId('');
     }
@@ -295,9 +295,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       setSecretDisclosure({ ...rotated.signingSecret, name: rotated.webhook.name });
       setPendingRotateId('');
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.rotateError'));
+      setMutationError('The signing secret could not be rotated. The current secret remains active; try again.');
     } finally {
       if (isCurrentRequest()) setMutatingId('');
     }
@@ -313,17 +313,16 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
   };
 
   const updateWorkflow = (workflowId: string) => {
-    const workflow = workflows.find((candidate) => candidate.id === workflowId);
     setDraft((current) => ({
       ...current,
       workflowId,
-      approvedContextGrants: ''
     }));
   };
 
   return (
-    <PageShell embedded={embedded} className={embedded ? 'p-4 sm:p-5' : undefined}>
-      {!embedded && <PageHeader
+    <PageShell embedded={embedded || hub} className={embedded ? 'px-1 py-1' : undefined}>
+      {!embedded && !hub && <PageHeader
+        className="mb-5"
         title={t('eventTriggers.title')}
         description={t('eventTriggers.subtitle', { workspace: workspace.name })}
         actions={<>
@@ -337,35 +336,41 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           </Button>
         </>}
       />}
-      {!embedded && navigate && (
-        <WorkflowSections activeSection="incomingWebhooks" navigate={navigate} workspaceId={workspace.id} />
-      )}
       <div
-        id={!embedded ? 'workflow-section-incomingWebhooks-panel' : undefined}
-        role={!embedded ? 'tabpanel' : undefined}
-        aria-labelledby={!embedded ? 'workflow-section-incomingWebhooks-tab' : undefined}
         className="contents"
       >
-      {embedded && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="type-caption text-ui-text-muted">
-            {triggersPending ? t('eventTriggers.loading') : t('eventTriggers.count', { count: visibleTriggers.length })}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
-              <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
-              {t('common.refresh')}
-            </Button>
-            <Button size="sm" variant="primary" onClick={() => openCreate(constrainedWorkflowId)} disabled={!canManage || !activeWorkflows.length}>
-              <ICONS.Plus className="h-4 w-4" aria-hidden="true" />
-              {t('eventTriggers.actions.create')}
-            </Button>
-          </div>
+      {hub && (
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
+            <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+            {t('common.refresh')}
+          </Button>
+          <a
+            href={appHref(AppPaths.workspaceWorkflows(workspace.id))}
+            onClick={navigate
+              ? (event) => handleAppLinkClick(event, AppPaths.workspaceWorkflows(workspace.id), navigate)
+              : undefined}
+            className={buttonClassName({ variant: 'secondary', size: 'sm' })}
+          >
+            {t('eventTriggers.actions.openWorkflows')}
+            <ICONS.ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </a>
         </div>
       )}
+      {embedded && (
+        <WorkflowTriggerToolbar
+          busy={phase === 'loading' || phase === 'refreshing'}
+          canCreate={canManage && activeWorkflows.length > 0}
+          createLabel={t('eventTriggers.actions.create')}
+          refreshLabel={t('common.refresh')}
+          summary={triggersPending ? t('eventTriggers.loading') : t('eventTriggers.count', { count: visibleTriggers.length })}
+          onCreate={() => openCreate(constrainedWorkflowId)}
+          onRefresh={() => void refresh()}
+        />
+      )}
 
-      {!canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
-      {!activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
+      {!hub && !canManage && <InlineAlert tone="neutral" className="mb-5">{t('eventTriggers.permissionNotice')}</InlineAlert>}
+      {!hub && !activeWorkflows.length && phase === 'ready' && <InlineAlert tone="warning" className="mb-5">{t('eventTriggers.noActiveWorkflows')}</InlineAlert>}
       {workspaceStateCurrent && mutationError && !deleteTargetTrigger && <InlineAlert tone="danger" className="mb-5">{mutationError}</InlineAlert>}
       {copyFeedback && <p role="status" className="sr-only">{copyFeedback}</p>}
 
@@ -509,13 +514,12 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         >
           <div className="divide-y divide-ui-border">
             {visibleTriggers.map((trigger) => {
-              const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
               const busy = mutatingId === trigger.id;
               return (
                 <WorkspaceWebhookCard
                   key={trigger.id}
                   trigger={trigger}
-                  workflowName={workflow?.name || trigger.workflowId}
+                  workflowName={workflowNamesById.get(trigger.workflowId) || trigger.workflowId}
                   canManage={canManage}
                   busy={busy}
                   pendingRotate={pendingRotateId === trigger.id}
@@ -537,6 +541,13 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
                     setMutationError('');
                     setPendingDeleteId(trigger.id);
                   }}
+                  workflowActionLabel={hub
+                    ? t(canManage ? 'eventTriggers.actions.manageInWorkflow' : 'eventTriggers.actions.viewWorkflow')
+                    : undefined}
+                  workflowPath={hub
+                    ? `${AppPaths.workspaceWorkflows(workspace.id)}?${new URLSearchParams({ workflow: trigger.workflowId, tab: 'webhooks' }).toString()}`
+                    : undefined}
+                  navigate={navigate}
                 />
               );
             })}
@@ -544,7 +555,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         </CollectionState>
       </DataSurface>
       )}
-      <WorkspaceWebhookDeleteDialog
+      {!hub && <WorkspaceWebhookDeleteDialog
         webhook={deleteTargetTrigger}
         error={mutationError}
         pending={Boolean(deleteTargetTrigger && mutatingId === deleteTargetTrigger.id)}
@@ -558,8 +569,8 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         onConfirm={() => {
           if (deleteTargetTrigger) void remove(deleteTargetTrigger);
         }}
-      />
-      <DialogFrame
+      />}
+      {!hub && <DialogFrame
         open={workspaceStateCurrent && drawerOpen}
         onClose={closeDrawer}
         closeDisabled={saving}
@@ -610,21 +621,11 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           </div>
           <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.runsAsHelp')}</span>
         </div>
-        <label className="block type-body type-emphasis text-ui-text">
-          {t('eventTriggers.form.approvedContextGrants')}
-          <Textarea
-            value={draft.approvedContextGrants}
-            onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))}
-            className={eventTriggerTextareaClassName}
-            rows={3}
-          />
-          <span className="mt-1 block type-caption text-ui-text-muted">{t('eventTriggers.form.approvedContextGrantsHelp')}</span>
-        </label>
         <label className="flex items-center gap-3 type-body type-emphasis text-ui-text">
           <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
           {t('eventTriggers.form.enabled')}
         </label>
-      </DialogFrame>
+      </DialogFrame>}
       </div>
     </PageShell>
   );

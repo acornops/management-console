@@ -68,6 +68,7 @@ export interface PageHeaderProps {
   className?: string;
   context?: React.ReactNode;
   description?: React.ReactNode;
+  descriptionClassName?: string;
   id?: string;
   title: React.ReactNode;
 }
@@ -79,6 +80,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className,
   context,
   description,
+  descriptionClassName,
   title,
   ...props
 }) => (
@@ -93,7 +95,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {breadcrumbs && <nav aria-label="Breadcrumb" className="mb-2 type-caption text-ui-text-muted">{breadcrumbs}</nav>}
       {context && <div className="mb-2 type-label text-ui-text-muted">{context}</div>}
       <h1 className="type-route-title break-words text-ui-text">{title}</h1>
-      {description && <div className="type-body mt-2 max-w-[72ch] text-ui-text-muted">{description}</div>}
+      {description && <div className={twMerge('type-body mt-2 max-w-[72ch] text-ui-text-muted', descriptionClassName)}>{description}</div>}
     </div>
     {actions && <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">{actions}</div>}
   </header>

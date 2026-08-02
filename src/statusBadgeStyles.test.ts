@@ -9,6 +9,8 @@ const workloadDetails = readFileSync(resolve(__dirname, 'features/kubernetes-clu
 const clusterOverview = readFileSync(resolve(__dirname, 'features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx'), 'utf8');
 const vmIssues = readFileSync(resolve(__dirname, 'pages/virtual-machines/VirtualMachineIssuesPanel.tsx'), 'utf8');
 const memberIdentity = readFileSync(resolve(__dirname, 'pages/workspace-members/WorkspaceMemberIdentityField.tsx'), 'utf8');
+const workspaceMembers = readFileSync(resolve(__dirname, 'pages/WorkspaceMembersPage.tsx'), 'utf8');
+const mcpServerCard = readFileSync(resolve(__dirname, 'features/targets/admin/McpServerCard.tsx'), 'utf8');
 const userSettings = readFileSync(resolve(__dirname, 'pages/UserSettingsPage.tsx'), 'utf8');
 
 describe('shared status badge styles', () => {
@@ -27,9 +29,13 @@ describe('shared status badge styles', () => {
     expect(clusterOverview).toContain('<StatusBadge tone="warning"');
     expect(vmIssues).toContain('<StatusBadge tone="warning"');
     expect(memberIdentity).toContain('<StatusBadge tone="neutral"');
+    expect(workspaceMembers).toContain('<StatusBadge tone="success">{t(\'members.active\')}</StatusBadge>');
+    expect(mcpServerCard).toContain("<StatusBadge tone={status.tone === 'muted' ? 'neutral' : status.tone}>");
     expect(userSettings).toContain('<StatusBadge tone="success"');
     expect(approvalCheckpoint).not.toContain('rounded-full border px-2.5 py-1');
     expect(resourceStatus).not.toContain('rounded-full border px-3 py-1.5');
     expect(memberIdentity).not.toContain('rounded-full border border-ui-border bg-ui-bg px-2 py-1 type-micro-label');
+    expect(workspaceMembers).not.toContain('rounded-full bg-status-success');
+    expect(mcpServerCard).not.toContain('statusToneClasses');
   });
 });

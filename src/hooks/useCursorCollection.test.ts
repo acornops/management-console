@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CursorCollectionController, type CursorCollectionOptions } from '@/hooks/useCursorCollection';
 import type { PagedResult } from '@/services/control-plane/types';
+import { clearSessionDataCache } from '@/hooks/sessionDataCache';
 
 interface Item { id: string; label?: string }
 interface Filters { query: string }
@@ -30,6 +31,8 @@ function options(
 }
 
 describe('CursorCollectionController', () => {
+  beforeEach(() => clearSessionDataCache());
+
   it('loads the initial page into ready state', async () => {
     const loadPage = vi.fn(async (): Promise<PagedResult<Item>> => ({ items: [{ id: 'one' }], nextCursor: 'next' }));
     const controller = new CursorCollectionController(options(loadPage));
@@ -53,6 +56,53 @@ describe('CursorCollectionController', () => {
     refresh.resolve({ items: [{ id: 'one', label: 'new' }] });
     await pending;
     expect(controller.getState().items).toEqual([{ id: 'one', label: 'new' }]);
+  });
+
+  it('hydrates a remounted collection from session cache while revalidating', async () => {
+    const initialLoad = vi.fn(async (): Promise<PagedResult<Item>> => ({ items: [{ id: 'one', label: 'cached' }] }));
+    const firstController = new CursorCollectionController(options(initialLoad, { cacheKey: 'workspace:1:items' }));
+    await firstController.reset();
+
+    const revalidation = deferred<PagedResult<Item>>();
+    const secondLoad = vi.fn(() => revalidation.promise);
+    const secondController = new CursorCollectionController(options(secondLoad, { cacheKey: 'workspace:1:items' }));
+
+    expect(secondController.getState()).toEqual({
+      items: [{ id: 'one', label: 'cached' }],
+      nextCursor: undefined,
+      phase: 'ready'
+    });
+
+    const pending = secondController.reset();
+    expect(secondController.getState()).toEqual({
+      items: [{ id: 'one', label: 'cached' }],
+      nextCursor: undefined,
+      phase: 'refreshing'
+    });
+
+    revalidation.resolve({ items: [{ id: 'one', label: 'fresh' }] });
+    await pending;
+    expect(secondController.getState().items).toEqual([{ id: 'one', label: 'fresh' }]);
+  });
+
+  it('keeps a cached empty result out of the initial-loading phase on remount', async () => {
+    const firstController = new CursorCollectionController(options(
+      vi.fn(async (): Promise<PagedResult<Item>> => ({ items: [] })),
+      { cacheKey: 'workspace:1:empty-items' }
+    ));
+    await firstController.reset();
+
+    const revalidation = deferred<PagedResult<Item>>();
+    const secondController = new CursorCollectionController(options(
+      vi.fn(() => revalidation.promise),
+      { cacheKey: 'workspace:1:empty-items' }
+    ));
+
+    const pending = secondController.reset();
+    expect(secondController.getState()).toEqual({ items: [], nextCursor: undefined, phase: 'ready' });
+    revalidation.resolve({ items: [] });
+    await pending;
+    expect(secondController.getState().phase).toBe('ready');
   });
 
   it('appends and deduplicates pages by stable key', async () => {
@@ -137,7 +187,7 @@ describe('CursorCollectionController', () => {
     await controller.reset();
 
     expect(loadPage).toHaveBeenCalledTimes(2);
-    expect(phases).toEqual(['loading', 'loading', 'ready']);
+    expect(phases).toEqual(['loading', 'ready']);
     expect(controller.getState().items).toEqual([{ id: 'two' }]);
   });
 });

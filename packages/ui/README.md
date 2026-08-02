@@ -29,6 +29,11 @@ Use `InlineAlert` for bordered semantic feedback and `StatusBadge` for compact
 or default semantic labels. Navigation counters and input tokens remain
 separate patterns.
 
+Use `CollectionResultSummary` for quiet collection counts outside
+`DiscoveryFilterBar`. It owns the same polite live-region semantics and
+`type-caption` treatment as discovery feedback; do not rebuild counts as
+uppercase or outlined capsules.
+
 Use `IconTile` for flat, non-interactive context glyphs. Neutral tiles use a
 quiet ink tint, identity tiles may retain an accent-colored glyph, and semantic
 tiles use the matching status-soft treatment. Icon actions must use `Button`

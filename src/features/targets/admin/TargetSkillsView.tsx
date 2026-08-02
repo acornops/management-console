@@ -3,9 +3,9 @@ import { GitBranch, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
+import { DestructiveConfirmationDialog } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import {
   controlPlaneApi,
@@ -32,6 +32,7 @@ import {
 } from '@/features/targets/admin/targetSkillsViewModel';
 import { TargetSkillEditorDialog } from '@/features/targets/admin/TargetSkillEditorDialog';
 import { TargetSkillsInventory } from '@/features/targets/admin/TargetSkillsInventory';
+import { TargetCapabilityInventoryLoading } from '@/features/targets/admin/TargetCapabilityInventoryLoading';
 
 export interface TargetSkillsDataSource {
   createSkill: (workspaceId: string, subjectId: string, input: CreateTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
@@ -92,6 +93,7 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
   const [pendingDangerAction, setPendingDangerAction] = React.useState<string | null>(null);
 
   const selectedSkill = selectedSkillId ? catalog?.items.find((item) => item.id === selectedSkillId) || null : null;
+  const deleteSkill = confirmDeleteSkillId ? catalog?.items.find((item) => item.id === confirmDeleteSkillId) || null : null;
   const selectedDetail = selectedSkillId ? detailsById[selectedSkillId] || null : null;
   const draftSignature = React.useMemo(() => JSON.stringify(toRequestFiles(draftFiles)), [draftFiles]);
   const detailSignature = React.useMemo(() => JSON.stringify(selectedDetail ? toRequestFiles(toDraftFiles(selectedDetail.files)) : []), [selectedDetail]);
@@ -409,7 +411,19 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
 
       {catalogError && <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{catalogError}</div>}
 
-      {catalogLoading && !catalog && <InlineLoadingIndicator label={t('targetSkills.loading')} className="mb-5" />}
+      {catalogLoading && !catalog && (
+        <TargetCapabilityInventoryLoading
+          caption={t('targetSkills.tableLabel')}
+          label={t('targetSkills.loading')}
+          columns={[
+            { label: t('targetSkills.skillColumn') },
+            { label: t('targetSkills.assistantStateColumn') },
+            { label: t('targetSkills.enabledColumn') },
+            { label: t('targetSkills.filesColumn'), className: 'hidden md:table-cell' },
+            { label: t('targetSkills.actionsColumn'), numeric: true }
+          ]}
+        />
+      )}
 
       {catalog ? (
         <TargetSkillsInventory
@@ -417,7 +431,10 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
           canEditSkills={canEditSkills}
           pendingToggleSkillId={toggleSkillId}
           onEditSkill={openEditEditor}
-          onDeleteSkill={setConfirmDeleteSkillId}
+          onDeleteSkill={(skillId) => {
+            setEditorError(null);
+            setConfirmDeleteSkillId(skillId);
+          }}
           onToggleSkill={(skillId, enabled) => void handleToggleSkill(skillId, enabled)}
         />
       ) : null}
@@ -505,28 +522,23 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
         </DialogFrame>
       )}
 
-      {confirmDeleteSkillId && (
-        <DialogFrame unframed
-          titleId="delete-target-skill-title"
-          onClose={() => setConfirmDeleteSkillId(null)}
-          className="w-full max-w-lg rounded-lg border border-ui-border bg-ui-surface shadow-xl"
-        >
-          <div className="border-b border-ui-border px-6 py-4">
-            <h3 id="delete-target-skill-title" className="type-panel-title text-ui-text">
-              {t('targetSkills.deleteTitle')}
-            </h3>
-          </div>
-          <div className="px-6 py-5 type-body text-ui-text-muted">{t('targetSkills.deleteBody')}</div>
-          <div className="flex justify-end gap-2 border-t border-ui-border px-6 py-4">
-            <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteSkillId(null)}>
-              {t('common.cancel')}
-            </Button>
-            <Button variant="danger" size="sm" onClick={() => void handleDelete()} disabled={pendingDangerAction === confirmDeleteSkillId}>
-              {pendingDangerAction === confirmDeleteSkillId ? t('targetSkills.deleting') : t('targetSkills.deleteSkill')}
-            </Button>
-          </div>
-        </DialogFrame>
-      )}
+      <DestructiveConfirmationDialog
+        open={Boolean(confirmDeleteSkillId)}
+        titleId="delete-target-skill-title"
+        title={deleteSkill ? `${t('targetSkills.deleteTitle')}: ${deleteSkill.name}` : t('targetSkills.deleteTitle')}
+        subtitle={t('common.irreversibleAction')}
+        description={t('targetSkills.deleteBody')}
+        error={confirmDeleteSkillId ? editorError : null}
+        cancelLabel={t('common.cancel')}
+        confirmLabel={t('targetSkills.deleteSkill')}
+        loadingLabel={t('targetSkills.deleting')}
+        pending={Boolean(confirmDeleteSkillId && pendingDangerAction === confirmDeleteSkillId)}
+        onCancel={() => {
+          setConfirmDeleteSkillId(null);
+          setEditorError(null);
+        }}
+        onConfirm={() => void handleDelete()}
+      />
 
       {confirmReimportSkillId && (
         <DialogFrame unframed

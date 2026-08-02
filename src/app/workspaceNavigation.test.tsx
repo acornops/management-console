@@ -39,7 +39,7 @@ describe('workspace navigation model', () => {
 
     expect(groups.map((group) => group.id)).toEqual(['primary', 'inventory', 'automation', 'governance', 'utilities']);
     expect(groups.flatMap((group) => group.items).map((item) => item.id)).toEqual([
-      'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'outboundWebhooks', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
+      'overview', 'clusters', 'virtualMachines', 'agents', 'workflows', 'webhooks', 'approvals', 'workspaceAuditLog', 'workspaceSettings', 'help'
     ]);
     expect(groups.flatMap((group) => group.items).some((item) => item.path.includes('/catalog'))).toBe(false);
     expect(groups.find((group) => group.id === 'automation')?.badge).toBeUndefined();
@@ -59,12 +59,12 @@ describe('workspace navigation model', () => {
       activeResourceNav: 'workspaceWebhooks',
       t
     });
-    const outboundWebhooks = groups
+    const webhooks = groups
       .find((group) => group.id === 'automation')
-      ?.items.find((item) => item.id === 'outboundWebhooks');
+      ?.items.find((item) => item.id === 'webhooks');
 
-    expect(outboundWebhooks).toMatchObject({
-      label: 'app.outboundWebhooks',
+    expect(webhooks).toMatchObject({
+      label: 'app.webhooks',
       path: AppPaths.workspaceWebhooks('workspace-1'),
       active: true
     });

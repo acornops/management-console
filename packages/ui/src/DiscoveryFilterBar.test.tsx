@@ -6,6 +6,7 @@ import {
   DiscoveryFilterBar,
   restoreDiscoveryFocus
 } from './DiscoveryFilterBar';
+import { CollectionResultSummary } from './CollectionResultSummary';
 
 const statusFilter = (value: 'all' | 'active' = 'all', onChange = vi.fn()) =>
   createDiscoveryFilterGroup<'all' | 'active'>({
@@ -42,6 +43,17 @@ const renderBar = ({
 );
 
 describe('DiscoveryFilterBar', () => {
+  it('provides one quiet live-region treatment for collection result summaries', () => {
+    const markup = renderToStaticMarkup(<CollectionResultSummary className="justify-end">3 of 8 results</CollectionResultSummary>);
+
+    expect(markup).toContain('type-caption inline-flex min-h-11');
+    expect(markup).toContain('text-ui-text-muted tabular-nums');
+    expect(markup).toContain('role="status"');
+    expect(markup).toContain('aria-live="polite"');
+    expect(markup).not.toContain('rounded-full');
+    expect(markup).not.toContain('type-label');
+  });
+
   it('safely erases typed filter definitions and ignores unknown shared values', () => {
     const onChange = vi.fn<(value: 'all' | 'active') => void>();
     const filter = statusFilter('all', onChange);

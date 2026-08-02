@@ -14,7 +14,7 @@ describe('getMcpCreateFlowCopyKeys', () => {
 
   it('describes credential connection for static authenticated servers', () => {
     expect(getMcpCreateFlowCopyKeys('bearer_token')).toEqual({
-      nextStep: 'mcpServers.stepConnect',
+      nextStep: 'mcpServers.stepAddCredential',
       help: 'mcpServers.credentialCreateHelp',
       pending: 'mcpServers.addingServer',
       action: 'mcpServers.continueToCredentials'

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Plus, ShieldCheck, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { Plus, ShieldCheck, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile } from '@acornops/ui';
+import { Button, DestructiveConfirmationDialog, IconTile } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { Switch } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -29,7 +29,7 @@ export function getMcpCreateFlowCopyKeys(authType: ServerFormState['authType']) 
   }
   if (authType !== 'none') {
     return {
-      nextStep: 'mcpServers.stepConnect',
+      nextStep: 'mcpServers.stepAddCredential',
       help: 'mcpServers.credentialCreateHelp',
       pending: 'mcpServers.addingServer',
       action: 'mcpServers.continueToCredentials'
@@ -202,7 +202,7 @@ export const McpServerFormDialog: React.FC<{
                   <div className="type-caption m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{mutationError}</div>
                 )}
                 {reviewToolsLoading ? (
-                  <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="m-4 bg-ui-surface type-caption" />
+                  <CollectionLoadingSkeleton label={t('mcpServers.loadingTools')} rows={3} className="m-4 overflow-hidden rounded-lg border border-ui-border bg-ui-surface" />
                 ) : reviewTools.length === 0 ? (
                   <div className="type-caption m-4 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">{t('mcpServers.noToolsDiscovered')}</div>
                 ) : (
@@ -322,6 +322,7 @@ export const McpServerFormDialog: React.FC<{
                       <label className="space-y-1">
                         <span className="type-label px-1">{t('mcpServers.headerName')}</span>
                         <TextInput
+                          aria-describedby={mode === 'create' ? 'mcp-header-name-help' : undefined}
                           value={form.headerName}
                           onChange={(event) =>
                             onFormChange((current) => ({
@@ -332,11 +333,18 @@ export const McpServerFormDialog: React.FC<{
                           placeholder={t('mcpServers.headerNamePlaceholder')}
                           className={mcpServerInputClassName}
                         />
+                        {mode === 'create' && (
+                          <span id="mcp-header-name-help" className="type-caption block px-1 text-ui-text-muted">
+                            {t('mcpServers.headerNameCreateHelp')}
+                          </span>
+                        )}
                       </label>
                     )}
-                    <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
-                      {t(form.authType === 'oauth' ? 'mcpServers.oauthCredentialSetupHelp' : 'mcpServers.credentialSetupHelp')}
-                    </p>
+                    {(mode === 'edit' || form.authType === 'oauth') && (
+                      <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
+                        {t(form.authType === 'oauth' ? 'mcpServers.oauthCredentialSetupHelp' : 'mcpServers.credentialSetupHelp')}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -494,57 +502,26 @@ export const DeleteMcpServerDialog: React.FC<{
 }> = ({ server, mutationError, pending, onClose, onDelete }) => {
   const { t } = useTranslation();
   return (
-    <DialogFrame
-      unframed
+    <DestructiveConfirmationDialog
+      open
       titleId="delete-mcp-server-title"
-      closeDisabled={pending}
-      onClose={onClose}
+      title={t('mcpServers.delete')}
+      subtitle={t('mcpServers.deleteSubtitle')}
+      description={(
+        <>
+          <span className="block">{t('mcpServers.deleteBody', { name: server.name })}</span>
+          <span className="mt-2 block">{t('mcpServers.deleteConsoleBoundary')}</span>
+        </>
+      )}
+      error={mutationError}
+      confirmLabel={t('mcpServers.deleteAction')}
+      loadingLabel={t('app.deleting')}
+      cancelLabel={t('app.cancel')}
+      closeLabel={t('mcpServers.closeDelete')}
+      pending={pending}
+      onCancel={onClose}
+      onConfirm={onDelete}
       overlayClassName="bg-ui-text/45 dark:bg-ui-bg/75"
-      className="w-full max-w-md overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-2xl"
-    >
-        <div className="flex items-center justify-between border-b border-ui-border bg-ui-bg px-6 py-4">
-          <div className="flex items-center gap-3">
-            <IconTile size="sm" tone="danger">
-              <Trash2 className="h-4 w-4" />
-            </IconTile>
-            <div>
-              <h3 id="delete-mcp-server-title" className="type-panel-title">
-                {t('mcpServers.delete')}
-              </h3>
-              <p className="mt-0.5 type-caption">{t('mcpServers.deleteSubtitle')}</p>
-            </div>
-          </div>
-          <CloseButton onClick={onClose} disabled={pending} aria-label={t('mcpServers.closeDelete')} />
-        </div>
-        <div className="space-y-3 px-6 py-5">
-          <p className="type-body">{t('mcpServers.deleteBody', { name: server.name })}</p>
-          <p className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-3 py-2 text-status-warning-text">
-            {t('mcpServers.deleteConsoleBoundary')}
-          </p>
-          {mutationError && <div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-3 py-2 text-status-danger-text">{mutationError}</div>}
-        </div>
-        <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onClose}
-            disabled={pending}
-            className="control-target px-4 py-2"
-          >
-            {t('app.cancel')}
-          </Button>
-          <Button
-            type="button"
-            variant="danger"
-            size="sm"
-            onClick={onDelete}
-            disabled={pending}
-            className="control-target type-ui rounded-lg border border-control-boundary bg-control-danger px-4 py-2 text-control-danger-fg transition-colors hover:bg-control-danger-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pending ? t('app.deleting') : t('mcpServers.deleteAction')}
-          </Button>
-        </div>
-    </DialogFrame>
+    />
   );
 };

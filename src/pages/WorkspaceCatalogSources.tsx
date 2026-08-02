@@ -2,13 +2,15 @@ import React from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, InlineAlert } from '@acornops/ui';
+import { Button, DestructiveConfirmationDialog, InlineAlert } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { catalogApi, type CatalogSource, type CatalogSourceMutationInput } from '@/services/control-plane/catalogApi';
 import { resourcePhaseForRequest, type CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { TextInput } from '@acornops/ui';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface WorkspaceCatalogSourcesProps {
   workspaceId: string;
@@ -22,14 +24,17 @@ const emptyCapabilities = {
 
 export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = ({ workspaceId, canManage }) => {
   const { t } = useTranslation();
-  const [sources, setSources] = React.useState<CatalogSource[]>([]);
-  const sourcesRef = React.useRef<CatalogSource[]>([]);
-  const [capabilities, setCapabilities] = React.useState(emptyCapabilities);
-  const [phase, setPhase] = React.useState<CursorCollectionPhase>('loading');
+  const sourcesCacheKey = `workspace:${workspaceId}:catalog-sources`;
+  const [sources, setSources] = useSessionCachedState<CatalogSource[]>(sourcesCacheKey, []);
+  const sourcesRef = React.useRef<CatalogSource[]>(sources);
+  sourcesRef.current = sources;
+  const [capabilities, setCapabilities] = useSessionCachedState(`workspace:${workspaceId}:catalog-source-capabilities`, emptyCapabilities);
+  const [phase, setPhase] = React.useState<CursorCollectionPhase>(() => hasSessionDataCacheValue(sourcesCacheKey) ? 'ready' : 'loading');
   const [busy, setBusy] = React.useState('');
   const [error, setError] = React.useState('');
   const [showForm, setShowForm] = React.useState(false);
   const [editingSourceId, setEditingSourceId] = React.useState<string>();
+  const [deleteSourceId, setDeleteSourceId] = React.useState<string>();
   const [displayName, setDisplayName] = React.useState('');
   const [baseUrl, setBaseUrl] = React.useState('');
   const [authType, setAuthType] = React.useState<'none' | 'bearer_token' | 'custom_header'>('none');
@@ -37,7 +42,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
   const [headerName, setHeaderName] = React.useState('');
 
   const load = React.useCallback(async () => {
-    setPhase(resourcePhaseForRequest(sourcesRef.current.length > 0));
+    setPhase(hasSessionDataCacheValue(sourcesCacheKey) ? 'refreshing' : resourcePhaseForRequest(sourcesRef.current.length > 0));
     setError('');
     try {
       const response = await catalogApi.listCatalogSources(workspaceId);
@@ -47,9 +52,9 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
       setPhase('ready');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('catalogSources.loadFailed'));
-      setPhase('error');
+      setPhase(sourcesRef.current.length > 0 || hasSessionDataCacheValue(sourcesCacheKey) ? 'ready' : 'error');
     }
-  }, [t, workspaceId]);
+  }, [sourcesCacheKey, t, workspaceId]);
 
   React.useEffect(() => void load(), [load]);
 
@@ -120,14 +125,16 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
     }
   };
 
-  const mutate = async (key: string, action: () => Promise<unknown>) => {
+  const mutate = async (key: string, action: () => Promise<unknown>): Promise<boolean> => {
     setBusy(key);
     setError('');
     try {
       await action();
       await load();
+      return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t('catalogSources.mutationFailed'));
+      return false;
     } finally {
       setBusy('');
     }
@@ -135,6 +142,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
 
   const canAddWorkspaceSource = canManage && capabilities.workspaceManagedSourcesEnabled;
   const editingSource = sources.find((source) => source.id === editingSourceId);
+  const deleteSource = sources.find((source) => source.id === deleteSourceId);
   const credentialRequired =
     authType !== 'none' &&
     Boolean(!editingSource || editingSource.authType !== authType || (authType === 'custom_header' && (editingSource.authHeaderName || '') !== headerName.trim()));
@@ -259,11 +267,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
         <CollectionState
           phase={phase}
           itemCount={sources.length}
-          loading={
-            <p role="status" className="p-5 type-body text-ui-text-muted">
-              {t('catalogSources.loading')}
-            </p>
-          }
+          loading={<CollectionLoadingSkeleton label={t('catalogSources.loading')} />}
           empty={
             <EmptyState
               embedded
@@ -345,13 +349,10 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
                           size="sm"
                           variant="danger"
                           disabled={Boolean(busy)}
-                          onClick={() =>
-                            window.confirm(
-                              t('catalogSources.deleteConfirm', {
-                                name: source.displayName
-                              })
-                            ) && void mutate(`delete:${source.id}`, () => catalogApi.deleteCatalogSource(workspaceId, source.id))
-                          }
+                          onClick={() => {
+                            setError('');
+                            setDeleteSourceId(source.id);
+                          }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           {t('catalogSources.delete')}
@@ -365,6 +366,28 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
           </div>
         </CollectionState>
       </div>
+      <DestructiveConfirmationDialog
+        open={Boolean(deleteSource)}
+        titleId="delete-catalog-source-title"
+        title={deleteSource ? t('catalogSources.deleteTitle', { name: deleteSource.displayName }) : ''}
+        subtitle={t('common.irreversibleAction')}
+        description={t('catalogSources.deleteDescription')}
+        error={deleteSource ? error : null}
+        cancelLabel={t('common.cancel')}
+        confirmLabel={t('catalogSources.delete')}
+        loadingLabel={t('app.deleting')}
+        pending={Boolean(deleteSource && busy === `delete:${deleteSource.id}`)}
+        onCancel={() => {
+          setDeleteSourceId(undefined);
+          setError('');
+        }}
+        onConfirm={() => {
+          if (!deleteSource) return;
+          void mutate(`delete:${deleteSource.id}`, () => catalogApi.deleteCatalogSource(workspaceId, deleteSource.id)).then((deleted) => {
+            if (deleted) setDeleteSourceId(undefined);
+          });
+        }}
+      />
     </section>
   );
 };

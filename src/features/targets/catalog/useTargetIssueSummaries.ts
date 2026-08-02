@@ -2,6 +2,7 @@ import React from 'react';
 
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 export type TargetIssueSummaryLoadState = 'loading' | 'ready' | 'error';
 
@@ -21,8 +22,9 @@ export function useTargetIssueSummaries<T extends TargetIssueSummaryRef>(targets
     () => targets.map((target) => `${target.workspaceId}:${target.id}`).sort().join('|'),
     [targets]
   );
-  const [summaryByTargetId, setSummaryByTargetId] = React.useState<Record<string, ControlPlaneTargetIssueSummary | undefined>>({});
-  const [loadStateByTargetId, setLoadStateByTargetId] = React.useState<Record<string, TargetIssueSummaryLoadState>>({});
+  const issueSummaryCachePrefix = `target-issue-summaries:${targetKey}:`;
+  const [summaryByTargetId, setSummaryByTargetId] = useSessionCachedState<Record<string, ControlPlaneTargetIssueSummary | undefined>>(`${issueSummaryCachePrefix}summaries`, {});
+  const [loadStateByTargetId, setLoadStateByTargetId] = useSessionCachedState<Record<string, TargetIssueSummaryLoadState>>(`${issueSummaryCachePrefix}states`, {});
 
   const refresh = React.useCallback(async () => {
     const activeTargets = targetsRef.current;

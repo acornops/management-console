@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 const root = resolve(__dirname, '../..');
 const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
 const page = readSource('src/pages/WorkspaceWebhooksPage.tsx');
+const inboundPage = readSource('src/pages/WorkspaceIncomingWebhooksPage.tsx');
+const inboundCard = readSource('src/pages/WorkspaceWebhookCard.tsx');
 const editor = readSource('src/features/webhooks/WebhookEditor.tsx');
 const list = readSource('src/features/webhooks/WebhookList.tsx');
 const model = readSource('src/features/webhooks/webhookModel.ts');
@@ -34,6 +36,28 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(page).toContain('<DrawerFrame');
     expect(settingsPage).not.toContain("'webhooks'");
     expect(settingsPage).not.toContain('WorkspaceWebhooksPage');
+  });
+
+  it('provides a URL-backed inbound and outbound hub while preserving outbound as the default', () => {
+    expect(page).toContain("type WebhookDirection = 'inbound' | 'outbound'");
+    expect(page).toContain("urlSearch.get('direction') === 'inbound' ? 'inbound' : 'outbound'");
+    expect(page).toContain('<SegmentedTabs<WebhookDirection>');
+    expect(page).toContain('direction: direction === \'inbound\' ? \'inbound\' : null');
+    expect(page).toContain('<WorkspaceIncomingWebhooksPage hub');
+    expect(page).toContain("if (activeDirection === 'outbound') void loadWebhooks(true)");
+    expect(page.indexOf("{ value: 'outbound', label: t('workspaceWebhooks.directions.outbound') }")).toBeLessThan(
+      page.indexOf("{ value: 'inbound', label: t('workspaceWebhooks.directions.inbound') }")
+    );
+  });
+
+  it('keeps inbound configuration workflow-owned while the hub aggregates every workflow', () => {
+    expect(inboundPage).toContain('listWorkspaceWorkflowWebhooks(requestedWorkspaceId)');
+    expect(inboundPage).toContain('workflowActionLabel={hub');
+    expect(inboundPage).toContain("tab: 'webhooks'");
+    expect(inboundPage).toContain('{!hub && <WorkspaceWebhookDeleteDialog');
+    expect(inboundPage).toContain('{!hub && <DialogFrame');
+    expect(inboundCard).toContain('workflowPath && workflowActionLabel');
+    expect(inboundCard).toContain('handleAppLinkClick(event, workflowPath, navigate)');
   });
 
   it('shows URL-backed search while loading or useful and searches operational fields', () => {
@@ -104,13 +128,14 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(list).toContain('entry.terminalReason');
   });
 
-  it('fences asynchronous list, history, and mutation results to the active workspace', () => {
+  it('fences asynchronous results while retaining workspace-scoped list data', () => {
     expect(page).toContain('currentWorkspaceId.current = workspace.id');
     expect(page).toContain('webhookRequestSequence.current === requestSequence');
     expect(page).toContain('historyRequestSequence.current === requestSequence');
     expect(page).toContain('saveRequestSequence.current === requestSequence');
     expect(page).toContain('deleteRequestSequence.current === requestSequence');
-    expect(page).toContain('setWebhooks([])');
+    expect(page).toContain('useSessionCachedState<ControlPlaneWebhookSubscription[]>(webhookCacheKey, [])');
+    expect(page).not.toContain('setWebhooks([])');
     expect(page).toContain('const workspaceStateCurrent = stateWorkspaceId === workspace.id');
     expect(page).toContain('const visibleWebhooks = workspaceStateCurrent ? webhooks : []');
   });

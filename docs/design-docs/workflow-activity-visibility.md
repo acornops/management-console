@@ -9,23 +9,27 @@ able to answer three questions without opening each workflow:
 
 ## Information Architecture
 
-Workflows is one route family with four first-class tabs: **All Workflows**,
-**Schedules**, **Incoming Webhooks**, and **Activity**. Each tab retains its own
-route, page header, discovery controls, and shareable state.
+Workflows is one route family with three first-class workspace tabs:
+**Workflows**, **Schedules**, and **Runs**. Each tab retains its own route, page
+header, discovery controls, and shareable state.
 
-Inside a selected workflow, **Overview**, **Agents**, **Capabilities**, **Runs**,
-and **Settings** are visible route-backed tabs. Exact-run links select the Runs
-tab and focus the matching execution in that panel. Text-labelled Edit,
-Schedules, Webhooks, and Launch or Activate actions sit below the workflow
-description without hiding the five-tab structure. Schedules and Webhooks open
-their filtered drawers; creation begins from each drawer's Create action.
+Inside a selected workflow, **Overview**, **Capabilities**, **Schedules**,
+**Webhooks**, and **Runs** are visible route-backed tabs. Overview contains the
+Agent assignment summary and editor, while Settings remains route-backed behind
+Edit. Exact-run links select the Runs tab and focus the matching execution in
+that panel. Only immediate Edit and Launch or Activate actions sit below the
+workflow description. Schedules and Webhooks render their workflow-filtered
+management tables in the detail pane; creation begins from each tab's Create
+action.
 
 Outbound webhooks remain a separate Automation destination because they deliver
 AcornOps events to another system; they do not start workflows. Schedules and
-incoming webhooks have first-class top-level tabs and may also be managed from
-workflow-filtered drawer tables. Create actions open modal forms above those
-drawers. Existing schedule, incoming webhook, and `tab=` deep links remain
-navigation contracts.
+inbound webhooks are managed from workflow-filtered detail tabs. Only Schedules
+also retains a workspace-level aggregate tab. Create actions open modal forms
+above the selected workflow detail. Legacy workflow `panel=schedules`,
+`panel=schedule`, and `panel=webhooks` links normalize to the corresponding
+route-backed detail tab. The former incoming-webhooks aggregate route remains
+available only for bookmarked-link compatibility.
 
 ## Execution Model
 
@@ -48,11 +52,20 @@ integration, schedule, webhook, and retained historical-event origins remain
 identifiable after a configuration is deleted. The console never displays
 webhook payloads or raw occurrence keys as provenance.
 
+Workflow run detail is an inspection surface, not a conversation. It renders
+the persisted output, approvals, trace events, and bounded coordination detail,
+but it does not expose a message history or instruction composer. Human
+operators change future behavior by editing the Workflow and starting a new
+run, rather than steering an execution after launch. Each run's persisted
+summary starts expanded and can be collapsed independently when an operator
+needs to scan several runs.
+
 ## Operator Surfaces
 
-The Activity tab shows open executions; the Workflows navigation item carries
-the Experimental badge. The Activity ledger defaults to open work
-and supports URL-backed search, state, origin, and workflow filters. Rows show
+The Runs tab shows workspace workflow executions; the Workflows navigation item
+carries the Experimental badge. The Runs ledger defaults to all executions so
+completed and fast-finishing workflow runs remain visible, and supports
+URL-backed search, state, origin, and workflow filters. Rows show
 workflow and origin, workspace scope, lifecycle time, honest duration, and one
 exact-run action. Exact links open the existing
 workflow-scoped Runs tab and focus the matching execution. The
@@ -60,11 +73,10 @@ workflow-scoped Runs tab and focus the matching execution. The
 
 ## Collection Behavior
 
-The workspace Activity, Schedules, Incoming Webhooks, and Outbound Webhooks
-routes use the shared page header and discovery
-bar. Workflow-scoped schedule and webhook drawers omit redundant discovery
-controls and lead with a compact table already filtered to the selected
-workflow.
+The workspace Runs, Schedules, compatibility Inbound Webhooks, and Webhooks
+Webhooks routes use the shared page header and discovery bar. Workflow-scoped
+schedule and webhook detail tabs omit redundant discovery controls and lead
+with a compact table already filtered to the selected workflow.
 
 Desktop ledgers retain concise, single-line column headings during loading,
 error, empty, filtered-empty, and populated states. Compact layouts replace
@@ -80,14 +92,14 @@ collection because there is nothing to search.
 
 Workflow creation uses two steps: describe the workflow, then select its agents.
 There is no read-only review step; the final button summarizes the real commit
-point. The Settings and Agents tabs open directly in actionable form for
-authorized operators. These surfaces retain Cancel or Back actions without
-nesting a second edit mode inside a task drawer.
+point. Settings and the Overview Agent assignment section open directly in
+actionable form for authorized operators. These surfaces retain Cancel or Back
+actions without nesting a second edit mode inside a task drawer.
 Workflow prompts are plain text: workflow authoring and launch do not provide
 runtime template parameters or bound prompt-reference insertion. Workflow prompt
 fields may insert plain-text `@target[Target name]` mentions through autocomplete. Schedule and incoming
-webhook creation use compact, medium-width modal forms above their parent drawer
-so operators retain the selected workflow as context.
+webhook creation use compact, medium-width modal forms above their parent detail
+tab so operators retain the selected workflow as context.
 
 ## Refresh and Accessibility
 

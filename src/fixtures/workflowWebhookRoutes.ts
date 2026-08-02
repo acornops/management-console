@@ -71,7 +71,6 @@ export async function routeWorkflowWebhookFixtureRequest(
         id: webhookId,
         workspaceId,
         status: requestBody.enabled === false ? 'paused' : 'enabled',
-        approvedContextGrants: [],
         principal: { type: 'user', id: FIXTURE_IDS.user },
         endpointUrl: signingSecret.url,
         ...requestBody

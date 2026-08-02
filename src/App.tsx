@@ -17,6 +17,7 @@ import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachin
 import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
 import { useAuthenticatedSessionLifecycle } from '@/app/useAuthenticatedSessionLifecycle';
 import { logoutAppSession } from '@/app/logoutAppSession';
+import { setSessionDataCacheOwner } from '@/hooks/sessionDataCache';
 import { useThemeTransition } from '@/hooks/useThemeTransition';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
 import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
     }
   }, [navigate, route]);
   const [user, setUser] = useState<User | null>(null);
+  setSessionDataCacheOwner(user?.id ?? null);
   const [kubernetesClusters, setKubernetesClusters] = useState<KubernetesCluster[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -245,7 +247,6 @@ const App: React.FC = () => {
     if (!routeWorkspaceId) return;
     setSelectedWorkspaceId((current) => (current === routeWorkspaceId ? current : routeWorkspaceId));
   }, [routeWorkspaceId]);
-
   useEffect(() => {
     if (!user || !workspaceContextId || workspaceById.has(workspaceContextId)) {
       return;
@@ -267,7 +268,6 @@ const App: React.FC = () => {
       cancelled = true;
     };
   }, [user, workspaceContextId, workspaceById, setWorkspaces]);
-
   useEffect(() => {
     if (!user || route.kind !== 'workspaceKubernetesClusterDiagnostics' || kubernetesClusterById.has(route.clusterId)) {
       return;

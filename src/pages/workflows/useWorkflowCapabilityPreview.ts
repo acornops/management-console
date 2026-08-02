@@ -5,6 +5,7 @@ import { previewWorkflowCapabilities, type WorkflowCapabilitiesPreview } from '@
 export function useWorkflowCapabilityPreview(input: {
   workspaceId: string;
   workflow?: WorkflowDefinition;
+  enabled: boolean;
 }) {
   const [preview, setPreview] = React.useState<WorkflowCapabilitiesPreview | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -22,7 +23,7 @@ export function useWorkflowCapabilityPreview(input: {
         : null;
 
   React.useEffect(() => {
-    if (!input.workflow) {
+    if (!input.workflow || !input.enabled) {
       requestRef.current += 1;
       setPreview(null);
       setLoading(false);
@@ -35,8 +36,9 @@ export function useWorkflowCapabilityPreview(input: {
     setLoading(true);
     setError('');
     setPreview(null);
+    const controller = new AbortController();
     const timer = window.setTimeout(() => previewWorkflowCapabilities(input.workspaceId, workflow.id, {
-      approvedContextGrants: workflow.contextGrants
+      signal: controller.signal
     })
       .then((response) => {
         if (requestRef.current !== requestId) return;
@@ -46,18 +48,19 @@ export function useWorkflowCapabilityPreview(input: {
         }
         setPreview(response);
       })
-      .catch((reason) => {
+      .catch(() => {
         if (requestRef.current !== requestId) return;
-        setError(reason instanceof Error ? reason.message : 'The capability check could not be loaded.');
+        setError('The capability check could not be loaded. Retry before launching this workflow.');
       })
       .finally(() => {
         if (requestRef.current === requestId) setLoading(false);
       }), 300);
     return () => {
       window.clearTimeout(timer);
+      controller.abort();
       if (requestRef.current === requestId) requestRef.current += 1;
     };
-  }, [input.workspaceId, input.workflow?.id, input.workflow?.policy.mode, input.workflow?.contextGrants.join('\0'), retryKey]);
+  }, [input.enabled, input.workspaceId, input.workflow?.id, input.workflow?.policy.mode, retryKey]);
 
   return { preview, loading, error, blocker, retry: () => setRetryKey((value) => value + 1) };
 }

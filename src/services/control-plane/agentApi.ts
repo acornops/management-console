@@ -6,17 +6,26 @@ export type AgentProviderType = 'internal' | 'external';
 export type RunPermissionMode = 'read_only' | 'ask_before_changes' | 'auto_allowed_changes';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
 export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; isSystem: boolean; canDelete: boolean; canEditConnection: boolean; canToggle: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
+export interface AgentTargetAccessPolicyApi { mode: 'all' | 'allowlist' | 'denylist'; targetIds: string[] }
+export interface AgentTargetAccessSettingsApi {
+  policy: AgentTargetAccessPolicyApi;
+  targets: Array<{
+    id: string;
+    name: string;
+    targetType: 'kubernetes' | 'virtual_machine';
+    status: 'online' | 'offline' | 'degraded' | 'unknown';
+  }>;
+}
 export interface WorkspaceNativeToolApi {
   id: string;
   modelAlias: string;
   title: string;
   description: string;
   semanticCapabilityId: string;
-  invocationScopes: Array<'workflow' | 'agent_chat'>;
+  invocationScopes: Array<'workflow' | 'target_chat' | 'agent_chat'>;
   authorizationClass: 'internal_artifact' | 'external_http_read';
   auditOperation: 'read' | 'write';
   approvalOperation: 'read' | 'write';
-  requiredContextGrant?: string;
   configSchema?: Record<string, unknown>;
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown>;
@@ -24,7 +33,7 @@ export interface WorkspaceNativeToolApi {
 export interface AgentSkillApi { id: string; name: string; description: string; enabled: boolean; revision: number; contentDigest: string; source: { type: 'manual' | 'git' | 'template'; provider?: 'github' | 'gitlab'; url?: string; apiBaseUrl?: string; ref?: string; path?: string; pinnedCommit?: string }; files: Array<{ path: string; content: string; contentDigest: string }>; inherited?: boolean }
 export interface ServiceIdentityApi { id: string; workspaceId: string; name: string; status: 'active' | 'disabled'; role: string; createdBy: string; createdAt: string; updatedAt: string }
 export interface AgentCapability {
-  source: 'builtin_tool' | 'mcp_tool' | 'skill' | 'context';
+  source: 'builtin_tool' | 'mcp_tool' | 'skill';
   providerAgentId?: string;
   resourceType: string;
   resourceScope: string;
@@ -103,8 +112,6 @@ export interface AgentDefinitionApi {
   skillInstallations?: AgentSkillApi[];
   permissionMode?: RunPermissionMode;
   semanticCapabilityIds?: string[];
-  contextScope?: string[];
-  contextGrants?: string[];
   approvalPolicy?: Record<string, unknown>;
   trustPolicy?: Record<string, unknown>;
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
@@ -275,6 +282,15 @@ const agentCapabilityBase = (workspaceId: string, agentId: string) => `/api/v1/w
 
 export function listAgentMcpServers(workspaceId: string, agentId: string): Promise<AgentMcpServerApi[]> {
   return requestJson<{ items: AgentMcpServerApi[] }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`).then((response) => response.items);
+}
+export function getAgentTargetAccessSettings(workspaceId: string, agentId: string, serverId: string): Promise<AgentTargetAccessSettingsApi> {
+  return requestJson<AgentTargetAccessSettingsApi>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}/target-access`);
+}
+export function updateAgentTargetAccessSettings(workspaceId: string, agentId: string, serverId: string, policy: AgentTargetAccessPolicyApi): Promise<AgentTargetAccessSettingsApi> {
+  return requestJson<AgentTargetAccessSettingsApi>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}/target-access`, {
+    method: 'PUT',
+    body: JSON.stringify(policy)
+  });
 }
 export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header' | 'oauth'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
   return requestJson<{ server: AgentMcpServerApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.server);

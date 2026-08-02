@@ -22,7 +22,7 @@ predictable visual vocabulary across the management console.
 - Workspace member candidate status pills.
 - Cluster, VM, workspace, workflow, conversation, schedule, and webhook delete
   confirmation guidance.
-- Inline Agent, capability, integration, and member removal confirmations.
+- Modal Agent, capability, integration, and member removal confirmations.
 - Removal of unused VM status-class helpers that preserve the obsolete
   outlined-pill treatment.
 

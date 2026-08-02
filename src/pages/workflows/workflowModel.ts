@@ -1,7 +1,7 @@
 export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
 export type WorkflowCapabilityRestrictionMode = 'inherit' | 'restrict';
-export type WorkflowView = 'overview' | 'agents' | 'capabilities' | 'runs' | 'settings';
+export type WorkflowView = 'overview' | 'capabilities' | 'schedules' | 'webhooks' | 'runs' | 'settings';
 export type WorkflowPrimaryAction = 'launch' | 'activate';
 
 export interface WorkflowRunRecord {
@@ -16,19 +16,10 @@ export interface WorkflowRunRecord {
   startedAt: string;
 }
 
-export interface WorkflowRunMessage {
-  id: string;
-  runId: string;
-  role: 'operator' | 'agent' | 'system';
-  author: string;
-  content: string;
-  createdAt: string;
-  status: 'sending' | 'sent' | 'failed';
-}
-
 export interface WorkflowAgentReference {
   agentId: string;
   name: string;
+  avatarEmoji?: string;
   role: string;
   required: boolean;
 }
@@ -49,7 +40,6 @@ export interface WorkflowDefinition {
   tags: string[];
   lastRun: string;
   agents: WorkflowAgentReference[];
-  contextGrants: string[];
   policy: {
     mode: WorkflowCapabilityMode;
     approvals: string[];
@@ -106,8 +96,7 @@ export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query
       workflow.semanticCapabilityIds.join(' '),
       workflow.status,
       workflow.policy.mode,
-      workflow.policy.approvals.join(' '),
-      workflow.contextGrants.join(' ')
+      workflow.policy.approvals.join(' ')
     ].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ');
     return queryTokens.every((token) => searchable.includes(token));
   });

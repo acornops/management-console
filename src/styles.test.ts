@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   addMcpServerAction,
   addClusterModal,
-  appDialogs,
   appPageContent,
   appShell,
   buttonComponent,
@@ -27,7 +26,6 @@ import {
   markdownComponents,
   mcpServerCard,
   mcpServerToolsDialog,
-  mcpServersDialogs,
   mcpServersInventory,
   mcpServersView,
   mcpServersViewHeader,
@@ -440,7 +438,7 @@ describe('theme color contract', () => {
     expect(workloadsExplorerSurface).toContain('className={resourceRowActionClass}');
     expect(resourceExplorerLayout).toContain('className={resourceRowActionClass}');
     expect(workloadExplorerParts).toContain('<StatusBadge');
-    expect(workloadExplorerParts).toContain('className="min-w-0 gap-2 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"');
+    expect(workloadExplorerParts).toContain('className="min-w-0 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"');
     expect(workloadExplorerParts).toContain('[overflow-wrap:anywhere]');
     expect(resourceExplorerLayout).toContain('type-ui inline-flex shrink-0 items-center gap-1');
     expect(resourceExplorerLayout).toContain('type-row-title break-words');

@@ -3,14 +3,13 @@ import { hasWorkspacePermission } from '@/app/workspacePermissions';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
-import { DataTableHeader, DataTableHeaderCell, TableLoadingRows } from '@acornops/ui';
+import { DataSurface, DataTableHeader, DataTableHeaderCell, TableLoadingRows } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
-import { type SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { Workspace } from '@/types';
 import {
@@ -29,10 +28,13 @@ import {
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import {
-  approvedContextGrants,
   createEmptyDraft,
   formatScheduleDateTime,
+  isValidScheduleCron,
+  isValidTimeZone,
+  scheduleFrequencyFromCron,
   scheduleToDraft,
+  type ScheduleFrequency,
   type ScheduleDraft
 } from '@/pages/WorkspaceSchedulesPage.helpers';
 import {
@@ -41,13 +43,15 @@ import {
   WorkspaceScheduleTableRow
 } from '@/pages/WorkspaceScheduleRows';
 import { WorkspaceScheduleDrawerTable } from '@/pages/WorkspaceScheduleDrawerTable';
-import { WorkspaceScheduleDrawerToolbar } from '@/pages/WorkspaceScheduleDrawerToolbar';
+import { WorkflowTriggerToolbar } from '@/pages/workflows/WorkflowTriggerToolbar';
 import { WorkspaceSchedulesPageChrome } from '@/pages/WorkspaceSchedulesPageChrome';
 import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
 import { WorkspaceScheduleDialog } from '@/pages/WorkspaceScheduleDialog';
+import type { ScheduleDraftField } from '@/pages/WorkspaceScheduleFormFields';
 import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
-import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface WorkspaceSchedulesPageProps {
   workspace: Workspace;
@@ -69,29 +73,44 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
   const consumedCreateIntentRef = React.useRef('');
-  const [schedulePage, setSchedulePage] = useState<WorkflowScheduleListResponse | null>(null);
-  const [workflows, setWorkflows] = useState<WorkflowApiDefinition[]>([]);
-  const [schedulePhase, setSchedulePhase] = useState<CursorCollectionPhase>('loading');
+  const scheduleCachePrefix = `workspace:${workspace.id}:workflow-schedules:`;
+  const schedulePageCacheKey = `${scheduleCachePrefix}page`;
+  const [schedulePage, setSchedulePage] = useSessionCachedState<WorkflowScheduleListResponse | null>(schedulePageCacheKey, null);
+  const [workflows, setWorkflows] = useSessionCachedState<WorkflowApiDefinition[]>(`${scheduleCachePrefix}workflows`, []);
+  const [schedulePhase, setSchedulePhase] = useState<CursorCollectionPhase>(() => hasSessionDataCacheValue(schedulePageCacheKey) ? 'ready' : 'loading');
   const [scheduleError, setScheduleError] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [draft, setDraft] = useState<ScheduleDraft>(() => createEmptyDraft());
   const [draftError, setDraftError] = useState('');
+  const [draftFieldErrors, setDraftFieldErrors] = useState<Partial<Record<ScheduleDraftField, string>>>({});
+  const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false);
+  const [scheduleEditorMode, setScheduleEditorMode] = useState<ScheduleFrequency>('weekdays');
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [deletingScheduleId, setDeletingScheduleId] = useState('');
   const [deleteTargetId, setDeleteTargetId] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [updatingScheduleId, setUpdatingScheduleId] = useState('');
-  const [currentUser, setCurrentUser] = useState<{ id: string; label: string } | null>(null);
+  const [currentUser, setCurrentUser] = useSessionCachedState<{ id: string; label: string } | null>(`${scheduleCachePrefix}current-user`, null);
   const [capabilityPreview, setCapabilityPreview] = useState<WorkflowCapabilitiesPreview | null>(null);
   const [capabilityPreviewError, setCapabilityPreviewError] = useState('');
   const [capabilityPreviewing, setCapabilityPreviewing] = useState(false);
   const [credentialRequirement, setCredentialRequirement] = useState<WorkflowMcpRequirementPreview | null>(null);
   const [capabilityPreviewRevision, setCapabilityPreviewRevision] = useState(0);
   const capabilityPreviewRequestRef = React.useRef(0);
+  const initialDraftRef = React.useRef<ScheduleDraft>(createEmptyDraft());
   const scheduleActionButtonRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const canManageSchedules = hasWorkspacePermission(workspace, 'manage_workflows');
-  const refreshSchedules = async (initial = false) => {
-    setSchedulePhase(initial || schedulePage === null ? 'loading' : 'refreshing');
+  const draftDirty = drawerOpen && JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current);
+  const scheduleFrequency = scheduleEditorMode;
+  const setDraftBaseline = (nextDraft: ScheduleDraft) => {
+    initialDraftRef.current = nextDraft;
+    setScheduleEditorMode(scheduleFrequencyFromCron(nextDraft.cron));
+    setDraft(nextDraft);
+    setDraftFieldErrors({});
+    setDiscardConfirmationOpen(false);
+  };
+  const refreshSchedules = async (_initial = false) => {
+    setSchedulePhase(schedulePage === null ? 'loading' : 'refreshing');
     setScheduleError('');
     try {
       const [schedulesResponse, workflowsResponse, loadedUser] = await Promise.all([
@@ -106,23 +125,23 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         setDraft((current) => ({ ...current, workflowId: workflowsResponse[0].id, runsAsUserId: current.runsAsUserId || loadedUser.id }));
       }
       setSchedulePhase('ready');
-    } catch (err) {
-      setScheduleError(err instanceof Error ? err.message : t('schedules.loadError'));
-      setSchedulePhase('error');
+    } catch {
+      setScheduleError('Schedules could not be loaded. Retry to reconnect to the control plane.');
+      setSchedulePhase(schedulePage === null ? 'error' : 'ready');
     }
   };
 
   useEffect(() => {
-    setSchedulePage(null);
-    setWorkflows([]);
-    setCurrentUser(null);
     setDeleteTargetId('');
     setDeleteError('');
-    setSchedulePhase('loading');
     void refreshSchedules(true);
   }, [workspace.id]);
 
   const schedules = schedulePage?.items || [];
+  const workflowsById = useMemo(
+    () => new Map(workflows.map((workflow) => [workflow.id, workflow])),
+    [workflows]
+  );
   const deleteTargetSchedule = schedules.find((schedule) => schedule.id === deleteTargetId);
   const summary = schedulePage?.summary || { total: 0, active: 0, paused: 0, approvalGated: 0 };
   const query = embedded ? '' : urlSearch.get('q') || '';
@@ -137,12 +156,16 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     if (!normalizedQuery) return true;
     return [
       schedule.name,
-      scheduleWorkflowName(workflows, schedule.workflowId),
+      scheduleWorkflowName(workflowsById, schedule.workflowId),
       schedule.cron,
       schedule.timezone
     ].some((value) => value.toLowerCase().includes(normalizedQuery));
-  }), [normalizedQuery, schedules, status, workflowFilter, workflows]);
-  const hasActiveFilters = Boolean(normalizedQuery || status !== 'all' || workflowFilter !== 'all');
+  }), [normalizedQuery, schedules, status, workflowFilter, workflowsById]);
+  const hasActiveFilters = Boolean(
+    normalizedQuery
+    || status !== 'all'
+    || (!constrainedWorkflowId && workflowFilter !== 'all')
+  );
   const clearFilters = () => {
     updateUrlSearch(
       { q: null, status: null, workflow: null },
@@ -157,15 +180,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     setDeleteTargetId(schedule.id);
   };
   const activeWorkflows = useMemo(() => workflows.filter((workflow) => workflow.status !== 'paused'), [workflows]);
-  const workflowOptions = useMemo<Array<SelectOption<string>>>(
-    () => workflows.map((workflow) => ({ value: workflow.id, label: workflow.name })),
-    [workflows]
-  );
 
   const openCreateDrawer = (workflowId?: string) => {
     const selectedWorkflowId = workflowId || activeWorkflows[0]?.id || workflows[0]?.id || '';
     const selectedWorkflow = workflows.find((candidate) => candidate.id === selectedWorkflowId);
-    setDraft({
+    setDraftBaseline({
       ...createEmptyDraft(),
       workflowId: selectedWorkflowId,
       name: selectedWorkflow ? `${selectedWorkflow.name} schedule` : '',
@@ -194,7 +213,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   }, [create, createWorkflowId, currentUser?.id, schedulePhase]);
 
   const openEditDrawer = (schedule: WorkflowSchedule) => {
-    setDraft(scheduleToDraft(schedule));
+    setDraftBaseline(scheduleToDraft(schedule));
     setDraftError('');
     setCapabilityPreview(null);
     setCapabilityPreviewError('');
@@ -202,19 +221,39 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   };
 
   const openMcpRepairDrawer = (schedule: WorkflowSchedule) => {
-    setDraft({ ...scheduleToDraft(schedule), enabled: true });
+    setDraftBaseline({ ...scheduleToDraft(schedule), enabled: true });
     setDraftError('');
     setCapabilityPreview(null);
     setCapabilityPreviewError('');
     setDrawerOpen(true);
   };
 
-  const closeDrawer = () => {
+  const forceCloseDrawer = () => {
     if (savingSchedule) return;
     setDrawerOpen(false);
     setDraftError('');
+    setDraftFieldErrors({});
+    setDiscardConfirmationOpen(false);
     setCredentialRequirement(null);
   };
+  const closeDrawer = () => {
+    if (savingSchedule) return;
+    if (draftDirty) {
+      setDiscardConfirmationOpen(true);
+      return;
+    }
+    forceCloseDrawer();
+  };
+
+  useEffect(() => {
+    if (!draftDirty) return undefined;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeUnload);
+    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
+  }, [draftDirty]);
 
   const draftOwnerIsCurrentUser = Boolean(currentUser?.id && currentUser.id === draft.runsAsUserId);
 
@@ -229,16 +268,14 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     capabilityPreviewRequestRef.current = requestId;
     setCapabilityPreviewing(true);
     const timer = window.setTimeout(() => {
-      previewWorkflowCapabilities(workspace.id, draft.workflowId, {
-        approvedContextGrants: approvedContextGrants(draft.approvedContextGrants)
-      }).then((preview) => {
+      previewWorkflowCapabilities(workspace.id, draft.workflowId).then((preview) => {
         if (capabilityPreviewRequestRef.current !== requestId) return;
         setCapabilityPreview(preview);
         setCapabilityPreviewError('');
-      }).catch((cause) => {
+      }).catch(() => {
         if (capabilityPreviewRequestRef.current !== requestId) return;
         setCapabilityPreview(null);
-        setCapabilityPreviewError(cause instanceof Error ? cause.message : t('agentsWorkflows.schedule.previewUnavailable'));
+        setCapabilityPreviewError('Schedule readiness could not be checked. Retry before saving this schedule.');
       }).finally(() => {
         if (capabilityPreviewRequestRef.current === requestId) setCapabilityPreviewing(false);
       });
@@ -247,7 +284,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
       window.clearTimeout(timer);
       if (capabilityPreviewRequestRef.current === requestId) capabilityPreviewRequestRef.current += 1;
     };
-  }, [capabilityPreviewRevision, draft.approvedContextGrants, draft.workflowId, draftOwnerIsCurrentUser, drawerOpen, t, workspace.id]);
+  }, [capabilityPreviewRevision, draft.workflowId, draftOwnerIsCurrentUser, drawerOpen, t, workspace.id]);
 
   const draftCapabilityReady = !draft.enabled
     || !draftOwnerIsCurrentUser
@@ -256,20 +293,26 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   const saveDraft = async () => {
     if (!canManageSchedules || savingSchedule) return;
     setDraftError('');
+    const nextFieldErrors: Partial<Record<ScheduleDraftField, string>> = {};
+    if (!draft.workflowId) nextFieldErrors.workflowId = t('schedules.form.workflowRequired');
+    if (!draft.name.trim()) nextFieldErrors.name = t('schedules.form.nameRequired');
+    if (!draft.runsAsUserId) nextFieldErrors.runsAsUserId = t('schedules.form.ownerRequired');
+    if (!isValidScheduleCron(draft.cron)) nextFieldErrors.cron = t('schedules.form.cronInvalid');
+    if (!isValidTimeZone(draft.timezone)) nextFieldErrors.timezone = t('schedules.form.timezoneInvalid');
+    setDraftFieldErrors(nextFieldErrors);
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setDraftError(t('schedules.form.reviewFields'));
+      return;
+    }
     setSavingSchedule(true);
     try {
-      const contextGrants = approvedContextGrants(draft.approvedContextGrants);
-      if (!draft.workflowId || !draft.name.trim() || !draft.cron.trim() || !draft.timezone.trim()) {
-        throw new Error(t('schedules.form.required'));
-      }
       if (draft.id) {
         await updateWorkflowSchedule(workspace.id, draft.id, {
           workflowId: draft.workflowId,
           name: draft.name.trim(),
           cron: draft.cron.trim(),
           timezone: draft.timezone.trim(),
-          enabled: draft.enabled,
-          approvedContextGrants: contextGrants
+          enabled: draft.enabled
         });
       } else {
         await createWorkflowSchedule(workspace.id, {
@@ -278,14 +321,14 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
           cron: draft.cron.trim(),
           timezone: draft.timezone.trim(),
           enabled: draft.enabled,
-          approvedContextGrants: contextGrants,
           principal: { type: 'user', id: currentUser?.id || draft.runsAsUserId }
         });
       }
       setDrawerOpen(false);
+      initialDraftRef.current = draft;
       await refreshSchedules();
-    } catch (err) {
-      setDraftError(err instanceof Error ? err.message : t('schedules.form.saveError'));
+    } catch {
+      setDraftError('Schedule could not be saved. Your changes are still here. Review the highlighted fields or try again.');
     } finally {
       setSavingSchedule(false);
     }
@@ -297,8 +340,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     try {
       await updateWorkflowSchedule(workspace.id, schedule.id, { enabled: schedule.status !== 'enabled' });
       await refreshSchedules();
-    } catch (err) {
-      setScheduleError(err instanceof Error ? err.message : t('schedules.form.saveError'));
+    } catch {
+      setScheduleError('The schedule status could not be changed. Refresh the list and try again.');
     } finally {
       setUpdatingScheduleId('');
     }
@@ -312,8 +355,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
       await deleteWorkflowSchedule(workspace.id, schedule.id);
       await refreshSchedules();
       return true;
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : t('schedules.form.deleteError'));
+    } catch {
+      setDeleteError('The schedule could not be deleted. It remains unchanged; try again.');
       return false;
     } finally {
       setDeletingScheduleId('');
@@ -325,11 +368,11 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   const scheduleEmptyState = (
     <EmptyState
       embedded
-      icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Clock />}
+      icon={<ICONS.CalendarClock />}
       title={hasActiveFilters ? t('schedules.filters.emptyTitle') : t('schedules.emptyTitle')}
       description={hasActiveFilters ? t('schedules.filters.emptyDescription') : t('schedules.emptyBody')}
       actions={hasActiveFilters
-        ? <Button variant="secondary" onClick={clearFilters}>{t('common.clearAll')}</Button>
+        ? <Button variant="secondary" size="sm" onClick={clearFilters}>{t('common.clearAll')}</Button>
         : undefined}
     />
   );
@@ -340,7 +383,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
       icon={<ICONS.AlertTriangle />}
       title={t('schedules.loadError')}
       description={scheduleError}
-      actions={<Button variant="secondary" onClick={() => void refreshSchedules()}>{t('common.retry', { defaultValue: 'Retry' })}</Button>}
+      actions={<Button variant="secondary" size="sm" onClick={() => void refreshSchedules()}>{t('common.retry', { defaultValue: 'Retry' })}</Button>}
     />
   );
   const scheduleFeedback = scheduleError
@@ -351,17 +394,18 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     : undefined;
 
   return (
-    <PageShell embedded={embedded} className={embedded ? 'p-4 sm:p-5' : undefined}>
+    <PageShell embedded={embedded} className={embedded ? 'px-1 py-1' : undefined}>
       <WorkspaceSchedulesPageChrome
         busy={schedulesBusy} canCreate={canManageSchedules && activeWorkflows.length > 0}
         canManage={canManageSchedules} embedded={embedded}
         error={scheduleError} showError={schedulePhase !== 'error'}
         workspaceName={workspace.name}
         onRefresh={() => void refreshSchedules()} onCreate={() => openCreateDrawer()}
-        drawerToolbar={<WorkspaceScheduleDrawerToolbar
+        drawerToolbar={<WorkflowTriggerToolbar
           busy={schedulesBusy} canCreate={canManageSchedules && activeWorkflows.length > 0}
-          loading={schedulesPending}
-          count={visibleSchedules.length} total={schedules.length}
+          createLabel={t('schedules.actions.create')}
+          refreshLabel={t('common.refresh')}
+          summary={schedulesPending ? t('schedules.loading') : t('schedules.count', { count: visibleSchedules.length })}
           onRefresh={() => void refreshSchedules()} onCreate={() => openCreateDrawer(constrainedWorkflowId)}
         />}
       />
@@ -422,7 +466,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         className="mb-4"
       />}
 
-      <section aria-label={t('schedules.tableLabel')} className="min-w-0 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+      <DataSurface aria-label={t('schedules.tableLabel')}>
         {embedded ? (
           <WorkspaceScheduleDrawerTable
             actionButtonRefs={scheduleActionButtonRefs}
@@ -430,7 +474,6 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             deletingId={deletingScheduleId}
             empty={scheduleEmptyState}
             error={scheduleErrorState}
-            loading={scheduleLoadingState}
             onDelete={openDeleteDialog}
             onEdit={openEditDrawer}
             onRepair={openMcpRepairDrawer}
@@ -438,12 +481,12 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             phase={schedulePhase}
             schedules={visibleSchedules}
             updatingId={updatingScheduleId}
-            workflows={workflows}
+            workflows={workflowsById}
             workspaceId={workspace.id}
           />
         ) : (
           <>
-        <div className="2xl:hidden">
+        <div className="xl:hidden">
           <CollectionState
             phase={schedulePhase}
             itemCount={visibleSchedules.length}
@@ -457,7 +500,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                 <WorkspaceScheduleMobileCard
                   key={schedule.id}
                   schedule={schedule}
-                  workflows={workflows}
+                  workflows={workflowsById}
                   workspaceId={workspace.id}
                   canManage={canManageSchedules}
                   updating={updatingScheduleId === schedule.id}
@@ -472,48 +515,44 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             </div>
           </CollectionState>
         </div>
-        <div className="hidden overflow-x-auto 2xl:block">
-          <DataTable caption={t('schedules.tableLabel')} className="min-w-[58rem] w-full border-collapse text-left">
-            <DataTableHeader collectionState={{ phase: schedulePhase, itemCount: visibleSchedules.length, showDuringInitialLoading: true }}>
-              <DataTableRow>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.schedule')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.workflow')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.cadence')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.nextRun')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.access')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('workflowActivity.activity')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense" numeric className="whitespace-nowrap">{t('schedules.table.actions')}</DataTableHeaderCell>
-              </DataTableRow>
-            </DataTableHeader>
-            <DataTableBody className="divide-y divide-ui-border">
-              {visibleSchedules.length > 0 ? visibleSchedules.map((schedule) => (
-                <WorkspaceScheduleTableRow
-                  key={schedule.id}
-                  schedule={schedule}
-                  workflows={workflows}
-                  workspaceId={workspace.id}
-                  canManage={canManageSchedules}
-                  updating={updatingScheduleId === schedule.id}
-                  deleting={deletingScheduleId === schedule.id}
-                  actionButtonRefs={scheduleActionButtonRefs}
-                  onEdit={() => openEditDrawer(schedule)}
-                  onRepair={() => openMcpRepairDrawer(schedule)}
-                  onToggle={() => void toggleSchedule(schedule)}
-                  onDelete={() => openDeleteDialog(schedule)}
-                />
-              )) : schedulePhase === 'loading' ? (
-                <TableLoadingRows columns={7} label={t('schedules.loading')} />
-              ) : (
+        <div className="hidden overflow-x-auto xl:block">
+          {visibleSchedules.length === 0 && schedulePhase !== 'loading' ? (
+            schedulePhase === 'error' ? scheduleErrorState : scheduleEmptyState
+          ) : (
+            <DataTable caption={t('schedules.tableLabel')} className="min-w-[58rem] w-full border-collapse text-left">
+              <DataTableHeader collectionState={{ phase: schedulePhase, itemCount: visibleSchedules.length, showDuringInitialLoading: true }}>
                 <DataTableRow>
-                  <DataTableCell colSpan={7} className="p-0">
-                    {schedulePhase === 'error'
-                        ? scheduleErrorState
-                        : scheduleEmptyState}
-                  </DataTableCell>
+                  <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.schedule')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.workflow')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.cadence')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.nextRun')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.access')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('workflowActivity.activity')}</DataTableHeaderCell>
+                  <DataTableHeaderCell density="dense" numeric className="whitespace-nowrap">{t('schedules.table.actions')}</DataTableHeaderCell>
                 </DataTableRow>
-              )}
-            </DataTableBody>
-          </DataTable>
+              </DataTableHeader>
+              <DataTableBody className="divide-y divide-ui-border">
+                {visibleSchedules.length > 0 ? visibleSchedules.map((schedule) => (
+                  <WorkspaceScheduleTableRow
+                    key={schedule.id}
+                    schedule={schedule}
+                    workflows={workflowsById}
+                    workspaceId={workspace.id}
+                    canManage={canManageSchedules}
+                    updating={updatingScheduleId === schedule.id}
+                    deleting={deletingScheduleId === schedule.id}
+                    actionButtonRefs={scheduleActionButtonRefs}
+                    onEdit={() => openEditDrawer(schedule)}
+                    onRepair={() => openMcpRepairDrawer(schedule)}
+                    onToggle={() => void toggleSchedule(schedule)}
+                    onDelete={() => openDeleteDialog(schedule)}
+                  />
+                )) : (
+                  <TableLoadingRows columns={7} label={t('schedules.loading')} cellClassName="px-4 py-4" />
+                )}
+              </DataTableBody>
+            </DataTable>
+          )}
           {visibleSchedules.length > 0
             && (schedulePhase === 'refreshing' || schedulePhase === 'loadingMore' || schedulePhase === 'error')
             && <div className="border-t border-ui-border p-4">{scheduleFeedback}</div>}
@@ -525,7 +564,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             {scheduleAnnouncement}
           </div>
         )}
-      </section>
+      </DataSurface>
 
       <WorkspaceScheduleDeleteDialog
         schedule={deleteTargetSchedule}
@@ -550,10 +589,13 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         open={drawerOpen}
         draft={draft}
         draftError={draftError}
+        draftFieldErrors={draftFieldErrors}
+        discardConfirmationOpen={discardConfirmationOpen}
         saving={savingSchedule}
-        workflowOptions={workflowOptions}
+        workflows={workflows}
         currentUser={currentUser}
         draftOwnerIsCurrentUser={draftOwnerIsCurrentUser}
+        scheduleFrequency={scheduleFrequency}
         capabilityPreview={capabilityPreview}
         capabilityPreviewError={capabilityPreviewError}
         capabilityPreviewing={capabilityPreviewing}
@@ -561,8 +603,12 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         credentialRequirement={credentialRequirement}
         workspaceId={workspace.id}
         setDraft={setDraft}
+        setDraftFieldErrors={setDraftFieldErrors}
+        setScheduleFrequency={setScheduleEditorMode}
         setCredentialRequirement={setCredentialRequirement}
         onClose={closeDrawer}
+        onDiscardCancel={() => setDiscardConfirmationOpen(false)}
+        onDiscardConfirm={forceCloseDrawer}
         onSave={() => void saveDraft()}
         onRetryCapabilityPreview={() => setCapabilityPreviewRevision((value) => value + 1)}
         onCredentialConnected={() => setCapabilityPreviewRevision((value) => value + 1)}

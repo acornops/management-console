@@ -1,9 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, InlineAlert } from '@acornops/ui';
+import { Button, DestructiveConfirmationDialog, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
-import { InlineConfirmation } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
   controlPlaneApi,
@@ -16,6 +15,7 @@ import {
   formatExternalIntegrationCapability,
   normalizeExternalIntegrationCapabilities
 } from './externalIntegrationGrants';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 function draftFromLinks(
   links: ControlPlaneExternalIntegrationLinkSummary[]
@@ -34,6 +34,7 @@ interface GrantEditorProps {
   draft: Record<string, ControlPlaneWorkspaceCapability[]>;
   isSaving: boolean;
   isUnlinking: boolean;
+  unlinkError: string | null;
   mutationsDisabled: boolean;
   pendingUnlink: boolean;
   onToggleWorkspace: (workspace: ControlPlaneExternalIntegrationGrantableWorkspace, enabled: boolean) => void;
@@ -53,6 +54,7 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
   draft,
   isSaving,
   isUnlinking,
+  unlinkError,
   mutationsDisabled,
   pendingUnlink,
   onToggleWorkspace,
@@ -89,18 +91,20 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
         </div>
       </div>
       {pendingUnlink && (
-        <InlineConfirmation
-          id={`unlink-external-integration-${link.id}`}
+        <DestructiveConfirmationDialog
+          open
+          titleId={`unlink-external-integration-${link.id}`}
           title={t('settings.externalIntegrationsUnlinkTitle', { name: link.clientDisplayName })}
+          subtitle={t('common.confirmConsequences')}
           description={t('settings.externalIntegrationsUnlinkDescription')}
-          tone="warning"
           confirmLabel={t('settings.externalIntegrationsUnlink')}
-          confirmVariant="danger"
-          confirmDisabled={mutationsDisabled}
+          loadingLabel={t('settings.externalIntegrationsUnlinking')}
+          confirmDisabled={mutationsDisabled && !isUnlinking}
+          pending={isUnlinking}
+          error={unlinkError}
           cancelLabel={t('settings.cancel')}
           onCancel={onCancelUnlink}
           onConfirm={onConfirmUnlink}
-          className="mt-4 rounded-lg"
         />
       )}
       <div className="mt-4 grid gap-3">
@@ -148,8 +152,8 @@ const ExternalIntegrationGrantEditor: React.FC<GrantEditorProps> = ({
 
 export const ExternalIntegrationSettingsPanel: React.FC = () => {
   const { t } = useTranslation();
-  const [links, setLinks] = React.useState<ControlPlaneExternalIntegrationLinkSummary[] | null>(null);
-  const [drafts, setDrafts] = React.useState<Record<string, Record<string, ControlPlaneWorkspaceCapability[]>>>({});
+  const [links, setLinks] = useSessionCachedState<ControlPlaneExternalIntegrationLinkSummary[] | null>('user:external-integration-links', null);
+  const [drafts, setDrafts] = React.useState<Record<string, Record<string, ControlPlaneWorkspaceCapability[]>>>(() => draftFromLinks(links || []));
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [savingLinkId, setSavingLinkId] = React.useState<string | null>(null);
@@ -265,6 +269,7 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
           draft={drafts[link.id] || {}}
           isSaving={savingLinkId === link.id}
           isUnlinking={unlinkingLinkId === link.id}
+          unlinkError={pendingUnlinkLinkId === link.id ? error : null}
           mutationsDisabled={mutationInFlight}
           pendingUnlink={pendingUnlinkLinkId === link.id}
           onToggleWorkspace={(workspace, enabled) => updateDraft(
@@ -279,7 +284,10 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
             updateDraft(link, workspace, [...selected]);
           }}
           onSave={() => void save(link)}
-          onRequestUnlink={() => setPendingUnlinkLinkId(link.id)}
+          onRequestUnlink={() => {
+            setError(null);
+            setPendingUnlinkLinkId(link.id);
+          }}
           onCancelUnlink={() => setPendingUnlinkLinkId(null)}
           onConfirmUnlink={() => void unlink(link)}
         />

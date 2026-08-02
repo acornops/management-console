@@ -80,7 +80,7 @@
   --ao-control-boundary-rgb: 123 107 97;
   --ao-route-padding-x: 1rem;
   --ao-route-padding-y: 1.5rem;
-  --ao-header-content-gap: 2rem;
+  --ao-header-content-gap: 1.25rem;
   --ao-section-gap: 1.5rem;
   --ao-surface-padding: 1rem;
   --ao-table-row-padding-y: 0.875rem;
@@ -237,6 +237,13 @@
 
 .type-ui {
   font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.25rem;
+}
+
+.type-compact-ui {
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0;
   line-height: 1.25rem;

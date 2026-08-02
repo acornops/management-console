@@ -11,6 +11,7 @@ import {
   type TargetMcpServerTestConnectionResult,
   type UpdateTargetMcpServerInput
 } from '@/services/controlPlaneApi';
+import type { AgentTargetAccessPolicyApi, AgentTargetAccessSettingsApi } from '@/services/control-plane/agentApi';
 
 export interface McpServersViewProps {
   subject: CapabilitySubject & { mcpTools?: TargetMcpToolSummary[] };
@@ -24,6 +25,11 @@ export interface McpServersViewProps {
   connectionDestination?: { kind: 'target' | 'agent'; id: string };
   catalogDestination?: string;
   scheduleCount?: (workspaceId: string, subjectId: string, serverId: string) => Promise<number>;
+  targetAccessSettings?: {
+    canEdit: boolean;
+    load: (workspaceId: string, subjectId: string, serverId: string) => Promise<AgentTargetAccessSettingsApi>;
+    save: (workspaceId: string, subjectId: string, serverId: string, policy: AgentTargetAccessPolicyApi) => Promise<AgentTargetAccessSettingsApi>;
+  };
 }
 
 export interface McpServersDataSource {

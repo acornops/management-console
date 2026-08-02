@@ -34,7 +34,7 @@ test('default and custom Agents use the same compact resource treatment and sett
   await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
 });
 
-test('recommendations retain attribution while added workflows become workspace-owned', async ({ page }) => {
+test('installed and custom workflows use the same workspace-owned treatment', async ({ page }) => {
   const installResponse = await page.request.post(`${fixtureApi}/workspaces/${workspaceId}/automation-templates/infrastructure-remediation/install`);
   expect(installResponse.ok(), `template install failed with ${installResponse.status()}`).toBe(true);
   const { workflowId } = await installResponse.json() as { workflowId: string };
@@ -45,14 +45,10 @@ test('recommendations retain attribution while added workflows become workspace-
   const addedHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(addedHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(addedHeader.getByText('Built-in', { exact: true })).toHaveCount(0);
-  await expect(addedHeader.getByText('Test User', { exact: true })).toBeVisible();
+  await expect(addedHeader.getByText('Owner: Test User', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: /Select workflow Production health review/ }).click();
   const customHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(customHeader.getByText('Test User', { exact: true })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Browse templates' }).click();
-  const recommendationDrawer = page.getByRole('dialog', { name: 'Add recommended workflows' });
-  await expect(recommendationDrawer.getByText('Recommended by AcornOps').first()).toBeVisible();
+  await expect(customHeader.getByText('Owner: Test User', { exact: true })).toBeVisible();
 });

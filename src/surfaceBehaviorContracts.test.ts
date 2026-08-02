@@ -62,6 +62,13 @@ describe('surface behavior contracts', () => {
     expect(markdownComponents).toContain('<tr className={`transition-colors ${tableRowHoverClass}`}>{children}</tr>');
   });
 
+  it('keeps cluster inventory summary cards limited to labels and values', () => {
+    expect(clusterOverviewView).not.toContain("t('clusterOverview.nodesReadyDetail'");
+    expect(clusterOverviewView).not.toContain("t('clusterOverview.podStateDetail'");
+    expect(clusterOverviewView).not.toContain("t('clusterOverview.inventoryObservedDetail'");
+    expect(clusterOverviewView).not.toContain('type-caption mt-3 truncate text-ui-text-muted');
+  });
+
   it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
     expect(workspaceActivityPage).toContain('<PageShell');
     expect(workspaceActivityPage).not.toContain('<PageShell width=');
@@ -70,9 +77,19 @@ describe('surface behavior contracts', () => {
     expect(workflowActivityUi).toContain('sm:grid-cols-2 sm:gap-x-6');
     expect(workflowActivityUi).toContain('sm:col-span-2 xl:col-span-1');
     expect(workspaceActivityPage).toContain('workflowExecutionLedgerGridClass');
+    expect(workspaceActivityPage).toContain('density="dense"');
+    expect(workspaceActivityPage).toContain('className="mb-4 shrink-0"');
+    expect(workflowActivityUi).not.toContain('xl:px-8 xl:py-6');
     expect(workflowActivityUi.match(/xl:grid-cols-\[minmax\(18rem,1fr\)/g)).toHaveLength(1);
     expect(workflowActivityUi.match(/text-ui-text-muted xl:hidden/g)).toHaveLength(3);
     expect(workflowActivityUi.match(/xl:mt-0/g)).toHaveLength(3);
+  });
+
+  it('keeps workflow empty states compact and aligned with their section icons', () => {
+    expect(workspaceSchedulesPage).toContain('icon={<ICONS.CalendarClock />}');
+    expect(workspaceSchedulesPage).toContain("visibleSchedules.length === 0 && schedulePhase !== 'loading'");
+    expect(workspaceActivityPage).toContain('icon={<ICONS.Activity />}');
+    expect(workspaceActivityPage).not.toContain('icon={<Filter />}');
   });
 
   it('offers the permission-gated connect action in both infrastructure inventory empty states', () => {
@@ -138,8 +155,8 @@ describe('surface behavior contracts', () => {
     expect(auditLogPage).not.toContain('min-w-[920px]');
     expect(auditLogPage).toContain('xl:table-cell');
     expect(auditLogPage).toContain('xl:hidden');
-    expect(workspaceSchedulesPage).toContain('className="2xl:hidden"');
-    expect(workspaceSchedulesPage).toContain('className="hidden overflow-x-auto 2xl:block"');
+    expect(workspaceSchedulesPage).toContain('className="xl:hidden"');
+    expect(workspaceSchedulesPage).toContain('className="hidden overflow-x-auto xl:block"');
   });
 
   it('keeps workspace member actions in the table rhythm on wide screens', () => {
@@ -148,7 +165,7 @@ describe('surface behavior contracts', () => {
     expect(membersPage).not.toContain('<td className="hidden md:block" aria-hidden="true" />');
     expect(membersPage).toContain('table-fixed');
     expect(membersPage).toContain('xl:table-cell');
-    expect(membersPage).toContain('text-ui-text-muted xl:hidden');
+    expect(membersPage).toContain('mt-2 flex items-center gap-2 xl:hidden');
     expect(membersPage).not.toContain('lg:grid-cols-[minmax(18rem,24rem)_9rem_8rem_9rem_4rem]');
     expect(membersPage).toContain('<span className="sr-only">{t(\'members.manage\')}</span>');
   });

@@ -10,7 +10,7 @@ import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import { AgentChatPanel } from '@/pages/agents/AgentChatPanel';
 import { AgentQuickChatPanel } from '@/pages/agents/AgentQuickChatPanel';
 import { DEFAULT_AGENT_EMOJI } from '@/pages/agents/AgentAvatar';
-import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, splitInput, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
+import { Notice, canManageWorkspaceAgents, createAgentEditDraft, filterVisibleAgents, getAgentEditChangeSummary, isWorkspaceCatalogAgent, mapApiAgent, shouldRefreshAgentEditDraft, type AgentDraft, type AgentEditDraft, type AgentEditDraftSource, type LocalNotice, type WorkspaceAgentsPageProps } from '@/pages/WorkspaceAgentsPage.helpers';
 import {
   createAgent as createWorkspaceAgent,
   deleteAgent as deleteWorkspaceAgent,
@@ -24,13 +24,16 @@ import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { AppPaths } from '@/utils/routes';
 import { UnsavedChangesDialog } from '@/features/capabilities/UnsavedChangesDialog';
 import { useAgentDrawerDiscardGuard } from '@/pages/agents/useAgentDrawerDiscardGuard';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace, currentUserId, isDark, routeState, navigate }) => {
   const urlSearch = useUrlSearchState();
   const initialUrlSearch = React.useMemo(() => new URLSearchParams(window.location.search), []);
-  const [agents, setAgents] = useState<AgentDefinition[]>([]);
+  const agentCatalogCacheKey = `workspace:${workspace.id}:agents`;
+  const ownerCatalogCacheKey = `workspace:${workspace.id}:agent-owner-options`;
+  const [agents, setAgents] = useSessionCachedState<AgentDefinition[]>(agentCatalogCacheKey, []);
   const agentCatalogWorkspaceIdRef = React.useRef(workspace.id);
-  const [ownerUserOptions, setOwnerUserOptions] = useState<ProjectMember[]>(workspace.members || []);
+  const [ownerUserOptions, setOwnerUserOptions] = useSessionCachedState<ProjectMember[]>(ownerCatalogCacheKey, workspace.members || []);
   const [selectedAgentId, setSelectedAgentId] = useState(routeState?.agentId || initialUrlSearch.get('agent') || '');
   const [query, setQuery] = useState(initialUrlSearch.get('q') || '');
   const initialFocus = initialUrlSearch.get('focus');
@@ -38,7 +41,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     focus: initialFocus === 'active' || initialFocus === 'draft' || initialFocus === 'disabled' ? initialFocus : 'all'
   });
   const [agentLoadError, setAgentLoadError] = useState('');
-  const [agentCatalogReady, setAgentCatalogReady] = useState(false);
+  const [agentCatalogReady, setAgentCatalogReady] = useState(() => hasSessionDataCacheValue(agentCatalogCacheKey));
   const [ownerUserLoadError, setOwnerUserLoadError] = useState('');
   const [agentCatalogReloadKey, setAgentCatalogReloadKey] = useState(0);
   const [ownerUsersReloadKey, setOwnerUsersReloadKey] = useState(0);
@@ -116,8 +119,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       })
       .catch((error) => {
         if (!mounted) return;
-        setAgents([]);
-        setSelectedAgentId('');
         setAgentLoadError(error instanceof Error ? error.message : 'Unable to load workspace agents');
         setAgentCatalogReady(true);
       });
@@ -127,7 +128,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   }, [agentCatalogReloadKey, navigate, ownerLabelsByUserId, routeState, workspace.id, workspace.name]);
   React.useEffect(() => {
     let mounted = true;
-    setOwnerUserOptions(workspace.members || []);
+    setOwnerUserOptions((current) => current.length > 0 ? current : workspace.members || []);
     setOwnerUserLoadError('');
     if (workspace.permissions?.read_members !== true) {
       return () => {
@@ -312,7 +313,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         description: createDraft.description.trim(),
         instructions: createDraft.instructions.trim() || createDraft.description.trim(),
         providerType: createDraft.providerType,
-        contextGrants: [],
         permissionMode: 'ask_before_changes',
         trustPolicy: { level: 'restricted', allowExternalData: false }
       });
@@ -328,12 +328,12 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setCreatingAgent(false);
     }
   };
-  const duplicateSelectedAgent = async () => {
-    if (!selectedAgent || !canManageAgents) return;
-    setDuplicatingAgentId(selectedAgent.id);
+  const duplicateAgent = async (agent: AgentDefinition) => {
+    if (!canManageAgents || duplicatingAgentId) return;
+    setDuplicatingAgentId(agent.id);
     setLocalNotice(null);
     try {
-      const created = await duplicateWorkspaceAgent(workspace.id, selectedAgent.id);
+      const created = await duplicateWorkspaceAgent(workspace.id, agent.id);
       const mapped = mapApiAgent(created, workspace.name, ownerLabelsByUserId);
       const draft = createAgentEditDraft(mapped);
       setAgents((current) => [mapped, ...current.filter((agent) => agent.id !== mapped.id)]);
@@ -341,7 +341,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setEditingAgentId(mapped.id);
       editDraftSourceRef.current = { agentId: mapped.id, draft };
       setEditDraft(draft);
-      setLocalNotice({ tone: 'success', message: `Duplicated ${selectedAgent.name} as a draft.` });
+      setLocalNotice({ tone: 'success', message: `Duplicated ${agent.name} as a draft.` });
       updateUrlSearch({ agent: mapped.id, panel: 'edit', agentTab: null });
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not duplicate this agent.' });
@@ -362,7 +362,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         providerType: editDraft.providerType,
         status: editDraft.status,
         ownerUserId: editDraft.ownerUserId.trim() || undefined,
-        contextGrants: splitInput(editDraft.contextScope),
         trustPolicy: { level: 'restricted', allowExternalData: editDraft.allowExternalData }
       };
       const updated = await updateWorkspaceAgent(workspace.id, editingAgent.id, input);
@@ -456,13 +455,12 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       canManageMcp={canManageMcp}
       canManageSkills={canManageSkills}
       updatingAgentId={updatingAgentId}
-      duplicatingAgentId={duplicatingAgentId}
       disableConfirmAgentId={disableConfirmAgentId}
       setDisableConfirmAgentId={setDisableConfirmAgentId}
       deleteConfirmAgentId={deleteConfirmAgentId}
+      deleteError={deleteConfirmAgentId && localNotice?.tone === 'danger' ? localNotice.message : null}
       setDeleteConfirmAgentId={setDeleteConfirmAgentId}
       onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
-      onDuplicateSelectedAgent={() => void duplicateSelectedAgent()}
       onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
       onDisableSelectedAgent={() => void disableSelectedAgent()}
       onDeleteSelectedAgent={() => void deleteSelectedAgent()}
@@ -499,6 +497,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         onQueryChange={(next) => { setQuery(next); updateUrlSearch({ q: next || null }, { replace: true }); }}
         catalogFilters={catalogFilters}
         dockedQuickChatOpen={quickChatLayoutReserved}
+        duplicatingAgentId={duplicatingAgentId}
         onCatalogFiltersChange={(filters) => {
           setCatalogFilters(filters);
           updateUrlSearch({ focus: filters.focus === 'all' ? null : filters.focus }, { replace: true });
@@ -510,6 +509,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         }}
         onOpenManagement={openAgentManagement}
         onQuickChat={openQuickChat}
+        onDuplicate={(agent) => void duplicateAgent(agent)}
         onOpenSettings={(agent) => navigate(AppPaths.workspaceAgentDetail(workspace.id, agent.id, 'settings'))}
       />
       <AgentQuickChatPanel

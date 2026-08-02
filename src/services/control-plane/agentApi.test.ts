@@ -7,6 +7,7 @@ import {
   deleteAgent,
   deleteAgentConversation,
   duplicateAgent,
+  getAgentTargetAccessSettings,
   getAgent,
   getAgentConversation,
   listAgentConversations,
@@ -15,7 +16,8 @@ import {
   postAgentConversationMessage,
   grantAgentNativeTool,
   revokeAgentNativeTool,
-  updateAgent
+  updateAgent,
+  updateAgentTargetAccessSettings
 } from './agentApi';
 
 describe('agent control-plane api', () => {
@@ -129,6 +131,31 @@ describe('agent control-plane api', () => {
     expect(mutations[1][1]?.body).toBe(JSON.stringify({
       config: { allowedUrlPatterns: ['https://status.example.com/api/*'] }
     }));
+  });
+
+  it('loads and updates Agent target access through the exact MCP server route', async () => {
+    const settings = {
+      policy: { mode: 'allowlist' as const, targetIds: ['target-1'] },
+      targets: [{ id: 'target-1', name: 'Production', targetType: 'kubernetes' as const, status: 'online' as const }]
+    };
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('/api/v1/auth/csrf')) {
+        return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify(settings), { status: 200 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getAgentTargetAccessSettings('workspace/a', 'agent/a', 'server/a')).resolves.toEqual(settings);
+    await expect(updateAgentTargetAccessSettings('workspace/a', 'agent/a', 'server/a', settings.policy)).resolves.toEqual(settings);
+
+    const calls = fetchMock.mock.calls.filter((call) => !String(call[0]).endsWith('/auth/csrf'));
+    expect(calls.map((call) => String(call[0]))).toEqual([
+      'http://localhost:8081/api/v1/workspaces/workspace%2Fa/agents/agent%2Fa/mcp/servers/server%2Fa/target-access',
+      'http://localhost:8081/api/v1/workspaces/workspace%2Fa/agents/agent%2Fa/mcp/servers/server%2Fa/target-access'
+    ]);
+    expect(calls[1][1]).toMatchObject({ method: 'PUT', credentials: 'include' });
+    expect(JSON.parse(calls[1][1]?.body as string)).toEqual(settings.policy);
   });
 
   it('creates and updates durable agents through workspace-scoped consumer payloads', async () => {

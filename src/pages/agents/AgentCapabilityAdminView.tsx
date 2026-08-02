@@ -13,6 +13,10 @@ import {
   createAgentToolsDataSource,
   toAgentCapabilitySubject
 } from '@/pages/agents/agentCapabilityAdminAdapters';
+import {
+  getAgentTargetAccessSettings,
+  updateAgentTargetAccessSettings
+} from '@/services/control-plane/agentApi';
 
 interface AgentCapabilityAdminViewProps {
   agent: AgentDefinition;
@@ -87,6 +91,11 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
       connectionDestination={{ kind: 'agent', id: agent.id }}
       catalogDestination={`agent:${agent.id}`}
       scheduleCount={countAgentCredentialModeScheduleImpact}
+      targetAccessSettings={{
+        canEdit: canManageAgents && canManageMcp,
+        load: getAgentTargetAccessSettings,
+        save: updateAgentTargetAccessSettings
+      }}
       initialCatalog={cachedCatalogs?.mcpServers}
       onCatalogChange={onMcpServersCatalogChange}
     />

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   Button,
+  CollectionLoadingSkeleton,
   CollectionState,
   DataSurface,
   DataTable,
@@ -13,13 +14,14 @@ import {
   DataTableRow,
   EmptyState,
   InlineConfirmation,
-  InlineLoadingIndicator,
+  TableLoadingRows,
   StatusBadge
 } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import { WorkspaceWebhookActionMenu } from '@/pages/WorkspaceWebhookCard';
+import { WorkspaceWebhookActionMenu, WorkspaceWebhookCard } from '@/pages/WorkspaceWebhookCard';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 interface WorkspaceWebhookDrawerTableProps {
   actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
@@ -61,9 +63,39 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
   return (
     <>
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-ui-border lg:hidden">
+          {triggers.length > 0 ? triggers.map((trigger) => (
+            <WorkspaceWebhookCard
+              key={trigger.id}
+              trigger={trigger}
+              workflowName={trigger.workflowId}
+              canManage={canManage}
+              busy={mutatingId === trigger.id}
+              pendingRotate={pendingRotateId === trigger.id}
+              actionButtonRefs={actionButtonRefs}
+              onCopyEndpoint={onCopyEndpoint}
+              onEdit={() => onEdit(trigger)}
+              onToggle={() => onToggle(trigger)}
+              onRequestRotate={() => onRequestRotate(trigger)}
+              onCancelRotate={() => setPendingRotateId('')}
+              onConfirmRotate={() => onRotate(trigger)}
+              onRequestDelete={() => onRequestDelete(trigger)}
+            />
+          )) : (
+            <CollectionState
+              phase={phase}
+              itemCount={0}
+              loading={<CollectionLoadingSkeleton label={t('eventTriggers.loading')} />}
+              empty={<EmptyState embedded icon={<ICONS.Zap />} title={t('eventTriggers.emptyTitle')} description={t('eventTriggers.emptyDescription')} />}
+              error={<EmptyState embedded role="alert" icon={<ICONS.AlertTriangle />} title={t('eventTriggers.loadError')} description={loadError} actions={<Button size="sm" variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>} />}
+            >
+              {null}
+            </CollectionState>
+          )}
+        </div>
+        <div className="hidden overflow-x-auto lg:block">
           <DataTable caption={t('eventTriggers.listTitle')} className="min-w-[42rem] w-full border-collapse text-left">
-            <DataTableHeader collectionState={{ phase, itemCount: triggers.length }}>
+            <DataTableHeader collectionState={{ phase, itemCount: triggers.length, showDuringInitialLoading: true }}>
               <DataTableRow>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.columns.trigger')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.secret.endpoint')}</DataTableHeaderCell>
@@ -75,19 +107,19 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
             <DataTableBody className="divide-y divide-ui-border">
               {triggers.length > 0 ? triggers.map((trigger) => (
                 <DataTableRow key={trigger.id}>
-                  <DataTableCell as="th" scope="row" className="px-4 py-3 type-emphasis text-ui-text">{trigger.name}</DataTableCell>
-                  <DataTableCell className="max-w-64 px-4 py-3">
+                  <DataTableCell as="th" scope="row" density="dense" className="py-3 type-emphasis text-ui-text">{trigger.name}</DataTableCell>
+                  <DataTableCell density="dense" className="max-w-64 py-3">
                     <code className="block truncate type-caption text-ui-text-muted" title={trigger.endpointUrl}>{trigger.endpointUrl || '—'}</code>
                   </DataTableCell>
-                  <DataTableCell className="px-4 py-3">
+                  <DataTableCell density="dense" className="py-3">
                     <StatusBadge tone={trigger.status === 'enabled' ? 'success' : 'neutral'}>
                       {trigger.status === 'enabled' ? t('eventTriggers.status.enabled') : t('eventTriggers.status.paused')}
                     </StatusBadge>
                   </DataTableCell>
-                  <DataTableCell className="px-4 py-3 type-caption text-ui-text-muted">
-                    {trigger.lastStatus ? trigger.lastStatus.replaceAll('_', ' ') : t('eventTriggers.emptyDescription')}
+                  <DataTableCell density="dense" className="py-3 type-caption text-ui-text-muted">
+                    {trigger.lastStatus ? formatIdentifierLabel(trigger.lastStatus) : t('eventTriggers.emptyDescription')}
                   </DataTableCell>
-                  <DataTableCell className="px-4 py-3">
+                  <DataTableCell density="dense" className="py-3">
                     <div className="flex justify-end">
                       <WorkspaceWebhookActionMenu
                         trigger={trigger}
@@ -107,13 +139,15 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
                     </div>
                   </DataTableCell>
                 </DataTableRow>
-              )) : (
+              )) : phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore' ? (
+                <TableLoadingRows columns={5} label={t('eventTriggers.loading')} showAvatarInFirstColumn />
+              ) : (
                 <DataTableRow>
-                  <DataTableCell colSpan={5} className="p-0">
+                  <DataTableCell colSpan={5} density="dense" className="p-0">
                     <CollectionState
                       phase={phase}
                       itemCount={0}
-                      loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
+                      loading={null}
                       empty={<EmptyState embedded icon={<ICONS.Zap />} title={t('eventTriggers.emptyTitle')} description={t('eventTriggers.emptyDescription')} />}
                       error={<EmptyState embedded role="alert" icon={<ICONS.AlertTriangle />} title={t('eventTriggers.loadError')} description={loadError} actions={<Button size="sm" variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>} />}
                     >

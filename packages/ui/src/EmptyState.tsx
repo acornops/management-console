@@ -47,7 +47,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       ))}
       {...props}
     >
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-lg">
         <IconTile className="mx-auto mb-3">
           {icon}
         </IconTile>

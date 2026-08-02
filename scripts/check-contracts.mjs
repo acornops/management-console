@@ -304,7 +304,7 @@ for (const guard of [
 ]) {
   const source = read(guard.path);
   for (const forbidden of guard.forbidden) {
-    expect(!source.includes(forbidden), `${guard.path} must not contain retired prompt-resource contract ${forbidden}`);
+    expect(!source.includes(forbidden), `${guard.path} must not contain retired Workflow prompt-reference contract ${forbidden}`);
   }
 }
 

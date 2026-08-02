@@ -24,6 +24,7 @@ import {
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface OverviewViewProps {
   cluster: KubernetesCluster;
@@ -83,8 +84,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const podCount = getPodCount(cluster);
   const telemetryFreshness = getTelemetryFreshness(cluster);
   const telemetryLabel = getTelemetryFreshnessLabel(telemetryFreshness);
-  const [metricHistory, setMetricHistory] = useState<ClusterMetricHistoryPoint[]>(cluster.metricHistory || []);
-  const [metricHistoryStatus, setMetricHistoryStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const clusterCachePrefix = `workspace:${cluster.workspaceId}:cluster:${cluster.id}:overview:`;
+  const metricHistoryCacheKey = `${clusterCachePrefix}metric-history`;
+  const issueCacheKey = `${clusterCachePrefix}issues`;
+  const [metricHistory, setMetricHistory] = useSessionCachedState<ClusterMetricHistoryPoint[]>(metricHistoryCacheKey, cluster.metricHistory || []);
+  const [metricHistoryStatus, setMetricHistoryStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'idle');
   const [metricHistoryRequestVersion, setMetricHistoryRequestVersion] = useState(0);
   const persistedMetricTimeline = useMemo(() => getPersistedMetricTimeline(metricHistory), [metricHistory]);
 
@@ -110,8 +114,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   );
   const hasMetricSamples = cpuSeries.length > 0 || memorySeries.length > 0;
 
-  const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
-  const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [clusterIssues, setClusterIssues] = useSessionCachedState<ControlPlaneIssueItem[] | null>(issueCacheKey, null);
+  const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'idle');
   const [issueRequestVersion, setIssueRequestVersion] = useState(0);
   const issueSectionTitleId = React.useId();
   useVisibilityAwareRefresh(() => {
@@ -128,8 +132,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       };
     }
 
-    setMetricHistory(cluster.metricHistory || []);
-    setMetricHistoryStatus('loading');
+    const hasCachedMetricHistory = hasSessionDataCacheValue(metricHistoryCacheKey);
+    if (!hasCachedMetricHistory) setMetricHistoryStatus('loading');
     void controlPlaneApi
       .getClusterMetricsHistory(cluster.workspaceId, cluster.id, {
         window: '6h',
@@ -143,17 +147,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       .catch((error) => {
         console.error('Failed loading cluster metric history', error);
         if (!isCurrent) return;
-        setMetricHistoryStatus('error');
+        setMetricHistoryStatus(hasCachedMetricHistory ? 'ready' : 'error');
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState, metricHistoryRequestVersion]);
+  }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState, metricHistoryCacheKey, metricHistoryRequestVersion]);
 
   useEffect(() => {
     let isCurrent = true;
-    setIssueLoadStatus('loading');
+    if (!hasSessionDataCacheValue(issueCacheKey)) setIssueLoadStatus('loading');
 
     void controlPlaneApi
       .listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
@@ -165,13 +169,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       .catch((error) => {
         console.error('Failed loading cluster issues', error);
         if (!isCurrent) return;
-        setIssueLoadStatus('error');
+        setIssueLoadStatus(hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'error');
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [cluster.id, cluster.workspaceId, issueRequestVersion]);
+  }, [cluster.id, cluster.workspaceId, issueCacheKey, issueRequestVersion]);
 
   const reportedIssues = useMemo(
     () =>
@@ -192,38 +196,39 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const scopedResourceCount =
     cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
-  const hasNodeInventory = cluster.nodes.length > 0;
   const observedNodeCount = cluster.resourceSummary?.nodeCount ?? cluster.nodes.length;
-  const readyNodeCount = cluster.nodes.filter((node) => node.status.toLowerCase() === 'ready').length;
+  const snapshotReadyNodeCount = cluster.resourceSummary?.readyNodeCount;
+  const hasSnapshotNodeReadiness = typeof snapshotReadyNodeCount === 'number'
+    && Number.isFinite(snapshotReadyNodeCount)
+    && snapshotReadyNodeCount >= 0
+    && snapshotReadyNodeCount <= observedNodeCount;
+  const readyNodeCount = hasSnapshotNodeReadiness
+    ? snapshotReadyNodeCount
+    : cluster.nodes.length > 0
+      ? cluster.nodes.filter((node) => node.status.toLowerCase() === 'ready').length
+      : undefined;
+  const hasNodeReadiness = typeof readyNodeCount === 'number' && observedNodeCount > 0;
   const observedNamespaceCount = cluster.resourceSummary?.namespaceCount ?? cluster.namespaces.length;
   const countFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
   const clusterSummaryCards = [
     {
       label: t('clusterOverview.nodeReadiness'),
-      value: hasNodeInventory ? `${readyNodeCount}/${cluster.nodes.length}` : t('common.unknown'),
-      detail: hasNodeInventory
-        ? t('clusterOverview.nodesReadyDetail', { ready: readyNodeCount, total: cluster.nodes.length })
-        : observedNodeCount > 0
-          ? t('clusterOverview.nodesObserved', { count: observedNodeCount })
-          : t('clusterOverview.inventoryPending'),
+      value: hasNodeReadiness ? `${readyNodeCount}/${observedNodeCount}` : t('common.unknown'),
       Icon: Server
     },
     {
       label: t('clusterOverview.runningPodsLabel'),
       value: `${cluster.podStats.running}/${podCount}`,
-      detail: t('clusterOverview.podStateDetail', { pending: cluster.podStats.pending, failed: cluster.podStats.failed }),
       Icon: Box
     },
     {
       label: t('clusterOverview.namespacesObserved'),
       value: countFormatter.format(observedNamespaceCount),
-      detail: t('clusterOverview.inventoryObservedDetail'),
       Icon: Layers
     },
     {
       label: t('clusterOverview.resourcesObserved'),
       value: countFormatter.format(scopedResourceCount),
-      detail: t('clusterOverview.inventoryObservedDetail'),
       Icon: Activity
     }
   ];
@@ -321,7 +326,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                       <DataTableCell density="compact" className="max-w-[34rem]">
                         <div className="flex flex-wrap items-center gap-2">
                           {shouldShowIssueStatus(issue.status) && (
-                            <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                            <StatusBadge tone={issueStatusTone(issue.status)}>{t(`issues.status.${issue.status}`)}</StatusBadge>
                           )}
                           <span className="type-caption text-ui-text-muted">
                             {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
@@ -338,7 +343,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                         />
                       </DataTableCell>
                       <DataTableCell density="compact">
-                        <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                        <StatusBadge tone={issueSeverityTone(issue.severity)}>{t(`issues.severity.${issue.severity}`)}</StatusBadge>
                       </DataTableCell>
                       <DataTableCell density="compact" className="type-caption break-words">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</DataTableCell>
                       <DataTableCell density="compact" className="type-caption">{formatRelativeTime(issueTimestamp(issue))}</DataTableCell>
@@ -367,9 +372,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
               {reportedIssues.map((issue) => (
                 <article key={issue.id} className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>{t(`issues.severity.${issue.severity}`)}</span>
+                    <StatusBadge tone={issueSeverityTone(issue.severity)}>{t(`issues.severity.${issue.severity}`)}</StatusBadge>
                     {shouldShowIssueStatus(issue.status) && (
-                      <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>{t(`issues.status.${issue.status}`)}</span>
+                      <StatusBadge tone={issueStatusTone(issue.status)}>{t(`issues.status.${issue.status}`)}</StatusBadge>
                     )}
                   </div>
                   <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>
@@ -474,7 +479,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       )}
 
       <section aria-label={t('clusterOverview.inventorySummary')} className="mb-12 grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {clusterSummaryCards.map(({ label, value, detail, Icon }) => (
+        {clusterSummaryCards.map(({ label, value, Icon }) => (
           <div key={label} className="rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <IconTile size="sm" tone="metric">
@@ -485,7 +490,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
                 <p className="mt-1 type-data">{value}</p>
               </div>
             </div>
-            <p className="type-caption mt-3 truncate text-ui-text-muted">{detail}</p>
           </div>
         ))}
       </section>

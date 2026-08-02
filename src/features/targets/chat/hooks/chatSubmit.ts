@@ -1,4 +1,4 @@
-import { ChatMessage, ChatRuntimeSelection, ChatSession } from '@/types';
+import { ChatMessage } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { createLocalMessageId, sleep } from '@/features/targets/chat/lib/helpers';
 import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/targets/chat/lib/trace-utils';

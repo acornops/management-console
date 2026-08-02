@@ -1,7 +1,5 @@
 import React from 'react';
-import { Trans } from 'react-i18next';
 import { Button, InlineAlert } from '@acornops/ui';
-import { Checkbox } from '@acornops/ui';
 import { CloseButton, Textarea, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
