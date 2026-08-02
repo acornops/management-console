@@ -54,7 +54,8 @@ catalog, pagination, and schedule-preview contracts.
   label the hidden entry Agent as an AcornOps-managed coordinator without
   exposing its ID.
 - The disconnected workflow scope editor and its update action remain removed.
-  The `tab=` parser selects the five visible workflow detail panels.
+  The `tab=` parser selects the four visible workflow inspection panels and the
+  route-backed Settings view opened through Edit.
 
 ## Validation Plan
 

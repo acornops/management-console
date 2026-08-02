@@ -584,14 +584,14 @@ describe('target chat polish contracts', () => {
     expect(markdownComponents).toContain("rel={isInternalRoute ? undefined : 'noreferrer'}");
     expect(assistantTurn).toContain('remarkPlugins={markdownRemarkPlugins}');
     expect(userMessageTurn).toContain('remarkPlugins={markdownRemarkPlugins}');
-    expect(enLocale).toContain("thinking: 'Thinking...'");
+    expect(enLocale).toContain("thinking: 'Thinking…'");
     expect(enLocale).toContain("copyMessage: 'Copy message'");
     expect(enLocale).toContain("copiedMessage: 'Copied'");
     expect(enLocale).toContain("editMessage: 'Edit message'");
     expect(enLocale).toContain("saveEdit: 'Send'");
     expect(enLocale).toContain("cancelEdit: 'Cancel'");
     expect(zhLocale).toContain("newConversation: '新会话'");
-    expect(zhLocale).toContain("thinking: '思考中...'");
+    expect(zhLocale).toContain("thinking: '思考中…'");
     expect(zhLocale).toContain("copyMessage: '复制消息'");
     expect(zhLocale).toContain("copiedMessage: '已复制'");
     expect(zhLocale).toContain("editMessage: '编辑消息'");

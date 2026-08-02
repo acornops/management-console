@@ -17,7 +17,7 @@ import {
   StatusBadge
 } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import { WorkspaceWebhookActionMenu } from '@/pages/WorkspaceWebhookCard';
+import { WorkspaceWebhookActionMenu, WorkspaceWebhookCard } from '@/pages/WorkspaceWebhookCard';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
 
@@ -61,7 +61,37 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
   return (
     <>
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-ui-border lg:hidden">
+          {triggers.length > 0 ? triggers.map((trigger) => (
+            <WorkspaceWebhookCard
+              key={trigger.id}
+              trigger={trigger}
+              workflowName={trigger.workflowId}
+              canManage={canManage}
+              busy={mutatingId === trigger.id}
+              pendingRotate={pendingRotateId === trigger.id}
+              actionButtonRefs={actionButtonRefs}
+              onCopyEndpoint={onCopyEndpoint}
+              onEdit={() => onEdit(trigger)}
+              onToggle={() => onToggle(trigger)}
+              onRequestRotate={() => onRequestRotate(trigger)}
+              onCancelRotate={() => setPendingRotateId('')}
+              onConfirmRotate={() => onRotate(trigger)}
+              onRequestDelete={() => onRequestDelete(trigger)}
+            />
+          )) : (
+            <CollectionState
+              phase={phase}
+              itemCount={0}
+              loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
+              empty={<EmptyState embedded icon={<ICONS.Zap />} title={t('eventTriggers.emptyTitle')} description={t('eventTriggers.emptyDescription')} />}
+              error={<EmptyState embedded role="alert" icon={<ICONS.AlertTriangle />} title={t('eventTriggers.loadError')} description={loadError} actions={<Button size="sm" variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>} />}
+            >
+              {null}
+            </CollectionState>
+          )}
+        </div>
+        <div className="hidden overflow-x-auto lg:block">
           <DataTable caption={t('eventTriggers.listTitle')} className="min-w-[42rem] w-full border-collapse text-left">
             <DataTableHeader collectionState={{ phase, itemCount: triggers.length }}>
               <DataTableRow>

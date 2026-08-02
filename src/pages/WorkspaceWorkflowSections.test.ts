@@ -10,6 +10,9 @@ const workflowsPage = readSource('src/pages/WorkspaceWorkflowsPage.tsx');
 const workflowPageComponents = readSource('src/pages/WorkspaceWorkflowsPage.components.tsx');
 const activityPage = readSource('src/pages/WorkspaceActivityPage.tsx');
 const workflowActions = readSource('src/pages/workflows/WorkflowLaunchActions.tsx');
+const workflowDetailTabs = readSource('src/pages/workflows/WorkflowDetailTabs.tsx');
+const workflowChrome = readSource('src/pages/WorkspaceWorkflowsChrome.tsx');
+const workflowTriggerDrawers = readSource('src/pages/WorkflowTriggerDrawers.tsx');
 const workflowPanels = readSource('src/pages/WorkspaceWorkflowsPage.panels.tsx');
 const workflowHelpers = readSource('src/pages/workflows/workflowPageHelpers.tsx');
 const workflowModel = readSource('src/pages/workflows/workflowModel.ts');
@@ -28,15 +31,17 @@ describe('workflow sections and Activity', () => {
     expect(sections).toContain('AppPaths.workspaceActivity(workspaceId)');
     expect(sections).toContain('activity.openCount > 0 ? activity.openCount : undefined');
     expect(sections).toContain('AppPaths.workspaceWorkflows(workspaceId, section)');
-    expect(workflowsPage).toContain('<WorkflowSections activeSection="all"');
+    expect(workflowChrome).toContain('<WorkflowSections activeSection="all"');
     expect(schedulesPage).toContain('<WorkflowSections activeSection="schedules"');
     expect(webhooksPage).toContain('<WorkflowSections activeSection="incomingWebhooks"');
     expect(activityPage).toContain('<WorkflowSections activeSection="activity"');
   });
 
   it('restores text-labelled workflow actions below the description', () => {
-    expect(workflowActions).toContain('aria-label="Workflow actions"');
+    expect(workflowActions).toContain('aria-label="Selected workflow actions"');
     expect(workflowActions).toContain('mt-3 flex w-full');
+    expect(workflowActions).toContain("launchBlocked ? 'Blocked' : 'Ready'");
+    expect(workflowActions).toContain("t('workflows.actions.reviewReadiness')");
     expect(workflowActions).toContain("t('workflows.actions.edit')");
     expect(workflowActions).toContain("t('workflows.actions.schedules')");
     expect(workflowActions).toContain("t('workflows.actions.webhooks')");
@@ -64,15 +69,17 @@ describe('workflow sections and Activity', () => {
     expect(activityPage).toContain('filterWidth="compact"');
     expect(activityPage).not.toContain('<DiscoveryFilterBar\n            embedded');
     expect(activityPage).toContain("activityLedgerFillsAvailableSpace = phase === 'loading' || items.length > 0");
-    expect(workflowPageComponents).toContain('<DiscoveryFilterBar searchWidth="fluid"');
-    expect(workflowPageComponents).not.toContain('embedded={!withSpacing}');
-    expect(workflowsPage).not.toContain('listWidth="compact"');
+    expect(workflowPageComponents).toContain('embedded={embedded}');
+    expect(workflowPageComponents).toContain('searchWidth="fluid"');
+    expect(workflowsPage).toContain('idPrefix="workflow-library-mobile"');
+    expect(workflowsPage).toContain('idPrefix="workflow-library-desktop"');
+    expect(workflowsPage).toContain('listWidth="compact"');
   });
 
-  it('restores five route-backed detail tabs with current panel contents', () => {
+  it('keeps four inspection tabs visible and opens settings through Edit', () => {
     expect(workflowHelpers).toContain("workflowViews: WorkflowView[] = ['overview', 'agents', 'capabilities', 'runs', 'settings']");
-    expect(workflowsPage).toContain('<SegmentedTabs<WorkflowView>');
-    expect(workflowsPage).toContain('workflowViewLabels');
+    expect(workflowDetailTabs).toContain("workflowInspectionViews: WorkflowView[] = ['overview', 'agents', 'capabilities', 'runs']");
+    expect(workflowDetailTabs).toContain('<SegmentedTabs<WorkflowView>');
     expect(workflowsPage).toContain("activeView === 'overview'");
     expect(workflowsPage).toContain("activeView === 'agents'");
     expect(workflowsPage).toContain("activeView === 'capabilities'");
@@ -80,11 +87,13 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain("const usesBoundedWorkflowDetail = activeView !== 'runs';");
     expect(workflowsPage).toContain('boundedOnDesktop={usesBoundedWorkflowDetail}');
     expect(workflowsPage).toContain("activeView === 'settings'");
+    expect(workflowsPage).toContain("selectWorkflowView('settings', selectedWorkflow.id)");
+    expect(workflowsPage).toContain('Back to workflow');
     expect(workflowsPage).toContain("onReviewCapabilities={() => selectWorkflowView('capabilities'");
     expect(workflowsPage).not.toContain("open={activeView === 'runs'}");
     expect(workflowsPage).not.toContain("open={activeView === 'settings'}");
-    expect(workflowsPage).toContain("managementPanel === 'schedules'");
-    expect(workflowsPage).toContain("managementPanel === 'webhooks'");
+    expect(workflowTriggerDrawers).toContain("managementPanel === 'schedules'");
+    expect(workflowTriggerDrawers).toContain("managementPanel === 'webhooks'");
     expect(workflowsPage).toContain('<WorkflowOverviewPanel');
     expect(workflowPanels).toContain('title="Capabilities"');
     expect(workflowsPage).toContain('<WorkflowRunsPanel');
@@ -94,8 +103,8 @@ describe('workflow sections and Activity', () => {
   });
 
   it('renders schedule and webhook collections in drawers and creation forms in dialogs', () => {
-    expect(workflowsPage).toContain('<WorkspaceSchedulesPage');
-    expect(workflowsPage).toContain('<WorkspaceIncomingWebhooksPage');
+    expect(workflowTriggerDrawers).toContain('<WorkspaceSchedulesPage');
+    expect(workflowTriggerDrawers).toContain('<WorkspaceIncomingWebhooksPage');
     expect(schedulesPage).toContain('<PageShell embedded={embedded}');
     expect(webhooksPage).toContain('<PageShell embedded={embedded}');
     expect(schedulesPage).toContain('<WorkspaceScheduleDialog');

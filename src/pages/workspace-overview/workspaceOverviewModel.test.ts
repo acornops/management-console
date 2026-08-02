@@ -188,14 +188,14 @@ describe('workspace overview model', () => {
     ]);
     expect(result.connectedClusterCards.map((card) => card.name)).toEqual(['cluster-1', 'cluster-2', 'cluster-3']);
     expect(result.connectedVirtualMachineCards.map((card) => card.name)).toEqual(['vm-1', 'vm-2']);
-    expect(result.connectedClusterCards[1].postureTone).toBe('bg-accent-soft text-accent-readable');
+    expect(result.connectedClusterCards[1].postureTone).toBe('warning');
     expect(result.connectedVirtualMachineCards[0]).toMatchObject({
       postureLabel: 'dashboard.warningStatus',
-      postureTone: 'bg-accent-soft text-accent-readable'
+      postureTone: 'warning'
     });
     expect(result.connectedVirtualMachineCards[1]).toMatchObject({
       postureLabel: 'virtualMachines.list.degraded',
-      postureTone: 'bg-accent-soft text-accent-readable'
+      postureTone: 'warning'
     });
     expect(result.attentionItems[0].issue.evidence).toBe('API server unavailable.');
     expect(result.attentionItems[1].issue.evidence).toBe('85% used');
@@ -216,7 +216,7 @@ describe('workspace overview model', () => {
 
     expect(result.connectedVirtualMachineCards[0]).toMatchObject({
       postureLabel: 'dashboard.criticalStatus',
-      postureTone: 'bg-status-danger-soft text-status-danger-text'
+      postureTone: 'danger'
     });
   });
 });

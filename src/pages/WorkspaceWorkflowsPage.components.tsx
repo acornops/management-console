@@ -24,25 +24,6 @@ function workflowProvenanceLabel(workflow: WorkflowDefinition): string {
 function formatWorkflowTimestamp(value: string, fallback: string): string {
   return formatUserDateTime(value, { fallback });
 }
-export const WorkflowLoadErrorNotice: React.FC<{ onRetry: () => void }> = ({ onRetry }) => (
-  <div className="mb-4 flex flex-col gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-caption type-emphasis text-status-warning-text sm:flex-row sm:items-center sm:justify-between">
-    <span className="min-w-0 break-words [overflow-wrap:anywhere]">Workflows could not be loaded from the control plane.</span>
-    <Button type="button" variant="secondary" size="sm" onClick={onRetry} className="self-start border-status-warning/30 bg-ui-surface text-status-warning-text hover:bg-ui-bg sm:self-auto">
-      Retry
-    </Button>
-  </div>
-);
-function workflowModeLabel(mode: string): string {
-  if (mode === 'read_write') return 'read-write run';
-  if (mode === 'write_only') return 'write-only run';
-  return 'read-only run';
-}
-function workflowModeTone(mode: string): 'success' | 'warning' | 'danger' {
-  if (mode === 'read_write') return 'warning';
-  if (mode === 'write_only') return 'danger';
-  return 'success';
-}
-export const WorkflowModeBadge: React.FC<{ mode: string }> = ({ mode }) => <StatusBadge tone={workflowModeTone(mode)}>{workflowModeLabel(mode)}</StatusBadge>;
 export const WorkflowSearchTagSuggestions: React.FC<{
   query: string;
   workflowSearchTags: string[];
@@ -59,6 +40,8 @@ export const WorkflowSearchTagSuggestions: React.FC<{
   ) : null;
 
 export const WorkflowDiscovery: React.FC<{
+  embedded?: boolean;
+  idPrefix?: string;
   ready: boolean;
   query: string;
   totalCount: number;
@@ -66,16 +49,32 @@ export const WorkflowDiscovery: React.FC<{
   workflowSearchTags: string[];
   withSpacing?: boolean;
   onQueryChange: (query: string) => void;
-}> = ({ ready, query, totalCount, visibleCount, workflowSearchTags, withSpacing = true, onQueryChange }) => {
+}> = ({ embedded = false, idPrefix = 'workflow-library', ready, query, totalCount, visibleCount, workflowSearchTags, withSpacing = true, onQueryChange }) => {
   return !ready || totalCount > 0 || Boolean(query.trim()) ? (
     <div className={`${withSpacing ? masterDetailDiscoverySpacingClass : ''} space-y-3`}>
-      <DiscoveryFilterBar searchWidth="fluid" idPrefix="workflow-library" query={query} queryLabel="Search workflow library" queryPlaceholder="Search workflows, agents, tools, tags" queryClearLabel="Clear search" resultSummary={ready ? (query.trim() ? `${visibleCount} of ${totalCount} workflows` : `${totalCount} ${totalCount === 1 ? 'workflow' : 'workflows'}`) : 'Loading workflows'} filters={[]} clearAllLabel="Clear all" onQueryChange={onQueryChange} onClearAll={() => onQueryChange('')} />
+      <DiscoveryFilterBar
+        embedded={embedded}
+        stacked={embedded}
+        searchWidth="fluid"
+        idPrefix={idPrefix}
+        query={query}
+        queryLabel="Search workflow library"
+        queryPlaceholder="Search workflows"
+        queryClearLabel="Clear search"
+        queryKeyShortcuts="/"
+        resultSummary={ready ? `${query.trim() ? `${visibleCount} of ${totalCount}` : totalCount} ${totalCount === 1 ? 'workflow' : 'workflows'}${embedded ? ' · Press / to search' : ''}` : 'Loading workflows'}
+        filters={[]}
+        clearAllLabel="Clear all"
+        onQueryChange={onQueryChange}
+        onClearAll={() => onQueryChange('')}
+      />
       <WorkflowSearchTagSuggestions query={query} workflowSearchTags={workflowSearchTags} onQueryChange={onQueryChange} />
     </div>
   ) : null;
 };
 
 export const WorkflowLibraryList: React.FC<{
+  discovery?: React.ReactNode;
   workflows: WorkflowDefinition[];
   visibleWorkflows: WorkflowDefinition[];
   selectedWorkflow?: WorkflowDefinition;
@@ -83,9 +82,21 @@ export const WorkflowLibraryList: React.FC<{
   loadError: string;
   onSelectWorkflow: (workflowId: string) => void;
   registerWorkflowRow: (workflowId: string, node: HTMLButtonElement | null) => void;
-}> = ({ workflows, visibleWorkflows, selectedWorkflow, ready, loadError, onSelectWorkflow, registerWorkflowRow }) => {
+}> = ({ discovery, workflows, visibleWorkflows, selectedWorkflow, ready, loadError, onSelectWorkflow, registerWorkflowRow }) => {
+  const rowRefs = React.useRef(new Map<string, HTMLButtonElement>());
+  const focusRelativeRow = (workflowId: string, direction: -1 | 1 | 'first' | 'last') => {
+    const currentIndex = visibleWorkflows.findIndex((workflow) => workflow.id === workflowId);
+    const nextIndex = direction === 'first'
+      ? 0
+      : direction === 'last'
+        ? visibleWorkflows.length - 1
+        : Math.max(0, Math.min(visibleWorkflows.length - 1, currentIndex + direction));
+    const nextWorkflow = visibleWorkflows[nextIndex];
+    if (nextWorkflow) rowRefs.current.get(nextWorkflow.id)?.focus({ preventScroll: true });
+  };
   return (
     <section aria-label="Workflow library" className="min-w-0 w-full max-w-full">
+      {discovery && <div className="hidden border-b border-ui-border p-4 lg:block">{discovery}</div>}
       <MasterDetailListHeader>Workflow library</MasterDetailListHeader>
       {!ready && <MasterDetailLoading>Loading workflows…</MasterDetailLoading>}
       {ready && visibleWorkflows.length > 0 && (
@@ -93,7 +104,11 @@ export const WorkflowLibraryList: React.FC<{
           {visibleWorkflows.map((workflow) => (
             <li key={workflow.id}>
               <MasterDetailRow
-                buttonRef={(node) => registerWorkflowRow(workflow.id, node)}
+                buttonRef={(node) => {
+                  if (node) rowRefs.current.set(workflow.id, node);
+                  else rowRefs.current.delete(workflow.id);
+                  registerWorkflowRow(workflow.id, node);
+                }}
                 title={workflow.name}
                 description={workflow.description}
                 status={(
@@ -112,6 +127,12 @@ export const WorkflowLibraryList: React.FC<{
                 selected={workflow.id === selectedWorkflow?.id}
                 ariaLabel={`Select workflow ${workflow.name}${workflow.id === selectedWorkflow?.id ? ', selected' : ''}`}
                 onClick={() => onSelectWorkflow(workflow.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'ArrowDown') { event.preventDefault(); focusRelativeRow(workflow.id, 1); }
+                  if (event.key === 'ArrowUp') { event.preventDefault(); focusRelativeRow(workflow.id, -1); }
+                  if (event.key === 'Home') { event.preventDefault(); focusRelativeRow(workflow.id, 'first'); }
+                  if (event.key === 'End') { event.preventDefault(); focusRelativeRow(workflow.id, 'last'); }
+                }}
               />
             </li>
           ))}

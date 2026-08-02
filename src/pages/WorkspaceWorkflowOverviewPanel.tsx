@@ -9,6 +9,7 @@ import {
   WorkflowPanel,
   WorkflowSection,
 } from '@/pages/WorkspaceWorkflowsPage.components';
+import { WorkflowTermsHelp } from '@/pages/WorkflowTermsHelp';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
 import type { WorkflowCapabilitiesPreview } from '@/services/control-plane/workflowApi';
 
@@ -22,6 +23,8 @@ export const WorkflowOverviewPanel: React.FC<{
   onRetryPreview: () => void;
   onReviewAgents: () => void;
   onReviewCapabilities: () => void;
+  onOpenGuide?: () => void;
+  showHeader?: boolean;
 }> = ({
   workflow,
   workspaceId,
@@ -31,11 +34,13 @@ export const WorkflowOverviewPanel: React.FC<{
   previewError,
   onRetryPreview,
   onReviewAgents,
-  onReviewCapabilities
+  onReviewCapabilities,
+  onOpenGuide,
+  showHeader
 }) => {
   const { t } = useTranslation();
   return (
-    <WorkflowPanel title="Overview" description="Review the workflow definition, assigned Agents, and capabilities before launch.">
+    <WorkflowPanel title="Overview" description="Review the workflow definition, assigned Agents, and capabilities before launch." showHeader={showHeader}>
       <WorkflowSection
         title={t('workflowCoordination.agentsTitle')}
         description={t('workflowCoordination.agentsDescription')}
@@ -59,6 +64,7 @@ export const WorkflowOverviewPanel: React.FC<{
           <p className="whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
         </div>
       </WorkflowSection>
+      <WorkflowTermsHelp onOpenGuide={onOpenGuide} />
     </WorkflowPanel>
   );
 };

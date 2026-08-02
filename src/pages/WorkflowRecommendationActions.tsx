@@ -9,18 +9,20 @@ export const WorkflowRecommendationActions = ({
   open,
   focusWorkflowId,
   onOpenChange,
-  onChanged
+  onChanged,
+  showTrigger = true
 }: {
   workspace: Workspace;
   open: boolean;
   focusWorkflowId?: string;
   onOpenChange: (open: boolean) => void;
   onChanged: (workflowId?: string) => void;
+  showTrigger?: boolean;
 }) => {
   const { t } = useTranslation();
   const canInstall = Boolean(workspace.permissions?.manage_workflows && workspace.permissions?.manage_agents);
   return <>
-    <Button type="button" variant="secondary" size="md" onClick={() => { updateUrlSearch({ panel: 'recommendations' }); onOpenChange(true); }}>{t('workflowRecommendations.open')}</Button>
+    {showTrigger && <Button type="button" variant="secondary" size="md" onClick={() => { updateUrlSearch({ panel: 'recommendations' }); onOpenChange(true); }}>{t('workflowRecommendations.open')}</Button>}
     <WorkflowRecommendationDrawer
       open={open}
       workspaceId={workspace.id}

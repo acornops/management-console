@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, CollectionResultSummary } from '@acornops/ui';
 import { ICONS } from '@/constants';
 
 interface WorkspaceScheduleDrawerToolbarProps {
@@ -26,9 +26,9 @@ export const WorkspaceScheduleDrawerToolbar: React.FC<WorkspaceScheduleDrawerToo
   const { t } = useTranslation();
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <p className="type-caption text-ui-text-muted">
+      <CollectionResultSummary>
         {loading ? t('schedules.loading') : t('schedules.filters.showing', { count, total })}
-      </p>
+      </CollectionResultSummary>
       <div className="flex items-center gap-2">
         <Button size="sm" variant="secondary" onClick={onRefresh} disabled={busy} aria-label={t('common.refresh')}>
           <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />

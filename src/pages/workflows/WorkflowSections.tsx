@@ -10,12 +10,14 @@ type WorkflowPageSection = WorkflowSection | 'activity';
 
 interface WorkflowSectionsProps {
   activeSection: WorkflowPageSection;
+  className?: string;
   workspaceId: string;
   navigate: (path: string) => void;
 }
 
 export const WorkflowSections: React.FC<WorkflowSectionsProps> = ({
   activeSection,
+  className = '',
   workspaceId,
   navigate
 }) => {
@@ -23,13 +25,17 @@ export const WorkflowSections: React.FC<WorkflowSectionsProps> = ({
   const activity = useWorkspaceWorkflowActivity();
 
   return (
-    <SegmentedTabs<WorkflowPageSection>
-      activeValue={activeSection}
-      ariaLabel={t('workflows.sections.label')}
-      className="mb-8 max-w-4xl"
-      idBase="workflow-section"
-      allPanelsMounted={false}
-      items={[
+    <div className={`mb-5 flex min-w-0 items-end gap-4 ${className}`}>
+      <span className="type-micro-label hidden shrink-0 pb-3 text-ui-text-muted xl:block">
+        {t('workflows.sections.scope')}
+      </span>
+      <SegmentedTabs<WorkflowPageSection>
+        activeValue={activeSection}
+        ariaLabel={t('workflows.sections.label')}
+        className="min-w-0 flex-1 gap-0"
+        idBase="workflow-section"
+        allPanelsMounted={false}
+        items={[
         {
           value: 'all',
           label: t('workflows.sections.all'),
@@ -51,15 +57,16 @@ export const WorkflowSections: React.FC<WorkflowSectionsProps> = ({
           icon: <Activity className="h-4 w-4" aria-hidden="true" />,
           count: activity.openCount > 0 ? activity.openCount : undefined
         }
-      ]}
-      onValueChange={(section) => {
-        if (section === activeSection) return;
-        navigate(
-          section === 'activity'
-            ? AppPaths.workspaceActivity(workspaceId)
-            : AppPaths.workspaceWorkflows(workspaceId, section)
-        );
-      }}
-    />
+        ]}
+        onValueChange={(section) => {
+          if (section === activeSection) return;
+          navigate(
+            section === 'activity'
+              ? AppPaths.workspaceActivity(workspaceId)
+              : AppPaths.workspaceWorkflows(workspaceId, section)
+          );
+        }}
+      />
+    </div>
   );
 };

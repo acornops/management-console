@@ -37,6 +37,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowRunMessageSendingId, setWorkflowRunMessageErrorByRunId, setWorkflowRunMessageRecoveryByRunId,
     setNewWorkflowTag,
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
+    workflowUndoCheckpoint, setWorkflowUndoCheckpoint,
     setDeleteWorkflowId, setUpdatingWorkflowId, selectResultingWorkflow, setDeletingWorkflowId,
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
     canManageWorkflows, workflowOptionsReady, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
@@ -158,7 +159,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       const recovery = recoveryAgentId
         ? resolveMcpReadinessRecovery(error, { workspaceId: workspace.id, scopeType: 'agent', agentId: recoveryAgentId })
         : null;
-      const message = recovery?.message || (error instanceof Error ? error.message : 'Unable to launch workflow');
+      const message = recovery?.message || 'The workflow could not be launched. Review readiness and try again.';
       setLaunchRecovery(recovery);
       const failedRun: WorkflowDefinition['runs'][number] = {
         ...optimisticRun,
@@ -249,7 +250,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       const recovery = recoveryAgentId
         ? resolveMcpReadinessRecovery(error, { workspaceId: workspace.id, scopeType: 'agent', agentId: recoveryAgentId })
         : null;
-      const message = recovery?.message || (error instanceof Error ? error.message : 'Unable to send workflow message');
+      const message = recovery?.message || 'The message could not be sent. Your draft is still here; try again.';
       setWorkflowRunMessageErrorByRunId((current: Record<string, string>) => ({ ...current, [runId]: message }));
       if (recovery) {
         setWorkflowRunMessageRecoveryByRunId((current: Record<string, unknown>) => ({ ...current, [runId]: recovery }));
@@ -275,8 +276,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         ...current,
         [runId]: (current[runId] || []).map((item) => item.id === approval.id ? approval : item)
       }));
-    } catch (error) {
-      setApprovalError(error instanceof Error ? error.message : 'Unable to decide workflow approval');
+    } catch {
+      setApprovalError('The approval decision could not be saved. No decision was recorded; try again.');
     } finally {
       setApprovalAction('');
     }
@@ -294,8 +295,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     try {
       const events = await listWorkflowRunEvents(runId);
       setRunEventsByRunId((current) => ({ ...current, [runId]: events }));
-    } catch (error) {
-      setRunLogError(error instanceof Error ? error.message : 'Unable to load workflow run logs');
+    } catch {
+      setRunLogError('Run details could not be loaded. Retry from this run.');
     }
   }
 
@@ -325,8 +326,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
           }
         ]
       }));
-    } catch (error) {
-      setCancelRunError(error instanceof Error ? error.message : 'Unable to stop workflow run');
+    } catch {
+      setCancelRunError('The stop request could not be sent. Check the run status and try again.');
     } finally {
       setCancelRunAction('');
     }
@@ -335,7 +336,12 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
   async function persistWorkflowTags(workflow: WorkflowDefinition, tags: string[]): Promise<boolean> {
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
+    if (!canManageWorkflows) {
+      setWorkflowUpdateError('You need manage_workflows to update workflow tags.');
+      return false;
+    }
     setUpdatingWorkflowId(workflow.id);
+    setWorkflowUndoCheckpoint(workflow);
     try {
       const updated = await updateWorkflow(workspace.id, workflow.id, {
         agentIds: workflow.agentIds,
@@ -348,8 +354,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       setWorkflowEditDrafts((current) => ({ ...current, [workflow.id]: createWorkflowEditDraft(mapped) }));
       setWorkflowUpdateResult('Workflow tags updated.');
       return true;
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow tags');
+    } catch {
+      setWorkflowUpdateError('Workflow tags could not be saved. Your current tags are unchanged. Try again.');
       return false;
     } finally {
       setUpdatingWorkflowId('');
@@ -425,6 +431,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setAgentSelectionError('');
     setAgentSelectionResult('');
     setSavingAgentSelectionId(selectedWorkflow.id);
+    setWorkflowUndoCheckpoint(selectedWorkflow);
     try {
       const updated = await updateWorkflow(workspace.id, selectedWorkflow.id, {
         agentIds: selectedAgentIds
@@ -435,9 +442,10 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         : workflow));
       setAgentSelectionDrafts((current) => ({ ...current, [selectedWorkflow.id]: createAgentSelectionDraft(mapped) }));
       setAgentSelectionResult('Selected Agents saved. Future workflow sessions will use the updated execution mode.');
+      setWorkflowUpdateResult('Agent assignment updated.');
       setEditingAgentSelectionId('');
-    } catch (error) {
-      setAgentSelectionError(error instanceof Error ? error.message : 'Unable to save workflow agents');
+    } catch {
+      setAgentSelectionError('Agent assignments could not be saved. Your selection is still here. Try again.');
     } finally {
       setSavingAgentSelectionId('');
     }
@@ -450,6 +458,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
     setUpdatingWorkflowId(selectedWorkflow.id);
+    setWorkflowUndoCheckpoint(selectedWorkflow);
     try {
       const updated = await updateWorkflow(workspace.id, selectedWorkflow.id, {
         agentIds: selectedWorkflow.agentIds,
@@ -464,8 +473,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         : workflow));
       setWorkflowEditDrafts((current) => ({ ...current, [selectedWorkflow.id]: createWorkflowEditDraft(mapped) }));
       setWorkflowUpdateResult('Workflow updated.');
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow');
+    } catch {
+      setWorkflowUpdateError('Workflow could not be saved. Your edits are still here. Try again.');
     } finally {
       setUpdatingWorkflowId('');
     }
@@ -475,6 +484,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setWorkflowUpdateError('');
     setWorkflowUpdateResult('');
     setUpdatingWorkflowId(workflow.id);
+    setWorkflowUndoCheckpoint(workflow);
     try {
       const updated = await updateWorkflow(workspace.id, workflow.id, {
         agentIds: workflow.agentIds,
@@ -485,8 +495,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         ? { ...mapped, runs: item.runs, lastRun: item.lastRun }
         : item));
       setWorkflowUpdateResult(active ? 'Workflow activated.' : 'Workflow deactivated.');
-    } catch (error) {
-      setWorkflowUpdateError(error instanceof Error ? error.message : 'Unable to update workflow status');
+    } catch {
+      setWorkflowUpdateError('Workflow availability could not be changed. The previous state is preserved. Try again.');
     } finally {
       setUpdatingWorkflowId('');
     }
@@ -501,10 +511,38 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       setWorkflows(nextWorkflows);
       selectResultingWorkflow(nextWorkflows[0]?.id || '', { replace: true });
       setDeleteWorkflowId('');
-    } catch (error) {
-      setDeleteWorkflowError(error instanceof Error ? error.message : 'Unable to delete workflow');
+    } catch {
+      setDeleteWorkflowError('The workflow could not be deleted. It remains unchanged; try again.');
     } finally {
       setDeletingWorkflowId('');
+    }
+  }
+
+  async function undoLastWorkflowMutation(): Promise<void> {
+    const previous = workflowUndoCheckpoint as WorkflowDefinition | null;
+    if (!previous) return;
+    setWorkflowUpdateError('');
+    setUpdatingWorkflowId(previous.id);
+    try {
+      const updated = await updateWorkflow(workspace.id, previous.id, {
+        agentIds: previous.agentIds,
+        tags: previous.tags,
+        name: previous.name,
+        description: previous.description,
+        prompt: previous.starterPrompt,
+        status: previous.status
+      });
+      const mapped = mapApiWorkflowToDefinition(updated, previous, workspace.id, workflowOptions, ownerLabelsByUserId);
+      setWorkflows((current) => current.map((workflow) => workflow.id === previous.id
+        ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
+        : workflow));
+      setWorkflowEditDrafts((current) => ({ ...current, [previous.id]: createWorkflowEditDraft(mapped) }));
+      setWorkflowUndoCheckpoint(null);
+      setWorkflowUpdateResult('Previous workflow settings restored.');
+    } catch {
+      setWorkflowUpdateError('Undo could not be applied. The current workflow is unchanged. Try again.');
+    } finally {
+      setUpdatingWorkflowId('');
     }
   }
 
@@ -528,8 +566,8 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       selectResultingWorkflow(mapped.id);
       setCreateDraft(createWorkflowDraft());
       setCreatePanelOpen(false);
-    } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Unable to create workflow');
+    } catch {
+      setCreateError('The workflow could not be created. Your draft is still here; review it and try again.');
     } finally {
       setCreatingWorkflow(false);
     }
@@ -547,6 +585,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     removeWorkflowTag,
     saveAgentSelection,
     saveWorkflowDefinition,
+    undoLastWorkflowMutation,
     startEditingAgentSelection,
     startEditingWorkflow,
     sendWorkflowRunMessage,

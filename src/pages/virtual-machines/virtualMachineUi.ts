@@ -1,4 +1,5 @@
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import { formatRelativeTime } from '@/utils/dateTime';
 
 export type VmConnectionFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 
@@ -74,6 +75,9 @@ export function getVmCatalogStatusTone(vm: ControlPlaneVirtualMachine, issueSumm
   return 'neutral';
 }
 
-export function formatSnapshotTime(vm: ControlPlaneVirtualMachine): string {
-  return vm.latestSnapshot?.timestamp || vm.updatedAt || 'Waiting for agent';
+export function formatSnapshotTime(vm: ControlPlaneVirtualMachine, now = Date.now()): string {
+  return formatRelativeTime(vm.latestSnapshot?.timestamp || vm.updatedAt, {
+    fallback: 'Waiting for agent',
+    now
+  });
 }
