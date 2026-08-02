@@ -120,6 +120,16 @@ gates.
   - The targeted mobile-dark incoming-webhooks route passed locally while
     creating a temporary macOS baseline and passed again against that baseline.
     The temporary baseline was removed.
+- GitHub Actions run `30746423572`, attempt 1
+  - Mobile-dark reproduced the same incoming-webhooks displacement after the
+    component stopped ancestor scrolling, identifying retained `.page-shell`
+    state across the suite's reused page as the remaining source.
+  - Route preparation now resets internal shells for origin-based baselines,
+    while the manifest explicitly preserves scroll for the intentionally
+    deep-linked MCP registries baseline.
+  - A targeted mobile-dark sequence covering schedules, incoming webhooks, and
+    MCP registries passed while creating temporary macOS baselines and passed
+    again against them. The temporary baselines were removed.
 
 The initial sub-12-minute target is satisfied. Establishing the below-10-minute
 median still requires two more representative full runs rather than rerunning

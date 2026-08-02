@@ -26,4 +26,9 @@ describe('route coverage manifest', () => {
       [...coveredCategories].sort()
     );
   });
+
+  it('preserves scroll only for intentional deep-link baselines', () => {
+    expect(routeCoverageManifest.filter((route) => route.preserveScroll).map((route) => route.name))
+      .toEqual(['workspace-mcp-registries']);
+  });
 });

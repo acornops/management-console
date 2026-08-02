@@ -8,6 +8,8 @@ const virtualMachine = `${workspace}/virtual-machines/fixture-vm`;
  * route-level visual, accessibility, and text-reflow contract.
  *
  * `ready` is a selector for the first stable landmark rendered by the route.
+ * `preserveScroll` marks routes whose baseline intentionally captures a
+ * deep-linked section rather than the route origin.
  */
 export const routeCoverageManifest = [
   { name: 'login', category: 'login', path: '/?fixtureAnonymous=1', ready: 'h1' },
@@ -45,7 +47,8 @@ export const routeCoverageManifest = [
     name: 'workspace-mcp-registries',
     category: 'settings',
     path: `${workspace}/settings?section=mcp-registries`,
-    ready: 'h1'
+    ready: 'h1',
+    preserveScroll: true
   },
   { name: 'account-settings', category: 'settings', path: '/account', ready: 'h1' },
   { name: 'cluster-overview', category: 'kubernetes', path: `${cluster}/overview`, ready: 'h1' },
