@@ -18,6 +18,7 @@ import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { useTargetMcpCredentialModeImpact } from '@/features/targets/admin/useTargetMcpCredentialModeImpact';
 import { McpServersNotices } from '@/features/targets/admin/McpServersNotices';
 import { parseMcpRecoveryAction } from '@/features/catalog/mcpConnectionActions';
+import { useAgentTargetsMcpSettingsDialog } from '@/features/targets/admin/useAgentTargetsMcpSettingsDialog';
 import {
   buildLocalCatalog,
   publicHeaderRowsFromRecord,
@@ -41,7 +42,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   dataSource = targetMcpServersDataSource,
   connectionDestination = { kind: 'target', id: subject.id },
   catalogDestination,
-  scheduleCount
+  scheduleCount, targetAccessSettings
 }) => {
   const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
@@ -72,6 +73,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [testResultsByServerId, setTestResultsByServerId] = useState<Record<string, TargetMcpServerTestConnectionResult>>({});
   const onSyncToolsRef = useRef(onSyncTools);
   const localCatalog = useMemo(() => buildLocalCatalog(subject, canManageMcp), [subject, canManageMcp]);
+  const [openTargetAccessSettings, targetAccessSettingsDialog] = useAgentTargetsMcpSettingsDialog(subject, targetAccessSettings);
   const activeCatalog = catalog || localCatalog;
   const canEditServers = canManageMcp && activeCatalog.permissions.canEdit;
   const servers = activeCatalog.servers;
@@ -483,7 +485,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setPendingToolName(null);
     }
   };
-
   const inventory = (
     <McpServersInventory
       servers={servers}
@@ -498,6 +499,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       recoveryServerId={recoveryServerId}
       recoveryAction={recoveryAction}
       onManageTools={setSelectedServerId}
+      onOpenSettings={targetAccessSettings ? openTargetAccessSettings : undefined}
       onTestConnection={(targetServer) => void handleTestConnection(targetServer)}
       onToggleServer={(targetServer, enabled) => void handleToggleServer(targetServer, enabled)}
       onEdit={openEditServerModal}
@@ -513,7 +515,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       onRetry={(targetServer) => void retry(targetServer)}
     />
   );
-
   return (
     <PageShell>
       <McpServersViewHeader
@@ -522,7 +523,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         onConnectByUrl={openCreateServerModal}
         catalogDestination={catalogDestination}
       />
-
       <McpServersNotices
         toolRefreshError={toolRefreshError}
         hasAgentWriteBlockedTools={hasAgentWriteBlockedTools}
@@ -533,7 +533,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
           ? void refreshConnectedServer(toolRefreshServer).catch(() => setToolRefreshError('The credential is connected, but tools may be stale. Refresh the MCP catalog to retry discovery.'))
           : void loadCatalog({ syncParent: true })}
       />
-
       <CollectionState
         phase={catalogPhase}
         itemCount={servers.length}
@@ -566,6 +565,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         onPrepareOAuth={async (returnPath) => credentialDialogServer ? prepareOAuth(credentialDialogServer, returnPath) : undefined}
         onStartOAuth={async (preparationHandle, issuer) => credentialDialogServer ? startOAuth(credentialDialogServer, preparationHandle, issuer) : undefined}
       />
+      {targetAccessSettingsDialog}
       <AnimatePresence>
         {activeServerWithPagedTools && (
           <McpServerToolsDialog

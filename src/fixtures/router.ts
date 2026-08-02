@@ -9,6 +9,7 @@ import { routeWorkflowWebhookFixtureRequest } from './workflowWebhookRoutes';
 import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
 import { routeApprovalFixtureRequest } from './approvalRoutes';
 import { routeAgentConversationFixtureRequest } from './agentConversationRoutes';
+import { routeAgentTargetAccessFixtureRequest } from './agentTargetAccessRoutes';
 import { applyFixtureRole } from './roleProfiles';
 
 export interface FixtureResponse {
@@ -457,6 +458,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
       return json({ server: clone(server) }, 201);
     }
   }
+  const agentTargetAccessResponse = await routeAgentTargetAccessFixtureRequest({ method, path, request, state });
+  if (agentTargetAccessResponse) return agentTargetAccessResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/skills$/);
   if (match && method === 'GET') return json({ items: clone(state.targetSkills) });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/service-identities$/);

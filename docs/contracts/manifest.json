@@ -57,11 +57,16 @@
         ],
         "runtimeToolIdentity": "McpToolRef{serverId,toolName}"
       },
+      "agentTargetsMcpAccess": {
+        "owner": "Target access policy belongs to the Agent's built-in Targets MCP server and is inherited by every Agent run context.",
+        "modes": ["all", "allowlist", "denylist"],
+        "enforcement": "The control plane filters list_targets and rejects denied target IDs before target lookup. Workflows do not own or override target access."
+      },
       "workflowRuntimeLimits": {
         "authority": "ASSISTANT_MAX_RUNTIME_MS is the only workflow execution limit and GENERATED_DOCUMENT_RETENTION_DAYS is the only generated-document retention policy.",
         "mutationContract": "Workflow mutations accept no capability, context, permission, approval, runtime, or retention policy. Deployment runtime and retention configuration remains authoritative.",
         "options": "Workflow option catalogs expose assignable Agents only.",
-        "capabilities": "Workflow capability mode is derived from assigned Agents; prompt context is authorized through explicit resource bindings."
+        "capabilities": "Workflow capability mode and target access are inherited from assigned Agents without Workflow-level overrides."
       },
       "workflowCapabilityPreview": {
         "path": "POST /api/v1/workflows/{workflowId}/capabilities-preview",
@@ -71,7 +76,6 @@
           "ready",
           "blocked"
         ],
-        "digests": "Responses include promptDigest and bindingDigest from the exact runtime-parameter compilation used for an accepted launch.",
         "mcpAuthRequirements": "Every credentialed MCP server in the compiled Agent scope emits mcpRequirements[].{serverId,serverName,authType,owningAgent.{id,name},connectionState,authRequirement.{scope,credentialLabel,requiredInformation[].{name,description}},action}; generic connection metadata and guidance only, never provider profiles, URLs, headers, or credential values",
         "privacy": "Responses expose bounded reason codes and explicit capability-preview metadata only; compiled scopes, credentials, URLs, headers, tool arguments, input schemas, private connection state, and internal coordinator identity are excluded.",
         "mutation": "Preview creates no session, execution, run, approval, or audit record. Dispatch recompiles an internal authoritative scope that is never returned by the public API."

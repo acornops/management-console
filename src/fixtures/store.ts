@@ -8,6 +8,7 @@ export const FIXTURE_IDS = {
   workflowAnalystAgent: 'fixture-workflow-analyst',
   specialistAgent: 'fixture-specialist',
   kubernetesAgent: 'fixture-kubernetes-agent',
+  targetsMcpServer: 'fixture-agent-targets-mcp',
   virtualMachineAgent: 'fixture-virtual-machine-agent',
   workflow: 'fixture-workflow',
   session: 'fixture-session',
@@ -183,6 +184,26 @@ export function createFixtureState(): FixtureState {
     { id: 'get_resource', name: 'get_resource', description: 'Read a Kubernetes resource', capability: 'read', enabledConfigured: true, enabledEffective: true, effectiveDisabledReason: null, source: 'builtin', version: '1.0.0' },
     { id: 'patch_resource', name: 'patch_resource', description: 'Patch a Kubernetes resource after approval', capability: 'write', enabledConfigured: true, enabledEffective: true, effectiveDisabledReason: null, source: 'builtin', version: '1.0.0' }
   ];
+  const agentTargetsMcpServer = {
+    id: FIXTURE_IDS.targetsMcpServer,
+    name: 'AcornOps Targets',
+    url: 'http://control-plane:8081/internal/v1/mcp',
+    enabled: true,
+    isSystem: true,
+    canDelete: false,
+    canEditConnection: false,
+    canToggle: true,
+    credentialMode: 'none',
+    authType: 'none',
+    revision: 1,
+    connectionStatus: 'ok',
+    lastDiscoveryError: null,
+    tools: [
+      { name: 'list_targets', serverId: FIXTURE_IDS.targetsMcpServer, alias: 'list_targets', description: 'List targets available to this Agent.', capability: 'read', enabled: true, reviewState: 'approved', riskLevel: 'read_only', autoAllowed: false },
+      { name: 'get_target', serverId: FIXTURE_IDS.targetsMcpServer, alias: 'get_target', description: 'Get one target available to this Agent.', capability: 'read', enabled: true, reviewState: 'approved', riskLevel: 'read_only', autoAllowed: false },
+      { name: 'list_target_issues', serverId: FIXTURE_IDS.targetsMcpServer, alias: 'list_target_issues', description: 'List issues for one target available to this Agent.', capability: 'read', enabled: true, reviewState: 'approved', riskLevel: 'read_only', autoAllowed: false }
+    ]
+  };
   const agents = [
     {
       id: FIXTURE_IDS.workflowAnalystAgent, workspaceId: FIXTURE_IDS.workspace, name: 'Workflow Analyst',
@@ -216,6 +237,8 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
+      mcpInstallations: [agentTargetsMcpServer],
+      targetAccessPolicy: { mode: 'all', targetIds: [] },
       tools: ['documents.create'], readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Kubernetes MCP tools', createdAt: EARLIER, updatedAt: NOW
     },
@@ -557,7 +580,7 @@ export function createFixtureState(): FixtureState {
         { name: 'restart_service', description: 'Restart a Linux service after approval', capability: 'write', version: '1.0.0', source: 'builtin', enabled: true, mcp_server_url: 'builtin://agentk', timeout_ms: 10000 }
       ] }
     ],
-    agentMcpServers: [],
+    agentMcpServers: [{ ...agentTargetsMcpServer, agentId: FIXTURE_IDS.kubernetesAgent }],
     mcpConnections: {}
   };
 }

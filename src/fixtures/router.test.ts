@@ -41,6 +41,28 @@ describe('frontend fixture router', () => {
     ]));
   });
 
+  it('serves and persists Agent target access settings', async () => {
+    const path = `/api/v1/workspaces/${FIXTURE_IDS.workspace}/agents/${FIXTURE_IDS.kubernetesAgent}/mcp/servers/${FIXTURE_IDS.targetsMcpServer}/target-access`;
+    const initial = await routeFixtureRequest(request(path));
+    expect(initial.body).toMatchObject({
+      policy: { mode: 'all', targetIds: [] },
+      targets: expect.arrayContaining([
+        expect.objectContaining({ id: FIXTURE_IDS.cluster, targetType: 'kubernetes' }),
+        expect.objectContaining({ id: FIXTURE_IDS.virtualMachine, targetType: 'virtual_machine' })
+      ])
+    });
+
+    const updated = await routeFixtureRequest(request(path, {
+      method: 'PUT',
+      body: JSON.stringify({ mode: 'allowlist', targetIds: [FIXTURE_IDS.cluster] })
+    }));
+    expect(updated.body).toMatchObject({
+      policy: { mode: 'allowlist', targetIds: [FIXTURE_IDS.cluster] }
+    });
+    expect(getFixtureState().agents.find((agent) => agent.id === FIXTURE_IDS.kubernetesAgent)?.targetAccessPolicy)
+      .toEqual({ mode: 'allowlist', targetIds: [FIXTURE_IDS.cluster] });
+  });
+
   it('persists workspace, membership, settings, agent, workflow, session, and message mutations', async () => {
     const createdWorkspace = await routeFixtureRequest(request('/api/v1/workspaces', {
       method: 'POST',

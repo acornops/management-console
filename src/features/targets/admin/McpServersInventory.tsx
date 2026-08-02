@@ -26,6 +26,7 @@ interface McpServersInventoryProps {
   recoveryServerId: string | null;
   recoveryAction?: 'connect_mcp_server' | 'authorize_mcp_server' | 'select_authorization_server' | 'reauthorize_mcp_server' | 'verify_mcp_server';
   onManageTools: (serverId: string) => void;
+  onOpenSettings?: (server: TargetToolCatalogServer) => void;
   onTestConnection: (server: TargetToolCatalogServer) => void;
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;
   onEdit: (server: TargetToolCatalogServer) => void;
@@ -51,6 +52,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   recoveryServerId,
   recoveryAction,
   onManageTools,
+  onOpenSettings,
   onTestConnection,
   onToggleServer,
   onEdit,
@@ -214,6 +216,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                       retryAfterSeconds={retryAfterSecondsFor(server.id)}
                       recoveryAction={recoveryServerId === server.id ? recoveryAction : undefined}
                       onManageTools={onManageTools}
+                      onOpenSettings={onOpenSettings}
                       onTestConnection={onTestConnection}
                       onToggleServer={onToggleServer}
                       onEdit={onEdit}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
-import { Edit3, Loader2, Link2, MoreVertical, RefreshCcw, Server, Settings2, Trash2, Unlink2 } from 'lucide-react';
+import { Edit3, Loader2, Link2, MoreVertical, RefreshCcw, Server, Settings, Settings2, Trash2, Unlink2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
@@ -33,6 +33,7 @@ interface McpServerCardProps {
   retryAfterSeconds: number;
   recoveryAction?: 'connect_mcp_server' | 'authorize_mcp_server' | 'select_authorization_server' | 'reauthorize_mcp_server' | 'verify_mcp_server';
   onManageTools: (serverId: string) => void;
+  onOpenSettings?: (server: TargetToolCatalogServer) => void;
   onTestConnection: (server: TargetToolCatalogServer) => void;
   onToggleServer: (server: TargetToolCatalogServer, enabled: boolean) => void;
   onEdit: (server: TargetToolCatalogServer) => void;
@@ -48,6 +49,15 @@ type ServerStatusTone = 'success' | 'warning' | 'danger' | 'muted';
 interface ServerStatusDisplay {
   labelKey: string;
   tone: ServerStatusTone;
+}
+
+export function canOpenMcpServerSettings(
+  server: Pick<TargetToolCatalogServer, 'isSystem' | 'name'>,
+  onOpenSettings?: (server: TargetToolCatalogServer) => void
+): boolean {
+  return server.isSystem
+    && server.name === 'AcornOps Targets'
+    && Boolean(onOpenSettings);
 }
 
 export function getMcpServerStatusDisplay(
@@ -84,6 +94,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   retryAfterSeconds,
   recoveryAction,
   onManageTools,
+  onOpenSettings,
   onTestConnection,
   onToggleServer,
   onEdit,
@@ -185,6 +196,12 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               <Settings2 className="h-4 w-4 shrink-0 text-accent-strong" aria-hidden="true" />
               <span>{t('mcpServers.manageTools')}</span>
             </MenuItem>
+            {canOpenMcpServerSettings(server, onOpenSettings) && onOpenSettings && (
+              <MenuItem onClick={() => onOpenSettings(server)}>
+                <Settings className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                <span>{t('mcpServers.settings')}</span>
+              </MenuItem>
+            )}
             {canTestServer && (
               <MenuItem
                 disabled={Boolean(pendingTestServerId)}
