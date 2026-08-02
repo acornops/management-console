@@ -110,6 +110,16 @@ gates.
     took 20-29s per shard. Caching or a pinned browser image is deferred because
     it offers materially less benefit than the completed test fan-out and may
     add cache maintenance or invalidation risk.
+- GitHub Actions run `30746088352`, attempt 1
+  - A later full run reproduced the incoming-webhooks page jump in mobile-dark,
+    confirming that restoring ancestor scroll after `scrollIntoView` still
+    raced the browser's deferred scrolling.
+  - Compact tabs now reveal the active item by adjusting only the tab list's
+    horizontal `scrollLeft`; keyboard focus also uses `preventScroll`. The
+    component no longer invokes ancestor-scrolling behavior.
+  - The targeted mobile-dark incoming-webhooks route passed locally while
+    creating a temporary macOS baseline and passed again against that baseline.
+    The temporary baseline was removed.
 
 The initial sub-12-minute target is satisfied. Establishing the below-10-minute
 median still requires two more representative full runs rather than rerunning

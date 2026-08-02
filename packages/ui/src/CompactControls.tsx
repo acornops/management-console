@@ -39,6 +39,17 @@ export function segmentedTabButtonClassName({ isActive, className }: { isActive:
   );
 }
 
+function revealTabHorizontally(tablist: HTMLElement, tab: HTMLElement) {
+  const tablistRect = tablist.getBoundingClientRect();
+  const tabRect = tab.getBoundingClientRect();
+
+  if (tabRect.left < tablistRect.left) {
+    tablist.scrollLeft -= tablistRect.left - tabRect.left;
+  } else if (tabRect.right > tablistRect.right) {
+    tablist.scrollLeft += tabRect.right - tablistRect.right;
+  }
+}
+
 export interface SegmentedTabsProps<T extends string> {
   activeValue: T;
   allPanelsMounted?: boolean;
@@ -58,14 +69,9 @@ export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted 
   React.useEffect(() => {
     if (!idBase) return undefined;
     const frame = window.requestAnimationFrame(() => {
-      const activeTab = tablistRef.current?.querySelector<HTMLElement>(`#${CSS.escape(`${idBase}-${activeValue}-tab`)}`);
-      const pageShell = tablistRef.current?.closest<HTMLElement>('.page-shell');
-      const pageShellScrollTop = pageShell?.scrollTop;
-      const viewportX = window.scrollX;
-      const viewportY = window.scrollY;
-      activeTab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      if (pageShell && pageShellScrollTop !== undefined) pageShell.scrollTop = pageShellScrollTop;
-      window.scrollTo(viewportX, viewportY);
+      const tablist = tablistRef.current;
+      const activeTab = tablist?.querySelector<HTMLElement>(`#${CSS.escape(`${idBase}-${activeValue}-tab`)}`);
+      if (tablist && activeTab) revealTabHorizontally(tablist, activeTab);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [activeValue, idBase]);
@@ -74,8 +80,8 @@ export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted 
     if (!idBase) return;
     window.requestAnimationFrame(() => {
       const tab = document.getElementById(`${idBase}-${value}-tab`);
-      tab?.focus();
-      tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      tab?.focus({ preventScroll: true });
+      if (tablistRef.current && tab) revealTabHorizontally(tablistRef.current, tab);
     });
   };
 

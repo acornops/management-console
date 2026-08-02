@@ -123,10 +123,10 @@ describe('surface behavior contracts', () => {
 
   it('reveals the active resource category when compact tab strips overflow', () => {
     expect(resourceCategoryTabs).toContain('<SegmentedTabs');
-    expect(compactControls).toContain('activeTab?.scrollIntoView');
-    expect(compactControls).toContain("inline: 'nearest'");
-    expect(compactControls).toContain('pageShell.scrollTop = pageShellScrollTop');
-    expect(compactControls).toContain('window.scrollTo(viewportX, viewportY)');
+    expect(compactControls).toContain('revealTabHorizontally(tablist, activeTab)');
+    expect(compactControls).toContain('tablist.scrollLeft +=');
+    expect(compactControls).toContain('focus({ preventScroll: true })');
+    expect(compactControls).not.toContain('scrollIntoView');
     expect(compactControls).toContain('ref={tablistRef}');
   });
 
