@@ -14,9 +14,13 @@ async function expectResourceGridColumns(page: Page, route: string, count: numbe
     if (!(error instanceof Error) || !error.message.includes('ERR_ABORTED')) throw error;
     await page.goto(route, { waitUntil: 'domcontentloaded' });
   }
+  await expect(page.locator('.management-console-desktop-sidebar')).toHaveAttribute(
+    'data-desktop-sidebar-mode',
+    'expanded'
+  );
   const grid = page.locator('[data-resource-card-grid="true"]').last();
   await expect(grid).toBeVisible();
-  const renderedColumns = await grid.evaluate((element) => {
+  const renderedColumns = () => grid.evaluate((element) => {
     const item = element.firstElementChild;
     if (!item) throw new Error('Resource-card grid requires at least one fixture item');
     while (element.childElementCount < 3) {
@@ -31,7 +35,7 @@ async function expectResourceGridColumns(page: Page, route: string, count: numbe
     }
     return Math.max(...rows.values());
   });
-  expect(renderedColumns).toBe(count);
+  await expect.poll(renderedColumns).toBe(count);
 }
 
 async function expectUltrawideCatalogExpansion(page: Page, route: string) {

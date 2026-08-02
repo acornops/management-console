@@ -97,7 +97,7 @@ test('workflow workspace stacks discovery controls below its views and keeps emp
   expect(emptyLedgerBox!.height).toBeLessThan(350);
 });
 
-test('workflow desktop workspace keeps chrome fixed and scrolls detail content independently', async ({ page }) => {
+test('workflow desktop workspace bounds ordinary detail and releases Runs to page scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow', {
     waitUntil: 'domcontentloaded'
@@ -152,7 +152,8 @@ test('workflow desktop workspace keeps chrome fixed and scrolls detail content i
 
   await page.getByRole('tab', { name: 'Runs', exact: true }).click();
   await expect(page.getByRole('tabpanel', { name: 'Runs' })).toBeVisible();
-  await expect(detailBody).toHaveCSS('overflow-y', 'auto');
+  await expect(page.locator('.page-shell')).toHaveCSS('overflow-y', 'auto');
+  await expect(detailBody).toHaveCSS('overflow-y', 'visible');
 });
 
 test('workflow launch uses the saved prompt without runtime template inputs', async ({ page }) => {
