@@ -282,10 +282,10 @@ export const WorkflowRunsPanel: React.FC<{
           delete next[run.id];
           return next;
         });
-      } catch (error) {
+      } catch {
         if (!cancelled) setCoordinationErrorByExecutionId((current) => ({
           ...current,
-          [run.id]: error instanceof Error ? error.message : t('workflowCoordination.traceUnavailable')
+          [run.id]: t('workflowCoordination.traceUnavailable')
         }));
       } finally {
         if (!cancelled) setCoordinationLoadingId('');
@@ -302,7 +302,7 @@ export const WorkflowRunsPanel: React.FC<{
   }, [expandedRunLogId, t, workflow.executionMode, workflow.runs]);
 
   return (
-  <WorkflowPanel title="Activity" description="Inspect this workflow's runs, approval pauses, trace events, and active instructions." showHeader={showHeader}>
+  <WorkflowPanel title="Runs" description="Inspect this workflow's runs, approval pauses, trace events, and active instructions." showHeader={showHeader}>
     {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <InlineAlert key={message} tone="danger" aria-live="assertive" className="type-emphasis">{message}</InlineAlert>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;

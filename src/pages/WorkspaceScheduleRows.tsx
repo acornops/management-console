@@ -14,7 +14,7 @@ import { DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceScheduleRowProps {
   schedule: WorkflowSchedule;
-  workflows: WorkflowApiDefinition[];
+  workflows: WorkflowApiDefinition[] | ReadonlyMap<string, WorkflowApiDefinition>;
   workspaceId: string;
   canManage: boolean;
   updating: boolean;
@@ -27,10 +27,12 @@ interface WorkspaceScheduleRowProps {
 }
 
 export function scheduleWorkflowName(
-  workflows: WorkflowApiDefinition[],
+  workflows: WorkflowApiDefinition[] | ReadonlyMap<string, WorkflowApiDefinition>,
   workflowId: string
 ): string {
-  return workflows.find((workflow) => workflow.id === workflowId)?.name || workflowId;
+  return (Array.isArray(workflows)
+    ? workflows.find((workflow) => workflow.id === workflowId)
+    : workflows.get(workflowId))?.name || workflowId;
 }
 
 export function isMcpAutoPause(schedule: WorkflowSchedule): boolean {
@@ -41,11 +43,13 @@ export function isMcpAutoPause(schedule: WorkflowSchedule): boolean {
 
 function scheduleMcpRecoveryPath(
   workspaceId: string,
-  workflows: WorkflowApiDefinition[],
+  workflows: WorkflowApiDefinition[] | ReadonlyMap<string, WorkflowApiDefinition>,
   workflowId: string,
   lastError?: string
 ): string {
-  const workflow = workflows.find((candidate) => candidate.id === workflowId);
+  const workflow = Array.isArray(workflows)
+    ? workflows.find((candidate) => candidate.id === workflowId)
+    : workflows.get(workflowId);
   if (workflow?.executionMode === 'coordinated') {
     const params = new URLSearchParams({ workflow: workflow.id, tab: 'capabilities' });
     return `${AppPaths.workspaceWorkflows(workspaceId)}?${params.toString()}`;

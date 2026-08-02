@@ -1,19 +1,20 @@
 import type { ControlPlaneIssueItem } from '@/services/controlPlaneApi';
+import type { StatusBadgeTone } from '@acornops/ui';
 
-export function issueStatusTone(status: ControlPlaneIssueItem['status']): string {
-  if (status === 'active') return 'bg-ui-surface-strong text-ui-text-muted';
-  if (status === 'recovering') return 'bg-status-warning-soft text-status-warning-text';
-  return 'bg-status-success-soft text-status-success-text';
+export function issueStatusTone(status: ControlPlaneIssueItem['status']): StatusBadgeTone {
+  if (status === 'active') return 'neutral';
+  if (status === 'recovering') return 'warning';
+  return 'success';
 }
 
 export function shouldShowIssueStatus(status: ControlPlaneIssueItem['status']): boolean {
   return status !== 'active';
 }
 
-export function issueSeverityTone(severity: ControlPlaneIssueItem['severity']): string {
-  if (severity === 'critical') return 'bg-status-danger-soft text-status-danger-text';
-  if (severity === 'warning') return 'bg-status-warning-soft text-status-warning-text';
-  return 'bg-ui-surface-strong text-ui-text-muted';
+export function issueSeverityTone(severity: ControlPlaneIssueItem['severity']): StatusBadgeTone {
+  if (severity === 'critical') return 'danger';
+  if (severity === 'warning') return 'warning';
+  return 'neutral';
 }
 
 function normalizedIssueCopy(value: string): string {

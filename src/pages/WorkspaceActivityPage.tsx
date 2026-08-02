@@ -141,7 +141,8 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
       contentClassName="lg:flex lg:h-full lg:min-h-0 lg:flex-col"
     >
       <PageHeader
-        title={t('app.workflows')}
+        className="mb-5"
+        title={t('workflowActivity.title')}
         description={t('workflowActivity.subtitle', { workspace: workspace.name })}
         actions={(
           <Button size="md" variant="secondary" onClick={() => void load()} disabled={phase === 'loading'}>

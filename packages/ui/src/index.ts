@@ -6,6 +6,7 @@ export * from './Checkbox';
 export * from './CloseButton';
 export * from './Combobox';
 export * from './CollectionState';
+export * from './CollectionResultSummary';
 export * from './CompactControls';
 export * from './DangerZone';
 export * from './DataTable';

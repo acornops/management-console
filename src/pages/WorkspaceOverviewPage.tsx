@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, Bot, Clock3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, buttonClassName } from '@acornops/ui';
+import { Button, StatusBadge, buttonClassName } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
@@ -253,7 +253,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
                     className="control-target group flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/25 sm:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className={`type-micro-label shrink-0 rounded-full px-2.5 py-1 ${card.postureTone}`}>{card.postureLabel}</span>
+                      <StatusBadge tone={card.postureTone} className="shrink-0">{card.postureLabel}</StatusBadge>
                       <span className="type-ui break-words text-ui-text">{card.name}</span>
                     </div>
                     <ArrowRight className="h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" aria-hidden="true" />
@@ -277,13 +277,13 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
         <div data-attention-issue-row="true" className="flex flex-col gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueSeverityTone(issue.severity)}`}>
+              <StatusBadge tone={issueSeverityTone(issue.severity)}>
                 {t(`issues.severity.${issue.severity}`)}
-              </span>
+              </StatusBadge>
               {shouldShowIssueStatus(issue.status) && (
-                <span className={`type-micro-label rounded-full px-2.5 py-1 ${issueStatusTone(issue.status)}`}>
+                <StatusBadge tone={issueStatusTone(issue.status)}>
                   {t(`issues.status.${issue.status}`)}
-                </span>
+                </StatusBadge>
               )}
             </div>
             <h3 className="mt-2 type-panel-title break-words">{issue.title}</h3>

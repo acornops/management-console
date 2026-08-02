@@ -48,9 +48,9 @@ export function useWorkflowCapabilityPreview(input: {
         }
         setPreview(response);
       })
-      .catch((reason) => {
+      .catch(() => {
         if (requestRef.current !== requestId) return;
-        setError(reason instanceof Error ? reason.message : 'The capability check could not be loaded.');
+        setError('The capability check could not be loaded. Retry before launching this workflow.');
       })
       .finally(() => {
         if (requestRef.current === requestId) setLoading(false);

@@ -9,7 +9,7 @@ import { WorkspaceInvitation } from '@/types';
 import { formatInvitationStatus, formatMemberMutationError, formatRole } from '@/pages/workspace-members/memberUtils';
 import { formatUserDateTime } from '@/utils/dateTime';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
-import { Button, InlineAlert, TextInput } from '@acornops/ui';
+import { Button, CollectionResultSummary, InlineAlert, StatusBadge, TextInput } from '@acornops/ui';
 
 interface WorkspaceInvitationsPanelProps {
   invitations: WorkspaceInvitation[];
@@ -145,11 +145,11 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
             <p className="type-body mt-1">{t('members.pendingInvitationsBody')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="type-label w-fit rounded-full border border-ui-border bg-ui-bg px-3 py-1">
+            <CollectionResultSummary>
               {t('members.inviteLinksCount', {
                 count: visibleInvitations.length
               })}
-            </span>
+            </CollectionResultSummary>
             <Button
               type="button"
               variant="secondary"
@@ -178,12 +178,15 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
                 <div key={invitation.id} className="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <p className="type-row-title truncate">{invitation.email}</p>
-                    <p className="type-label mt-1">
-                      {formatRole(invitation.role, invitation.roleTemplate)} · {formatInvitationStatus(invitation.status)} ·{' '}
-                      {t('members.expires', {
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="type-caption text-ui-text-muted">{formatRole(invitation.role, invitation.roleTemplate)}</span>
+                      <StatusBadge tone={invitation.status === 'expired' ? 'warning' : 'neutral'} size="compact">
+                        {formatInvitationStatus(invitation.status)}
+                      </StatusBadge>
+                      <span className="type-caption text-ui-text-muted">{t('members.expires', {
                         time: formatUserDateTime(invitation.expiresAt)
-                      })}
-                    </p>
+                      })}</span>
+                    </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {invitation.inviteLink && (

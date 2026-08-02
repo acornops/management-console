@@ -2,6 +2,7 @@ import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary, ControlPlan
 import { HealthStatus, type KubernetesCluster } from '@/types';
 import { getVmCatalogStatusLabel, getVmCatalogStatusTone } from '@/pages/virtual-machines/virtualMachineUi';
 import { getEffectiveHealthStatus } from '@/utils/telemetry';
+import type { StatusBadgeTone } from '@acornops/ui';
 
 export type WorkspaceOverviewSeverity = 'critical' | 'warning' | 'info';
 
@@ -26,7 +27,7 @@ export interface WorkspaceOverviewTargetCard {
   targetType: 'kubernetes' | 'virtual_machine';
   name: string;
   postureLabel: string;
-  postureTone: string;
+  postureTone: StatusBadgeTone;
 }
 
 export interface WorkspaceOverviewAttentionItem {
@@ -62,17 +63,17 @@ function clusterPostureLabel(status: HealthStatus, t: OverviewTranslator): strin
   return t('overview.critical');
 }
 
-function clusterPostureTone(status: HealthStatus): string {
-  if (status === HealthStatus.GREEN) return 'bg-status-success-soft text-status-success-text';
-  if (status === HealthStatus.YELLOW) return 'bg-accent-soft text-accent-readable';
-  return 'bg-status-danger-soft text-status-danger-text';
+function clusterPostureTone(status: HealthStatus): StatusBadgeTone {
+  if (status === HealthStatus.GREEN) return 'success';
+  if (status === HealthStatus.YELLOW) return 'warning';
+  return 'danger';
 }
 
-function virtualMachinePostureTone(tone: ReturnType<typeof getVmCatalogStatusTone>): string {
-  if (tone === 'success') return 'bg-status-success-soft text-status-success-text';
-  if (tone === 'warning') return 'bg-accent-soft text-accent-readable';
-  if (tone === 'danger') return 'bg-status-danger-soft text-status-danger-text';
-  return 'bg-ui-bg text-ui-text-muted';
+function virtualMachinePostureTone(tone: ReturnType<typeof getVmCatalogStatusTone>): StatusBadgeTone {
+  if (tone === 'success') return 'success';
+  if (tone === 'warning') return 'warning';
+  if (tone === 'danger') return 'danger';
+  return 'neutral';
 }
 
 function summarizeVisibleTargetIssues(

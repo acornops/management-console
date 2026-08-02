@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from './Button';
+import { CollectionResultSummary } from './CollectionResultSummary';
 import { PageSearchInput } from './PageSearchInput';
 import { SearchFilterFrame } from './SearchFilterFrame';
 import { Select, type SelectOption } from './Select';
@@ -59,6 +60,7 @@ export interface DiscoveryFilterBarProps {
   queryLabel: string;
   queryPlaceholder: string;
   queryClearLabel: string;
+  queryKeyShortcuts?: string;
   resultSummary: string;
   filters: ReadonlyArray<DiscoveryFilterGroup>;
   clearAllLabel: string;
@@ -67,6 +69,7 @@ export interface DiscoveryFilterBarProps {
   embedded?: boolean;
   searchWidth?: 'fluid' | 'fixed';
   filterWidth?: 'default' | 'compact';
+  stacked?: boolean;
   className?: string;
 }
 
@@ -83,6 +86,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
   queryLabel,
   queryPlaceholder,
   queryClearLabel,
+  queryKeyShortcuts,
   resultSummary,
   filters,
   clearAllLabel,
@@ -91,6 +95,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
   embedded = false,
   searchWidth = 'fluid',
   filterWidth = 'default',
+  stacked = false,
   className
 }) => {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -125,6 +130,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
           }
         }}
         placeholder={queryPlaceholder}
+        aria-keyshortcuts={queryKeyShortcuts}
         className="w-full pl-11 pr-12 lg:w-full"
       />
       {hasQuery && (
@@ -163,14 +169,14 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
     ) : undefined;
 
   const liveResultSummary = (
-    <span className="min-w-0 text-ui-text-muted type-caption tabular-nums lg:whitespace-nowrap" role="status" aria-live="polite" aria-atomic="true">
+    <CollectionResultSummary>
       {resultSummary}
-    </span>
+    </CollectionResultSummary>
   );
 
   return (
     <div data-discovery-filter-bar="true" className={className}>
-      <SearchFilterFrame embedded={embedded} searchWidth={searchWidth} filterWidth={filterWidth} search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
+      <SearchFilterFrame embedded={embedded} searchWidth={searchWidth} filterWidth={filterWidth} stacked={stacked} search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
     </div>
   );
 };

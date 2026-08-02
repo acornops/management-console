@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('default workflows are directly editable without creating a copy', async ({ page }) => {
+test('default workflows open editable settings inline without creating a copy', async ({ page }) => {
   await page.goto(
     '/workspaces/fixture-workspace/workflows?workflow=fixture-template-kubernetes-health',
     { waitUntil: 'domcontentloaded' }
@@ -10,9 +10,10 @@ test('default workflows are directly editable without creating a copy', async ({
   await expect(page.getByRole('button', { name: 'Schedules', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Launch', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
-  const editDrawer = page.getByRole('dialog', { name: 'Edit workflow' });
-  await expect(editDrawer).toBeVisible();
-  await expect(editDrawer.getByLabel('Workflow name')).toHaveValue('Kubernetes health check');
+  await expect(page).toHaveURL(/tab=settings/);
+  await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Workflow name')).toHaveValue('Kubernetes health check');
+  await expect(page.getByRole('button', { name: 'Back to workflow' })).toBeVisible();
 });
 
 test('workflow detail keeps primary navigation lean across contextual and compact views', async ({ page }) => {
@@ -22,29 +23,27 @@ test('workflow detail keeps primary navigation lean across contextual and compac
   });
 
   await expect(page.getByRole('heading', { name: 'Production health review' })).toBeVisible();
-  await expect(page.getByRole('tablist')).toHaveCount(0);
+  await expect(page.getByRole('tablist', { name: 'Workflow detail sections' })).toBeVisible();
+  await expect(page.getByRole('tablist', { name: 'Workflow sections' })).toBeHidden();
   await expect(page.getByRole('searchbox', { name: 'Search workflow library' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Back to workflows' })).toBeVisible();
 
-  const workflowActions = page.getByLabel('Workflow actions').getByRole('button');
-  await expect(workflowActions).toHaveCount(5);
-  await expect(page.getByRole('button', { name: 'Run activity', exact: true })).toBeVisible();
+  const workflowActions = page.getByLabel('Selected workflow actions').getByRole('button');
+  await expect(workflowActions).toHaveCount(4);
   await expect(page.getByRole('button', { name: 'Schedules', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Incoming webhooks', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Webhooks', exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Edit agents' }).click();
+  await page.getByRole('tab', { name: 'Agents', exact: true }).click();
   await expect(page).toHaveURL(/tab=agents/);
-  const agentsDrawer = page.getByRole('dialog', { name: 'Agents' });
-  await expect(agentsDrawer).toBeVisible();
-  await expect(agentsDrawer.getByRole('checkbox').first()).toBeVisible();
-  await agentsDrawer.getByRole('button', { name: 'Close' }).click();
-  await expect(page).not.toHaveURL(/tab=/);
+  await expect(page.getByRole('heading', { name: 'Selected Agents', exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Run activity', exact: true }).click();
+  await page.getByRole('tab', { name: 'Capabilities', exact: true }).click();
+  await expect(page).toHaveURL(/tab=capabilities/);
+  await expect(page.getByRole('tab', { name: 'Capabilities', exact: true })).toHaveAttribute('aria-selected', 'true');
+
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
   await expect(page).toHaveURL(/tab=runs/);
-  const activityDrawer = page.getByRole('dialog', { name: 'Run activity' });
-  await expect(activityDrawer).toBeVisible();
-  await activityDrawer.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('tab', { name: 'Runs', exact: true })).toHaveAttribute('aria-selected', 'true');
 
   const geometry = await page.evaluate(() => {
     const pageShell = document.querySelector<HTMLElement>('.page-shell');
@@ -64,27 +63,31 @@ test('workflow detail keeps primary navigation lean across contextual and compac
   expect(geometry.detailBodyOverflowY).not.toBe('auto');
 });
 
-test('workflow workspace stacks discovery controls below its views and keeps empty Activity compact', async ({ page }) => {
-  await page.setViewportSize({ width: 1800, height: 1000 });
+test('workflow workspace integrates discovery into the library and keeps empty Activity compact', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
 
-  const viewTabs = page.getByRole('tablist', { name: 'Workflow views' });
   const workflowSearch = page.getByRole('searchbox', { name: 'Search workflow library' });
   const workflowDiscoveryFrame = page.locator('[data-search-filter-frame="true"]').filter({ has: workflowSearch });
-  const [tabsBox, workflowSearchBox, workflowDiscoveryFrameBox] = await Promise.all([
-    viewTabs.boundingBox(),
+  const workflowLibrary = page.locator('[data-master-detail-list="true"]');
+  const workflowListHeader = workflowLibrary.locator('[data-master-detail-list-header="true"]');
+  const [workflowSearchBox, workflowDiscoveryFrameBox, workflowLibraryBox, workflowListHeaderBox] = await Promise.all([
     workflowSearch.boundingBox(),
-    workflowDiscoveryFrame.boundingBox()
+    workflowDiscoveryFrame.boundingBox(),
+    workflowLibrary.boundingBox(),
+    workflowListHeader.boundingBox()
   ]);
-  expect(tabsBox).not.toBeNull();
   expect(workflowSearchBox).not.toBeNull();
   expect(workflowDiscoveryFrameBox).not.toBeNull();
-  expect(workflowDiscoveryFrameBox!.y).toBeGreaterThanOrEqual(tabsBox!.y + tabsBox!.height + 8);
-  expect(Math.abs(workflowDiscoveryFrameBox!.x - tabsBox!.x)).toBeLessThanOrEqual(1);
-  expect(workflowSearchBox!.width).toBeGreaterThan(600);
-  await expect(workflowDiscoveryFrame).toHaveCSS('border-top-width', '1px');
+  expect(workflowLibraryBox).not.toBeNull();
+  expect(workflowDiscoveryFrameBox!.x).toBeGreaterThanOrEqual(workflowLibraryBox!.x);
+  expect(workflowDiscoveryFrameBox!.x + workflowDiscoveryFrameBox!.width).toBeLessThanOrEqual(workflowLibraryBox!.x + workflowLibraryBox!.width + 1);
+  expect(workflowDiscoveryFrameBox!.height).toBeLessThan(120);
+  expect(workflowListHeaderBox!.y - (workflowDiscoveryFrameBox!.y + workflowDiscoveryFrameBox!.height)).toBeLessThan(40);
+  expect(workflowSearchBox!.width).toBeGreaterThan(200);
+  await expect(workflowDiscoveryFrame).toHaveCSS('border-top-width', '0px');
 
-  await page.getByRole('tab', { name: 'Activity' }).click();
+  await page.getByRole('tab', { name: /All Runs/ }).click();
   const activitySearch = page.getByRole('searchbox', { name: 'Search Activity' });
   await expect(activitySearch).toBeVisible();
   const activitySearchBox = await activitySearch.boundingBox();
@@ -96,6 +99,29 @@ test('workflow workspace stacks discovery controls below its views and keeps emp
   const emptyLedgerBox = await page.getByRole('region', { name: 'Workflow execution ledger' }).boundingBox();
   expect(emptyLedgerBox).not.toBeNull();
   expect(emptyLedgerBox!.height).toBeLessThan(350);
+});
+
+test('workflow workspace routes preserve stable scope and responsive geometry', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
+
+  const destinations = [
+    { tab: 'All Schedules', title: 'Schedules', search: 'Search schedules' },
+    { tab: 'All Incoming Webhooks', title: 'Incoming Webhooks', search: 'Search incoming webhooks' },
+    { tab: /All Runs/, title: 'Workflow activity', search: 'Search Activity' },
+    { tab: 'All Workflows', title: 'Workflows', search: 'Search workflow library' }
+  ] as const;
+
+  for (const destination of destinations) {
+    await page.getByRole('tab', { name: destination.tab }).click();
+    await expect(page.getByRole('heading', { level: 1, name: destination.title })).toBeVisible();
+    await expect(page.getByRole('searchbox', { name: destination.search })).toBeVisible();
+    const geometry = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth
+    }));
+    expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+  }
 });
 
 test('workflow desktop workspace keeps chrome fixed and scrolls detail content independently', async ({ page }) => {
@@ -133,7 +159,7 @@ test('workflow desktop workspace keeps chrome fixed and scrolls detail content i
   expect(initial.detailOverflowY).toBe('hidden');
   expect(initial.bodyOverflowY).toBe('auto');
   expect(initial.bodyScrollHeight).toBeGreaterThan(initial.bodyClientHeight);
-  expect(initial.headerHeight).toBeLessThanOrEqual(145);
+  expect(initial.headerHeight).toBeLessThanOrEqual(250);
 
   await detailBody.evaluate((element) => element.scrollTo(0, 160));
   const afterScroll = await page.evaluate(() => {
@@ -151,8 +177,8 @@ test('workflow desktop workspace keeps chrome fixed and scrolls detail content i
   expect(afterScroll.bodyScrollTop).toBeGreaterThan(0);
   expect(afterScroll.headerTop).toBe(initial.headerTop);
 
-  await page.getByRole('button', { name: 'Run activity', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Run activity' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Runs', exact: true })).toHaveAttribute('aria-selected', 'true');
   await expect(detailBody).toHaveCSS('overflow-y', 'auto');
 });
 
@@ -180,7 +206,8 @@ test('workflow launch uses the saved prompt without runtime template inputs', as
 
 test('workflow authoring uses a plain prompt field and a two-step setup', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Create workflow' }).click();
+  await page.getByRole('button', { name: 'Add workflow' }).click();
+  await page.getByRole('menuitem', { name: 'Create custom workflow' }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Create workflow' });
   const setup = drawer.getByLabel('Create workflow setup');
@@ -199,6 +226,59 @@ test('workflow authoring uses a plain prompt field and a two-step setup', async 
   await expect(createButton).toBeDisabled();
   await drawer.getByRole('checkbox').first().check();
   await expect(createButton).toBeEnabled();
+  await drawer.getByRole('button', { name: 'Close create workflow drawer' }).click();
+  await expect(drawer.getByText('Discard workflow draft?')).toBeVisible();
+  await drawer.getByRole('button', { name: 'Continue editing' }).click();
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole('button', { name: 'Close create workflow drawer' }).click();
+  await drawer.getByRole('button', { name: 'Discard draft' }).click();
+  await expect(drawer).toBeHidden();
+});
+
+test('workflow guide and keyboard shortcuts keep advanced help close at hand', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
+
+  const guideButton = page.getByRole('button', { name: 'Workflow guide' });
+  await guideButton.click();
+  const guide = page.getByRole('dialog', { name: 'Workflow guide' });
+  await expect(guide).toBeVisible();
+  await expect(page).toHaveURL(/panel=help/);
+  await guide.getByRole('textbox', { name: 'Search workflow help' }).fill('MCP');
+  await expect(guide.getByRole('heading', { name: 'Capabilities and MCP' })).toBeVisible();
+  await expect(guide.getByRole('heading', { name: 'Schedules and cron' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(guide).toBeHidden();
+  await expect(page).not.toHaveURL(/panel=help/);
+  await expect(guideButton).toBeFocused();
+
+  await page.keyboard.press('/');
+  const search = page.getByRole('searchbox', { name: 'Search workflow library' });
+  await expect(search).toBeFocused();
+  await search.fill('');
+  await page.keyboard.press('Escape');
+
+  const firstWorkflow = page.getByRole('button', { name: /^Select workflow/ }).first();
+  const secondWorkflow = page.getByRole('button', { name: /^Select workflow/ }).nth(1);
+  await firstWorkflow.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(secondWorkflow).toBeFocused();
+
+  await page.keyboard.press('Control+Enter');
+  await expect(page.getByRole('dialog', { name: 'Run workflow' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Run workflow' }).getByRole('button', { name: 'Launch workflow' })).toBeVisible();
+});
+
+test('workflow edits offer a one-click undo', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  const name = page.getByLabel('Workflow name');
+  await name.fill('Production health review updated');
+  await page.getByRole('button', { name: 'Save workflow' }).click();
+  const undo = page.getByRole('button', { name: 'Undo', exact: true });
+  await expect(undo).toBeVisible();
+  await undo.click();
+  await expect(page.getByRole('heading', { name: 'Production health review', exact: true })).toBeVisible();
+  await expect(undo).toHaveCount(0);
 });
 
 test('schedule creation omits runtime inputs and stays a bounded dialog', async ({ page }) => {
@@ -217,14 +297,31 @@ test('schedule creation omits runtime inputs and stays a bounded dialog', async 
   const scheduleBox = await dialog.boundingBox();
   expect(scheduleBox?.width).toBeLessThanOrEqual(578);
   expect(scheduleBox?.height).toBeLessThanOrEqual(578);
+  await expect(dialog.getByRole('button', { name: 'Frequency' })).toBeVisible();
+  await expect(dialog.getByText('Search or enter an IANA timezone')).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Save schedule' })).toBeEnabled();
+
+  await dialog.getByRole('button', { name: 'Frequency' }).click();
+  await page.getByRole('option', { name: 'Custom' }).click();
+  const cron = dialog.getByLabel(/Cron expression/);
+  await cron.fill('60 24 * * 1-5');
+  await dialog.getByRole('button', { name: 'Save schedule' }).click();
+  await expect(dialog.getByText('Enter a valid five-part cron expression.')).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog.getByText('Discard unsaved schedule changes?')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Continue editing' }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await dialog.getByRole('button', { name: 'Discard changes' }).click();
+  await expect(dialog).toBeHidden();
 });
 
 test('workflow webhook management stays scoped in a table-first drawer and creates in a modal', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow', {
     waitUntil: 'domcontentloaded'
   });
-  await page.getByRole('button', { name: 'Incoming webhooks', exact: true }).click();
+  await page.getByRole('button', { name: 'Webhooks', exact: true }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Webhooks' });
   await expect(drawer).toBeVisible();

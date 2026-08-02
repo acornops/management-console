@@ -12,7 +12,8 @@ import {
 } from '@acornops/ui';
 import {
   isMcpAutoPause,
-  WorkspaceScheduleActionMenu
+  WorkspaceScheduleActionMenu,
+  WorkspaceScheduleMobileCard
 } from '@/pages/WorkspaceScheduleRows';
 import { formatScheduleDateTime } from '@/pages/WorkspaceSchedulesPage.helpers';
 import type {
@@ -35,7 +36,7 @@ interface WorkspaceScheduleDrawerTableProps {
   phase: CursorCollectionPhase;
   schedules: WorkflowSchedule[];
   updatingId: string;
-  workflows: WorkflowApiDefinition[];
+  workflows: WorkflowApiDefinition[] | ReadonlyMap<string, WorkflowApiDefinition>;
   workspaceId: string;
 }
 
@@ -58,7 +59,26 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
 }) => {
   const { t } = useTranslation();
   return (
-    <div className="overflow-x-auto">
+    <>
+      <div className="divide-y divide-ui-border lg:hidden">
+        {schedules.length > 0 ? schedules.map((schedule) => (
+          <WorkspaceScheduleMobileCard
+            key={schedule.id}
+            schedule={schedule}
+            workflows={workflows}
+            workspaceId={workspaceId}
+            canManage={canManage}
+            updating={updatingId === schedule.id}
+            deleting={deletingId === schedule.id}
+            actionButtonRefs={actionButtonRefs}
+            onEdit={() => onEdit(schedule)}
+            onRepair={() => onRepair(schedule)}
+            onToggle={() => onToggle(schedule)}
+            onDelete={() => onDelete(schedule)}
+          />
+        )) : phase === 'loading' ? loading : phase === 'error' ? error : empty}
+      </div>
+      <div className="hidden overflow-x-auto lg:block">
       <DataTable caption={t('schedules.tableLabel')} className="min-w-[42rem] w-full border-collapse text-left">
         <DataTableHeader collectionState={{ phase, itemCount: schedules.length }}>
           <DataTableRow>
@@ -108,6 +128,7 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
           )}
         </DataTableBody>
       </DataTable>
-    </div>
+      </div>
+    </>
   );
 };

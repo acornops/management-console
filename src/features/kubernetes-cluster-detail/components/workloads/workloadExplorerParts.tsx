@@ -355,12 +355,8 @@ export const ResourceStatusPill: React.FC<{ status: string; healthy: boolean }> 
     tone={healthy ? 'success' : 'warning'}
     title={status}
     aria-label={`Status: ${status}`}
-    className="min-w-0 gap-2 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"
+    className="min-w-0 px-3 py-1.5 type-caption type-emphasis normal-case leading-4 tracking-normal"
   >
-    <span
-      aria-hidden="true"
-      className={classNames('h-2 w-2 shrink-0 rounded-full', healthy ? 'bg-status-success' : 'bg-status-warning')}
-    />
     <span className="min-w-0 break-words text-left [overflow-wrap:anywhere]">{status}</span>
   </StatusBadge>
 );

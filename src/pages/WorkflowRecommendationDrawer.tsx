@@ -24,6 +24,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
   const [loading, setLoading] = React.useState(false);
   const [loadError, setLoadError] = React.useState('');
   const [actionError, setActionError] = React.useState('');
+  const [failedAction, setFailedAction] = React.useState<'install' | 'activate' | ''>('');
   const [reloadKey, setReloadKey] = React.useState(0);
 
   const selected = recommendations.find((recommendation) => recommendation.id === selectedId) || recommendations[0];
@@ -34,6 +35,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
     setLoading(true);
     setLoadError('');
     setActionError('');
+    setFailedAction('');
     listAutomationTemplates(workspaceId)
       .then(({ templates: next }) => {
         if (!active) return;
@@ -46,11 +48,11 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
             ''
         );
       })
-      .catch((cause) => {
+      .catch(() => {
         if (!active) return;
         setRecommendations([]);
         setSelectedId('');
-        setLoadError(cause instanceof Error ? cause.message : t('workflowRecommendations.loadFailed'));
+        setLoadError(t('workflowRecommendations.loadFailed'));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -60,14 +62,16 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
     };
   }, [focusWorkflowId, open, reloadKey, t, workspaceId]);
 
-  const run = async (key: string, operation: () => Promise<void>) => {
+  const run = async (key: 'install' | 'activate', operation: () => Promise<void>) => {
     setPending(key);
     setActionError('');
+    setFailedAction('');
     try {
       await operation();
       setReloadKey((value) => value + 1);
-    } catch (cause) {
-      setActionError(cause instanceof Error ? cause.message : t('workflowRecommendations.actionFailed'));
+    } catch {
+      setFailedAction(key);
+      setActionError(t(key === 'install' ? 'workflowRecommendations.installFailed' : 'workflowRecommendations.activateFailed'));
     } finally {
       setPending('');
     }
@@ -94,9 +98,8 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
         </p>
       ) : loadError ? (
         <div className="space-y-4">
-          <InlineAlert tone="danger" className="type-body">
-            <strong>{t('workflowRecommendations.loadFailed')}</strong>
-            <span className="mt-1 block">{loadError}</span>
+          <InlineAlert tone="danger" className="type-body" title={t('workflowRecommendations.loadFailed')}>
+            {t('workflowRecommendations.loadRecovery')}
           </InlineAlert>
           <Button variant="secondary" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
             {t('workflowRecommendations.retry')}
@@ -116,6 +119,7 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                 onClick={() => {
                   setSelectedId(recommendation.id);
                   setActionError('');
+                  setFailedAction('');
                 }}
                 className={`min-h-11 w-full rounded-lg border px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:ring-control-boundary ${
                   selected?.id === recommendation.id ? 'border-accent/40 bg-accent/5' : 'border-ui-border bg-ui-bg hover:bg-ui-surface'
@@ -182,7 +186,11 @@ export const WorkflowRecommendationDrawer: React.FC<WorkflowRecommendationDrawer
                 </Button>
               )}
               {actionError && (
-                <InlineAlert tone="danger" className="type-body">
+                <InlineAlert tone="danger" className="type-body" action={
+                  <Button variant="secondary" size="sm" disabled={Boolean(pending)} onClick={failedAction === 'install' ? install : activate}>
+                    {t('workflowRecommendations.retry')}
+                  </Button>
+                }>
                   {actionError}
                 </InlineAlert>
               )}

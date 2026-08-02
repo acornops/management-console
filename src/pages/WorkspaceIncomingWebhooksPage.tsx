@@ -103,9 +103,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       setTriggerPage(loadedTriggers);
       setWorkflows(loadedWorkflows);
       setPhase('ready');
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setLoadError(error instanceof Error ? error.message : t('eventTriggers.loadError'));
+      setLoadError('Incoming webhooks could not be loaded. Retry to reconnect to the control plane.');
       setPhase('error');
     }
   };
@@ -146,18 +146,21 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
     })) : [],
     [workflows, workspaceStateCurrent]
   );
+  const workflowNamesById = useMemo(
+    () => new Map(workflows.map((workflow) => [workflow.id, workflow.name])),
+    [workflows]
+  );
   const searchLabel = t('eventTriggers.filters.searchIncomingWebhooks');
   const visibleTriggers = useMemo(() => triggers.filter((trigger) => {
     if (status !== 'all' && trigger.status !== status) return false;
     if (workflowFilter !== 'all' && trigger.workflowId !== workflowFilter) return false;
     if (!normalizedQuery) return true;
-    const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
     return [
       trigger.name,
-      workflow?.name,
+      workflowNamesById.get(trigger.workflowId),
       trigger.endpointUrl
     ].some((value) => value?.toLowerCase().includes(normalizedQuery));
-  }), [normalizedQuery, status, workflowFilter, workflows, triggers]);
+  }), [normalizedQuery, status, workflowFilter, workflowNamesById, triggers]);
   const hasActiveFilters = Boolean(normalizedQuery || status !== 'all' || workflowFilter !== 'all');
   const clearFilters = () => {
     updateUrlSearch(
@@ -231,9 +234,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       if (!isCurrentRequest()) return;
       setDrawerOpen(false);
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.saveError'));
+      setMutationError('The webhook could not be saved. Your changes are still here; review them and try again.');
     } finally {
       if (isCurrentRequest()) setSaving(false);
     }
@@ -251,9 +254,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       await updateWorkflowWebhook(requestedWorkspaceId, trigger.id, { enabled: trigger.status !== 'enabled' });
       if (!isCurrentRequest()) return;
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.updateError'));
+      setMutationError('The webhook status could not be changed. Refresh the list and try again.');
     } finally {
       if (isCurrentRequest()) setMutatingId('');
     }
@@ -272,9 +275,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       if (!isCurrentRequest()) return;
       setPendingDeleteId('');
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.deleteError'));
+      setMutationError('The webhook could not be deleted. It remains unchanged; try again.');
     } finally {
       if (isCurrentRequest()) setMutatingId('');
     }
@@ -294,9 +297,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       setSecretDisclosure({ ...rotated.signingSecret, name: rotated.webhook.name });
       setPendingRotateId('');
       await refresh();
-    } catch (error) {
+    } catch {
       if (!isCurrentRequest()) return;
-      setMutationError(error instanceof Error ? error.message : t('eventTriggers.rotateError'));
+      setMutationError('The signing secret could not be rotated. The current secret remains active; try again.');
     } finally {
       if (isCurrentRequest()) setMutatingId('');
     }
@@ -323,6 +326,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
   return (
     <PageShell embedded={embedded} className={embedded ? 'p-4 sm:p-5' : undefined}>
       {!embedded && <PageHeader
+        className="mb-5"
         title={t('eventTriggers.title')}
         description={t('eventTriggers.subtitle', { workspace: workspace.name })}
         actions={<>
@@ -506,13 +510,12 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         >
           <div className="divide-y divide-ui-border">
             {visibleTriggers.map((trigger) => {
-              const workflow = workflows.find((candidate) => candidate.id === trigger.workflowId);
               const busy = mutatingId === trigger.id;
               return (
                 <WorkspaceWebhookCard
                   key={trigger.id}
                   trigger={trigger}
-                  workflowName={workflow?.name || trigger.workflowId}
+                  workflowName={workflowNamesById.get(trigger.workflowId) || trigger.workflowId}
                   canManage={canManage}
                   busy={busy}
                   pendingRotate={pendingRotateId === trigger.id}

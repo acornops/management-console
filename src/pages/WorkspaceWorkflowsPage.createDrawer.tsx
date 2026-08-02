@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, InlineAlert, Textarea } from '@acornops/ui';
+import { Button, InlineAlert, InlineConfirmation, Textarea } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
@@ -45,10 +45,24 @@ export const WorkflowCreateDrawer: React.FC<{
 }) => {
   const { t } = useTranslation();
   const [stepNavigationError, setStepNavigationError] = React.useState('');
-  const close = () => { onClose(); setCreateWorkflowStep(1); setStepNavigationError(''); };
+  const [discardOpen, setDiscardOpen] = React.useState(false);
   const describeStepComplete = Boolean(createDraft.name.trim());
   const accessStepComplete = workflowOptionsReady && createDraft.agentIds.length > 0;
   const draftPristine = !createDraft.name && !createDraft.description && !createDraft.starterPrompt && createDraft.agentIds.length === 0;
+  const finishClose = () => {
+    onClose();
+    setCreateDraft(createWorkflowDraft());
+    setCreateWorkflowStep(1);
+    setStepNavigationError('');
+    setDiscardOpen(false);
+  };
+  const close = () => {
+    if (!draftPristine) {
+      setDiscardOpen(true);
+      return;
+    }
+    finishClose();
+  };
   const selectedAgentLabels = workflowOptions.agents
     .filter((agent) => createDraft.agentIds.includes(agent.value))
     .map((agent) => agent.label);
@@ -93,6 +107,19 @@ export const WorkflowCreateDrawer: React.FC<{
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
+        {discardOpen && (
+          <InlineConfirmation
+            id="discard-workflow-draft"
+            title="Discard workflow draft?"
+            description="Your workflow name, prompt, and Agent selection will be lost."
+            tone="warning"
+            confirmLabel="Discard draft"
+            cancelLabel="Continue editing"
+            onConfirm={finishClose}
+            onCancel={() => setDiscardOpen(false)}
+            className="mb-4"
+          />
+        )}
         {!canManageWorkflows && <div className="mb-4 rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You need manage_workflows to create workflows.</div>}
         {!workflowOptionsReady && <div className="mb-4 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-2 type-caption type-emphasis text-status-warning-text">Workflow options must load before you can create a workflow.</div>}
         {createError && <InlineAlert tone="danger" aria-live="assertive" className="mb-4 type-emphasis">{createError}</InlineAlert>}

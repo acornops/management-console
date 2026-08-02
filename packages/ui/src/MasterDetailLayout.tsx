@@ -54,6 +54,7 @@ export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({ title, descrip
       aria-pressed={selected}
       aria-label={ariaLabel}
       aria-describedby={describedBy}
+      aria-keyshortcuts="ArrowUp ArrowDown Home End"
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={`control-target min-h-24 w-full px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${

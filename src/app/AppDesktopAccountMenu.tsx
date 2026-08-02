@@ -73,7 +73,7 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
             data-account-settings-active={isActive ? 'true' : undefined}
             className={`group flex w-full items-center rounded-lg border text-left outline-none transition-colors duration-[160ms] focus-visible:ring-2 focus-visible:ring-accent/20 motion-reduce:duration-0 ${
               collapsed ? 'h-10 justify-center p-0' : 'justify-between gap-3 p-2'
-            } ${isActive ? 'border-accent/30 bg-accent-soft shadow-sm' : 'border-transparent hover:border-ui-border hover:bg-ui-bg'}`}
+            } ${isActive ? 'border-transparent bg-ui-bg text-ui-text' : 'border-transparent hover:border-ui-border hover:bg-ui-bg'}`}
             aria-controls={popoverId}
             aria-expanded={isOpen}
             aria-current={isActive ? 'page' : undefined}
@@ -81,11 +81,11 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
           >
             <span className="flex min-w-0 items-center gap-3">
               <span data-rail-align={collapsed ? 'true' : undefined} className={`flex h-8 w-8 shrink-0 items-center justify-center font-mono type-caption type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${collapsed ? 'rounded-md' : 'rounded-full'} ${
-                isActive ? 'bg-accent-soft text-accent-readable' : 'bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
+                isActive ? 'bg-ui-surface text-accent-strong' : 'bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
               }`}>{userInitials}</span>
               <span className={collapsed ? 'sr-only' : 'min-w-0'}>
                 <span className="block truncate type-body type-emphasis leading-5 text-ui-text">{user.name}</span>
-                <span className={`block truncate type-caption leading-4 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`}>{user.email}</span>
+                <span className="block truncate type-caption leading-4 text-ui-text-muted">{user.email}</span>
               </span>
             </span>
             <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.18 }} className={collapsed ? 'sr-only' : 'shrink-0'}>
@@ -126,10 +126,10 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
                   }}
                   aria-current={isActive ? 'page' : undefined}
                   className={`type-ui flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left transition-colors duration-[160ms] motion-reduce:duration-0 sm:min-h-10 ${
-                    isActive ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
+                    isActive ? 'bg-ui-bg text-ui-text' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                   }`}
                 >
-                  <ICONS.User className="h-4 w-4 shrink-0" />
+                  <ICONS.User className={`h-4 w-4 shrink-0 ${isActive ? 'text-accent-strong' : ''}`} />
                   <span>{t('app.accountSettings')}</span>
                 </MotionButton>
                 <ThemeMenu preference={themePreference} resolvedTheme={resolvedTheme} variant="account" onSelect={onSelectTheme} />

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import {
+  formatSnapshotTime,
   getVmCatalogStatusLabel,
   getVmCatalogStatusReason,
   getVmCatalogStatusTone,
@@ -108,5 +109,11 @@ describe('virtual machine connection filters', () => {
     expect(vmMatchesConnectionFilter(vm, 'not_installed')).toBe(true);
     expect(getVmCatalogStatusLabel(vm, undefined, (key) => key)).toBe('dashboard.notConnected');
     expect(getVmCatalogStatusTone(vm, undefined)).toBe('warning');
+  });
+
+  it('formats snapshot recency instead of exposing a raw ISO timestamp', () => {
+    const now = Date.parse('2026-01-01T00:00:05Z');
+    expect(formatSnapshotTime(vmWithStatus('online'), now)).toBe('just now');
+    expect(formatSnapshotTime({ ...vmWithStatus('online'), latestSnapshot: undefined, updatedAt: '' }, now)).toBe('Waiting for agent');
   });
 });

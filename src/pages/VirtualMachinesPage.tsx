@@ -2,7 +2,7 @@ import React from 'react';
 import { Activity, Bot, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
-import { Button } from '@acornops/ui';
+import { Button, StatusBadge } from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -530,8 +530,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
               {t('virtualMachines.overview.openAssistant')}
             </Button>
             <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
-              <div className={`h-2 w-2 rounded-full ${selected.status === 'online' ? 'bg-status-success' : selected.status === 'degraded' ? 'bg-status-warning' : 'bg-status-danger'}`} />
-              <span className="type-label">{getVmStatusLabel(selected.status, t)} · {formatSnapshotTime(selected)}</span>
+              <StatusBadge tone={selected.status === 'online' ? 'success' : selected.status === 'degraded' ? 'warning' : 'danger'}>
+                {getVmStatusLabel(selected.status, t)}
+              </StatusBadge>
+              <span className="type-caption text-ui-text-muted">{formatSnapshotTime(selected)}</span>
             </div>
           </>
         } />

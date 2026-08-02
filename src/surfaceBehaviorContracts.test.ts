@@ -136,8 +136,8 @@ describe('surface behavior contracts', () => {
     expect(auditLogPage).not.toContain('min-w-[920px]');
     expect(auditLogPage).toContain('xl:table-cell');
     expect(auditLogPage).toContain('xl:hidden');
-    expect(workspaceSchedulesPage).toContain('className="2xl:hidden"');
-    expect(workspaceSchedulesPage).toContain('className="hidden overflow-x-auto 2xl:block"');
+    expect(workspaceSchedulesPage).toContain('className="xl:hidden"');
+    expect(workspaceSchedulesPage).toContain('className="hidden overflow-x-auto xl:block"');
   });
 
   it('keeps workspace member actions in the table rhythm on wide screens', () => {
@@ -146,7 +146,7 @@ describe('surface behavior contracts', () => {
     expect(membersPage).not.toContain('<td className="hidden md:block" aria-hidden="true" />');
     expect(membersPage).toContain('table-fixed');
     expect(membersPage).toContain('xl:table-cell');
-    expect(membersPage).toContain('text-ui-text-muted xl:hidden');
+    expect(membersPage).toContain('mt-2 flex items-center gap-2 xl:hidden');
     expect(membersPage).not.toContain('lg:grid-cols-[minmax(18rem,24rem)_9rem_8rem_9rem_4rem]');
     expect(membersPage).toContain('<span className="sr-only">{t(\'members.manage\')}</span>');
   });

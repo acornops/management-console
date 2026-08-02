@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, CollectionResultSummary } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
@@ -355,9 +355,9 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   className="w-full"
                   ariaLabel={t('tools.filterTools')}
                 />
-                <span className="type-label flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-ui-border bg-ui-bg px-3 text-ui-text-muted">
+                <CollectionResultSummary className="xl:justify-end">
                   {t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
-                </span>
+                </CollectionResultSummary>
               </div>
             )}
             <div className="min-w-0">
@@ -483,9 +483,9 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                   <p className="type-caption mt-1 text-ui-text-muted">{t('tools.domainFormatHelp')}</p>
                 </div>
                 {dialogDomainSummary && (
-                  <span className="type-label rounded-full border border-ui-border bg-ui-bg px-3 py-2 text-ui-text-muted">
+                  <CollectionResultSummary>
                     {dialogDomainSummary}
-                  </span>
+                  </CollectionResultSummary>
                 )}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
