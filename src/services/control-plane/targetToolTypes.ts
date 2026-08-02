@@ -4,7 +4,8 @@ export interface ControlPlaneTargetToolDomainFilters {
 }
 
 export interface ControlPlaneTargetToolConfig {
-  authorizationClass?: 'prompt_resource' | 'internal_artifact';
+  authorizationClass?: 'internal_artifact' | 'external_http_read';
+  allowedUrlPatterns?: string[];
   domainFilters?: ControlPlaneTargetToolDomainFilters;
   learning?: {
     idleCheckpointDelayMinutes: number;

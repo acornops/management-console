@@ -16,10 +16,12 @@ describe('workspace navigation model', () => {
   it('keeps navigation rows and groups visually separated', () => {
     const regular = renderToStaticMarkup(<SidebarSection title="Inventory"><span>Clusters</span></SidebarSection>);
     const compact = renderToStaticMarkup(<SidebarSection title="Inventory" compactAfter><span>Clusters</span></SidebarSection>);
+    const collapsed = renderToStaticMarkup(<SidebarSection title="Inventory" compactAfter collapsed><span>Clusters</span></SidebarSection>);
     const experimental = renderToStaticMarkup(<SidebarSection title="Automation" badge="Experimental"><span>Workflows</span></SidebarSection>);
 
     expect(regular).toContain('pb-7 px-3');
     expect(compact).toContain('pb-5 px-3');
+    expect(collapsed).toContain('pb-0');
     expect(regular).toContain('mb-2 flex');
     expect(regular).toContain('space-y-1');
     expect(experimental).toContain('Automation');

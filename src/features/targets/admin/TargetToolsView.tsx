@@ -182,6 +182,20 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
   const validateDraft = React.useCallback(() => {
     if (!draft) return null;
+    if (editingTool?.id === 'http.fetch.get') {
+      const allowedUrlPatterns = draft.allowedUrlPatternsText
+        .split(/\n+/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+      if (allowedUrlPatterns.length < 1 || allowedUrlPatterns.length > 20) {
+        throw new Error('Configure between 1 and 20 allowed HTTPS URL patterns.');
+      }
+      if (new Set(allowedUrlPatterns).size !== allowedUrlPatterns.length
+        || allowedUrlPatterns.some((value) => !value.startsWith('https://'))) {
+        throw new Error('Use unique, complete HTTPS URL patterns, one per line.');
+      }
+      return { enabled: draft.enabled, config: { allowedUrlPatterns } };
+    }
     const allowedDomains = parseDomainList(draft.allowedDomainsText, t('tools.allowedDomains'), t);
     const blockedDomains = parseDomainList(draft.blockedDomainsText, t('tools.blockedDomains'), t);
     const blocked = new Set(blockedDomains);
@@ -198,7 +212,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         }
       }
     };
-  }, [draft, t]);
+  }, [draft, editingTool?.id, t]);
 
   const draftRequest = React.useMemo(() => {
     try {
@@ -475,6 +489,29 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
               </div>
             )}
 
+            {editingTool.id === 'http.fetch.get' ? (
+              <section className="space-y-3">
+                <div>
+                  <h3 className="type-row-title">Allowed URL patterns</h3>
+                  <p className="type-caption mt-1 text-ui-text-muted">Enter one complete HTTPS URL pattern per line. Wildcards are allowed only in the path or query.</p>
+                </div>
+                <Textarea
+                  id="tool-allowed-url-patterns"
+                  rows={8}
+                  className={toolDomainTextareaClassName}
+                  value={draft.allowedUrlPatternsText}
+                  disabled={saving}
+                  readOnly={!canEditSelectedTool}
+                  placeholder={'https://status.example.com/api/*\nhttps://api.example.com/v1/health'}
+                  onChange={(event) => {
+                    if (!canEditSelectedTool) return;
+                    setDraft((current) => current ? { ...current, allowedUrlPatternsText: event.target.value } : current);
+                    setValidationError(null);
+                    setSavingError(null);
+                  }}
+                />
+              </section>
+            ) : (
             <section className="space-y-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -529,6 +566,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 </div>
               </div>
             </section>
+            )}
           </div>
           <div className="flex items-center justify-end gap-3 border-t border-ui-border px-6 py-4">
             {canEditSelectedTool ? (

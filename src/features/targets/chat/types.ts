@@ -58,10 +58,10 @@ export interface RunTraceToolCall {
     content_type: string;
   };
   artifactUnavailable?: boolean;
-  reportArtifact?: {
-    reportId: string;
+  documentArtifact?: {
+    documentId: string;
     title: string;
-    mediaType: 'application/pdf';
+    mediaType: 'application/pdf' | 'text/markdown';
     downloadUrl: string;
     retentionExpiresAt?: string;
   };

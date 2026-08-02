@@ -60,24 +60,16 @@ describe('workflow control-plane api', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8081/api/v1/workspaces/workspace-1/workflows');
   });
 
-  it('loads workflow authoring options for dropdowns', async () => {
+  it('loads assignable Agents for workflow authoring', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({
-        mcpServers: [{ value: 'github', label: 'GitHub' }],
-        mcpTools: [{ value: 'github.prs.create', label: 'github.prs.create' }],
-        skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
         agents: [{ value: 'agent-release-coordinator', label: 'Workflow Analyst' }],
-        outputFormats: [{ value: 'pdf', label: 'PDF' }],
-        approvalPolicies: [],
-        runtimeLimits: [],
-        retentionPolicies: []
+        sourceAvailability: { agents: { status: 'available' } }
       }), { status: 200 })
     );
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(listWorkflowOptions('workspace-1')).resolves.toMatchObject({
-      mcpServers: [{ value: 'github', label: 'GitHub' }],
-      skills: [{ value: 'acornops-open-pr', label: 'acornops-open-pr' }],
       agents: [{ value: 'agent-release-coordinator', label: 'Workflow Analyst' }]
     });
 
@@ -124,16 +116,7 @@ describe('workflow control-plane api', () => {
             name: 'Custom workflow',
             prompt: 'Inspect the repository.',
             agentIds: ['agent-1'],
-            executionMode: 'direct',
-            requiredPermissions: ['read_workspace_data'],
-            capabilityPolicy: {
-              mode: 'read_write',
-              semanticCapabilityIds: ['scm.repository.read'],
-              contextGrants: [],
-              maxRuntimeSeconds: 1800,
-              retentionDays: 90,
-              approvalRequirements: ['Before write-capable tools run']
-            }
+            executionMode: 'direct'
           }
         }), { status: 201 })
       );
@@ -142,13 +125,7 @@ describe('workflow control-plane api', () => {
     await expect(createWorkflow('workspace-1', {
       name: 'Custom workflow',
       prompt: 'Inspect the repository.',
-      agentIds: ['agent-1'],
-      capabilityPolicy: {
-        mode: 'read_write',
-        semanticCapabilityIds: ['scm.repository.read'],
-        contextGrants: [],
-        approvalRequirements: ['Before write-capable tools run']
-      }
+      agentIds: ['agent-1']
     })).resolves.toMatchObject({
       id: 'workflow-1',
       agentIds: ['agent-1'],
@@ -161,13 +138,7 @@ describe('workflow control-plane api', () => {
     expect(JSON.parse(createCall[1]?.body as string)).toEqual({
       name: 'Custom workflow',
       prompt: 'Inspect the repository.',
-      agentIds: ['agent-1'],
-      capabilityPolicy: {
-        mode: 'read_write',
-        semanticCapabilityIds: ['scm.repository.read'],
-        contextGrants: [],
-        approvalRequirements: ['Before write-capable tools run']
-      }
+      agentIds: ['agent-1']
     });
   });
 
@@ -210,7 +181,7 @@ describe('workflow control-plane api', () => {
   it('duplicates an effective workflow definition into a custom draft', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      return Promise.resolve(new Response(JSON.stringify({ workflow: { id: 'workflow-copy', workspaceId: 'workspace-1', source: 'user', createdBy: 'user-1', name: 'Triage copy', status: 'draft', requiredPermissions: [], policy: { mode: 'read_only', maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] }, steps: [] } }), { status: 201 }));
+      return Promise.resolve(new Response(JSON.stringify({ workflow: { id: 'workflow-copy', workspaceId: 'workspace-1', source: 'user', createdBy: 'user-1', name: 'Triage copy', status: 'draft', agentIds: ['agent-1'], executionMode: 'direct' } }), { status: 201 }));
     });
     vi.stubGlobal('fetch', fetchMock);
 

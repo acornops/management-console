@@ -34,7 +34,7 @@ The management console is the browser client for the control-plane API. Keep thi
 
 ## Shared Invariants
 
-- Target-chat PDF reports are created only by the model-invoked platform
+- Target-chat documents are created only by the model-invoked platform
   function. The console keeps Copy as a response action and renders successful
   report metadata as a persistent authenticated download card; it does not
   expose a separate response-export API action.
@@ -52,10 +52,10 @@ The management console is the browser client for the control-plane API. Keep thi
   custom-host imports during a mixed-version rollout because their
   browser-supplied API bases are intentionally rejected by the new producer.
 - MCP registry role, policy, and editability data comes from the control plane; the console must not hard-code editable role keys or workspace-management availability.
-- Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit MCP servers and tools from selected agents unless a narrower restriction is saved.
-- Workflow create always sends `restrictionMode`: `inherit` by default after
-  Agent selection, or `restrict` for an explicit subset that may intentionally
-  be empty. Review surfaces distinguish the policy from effective capabilities.
+- Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit their complete effective capabilities from selected Agents.
+- Workflow creation sends only Workflow metadata and selected Agent IDs. Review
+  surfaces show the assigned Agents' effective capabilities without offering
+  Workflow-local tool, skill, MCP, context, permission, or approval controls.
 - Capability review renders semantic capabilities, direct MCP servers,
   installed skills, and direct tools as distinct sources. Launch uses the
   workflow capability-preview endpoint to show tools inherited from assigned
@@ -66,10 +66,13 @@ The management console is the browser client for the control-plane API. Keep thi
 - Agent **Capabilities → Tools** lists AcornOps native tools separately from
   MCP-discovered tools. Native grant and revoke require `manage_agents` only,
   and Workflow traces expose authenticated PDF downloads.
+- Every Agent exposes the managed **AcornOps Targets** MCP server in its MCP
+  table. Users may toggle the server and its `list_targets`, `get_target`, and
+  `list_target_issues` tools, but cannot edit its connection or delete it.
 - Fetch is configured in that Tools tab with a fixed GET method and one to 20
   complete public HTTPS URL patterns. The drawer validates wildcard placement
   and unsafe URL forms and warns that paths and query values leave AcornOps.
-- Completed target-chat assistant turns expose a contextual **Generate PDF**
+- Completed target-chat assistant turns expose a contextual document download
   action. The browser submits the run ID (and optional title), never replacement
   report content; the control plane exports the persisted assistant response
   and returns an authenticated same-origin artifact URL.
@@ -98,7 +101,7 @@ The management console is the browser client for the control-plane API. Keep thi
   consent before browser navigation. Multiple advertised issuers require an
   explicit selection. Fixture mode rejects external OAuth before any request.
 - The console does not expose a built-in repository-review Agent, workflow, provider profile, or template setup branch. Workspace managers create a specialist Agent, attach and review any compatible MCP server from the Agent's generic MCP page, and then create a workflow selecting that Agent. Credential values remain write-only and never enter preview state or browser storage.
-- Manual workflow creation sends only operator-controlled fields. Mode, context grants, permissions, approvals, execution duration, and report retention are omitted so the control plane applies deployment-owned defaults. Creation fails closed until the authoritative workflow-options catalog has loaded; fallback catalogs contain no output, approval, runtime, or retention choices.
+- Manual workflow creation sends only operator-controlled metadata and Agent IDs. Mode, tools, MCP servers, skills, context grants, permissions, approvals, execution duration, and report retention are not Workflow fields. Creation fails closed until the authoritative Agent options catalog has loaded.
 - AI behavior drafts remain empty until workspace AI settings arrive, so the console does not invent a provider or model. An omitted production control-plane API base uses same-origin requests; local development retains the localhost fallback.
 - A blocked workflow capability preview opens the matching individual
   credential or OAuth authorization dialog from `serverId`, `authType`, owner,

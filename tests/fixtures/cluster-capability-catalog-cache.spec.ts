@@ -30,7 +30,7 @@ test('cluster capability catalogs remain visible during revisit refreshes', asyn
 
   await page.goto(`${clusterRoute}/tools`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Tools' })).toBeVisible();
-  await expect(page.getByText('Generate PDF report')).toBeVisible();
+  await expect(page.getByText('Create document')).toBeVisible();
 
   await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible();
@@ -42,7 +42,7 @@ test('cluster capability catalogs remain visible during revisit refreshes', asyn
 
   await page.getByRole('link', { name: 'Tools', exact: true }).click();
   await expect(page.getByText('Loading tools')).toHaveCount(0);
-  await expect(page.getByText('Generate PDF report')).toBeVisible({ timeout: 750 });
+  await expect(page.getByText('Create document')).toBeVisible({ timeout: 750 });
 
   await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByText('Loading skills')).toHaveCount(0);
@@ -57,7 +57,7 @@ test('virtual machine capability catalogs remain visible during revisit refreshe
   await delayCapabilityRefreshes(page);
 
   await page.goto(`${virtualMachineRoute}/tools`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('Generate PDF report')).toBeVisible();
+  await expect(page.getByText('Create document')).toBeVisible();
 
   await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByText('VM diagnostics')).toBeVisible();
@@ -67,7 +67,7 @@ test('virtual machine capability catalogs remain visible during revisit refreshe
 
   await page.getByRole('link', { name: 'Tools', exact: true }).click();
   await expect(page.getByText('Loading tools')).toHaveCount(0);
-  await expect(page.getByText('Generate PDF report')).toBeVisible({ timeout: 750 });
+  await expect(page.getByText('Create document')).toBeVisible({ timeout: 750 });
 
   await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByText('Loading skills')).toHaveCount(0);

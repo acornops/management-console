@@ -6,6 +6,8 @@ import {
   createMarkdownComponents,
   type LiveRunTrace
 } from '@/features/conversations/presentation';
+import { buildTargetChatAutoScrollSignature } from '@/features/targets/chat/hooks/targetChatState';
+import { useTargetChatScrollAnchor } from '@/features/targets/chat/hooks/useTargetChatScrollAnchor';
 import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, Workspace } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import {
@@ -145,7 +147,6 @@ export const AgentChatPanel: React.FC<{
   const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
   const [accessBusy, setAccessBusy] = React.useState(false);
   const [operationError, setOperationError] = React.useState('');
-  const transcriptNodeRef = React.useRef<HTMLDivElement | null>(null);
   const assistantMarkdownComponents = React.useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
   const activeSummary = summaries.find((summary) => summary.id === activeSessionId);
@@ -184,6 +185,22 @@ export const AgentChatPanel: React.FC<{
     .reverse()
     .find((message) => message.runId && ['connecting', 'running'].includes(runTracesByRunId[message.runId]?.status))
     ?.runId || null;
+  const chatAutoScrollSignature = buildTargetChatAutoScrollSignature({
+    messages: activeSession?.messages || [],
+    effectiveActiveRunId: activeRunId,
+    runTracesByRunId
+  });
+  const {
+    lastChatScrollTopRef,
+    scrollRef,
+    shouldStickToBottomRef,
+    transcriptRef
+  } = useTargetChatScrollAnchor({
+    activeSessionId,
+    chatAutoScrollSignature,
+    isChatActive: true,
+    isLoadingEarlierMessages: false
+  });
   const canChat = Boolean(
     permissions?.create_sessions
     && (canCreateReadOnlyRuns || (agentAllowsWrites && canCreateWriteRuns))
@@ -192,6 +209,21 @@ export const AgentChatPanel: React.FC<{
   const reportError = React.useCallback((error: unknown, fallback: string) => {
     setOperationError(error instanceof Error ? error.message : fallback);
   }, []);
+  const handleChatScroll = React.useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+
+    const currentScrollTop = node.scrollTop;
+    const distanceToBottom = node.scrollHeight - currentScrollTop - node.clientHeight;
+    const isScrollingUp = currentScrollTop < lastChatScrollTopRef.current - 0.5;
+    const isScrollingDown = currentScrollTop > lastChatScrollTopRef.current + 0.5;
+    if (isScrollingUp) {
+      shouldStickToBottomRef.current = false;
+    } else if (distanceToBottom <= 2 && (shouldStickToBottomRef.current || isScrollingDown)) {
+      shouldStickToBottomRef.current = true;
+    }
+    lastChatScrollTopRef.current = currentScrollTop;
+  }, [lastChatScrollTopRef, scrollRef, shouldStickToBottomRef]);
 
   const refreshSummaries = React.useCallback(async (preferredId?: string) => {
     const items = await listAgentConversations(agent.workspaceId, agent.id);
@@ -353,8 +385,8 @@ export const AgentChatPanel: React.FC<{
         userMarkdownComponents={userMarkdownComponents}
         visibleMessages={activeSession?.messages || []}
         runTracesByRunId={runTracesByRunId}
-        transcriptRef={(node) => { transcriptNodeRef.current = node; }}
-        onChatScroll={() => undefined}
+        transcriptRef={transcriptRef}
+        onChatScroll={handleChatScroll}
         onLoadEarlierMessages={() => undefined}
         onOpenAiSettings={onOpenAiSettings}
         onInputChange={setInputValue}

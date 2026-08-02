@@ -120,18 +120,18 @@ function parseArtifact(value: unknown): LiveRunTrace['toolCalls'][number]['artif
   return artifact as LiveRunTrace['toolCalls'][number]['artifact'];
 }
 
-function parseReportArtifact(value: unknown): LiveRunTrace['toolCalls'][number]['reportArtifact'] | undefined {
+function parseDocumentArtifact(value: unknown): LiveRunTrace['toolCalls'][number]['documentArtifact'] | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const envelope = value as Record<string, unknown>;
   const structured = envelope.structuredContent && typeof envelope.structuredContent === 'object'
     ? envelope.structuredContent as Record<string, unknown>
     : envelope;
-  if (typeof structured.reportId !== 'string' || typeof structured.downloadUrl !== 'string'
-    || structured.mediaType !== 'application/pdf') return undefined;
+  if (typeof structured.documentId !== 'string' || typeof structured.downloadUrl !== 'string'
+    || (structured.mediaType !== 'application/pdf' && structured.mediaType !== 'text/markdown')) return undefined;
   return {
-    reportId: structured.reportId,
-    title: typeof structured.title === 'string' ? structured.title : 'Workflow report',
-    mediaType: 'application/pdf',
+    documentId: structured.documentId,
+    title: typeof structured.title === 'string' ? structured.title : 'Generated document',
+    mediaType: structured.mediaType,
     downloadUrl: structured.downloadUrl,
     ...(typeof structured.retentionExpiresAt === 'string' ? { retentionExpiresAt: structured.retentionExpiresAt } : {})
   };
@@ -306,7 +306,7 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
       const isError = Boolean(event.payload?.is_error);
       const artifact = parseArtifact(event.payload?.artifact);
       const contextMeta = parseContextMeta(event.payload?.context_meta);
-      const reportArtifact = parseReportArtifact(event.payload?.result);
+      const documentArtifact = parseDocumentArtifact(event.payload?.result);
       trace = appendRunTraceStep(
         upsertToolCall(trace, callId, {
           callId,
@@ -315,7 +315,7 @@ export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPla
           isError,
           ...(contextMeta ? { contextMeta } : {}),
           ...(artifact ? { artifact } : {}),
-          ...(reportArtifact ? { reportArtifact } : {}),
+          ...(documentArtifact ? { documentArtifact } : {}),
           ...(event.payload?.artifactUnavailable ? { artifactUnavailable: true } : {})
         }),
         `Tool call completed: ${toolName}`,
@@ -523,7 +523,7 @@ export function createRunEventHandler(args: {
       const isError = Boolean(event.payload?.is_error);
       const artifact = parseArtifact(event.payload?.artifact);
       const contextMeta = parseContextMeta(event.payload?.context_meta);
-      const reportArtifact = parseReportArtifact(event.payload?.result);
+      const documentArtifact = parseDocumentArtifact(event.payload?.result);
       const nextTrace = upsertToolCall(trace, callId, {
         callId,
         tool: toolName,
@@ -531,7 +531,7 @@ export function createRunEventHandler(args: {
         isError,
         ...(contextMeta ? { contextMeta } : {}),
         ...(artifact ? { artifact } : {}),
-        ...(reportArtifact ? { reportArtifact } : {}),
+        ...(documentArtifact ? { documentArtifact } : {}),
         ...(event.payload?.artifactUnavailable ? { artifactUnavailable: true } : {})
       });
       updateTrace(

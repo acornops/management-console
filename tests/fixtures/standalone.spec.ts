@@ -40,7 +40,7 @@ for (const route of routes) {
 
 test('outbound webhooks expose history, confirmation, and one-time secret flows', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Webhooks' })).toBeVisible();
   await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
 
   const webhookArticle = page.getByRole('article').filter({ hasText: 'Mattermost operations' });
@@ -110,7 +110,7 @@ test('outbound webhooks remain usable from compact navigation', async ({ browser
   const page = await context.newPage();
 
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Outbound webhooks' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Webhooks' })).toBeVisible();
   await page.getByRole('button', { name: 'Open navigation' }).click();
   const navigation = page.getByRole('dialog', { name: 'Navigation' });
   await expect(navigation.getByRole('link', { name: 'Webhooks' })).toHaveAttribute('aria-current', 'page');

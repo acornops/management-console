@@ -263,6 +263,25 @@ test('Agent conversations follow the Agent policy without a redundant access ele
   await expect(page.getByText('Fixture Agent analysis complete. No external changes were made.')).toBeVisible();
 });
 
+test('Agent target mentions support keyboard-only Tab completion', async ({ page }) => {
+  await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
+
+  const composer = page.getByRole('combobox', { name: 'Message Kubernetes Specialist assistant' });
+  await composer.fill('@');
+  const mentionTypePicker = page.getByRole('listbox', { name: 'Select a mention type' });
+  await expect(mentionTypePicker.getByRole('option', { name: /Target/ })).toBeVisible();
+
+  await composer.press('Tab');
+  await expect(composer).toHaveValue('@target[');
+  const targetPicker = page.getByRole('listbox', { name: 'Select a target' });
+  await expect(targetPicker.getByRole('option', { name: /Payments VM/ })).toBeVisible();
+
+  await composer.press('Tab');
+  await expect(composer).toHaveValue('@target[Payments VM] ');
+  await expect(targetPicker).toHaveCount(0);
+  await expect(composer).toBeFocused();
+});
+
 test('Agent lifecycle confirmations announce themselves, receive focus, and restore focus', async ({ page }) => {
   await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
 

@@ -69,16 +69,6 @@ export type WorkflowApiDefinition = Record<string, unknown> & {
   agentIds: string[];
   executionMode: 'direct' | 'coordinated';
   tags?: string[];
-  requiredPermissions?: string[];
-  capabilityPolicy: {
-    mode: 'read_only' | 'read_write';
-    restrictionMode: 'inherit' | 'restrict';
-    semanticCapabilityIds: string[];
-    contextGrants: string[];
-    maxRuntimeSeconds: number;
-    retentionDays: number;
-    approvalRequirements: string[];
-  };
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
 };
 
@@ -98,15 +88,8 @@ export interface WorkflowOption {
 }
 
 export interface WorkflowOptionsCatalog {
-  mcpServers: WorkflowOption[];
-  mcpTools: WorkflowOption[];
-  skills: WorkflowOption[];
   agents: WorkflowOption[];
-  outputFormats: WorkflowOption[];
-  approvalPolicies: WorkflowOption[];
-  runtimeLimits: WorkflowOption[];
-  retentionPolicies: WorkflowOption[];
-  sourceAvailability: Record<string, {
+  sourceAvailability: Record<'agents', {
     status: 'available' | 'empty' | 'unavailable' | 'error';
     message?: string;
     retryable?: boolean;
@@ -345,14 +328,6 @@ export interface WorkflowCreateInput {
   prompt: string;
   agentIds: string[];
   tags?: string[];
-  requiredPermissions?: string[];
-  capabilityPolicy?: {
-    mode?: 'read_only' | 'read_write';
-    restrictionMode?: 'inherit' | 'restrict';
-    semanticCapabilityIds?: string[];
-    contextGrants?: string[];
-    approvalRequirements?: string[];
-  };
 }
 
 export type WorkflowUpdateInput = Partial<Omit<WorkflowCreateInput, 'agentIds'>> & {

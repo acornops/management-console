@@ -57,7 +57,6 @@ const workflow: WorkflowDefinition = {
     role: 'Direct',
     required: true
   }],
-  requiredPermissions: ['read_workspace_data', 'create_read_only_runs'],
   contextGrants: ['workspace_metadata'],
   policy: {
     mode: 'read_only',

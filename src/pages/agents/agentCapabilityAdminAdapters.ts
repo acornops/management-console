@@ -82,10 +82,10 @@ function mapAgentMcpServer(server: AgentMcpServerApi): McpToolCatalogServer {
     url: server.url,
     type: 'mcp',
     enabled: server.enabled,
-    isSystem: false,
-    canDelete: true,
-    canEditConnection: true,
-    canToggle: true,
+    isSystem: server.isSystem,
+    canDelete: server.canDelete,
+    canEditConnection: server.canEditConnection,
+    canToggle: server.canToggle,
     authType: server.authType === 'bearer_token' || server.authType === 'custom_header' ? server.authType : 'none',
     credentialMode: server.credentialMode,
     authHeaderName: server.authHeaderName,
@@ -190,10 +190,13 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
       return result;
     },
     async updateServerTool(workspaceId, subjectId, serverId, toolName, input) {
+      const currentServer = (await listAgentMcpServers(workspaceId, subjectId)).find((item) => item.id === serverId);
       const tool = await reviewAgentMcpTool(workspaceId, subjectId, serverId, toolName, {
         enabled: input.enabled,
-        capability: input.capability,
-        reviewState: input.enabled ? 'approved' : undefined
+        ...(currentServer?.isSystem ? {} : {
+          capability: input.capability,
+          reviewState: input.enabled ? 'approved' as const : undefined
+        })
       });
       const server = (await listAgentMcpServers(workspaceId, subjectId)).find((item) => item.id === serverId);
       return mapAgentMcpTool(tool, server?.enabled !== false);
@@ -344,7 +347,7 @@ export function createAgentToolsDataSource(agent: AgentDefinition, canManageTool
         description: 'Workspace-native Agent tool.',
         semanticCapabilityId: toolId,
         invocationScopes: ['agent_chat'],
-        authorizationClass: 'prompt_resource',
+        authorizationClass: 'internal_artifact',
         auditOperation: 'read',
         approvalOperation: 'read',
         inputSchema: {},

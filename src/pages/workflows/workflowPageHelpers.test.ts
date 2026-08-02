@@ -14,15 +14,6 @@ function workflow(overrides: Partial<WorkflowApiDefinition> = {}): WorkflowApiDe
     agentIds: ['agent-infrastructure-diagnostics'],
     executionMode: 'direct',
     tags: [],
-    capabilityPolicy: {
-      mode: 'read_only',
-      restrictionMode: 'restrict',
-      semanticCapabilityIds: ['infrastructure.diagnostics.read'],
-      contextGrants: [],
-      maxRuntimeSeconds: 900,
-      retentionDays: 30,
-      approvalRequirements: []
-    },
     ...overrides
   };
 }

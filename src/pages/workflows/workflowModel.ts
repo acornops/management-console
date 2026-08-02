@@ -49,7 +49,6 @@ export interface WorkflowDefinition {
   tags: string[];
   lastRun: string;
   agents: WorkflowAgentReference[];
-  requiredPermissions: string[];
   contextGrants: string[];
   policy: {
     mode: WorkflowCapabilityMode;
@@ -108,7 +107,6 @@ export function filterWorkflowDefinitions(workflows: WorkflowDefinition[], query
       workflow.status,
       workflow.policy.mode,
       workflow.policy.approvals.join(' '),
-      workflow.requiredPermissions.join(' '),
       workflow.contextGrants.join(' ')
     ].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ');
     return queryTokens.every((token) => searchable.includes(token));

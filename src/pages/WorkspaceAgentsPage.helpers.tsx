@@ -2,7 +2,6 @@ import React from 'react';
 import { SelectOption } from '@acornops/ui';
 import { filterAgentDefinitions, type AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
-import { type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
 import type { Workspace } from '@/types';
 import type { AgentSubview } from '@/utils/routes';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -45,7 +44,6 @@ export type LocalNotice = {
   actionHref?: string;
   actionLabel?: string;
 };
-export type AgentCapabilityOptions = Pick<WorkflowOptionsCatalog, 'mcpServers' | 'mcpTools' | 'skills'>;
 export type AgentCatalogFocus = 'all' | 'active' | 'draft' | 'disabled';
 
 export const statusTone = (status: AgentDefinition['status']): 'success' | 'warning' | 'danger' => {
@@ -61,38 +59,6 @@ export const splitInput = (value: string): string[] =>
     .filter(Boolean);
 
 const joinInput = (values: string[]): string => values.join('\n');
-
-const normalizeAgentCapabilityOption = (option: unknown): AgentCapabilityOptions['mcpServers'][number] | null => {
-  if (typeof option === 'string' && option.trim()) return { value: option.trim(), label: option.trim() };
-  if (!option || typeof option !== 'object') return null;
-  const value = option as {
-    value?: unknown;
-    label?: unknown;
-    description?: unknown;
-    disabled?: unknown;
-    disabledReason?: unknown;
-  };
-  if (typeof value.value !== 'string' || !value.value.trim()) return null;
-  return {
-    value: value.value,
-    label: typeof value.label === 'string' && value.label.trim() ? value.label : value.value,
-    description: typeof value.description === 'string' ? value.description : undefined,
-    disabled: typeof value.disabled === 'boolean' ? value.disabled : undefined,
-    disabledReason: typeof value.disabledReason === 'string' ? value.disabledReason : undefined
-  };
-};
-
-const normalizeAgentCapabilityOptionList = (options: unknown): AgentCapabilityOptions['mcpServers'] => {
-  if (!Array.isArray(options)) return [];
-  const normalized = options.map(normalizeAgentCapabilityOption).filter((option): option is NonNullable<typeof option> => Boolean(option));
-  return normalized;
-};
-
-export const normalizeAgentCapabilityOptions = (catalog: WorkflowOptionsCatalog): AgentCapabilityOptions => ({
-  mcpServers: normalizeAgentCapabilityOptionList(catalog.mcpServers),
-  mcpTools: normalizeAgentCapabilityOptionList(catalog.mcpTools),
-  skills: normalizeAgentCapabilityOptionList(catalog.skills)
-});
 
 const listValuesChanged = (left: string[], right: string): boolean => {
   const rightValues = splitInput(right);

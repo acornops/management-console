@@ -6,6 +6,11 @@ const CSRF_HEADER_NAME = 'x-csrf-token';
 let csrfTokenRequest: Promise<string> | null = null;
 let cachedCsrfToken = '';
 
+function isHtmlErrorDocument(body: string, contentType: string | null): boolean {
+  return contentType?.toLowerCase().includes('text/html') === true
+    || /^\s*(?:<!doctype\s+html|<html\b)/i.test(body);
+}
+
 export class ControlPlaneRequestError extends Error {
   constructor(
     message: string,
@@ -110,7 +115,11 @@ async function throwControlPlaneResponseError(
   let message = body.trim();
   let code: string | undefined;
   let details: Record<string, unknown> | undefined;
-  if (message) {
+  if (isHtmlErrorDocument(message, response.headers.get('content-type'))) {
+    // Reverse proxies commonly return full HTML error pages. They are not
+    // actionable to an operator and must never become UI error copy.
+    message = response.statusText || 'Service unavailable';
+  } else if (message) {
     try {
       const parsed = JSON.parse(message) as {
         error?: string | { message?: string; detail?: string; code?: string; details?: Record<string, unknown> };

@@ -117,7 +117,7 @@ describe('control-plane http helpers', () => {
     env.VITE_CONTROL_PLANE_API_BASE_URL = previous;
   });
 
-  it('normalizes error responses from unauthorized, json, and raw text bodies', async () => {
+  it('normalizes error responses from unauthorized, json, raw text, and HTML bodies', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(new Response('secret response body', { status: 401, statusText: 'Unauthorized', headers: { 'x-request-id': 'request-401' } }))
@@ -131,6 +131,13 @@ describe('control-plane http helpers', () => {
         new Response('plain failure', {
           status: 502,
           statusText: 'Bad Gateway'
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response('<html><head><title>502 Bad Gateway</title></head><body>nginx</body></html>', {
+          status: 502,
+          statusText: 'Bad Gateway',
+          headers: { 'content-type': 'text/html' }
         })
       );
     vi.stubGlobal('fetch', fetchMock);
@@ -149,6 +156,9 @@ describe('control-plane http helpers', () => {
     );
     await expect(requestJson('/api/v1/text-error')).rejects.toThrow(
       'Control plane request failed (502): plain failure'
+    );
+    await expect(requestJson('/api/v1/html-error')).rejects.toThrow(
+      'Control plane request failed (502): Bad Gateway'
     );
   });
 

@@ -32,6 +32,7 @@ export interface ToolDraft {
   enabled: boolean;
   allowedDomainsText: string;
   blockedDomainsText: string;
+  allowedUrlPatternsText: string;
 }
 
 export type TargetInsightsAction = 'files' | 'settings' | 'activity' | 'reset';
@@ -100,7 +101,8 @@ export function draftFromTool(tool: ControlPlaneTargetToolItem): ToolDraft {
   return {
     enabled: tool.enabled,
     allowedDomainsText: domainFilters.allowedDomains.join('\n'),
-    blockedDomainsText: domainFilters.blockedDomains.join('\n')
+    blockedDomainsText: domainFilters.blockedDomains.join('\n'),
+    allowedUrlPatternsText: (tool.config?.allowedUrlPatterns || []).join('\n')
   };
 }
 

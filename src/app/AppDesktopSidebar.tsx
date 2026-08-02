@@ -297,7 +297,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 const items = group.items.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.id} className={item.children ? 'rounded-md bg-ui-bg pb-1' : undefined}>
+                    <div key={item.id} className={item.children && !collapsed ? 'rounded-md bg-ui-bg pb-1' : undefined}>
                       <WorkspaceSidebarNavLink
                         active={item.active}
                         current={item.current}

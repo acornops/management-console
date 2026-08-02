@@ -112,4 +112,12 @@ describe('formatControlPlaneError', () => {
       'You do not have permission to do that.'
     );
   });
+
+  it('replaces HTML gateway responses with the standard upstream recovery message', () => {
+    const error = controlPlaneError(502, undefined, '<html><body>502 Bad Gateway</body></html>');
+
+    expect(formatControlPlaneError(error, 'Workflow options could not be loaded.')).toBe(
+      'The service could not complete the request. Try again shortly.'
+    );
+  });
 });

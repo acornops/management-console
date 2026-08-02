@@ -177,7 +177,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
     setDraft({
       ...emptyWebhookDraft(),
       workflowId: workflow?.id || '',
-      approvedContextGrants: workflow?.capabilityPolicy.contextGrants.join('\n') || ''
+      approvedContextGrants: ''
     });
     setMutationError('');
     setDrawerOpen(true);
@@ -316,7 +316,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
     setDraft((current) => ({
       ...current,
       workflowId,
-      approvedContextGrants: workflow?.capabilityPolicy.contextGrants.join('\n') || ''
+      approvedContextGrants: ''
     }));
   };
 

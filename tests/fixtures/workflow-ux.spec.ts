@@ -177,7 +177,7 @@ test('workflow launch uses the saved prompt without runtime template inputs', as
   await expect(page.getByRole('dialog', { name: 'Run workflow' }).getByRole('combobox')).toHaveCount(0);
 });
 
-test('workflow authoring uses a plain prompt field and a two-step setup', async ({ page }) => {
+test('workflow authoring uses a target-aware prompt field and a two-step setup', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Create workflow' }).click();
 
@@ -187,8 +187,8 @@ test('workflow authoring uses a plain prompt field and a two-step setup', async 
   await expect(setup.getByText('Agents', { exact: true })).toBeVisible();
   await expect(setup.getByText('Review', { exact: true })).toHaveCount(0);
   await expect(drawer.getByRole('button', { name: 'Reset' })).toBeDisabled();
-  const prompt = drawer.getByRole('textbox', { name: 'Workflow prompt' });
-  await expect(prompt).not.toHaveAttribute('role', 'combobox');
+  const prompt = drawer.getByRole('combobox', { name: 'Workflow prompt' });
+  await expect(prompt).toHaveAttribute('aria-autocomplete', 'list');
   await expect(drawer.getByRole('listbox')).toHaveCount(0);
 
   await drawer.locator('#create-workflow-name-input').fill('Lean workflow');

@@ -21,7 +21,6 @@ function workflowWithRun(run: WorkflowDefinition['runs'][number]): WorkflowDefin
     tags: [],
     lastRun: 'Just now',
     agents: [],
-    requiredPermissions: [],
     contextGrants: [],
     policy: { mode: 'read_only', approvals: [] },
     starterPrompt: 'Inspect production health.',

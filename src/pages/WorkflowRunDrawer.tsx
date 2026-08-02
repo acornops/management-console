@@ -37,7 +37,7 @@ export const WorkflowRunDrawer: React.FC<{
   onClose,
   onLaunch
 }) => {
-  const writeCapable = workflow?.policy.mode === 'read_write';
+  const writeCapable = Boolean(preview?.tools.write.length);
   const acknowledgementMissing = Boolean(writeCapable && !acknowledged);
   return (
     <DrawerFrame

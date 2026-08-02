@@ -44,7 +44,7 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/ai-settings`));
   await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/chat?session=fixture-session`);
 
-  await page.evaluate(() => {
+  await page.addInitScript(() => {
     window.localStorage.setItem('acornops_active_theme_preference', 'dark');
     window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:theme', 'dark');
   });

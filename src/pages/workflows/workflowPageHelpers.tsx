@@ -15,6 +15,7 @@ import type {
   WorkflowRunSummary
 } from '@/services/control-plane/workflowApi';
 import { formatElapsedDuration } from '@/utils/dateTime';
+import type { AgentDefinition } from '@/pages/agents/agentModel';
 
 export const workflowViews: WorkflowView[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
 
@@ -149,11 +150,7 @@ export function buildWorkflowCreateInput(draft: CreateWorkflowDraft): WorkflowCr
     description: draft.description.trim(),
     tags: [],
     prompt: draft.starterPrompt.trim() || `Start ${name}.`,
-    agentIds,
-    capabilityPolicy: {
-      restrictionMode: 'inherit',
-      semanticCapabilityIds: []
-    }
+    agentIds
   };
 }
 
@@ -177,53 +174,10 @@ export function agentIdsFromDraft(draft: AgentSelectionDraft | CreateWorkflowDra
 
 export function createFallbackWorkflowOptions(_workflows: WorkflowDefinition[]): WorkflowOptionsCatalog {
   return {
-    mcpServers: [],
-    mcpTools: [],
-    skills: [],
     agents: [],
-    outputFormats: [],
-    approvalPolicies: [],
-    runtimeLimits: [],
-    retentionPolicies: [],
     sourceAvailability: {
-      mcpServers: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
-      mcpTools: { status: 'unavailable', message: 'MCP catalog has not loaded.' },
-      skills: { status: 'unavailable', message: 'Skill catalog has not loaded.' },
       agents: { status: 'unavailable', message: 'Agent catalog has not loaded.' },
     }
-  };
-}
-
-type WorkflowScopeAgentSource = {
-  id: string;
-  semanticCapabilityIds: string[];
-};
-
-type WorkflowScopeOptions = {
-  semanticCapabilities: WorkflowOption[];
-};
-
-function optionsForCapabilityIds(
-  values: string[],
-  catalogOptions: WorkflowOption[]
-): WorkflowOption[] {
-  const catalogByValue = new Map(catalogOptions.map((option) => [option.value, option]));
-  return uniqueValues(values).map((value) => catalogByValue.get(value) || { value, label: value });
-}
-
-export function getWorkflowScopeOptionsForAgents(
-  agentIds: string[],
-  agents: WorkflowScopeAgentSource[],
-  catalog: WorkflowOptionsCatalog
-): WorkflowScopeOptions {
-  const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
-  const selectedAgents = uniqueInOrder(agentIds).map((agentId) => agentsById.get(agentId)).filter((agent): agent is WorkflowScopeAgentSource => Boolean(agent));
-
-  return {
-    semanticCapabilities: optionsForCapabilityIds(
-      selectedAgents.flatMap((agent) => agent.semanticCapabilityIds),
-      catalog.mcpTools
-    )
   };
 }
 
@@ -258,14 +212,7 @@ export function normalizeWorkflowOptionsCatalog(
 ): WorkflowOptionsCatalog {
   const value = catalog && typeof catalog === 'object' ? catalog as Record<string, unknown> : {};
   return {
-    mcpServers: normalizeWorkflowOptionList(value.mcpServers, fallback.mcpServers),
-    mcpTools: normalizeWorkflowOptionList(value.mcpTools, fallback.mcpTools),
-    skills: normalizeWorkflowOptionList(value.skills, fallback.skills),
     agents: normalizeWorkflowOptionList(value.agents, fallback.agents),
-    outputFormats: normalizeWorkflowOptionList(value.outputFormats, fallback.outputFormats),
-    approvalPolicies: normalizeWorkflowOptionList(value.approvalPolicies, fallback.approvalPolicies),
-    runtimeLimits: normalizeWorkflowOptionList(value.runtimeLimits, fallback.runtimeLimits),
-    retentionPolicies: normalizeWorkflowOptionList(value.retentionPolicies, fallback.retentionPolicies),
     sourceAvailability: value.sourceAvailability && typeof value.sourceAvailability === 'object'
       ? value.sourceAvailability as WorkflowOptionsCatalog['sourceAvailability']
       : fallback.sourceAvailability
@@ -301,16 +248,18 @@ export function mapApiWorkflowToDefinition(
   fallback: WorkflowDefinition | undefined,
   workspaceId: string,
   options?: WorkflowOptionsCatalog,
-  ownerLabelsByUserId?: Map<string, string>
+  ownerLabelsByUserId?: Map<string, string>,
+  agents: AgentDefinition[] = []
 ): WorkflowDefinition {
-  const semanticCapabilityIds = uniqueValues(workflow.capabilityPolicy.semanticCapabilityIds);
-  const capabilityRestrictionMode = workflow.capabilityPolicy.restrictionMode === 'inherit' ? 'inherit' : 'restrict';
   const agentIds = uniqueInOrder(Array.isArray(workflow.agentIds) ? workflow.agentIds : [])
     .sort((left, right) => left.localeCompare(right));
+  const assignedAgents = agentIds.map((agentId) => agents.find((agent) => agent.id === agentId))
+    .filter((agent): agent is AgentDefinition => Boolean(agent));
+  const semanticCapabilityIds = uniqueValues(assignedAgents.flatMap((agent) => agent.semanticCapabilityIds));
+  const capabilityRestrictionMode = 'inherit' as const;
   const executionMode = workflow.executionMode || (agentIds.length > 1 ? 'coordinated' : 'direct');
   const agentOptionLabels = new Map((options?.agents || []).map((agent) => [agent.value, agent.label]));
-  const workflowPolicy = workflow.capabilityPolicy;
-  const contextGrants = uniqueValues(workflowPolicy.contextGrants);
+  const contextGrants = uniqueValues(assignedAgents.flatMap((agent) => agent.contextScope));
   const fallbackAssignments = fallback?.agents || [];
   const apiAssignments = agentIds.map((agentId) => {
     const fallbackAgent = fallbackAssignments.find((agent) => agent.agentId === agentId);
@@ -337,11 +286,10 @@ export function mapApiWorkflowToDefinition(
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
     lastRun: fallback?.lastRun || 'No runs yet',
     agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
-    requiredPermissions: Array.isArray(workflow.requiredPermissions) ? workflow.requiredPermissions : fallback?.requiredPermissions || [],
     contextGrants,
     policy: {
-      mode: workflowPolicy.mode,
-      approvals: uniqueValues(workflowPolicy.approvalRequirements)
+      mode: assignedAgents.some((agent) => agent.permissionMode !== 'read_only') ? 'read_write' : 'read_only',
+      approvals: []
     },
     starterPrompt: workflow.prompt || fallback?.starterPrompt || `Start ${workflow.name}.`,
     runs: fallback?.runs || []

@@ -5,7 +5,7 @@ export type AgentStatus = 'draft' | 'active' | 'disabled';
 export type AgentProviderType = 'internal' | 'external';
 export type RunPermissionMode = 'read_only' | 'ask_before_changes' | 'auto_allowed_changes';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
-export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
+export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; isSystem: boolean; canDelete: boolean; canEditConnection: boolean; canToggle: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
 export interface WorkspaceNativeToolApi {
   id: string;
   modelAlias: string;
@@ -13,7 +13,7 @@ export interface WorkspaceNativeToolApi {
   description: string;
   semanticCapabilityId: string;
   invocationScopes: Array<'workflow' | 'agent_chat'>;
-  authorizationClass: 'prompt_resource' | 'internal_artifact' | 'external_http_read';
+  authorizationClass: 'internal_artifact' | 'external_http_read';
   auditOperation: 'read' | 'write';
   approvalOperation: 'read' | 'write';
   requiredContextGrant?: string;

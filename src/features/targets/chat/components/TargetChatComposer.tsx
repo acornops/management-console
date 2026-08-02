@@ -185,8 +185,10 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             activeIndex={targetMentions.activeIndex}
             error={targetMentions.error}
             loading={targetMentions.loading}
+            mentionQuery={targetMentions.mentionQuery}
             targets={targetMentions.targets}
             onActiveIndexChange={targetMentions.setActiveIndex}
+            onSelectMentionType={targetMentions.selectMentionType}
             onSelect={targetMentions.selectTarget}
             className="absolute bottom-full left-2 right-2 z-50 mb-2"
           />
@@ -260,14 +262,20 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text shadow-none outline-none placeholder:text-ui-text-muted/60 hover:bg-transparent focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60`}
               role="combobox"
               aria-label={t('chat.composerInputLabel', { name: subject.name })}
-              aria-controls={targetMentions.mentionQuery ? targetMentions.menuId : referenceMenuId}
+              aria-controls={targetMentions.mentionQuery
+                ? targetMentions.menuId
+                : isReferenceMenuOpen
+                  ? referenceMenuId
+                  : undefined}
               aria-expanded={Boolean(targetMentions.mentionQuery) || isReferenceMenuOpen}
               aria-autocomplete="list"
-              aria-activedescendant={targetMentions.mentionQuery && targetMentions.targets[targetMentions.activeIndex]
-                ? `${targetMentions.menuId}-option-${targetMentions.activeIndex}`
-                : isReferenceMenuOpen && referencePickerItems[referenceActiveIndex]
-                  ? `${referenceMenuId}-option-${referenceActiveIndex}`
-                  : undefined}
+              aria-activedescendant={targetMentions.mentionQuery?.stage === 'type'
+                ? `${targetMentions.menuId}-type-option`
+                : targetMentions.mentionQuery && targetMentions.targets[targetMentions.activeIndex]
+                  ? `${targetMentions.menuId}-option-${targetMentions.activeIndex}`
+                  : isReferenceMenuOpen && referencePickerItems[referenceActiveIndex]
+                    ? `${referenceMenuId}-option-${referenceActiveIndex}`
+                    : undefined}
               placeholder={canPost ? t(resolvedInputPlaceholderKey, { name: subject.name }) : blockedComposerMessage}
               disabled={!canPost || isRunActive}
             />

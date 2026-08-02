@@ -13,6 +13,13 @@ describe('target mention surface scope', () => {
     expect(chatView).toContain('targetMentionsEnabled = false');
   });
 
+  it('uses the shared chat scroll anchor for Agent conversations', () => {
+    const agentChat = readSource('src/pages/agents/AgentChatPanel.tsx');
+    expect(agentChat).toContain("useTargetChatScrollAnchor({");
+    expect(agentChat).toContain('transcriptRef={transcriptRef}');
+    expect(agentChat).toContain('onChatScroll={handleChatScroll}');
+  });
+
   it('uses the target mention textarea only for workflow prompt fields', () => {
     const createDrawer = readSource('src/pages/WorkspaceWorkflowsPage.createDrawer.tsx');
     const settingsPanel = readSource('src/pages/WorkflowSettingsPanel.tsx');

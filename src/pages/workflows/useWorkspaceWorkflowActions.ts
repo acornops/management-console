@@ -41,7 +41,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
     canManageWorkflows, workflowOptionsReady, launchBlocker, workflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
     setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
-    ownerLabelsByUserId: providedOwnerLabelsByUserId
+    ownerLabelsByUserId: providedOwnerLabelsByUserId, workflowAgents
   } = ctx;
   const ownerLabelEntries: Array<[string, string]> = (workspace.members || [])
     .filter((member: { userId?: string }) => member.userId)
@@ -341,7 +341,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         agentIds: workflow.agentIds,
         tags
       });
-      const mapped = mapApiWorkflowToDefinition(updated, workflow, workspace.id, workflowOptions, ownerLabelsByUserId);
+      const mapped = mapApiWorkflowToDefinition(updated, workflow, workspace.id, workflowOptions, ownerLabelsByUserId, workflowAgents);
       setWorkflows((current) => current.map((item) => item.id === workflow.id
         ? { ...mapped, runs: item.runs, lastRun: item.lastRun }
         : item));
@@ -429,7 +429,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
       const updated = await updateWorkflow(workspace.id, selectedWorkflow.id, {
         agentIds: selectedAgentIds
       });
-      const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
+      const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId, workflowAgents);
       setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id
         ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
         : workflow));
@@ -458,7 +458,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         description: selectedWorkflowEditDraft.description.trim(),
         prompt: selectedWorkflowEditDraft.starterPrompt.trim() || `Start ${name}.`
       });
-      const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId);
+      const mapped = mapApiWorkflowToDefinition(updated, selectedWorkflow, workspace.id, workflowOptions, ownerLabelsByUserId, workflowAgents);
       setWorkflows((current) => current.map((workflow) => workflow.id === selectedWorkflow.id
         ? { ...mapped, runs: workflow.runs, lastRun: workflow.lastRun }
         : workflow));
@@ -480,7 +480,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
         agentIds: workflow.agentIds,
         status: active ? 'active' : 'paused'
       });
-      const mapped = mapApiWorkflowToDefinition(updated, workflow, workspace.id, workflowOptions, ownerLabelsByUserId);
+      const mapped = mapApiWorkflowToDefinition(updated, workflow, workspace.id, workflowOptions, ownerLabelsByUserId, workflowAgents);
       setWorkflows((current) => current.map((item) => item.id === workflow.id
         ? { ...mapped, runs: item.runs, lastRun: item.lastRun }
         : item));
@@ -523,7 +523,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     setCreatingWorkflow(true);
     try {
       const workflow = await createWorkflow(workspace.id, buildWorkflowCreateInput(createDraft));
-      const mapped = mapApiWorkflowToDefinition(workflow, undefined, workspace.id, workflowOptions, ownerLabelsByUserId);
+      const mapped = mapApiWorkflowToDefinition(workflow, undefined, workspace.id, workflowOptions, ownerLabelsByUserId, workflowAgents);
       setWorkflows((current) => [mapped, ...current]);
       selectResultingWorkflow(mapped.id);
       setCreateDraft(createWorkflowDraft());

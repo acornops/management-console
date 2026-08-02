@@ -21,17 +21,9 @@ export function targetSummary(target: Record<string, any>): Record<string, unkno
 
 export function workflowOptions(state: FixtureState) {
   return {
-    mcpServers: [{ value: 'fixture-mcp', label: 'AcornOps Kubernetes Tools', description: 'Target-native Kubernetes tools', provenance: { source: 'target', targetId: FIXTURE_IDS.cluster, targetName: 'Singapore Production', serverId: 'fixture-mcp' } }],
-    mcpTools: state.targetTools.map((tool) => ({ value: `fixture-mcp:${tool.name}`, label: tool.name, description: tool.description, provenance: { source: 'target', targetId: FIXTURE_IDS.cluster, serverId: 'fixture-mcp', toolName: tool.name } })),
-    skills: state.targetSkills.map((skill) => ({ value: skill.id, label: skill.name, description: skill.description, provenance: { source: 'target', targetId: FIXTURE_IDS.cluster } })),
     agents: state.agents.map((agent) => ({ value: agent.id, label: agent.name, description: agent.description, provenance: { source: 'agent', agentId: agent.id } })),
-    outputFormats: [{ value: 'markdown', label: 'Markdown' }, { value: 'json', label: 'JSON' }],
-    approvalPolicies: [{ value: 'ask_before_changes', label: 'Ask before changes' }],
-    runtimeLimits: [{ value: '600', label: '10 minutes' }],
-    retentionPolicies: [{ value: '30', label: '30 days' }],
     sourceAvailability: {
-      mcpServers: { status: 'available' }, mcpTools: { status: 'available' },
-      skills: { status: 'available' }, agents: { status: 'available' }
+      agents: { status: 'available' }
     }
   };
 }
@@ -79,10 +71,10 @@ export function targetToolCatalog(state: FixtureState, targetId: string) {
         }
       },
       {
-        id: 'reports.pdf.generate',
-        label: 'Generate PDF report',
-        description: 'Create a provenance-linked PDF incident report from the current assistant conversation and available evidence.',
-        enabled: state.targetToolSettings['reports.pdf.generate'] ?? true,
+        id: 'documents.create',
+        label: 'Create document',
+        description: 'Create a provenance-linked PDF or Markdown document from the current assistant conversation and available evidence.',
+        enabled: state.targetToolSettings['documents.create'] ?? true,
         toggleable: true,
         origin: 'platform_native',
         capability: 'read',

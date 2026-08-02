@@ -217,8 +217,8 @@ export function createFixtureState(): FixtureState {
       status: 'active',
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
-      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
-      tools: ['prompt.resources.read', 'reports.pdf.generate'],
+      semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
+      tools: ['documents.create'],
       contextScope: [], contextGrants: [], readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Kubernetes MCP tools', createdAt: EARLIER, updatedAt: NOW
     },
@@ -230,8 +230,8 @@ export function createFixtureState(): FixtureState {
       status: 'active',
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
-      semanticCapabilityIds: ['prompt.resources.read', 'reports.pdf.generate', 'infrastructure.diagnostics.read'],
-      tools: ['prompt.resources.read', 'reports.pdf.generate'],
+      semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read'],
+      tools: ['documents.create'],
       contextScope: [],
       contextGrants: [], readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Virtual-machine MCP tools', createdAt: EARLIER, updatedAt: NOW
@@ -246,7 +246,6 @@ export function createFixtureState(): FixtureState {
     starterPrompt: 'Review production health and produce a concise operational summary.', agentIds: [FIXTURE_IDS.workflowAnalystAgent, FIXTURE_IDS.specialistAgent],
     executionMode: 'coordinated',
     category: 'Operations', tags: ['production', 'health'],
-    capabilityPolicy: { mode: 'read_only', semanticCapabilityIds: ['workspace.audit.read', 'issue.read'], contextGrants: ['workspace.summary'], maxRuntimeSeconds: 600, retentionDays: 30, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
     id: 'fixture-template-kubernetes-health', workspaceId: FIXTURE_IDS.workspace,
@@ -255,7 +254,6 @@ export function createFixtureState(): FixtureState {
     prompt: "Assess the available Kubernetes environments' current health without making changes. Inspect workload readiness and availability, pod restarts, warning events, resource pressure, and relevant recent logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
     agentIds: [FIXTURE_IDS.kubernetesAgent], executionMode: 'direct',
     category: 'Operations', tags: ['diagnostics'],
-    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['infrastructure.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 90, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }, {
     id: 'fixture-template-virtual-machine-health', workspaceId: FIXTURE_IDS.workspace,
@@ -264,7 +262,6 @@ export function createFixtureState(): FixtureState {
     prompt: "Assess the selected Linux virtual machine's current health without making changes. Inspect the host summary, filesystem pressure, top processes, network listeners, degraded systemd services, and relevant allowlisted journal logs. Cite the exact evidence for each finding, distinguish observations from inferences, call out unavailable evidence, and finish with prioritized safe next actions.",
     agentIds: [FIXTURE_IDS.virtualMachineAgent], executionMode: 'direct',
     category: 'Operations', tags: ['diagnostics', 'virtual-machine'],
-    capabilityPolicy: { mode: 'read_only', restrictionMode: 'restrict', semanticCapabilityIds: ['infrastructure.diagnostics.read'], contextGrants: [], maxRuntimeSeconds: 900, retentionDays: 180, approvalRequirements: [] },
     readiness: { status: 'ready', reasons: [] }
   }];
   const automationTemplates = [
@@ -551,7 +548,7 @@ export function createFixtureState(): FixtureState {
     targetToolSettings: {
       web_search: true,
       target_insights: true,
-      'reports.pdf.generate': true
+      'documents.create': true
     },
     targetSkills: [
       { id: 'fixture-kubernetes-triage', target_id: FIXTURE_IDS.cluster, target_type: 'kubernetes', name: 'Kubernetes triage', description: 'Evidence-first workload health investigation.', enabled: true, revision: 1, contentDigest: 'sha256:fixture-skill', source: { type: 'manual' }, files: [{ path: 'SKILL.md', content: '# Kubernetes triage\nInspect events, status, and logs.', contentDigest: 'sha256:fixture-skill-file' }] },

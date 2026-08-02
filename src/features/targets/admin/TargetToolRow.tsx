@@ -34,6 +34,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
   const isBlockedByOtherToolToggle = Boolean(pendingToolId && !isTogglingTool);
   const canEditTool = canEditTools && (tool.permissions?.canEdit ?? true);
   const isPlatformNative = tool.origin === 'platform_native';
+  const isConfigurablePlatformNative = isPlatformNative && tool.id === 'http.fetch.get';
   const isUnavailable = tool.enabled && tool.availability?.available === false;
   const isToggleable = tool.toggleable ?? !isPlatformNative;
   const canToggleTool = isToggleable && canEditTool && !isBlockedByOtherToolToggle && !isTogglingTool;
@@ -88,7 +89,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
                   </MenuItem>
                 )}
               </>
-            ) : !isPlatformNative ? (
+            ) : !isPlatformNative || isConfigurablePlatformNative ? (
               <MenuItem
                 onClick={() => {
                   onConfigure(tool);
@@ -162,7 +163,7 @@ export const TargetToolRow: React.FC<TargetToolRowProps> = ({
         <StatusBadge tone="neutral" className="px-2.5 py-1">{runtimeLabel}</StatusBadge>
       </DataTableCell>
       <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
-        {isPlatformNative ? (
+        {isPlatformNative && !isConfigurablePlatformNative ? (
           <span className="type-caption text-ui-text-muted">{t('tools.noConfiguration')}</span>
         ) : (
           actionMenu

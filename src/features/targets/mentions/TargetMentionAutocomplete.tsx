@@ -1,12 +1,14 @@
 import React from 'react';
-import { Server } from 'lucide-react';
+import { AtSign, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { ComboboxListbox, ComboboxOption, Textarea } from '@acornops/ui';
 import { listTargetsForWorkspace } from '@/services/control-plane/targetApi';
 import type { TargetSummary } from '@/services/control-plane/types';
 import {
+  completeTargetMentionType,
   insertTargetMention,
+  resolveTargetMentionKeyboardAction,
   resolveTargetMentionQuery,
   type TargetMentionQuery
 } from '@/features/targets/mentions/targetMentionModel';
@@ -44,7 +46,14 @@ export function useTargetMentionAutocomplete({
   }, []);
 
   React.useEffect(() => {
-    if (!enabled || !mentionQuery) return;
+    if (!enabled || mentionQuery?.stage !== 'target') {
+      requestSequence.current += 1;
+      setTargets([]);
+      setActiveIndex(0);
+      setLoading(false);
+      setError(false);
+      return;
+    }
     const sequence = ++requestSequence.current;
     setTargets([]);
     setActiveIndex(0);
@@ -64,7 +73,7 @@ export function useTargetMentionAutocomplete({
     }).finally(() => {
       if (requestSequence.current === sequence) setLoading(false);
     });
-  }, [enabled, mentionQuery?.query, workspaceId]);
+  }, [enabled, mentionQuery?.query, mentionQuery?.stage, workspaceId]);
 
   const handleInputChange = React.useCallback((nextValue: string, cursor: number) => {
     onValueChange(nextValue, cursor);
@@ -78,8 +87,20 @@ export function useTargetMentionAutocomplete({
     setActiveIndex(0);
   }, [dismiss, enabled, onValueChange]);
 
+  const selectMentionType = React.useCallback(() => {
+    if (mentionQuery?.stage !== 'type') return;
+    const insertion = completeTargetMentionType(value, mentionQuery);
+    onValueChange(insertion.value, insertion.cursor);
+    setMentionQuery(resolveTargetMentionQuery(insertion.value, insertion.cursor));
+    setActiveIndex(0);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus({ preventScroll: true });
+      inputRef.current?.setSelectionRange(insertion.cursor, insertion.cursor);
+    });
+  }, [inputRef, mentionQuery, onValueChange, value]);
+
   const selectTarget = React.useCallback((target: TargetSummary) => {
-    if (!mentionQuery) return;
+    if (mentionQuery?.stage !== 'target') return;
     const insertion = insertTargetMention(value, mentionQuery, target.name);
     dismiss();
     onValueChange(insertion.value, insertion.cursor);
@@ -91,26 +112,25 @@ export function useTargetMentionAutocomplete({
 
   const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!mentionQuery) return false;
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      event.preventDefault();
-      const direction = event.key === 'ArrowDown' ? 1 : -1;
+    const action = resolveTargetMentionKeyboardAction(
+      mentionQuery.stage,
+      event.key,
+      event.shiftKey,
+      Boolean(targets[activeIndex])
+    );
+    if (action === 'none') return false;
+    event.preventDefault();
+    if (action === 'complete_type') selectMentionType();
+    if (action === 'dismiss') dismiss();
+    if (action === 'select_target' && targets[activeIndex]) selectTarget(targets[activeIndex]);
+    if (action === 'move_next' || action === 'move_previous') {
+      const direction = action === 'move_next' ? 1 : -1;
       setActiveIndex((current) => targets.length === 0
         ? 0
         : (current + direction + targets.length) % targets.length);
-      return true;
     }
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      dismiss();
-      return true;
-    }
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      if (targets[activeIndex]) selectTarget(targets[activeIndex]);
-      return true;
-    }
-    return false;
-  }, [activeIndex, dismiss, mentionQuery, selectTarget, targets]);
+    return true;
+  }, [activeIndex, dismiss, mentionQuery, selectMentionType, selectTarget, targets]);
 
   return {
     activeIndex,
@@ -121,6 +141,7 @@ export function useTargetMentionAutocomplete({
     loading,
     mentionQuery,
     menuId,
+    selectMentionType,
     selectTarget,
     setActiveIndex,
     targets
@@ -133,7 +154,9 @@ interface TargetMentionMenuProps {
   error: boolean;
   id: string;
   loading: boolean;
+  mentionQuery: TargetMentionQuery;
   onActiveIndexChange: (index: number) => void;
+  onSelectMentionType: () => void;
   onSelect: (target: TargetSummary) => void;
   targets: TargetSummary[];
 }
@@ -144,11 +167,38 @@ export const TargetMentionMenu: React.FC<TargetMentionMenuProps> = ({
   error,
   id,
   loading,
+  mentionQuery,
   onActiveIndexChange,
+  onSelectMentionType,
   onSelect,
   targets
 }) => {
   const { t } = useTranslation();
+  const menuClassName = `${className} max-h-64 overflow-y-auto rounded-xl border border-ui-border bg-ui-surface-strong p-1.5 shadow-xl shadow-ui-text/10 custom-scrollbar`;
+  if (mentionQuery.stage === 'type') {
+    return (
+      <ComboboxListbox
+        id={id}
+        label={t('chat.targetMentionTypePickerLabel')}
+        className={menuClassName}
+      >
+        <ComboboxOption
+          id={`${id}-type-option`}
+          active
+          tabIndex={-1}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={onSelectMentionType}
+          className="control-target items-start gap-2 rounded-lg"
+        >
+          <AtSign className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate type-body type-emphasis">{t('chat.targetMentionTypeLabel')}</span>
+            <span className="mt-0.5 block type-caption text-ui-text-muted">{t('chat.targetMentionTypeDescription')}</span>
+          </span>
+        </ComboboxOption>
+      </ComboboxListbox>
+    );
+  }
   const emptyMessage = error
     ? t('chat.targetMentionLoadFailed')
     : loading
@@ -158,7 +208,7 @@ export const TargetMentionMenu: React.FC<TargetMentionMenuProps> = ({
     <ComboboxListbox
       id={id}
       label={t('chat.targetMentionPickerLabel')}
-      className={`${className} max-h-64 overflow-y-auto rounded-xl border border-ui-border bg-ui-surface-strong p-1.5 shadow-xl shadow-ui-text/10 custom-scrollbar`}
+      className={menuClassName}
     >
       {targets.length === 0 ? (
         <p className="px-3 py-3 type-ui text-ui-text-muted" role="status">{emptyMessage}</p>
@@ -167,6 +217,7 @@ export const TargetMentionMenu: React.FC<TargetMentionMenuProps> = ({
           key={target.id}
           id={`${id}-option-${index}`}
           active={index === activeIndex}
+          tabIndex={-1}
           onMouseEnter={() => onActiveIndexChange(index)}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => onSelect(target)}
@@ -232,12 +283,14 @@ export const TargetMentionTextarea = React.forwardRef<HTMLTextAreaElement, Targe
           autocomplete.dismiss();
         }}
         role="combobox"
-        aria-controls={autocomplete.menuId}
+        aria-controls={autocomplete.mentionQuery ? autocomplete.menuId : undefined}
         aria-expanded={Boolean(autocomplete.mentionQuery)}
         aria-autocomplete="list"
-        aria-activedescendant={autocomplete.mentionQuery && autocomplete.targets[autocomplete.activeIndex]
-          ? `${autocomplete.menuId}-option-${autocomplete.activeIndex}`
-          : undefined}
+        aria-activedescendant={autocomplete.mentionQuery?.stage === 'type'
+          ? `${autocomplete.menuId}-type-option`
+          : autocomplete.mentionQuery && autocomplete.targets[autocomplete.activeIndex]
+            ? `${autocomplete.menuId}-option-${autocomplete.activeIndex}`
+            : undefined}
       />
       {autocomplete.mentionQuery && (
         <TargetMentionMenu
@@ -245,8 +298,10 @@ export const TargetMentionTextarea = React.forwardRef<HTMLTextAreaElement, Targe
           activeIndex={autocomplete.activeIndex}
           error={autocomplete.error}
           loading={autocomplete.loading}
+          mentionQuery={autocomplete.mentionQuery}
           targets={autocomplete.targets}
           onActiveIndexChange={autocomplete.setActiveIndex}
+          onSelectMentionType={autocomplete.selectMentionType}
           onSelect={autocomplete.selectTarget}
         />
       )}

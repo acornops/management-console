@@ -5,6 +5,7 @@ import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ProjectMember, Workspace } from '@/types';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { mapApiAgent } from '@/pages/WorkspaceAgentsPage.helpers';
@@ -195,7 +196,8 @@ export const WorkspaceWorkflowsPage: React.FC<{
             undefined,
             workspace.id,
             effectiveWorkflowOptions,
-            workflowOwnerLabelsByUserId
+            workflowOwnerLabelsByUserId,
+            workflowAgents
           );
           const pendingRuns = pendingWorkflowRunsRef.current[workflow.id] || [];
           const runs = mergeWorkflowRunsWithLocalDispatches(workflow.runs, pendingRuns);
@@ -209,7 +211,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
       })
       .catch((error) => {
         if (!mounted) return;
-        setWorkflowLoadError(error instanceof Error ? error.message : 'Unable to load workflow catalog');
+        setWorkflowLoadError(formatControlPlaneError(error, 'Unable to load workflow catalog'));
         setWorkflowCatalogReady(true);
       });
     return () => { mounted = false; };
@@ -227,7 +229,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
       .catch((error) => {
         if (!mounted) return;
         setWorkflowOptions(createFallbackWorkflowOptions([]));
-        setWorkflowOptionsError(error instanceof Error ? error.message : 'Unable to load workflow options');
+        setWorkflowOptionsError(formatControlPlaneError(error, 'Unable to load workflow options'));
         setWorkflowOptionsCatalogWorkspaceId(workspace.id);
       });
     return () => { mounted = false; };
@@ -370,7 +372,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
       createDraft, setCreateDraft, setCreatePanelOpen, setCreateError, setCreatingWorkflow,
       canManageWorkflows, workflowOptionsReady, launchBlocker, workflowOptions: effectiveWorkflowOptions, agentSelectionDrafts, setAgentSelectionDrafts,
      setEditingAgentSelectionId, setAgentSelectionError, setAgentSelectionResult, setSavingAgentSelectionId,
-     ownerLabelsByUserId: workflowOwnerLabelsByUserId
+     ownerLabelsByUserId: workflowOwnerLabelsByUserId, workflowAgents
   });
   return (
     <PageShell
@@ -505,7 +507,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
                 <WorkflowCapabilitiesPanel
                   workflow={selectedWorkflow}
                   agents={workflowAgents}
-                  catalogFailures={(['mcpTools', 'agents'] as const).flatMap((source) => ['error', 'unavailable'].includes(workflowOptions.sourceAvailability[source]?.status) ? [workflowOptions.sourceAvailability[source]?.message || source] : [])}
+                  catalogFailures={['error', 'unavailable'].includes(workflowOptions.sourceAvailability.agents?.status) ? [workflowOptions.sourceAvailability.agents?.message || 'agents'] : []}
                   onRetryCatalog={() => setWorkflowOptionsReloadKey((value) => value + 1)}
                 />
               )}

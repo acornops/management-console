@@ -6,12 +6,12 @@ import { GeneratedReportCard } from './GeneratedReportCard';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 
 const t = ((key: string, options?: Record<string, unknown>) => {
-  if (key === 'chat.generatedIncidentReport') return 'Generated incident report';
-  if (key === 'chat.downloadPdf') return 'Download PDF';
-  if (key === 'chat.reportAvailableUntil') return `Available until ${String(options?.date || '')}`;
-  if (key === 'chat.reportAuthenticatedDownload') return 'Authenticated download';
-  if (key === 'chat.incidentReportGenerationFailed') return 'Incident report generation failed';
-  if (key === 'chat.incidentReportGenerationFailedBody') return 'Try the request again.';
+  if (key === 'chat.generatedDocument') return 'Generated document';
+  if (key === 'chat.downloadDocument') return 'Download document';
+  if (key === 'chat.documentAvailableUntil') return `Available until ${String(options?.date || '')}`;
+  if (key === 'chat.documentAuthenticatedDownload') return 'Authenticated download';
+  if (key === 'chat.documentGenerationFailed') return 'Document generation failed';
+  if (key === 'chat.documentGenerationFailedBody') return 'Try the request again.';
   return key;
 }) as TFunction;
 
@@ -26,11 +26,11 @@ describe('GeneratedReportCard', () => {
         t={t}
         trace={trace([{
           callId: 'call-1',
-          tool: 'acornops_generate_pdf_report',
+          tool: 'acornops_create_document',
           status: 'completed',
           isError: false,
-          reportArtifact: {
-            reportId: 'report-1',
+          documentArtifact: {
+            documentId: 'document-1',
             title: 'Payments outage incident report',
             mediaType: 'application/pdf',
             downloadUrl: '/api/v1/report-artifacts/report-1/download',
@@ -40,9 +40,9 @@ describe('GeneratedReportCard', () => {
       />
     );
 
-    expect(html).toContain('Generated incident report');
+    expect(html).toContain('Generated document');
     expect(html).toContain('Payments outage incident report');
-    expect(html).toContain('Download PDF');
+    expect(html).toContain('Download document');
     expect(html).toContain('/api/v1/report-artifacts/report-1/download');
     expect(html).toContain('download=""');
     expect(html).not.toContain('role="alert"');
@@ -54,7 +54,7 @@ describe('GeneratedReportCard', () => {
         t={t}
         trace={trace([{
           callId: 'call-1',
-          tool: 'acornops_generate_pdf_report',
+          tool: 'acornops_create_document',
           status: 'completed',
           isError: true
         }])}
@@ -62,7 +62,30 @@ describe('GeneratedReportCard', () => {
     );
 
     expect(html).toContain('role="alert"');
-    expect(html).toContain('Incident report generation failed');
-    expect(html).not.toContain('Download PDF');
+    expect(html).toContain('Document generation failed');
+    expect(html).not.toContain('Download document');
+  });
+
+  it('renders a Markdown document download', () => {
+    const html = renderToStaticMarkup(
+      <GeneratedReportCard
+        t={t}
+        trace={trace([{
+          callId: 'call-1',
+          tool: 'acornops_create_document',
+          status: 'completed',
+          isError: false,
+          documentArtifact: {
+            documentId: 'document-2',
+            title: 'Incident notes',
+            mediaType: 'text/markdown',
+            downloadUrl: '/api/v1/report-artifacts/document-1/download'
+          }
+        }])}
+      />
+    );
+
+    expect(html).toContain('Generated document');
+    expect(html).toContain('Download document');
   });
 });

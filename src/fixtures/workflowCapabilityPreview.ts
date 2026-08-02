@@ -8,11 +8,13 @@ export function workflowCapabilityPreview(
 ): Record<string, unknown> | undefined {
   const workflow = state.workflows.find((item) => item.id === workflowId);
   if (!workflow) return undefined;
+  const assignedAgents = state.agents.filter((agent) => workflow.agentIds.includes(agent.id));
+  const semanticCapabilityIds = [...new Set(assignedAgents.flatMap((agent) => agent.semanticCapabilityIds))].sort();
   const tools: Array<Record<string, unknown>> = [];
   return {
     workflowId,
-    mode: (workflow.capabilityPolicy as { mode?: string } | undefined)?.mode || 'read_only',
-    semanticCapabilityIds: (workflow.capabilityPolicy as { semanticCapabilityIds?: string[] } | undefined)?.semanticCapabilityIds || [],
+    mode: assignedAgents.some((agent) => agent.permissionMode !== 'read_only') ? 'read_write' : 'read_only',
+    semanticCapabilityIds,
     checkedAt: NOW,
     status: 'ready',
     reasonCodes: [],

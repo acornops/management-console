@@ -38,7 +38,7 @@ export const SidebarSection: React.FC<{
     badge={badge ? <ExperimentalBadge>{badge}</ExperimentalBadge> : undefined}
     compactAfter={compactAfter}
     className={collapsed
-      ? `px-3 pb-0.5 [&>div:last-child]:space-y-0.5 ${title ? '[&>div:first-child]:sr-only' : ''}`
+      ? `px-3 pb-0 [&>div:last-child]:space-y-0.5 ${title ? '[&>div:first-child]:sr-only' : ''}`
       : undefined}
   >
     {children}

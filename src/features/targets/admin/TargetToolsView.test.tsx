@@ -55,14 +55,14 @@ describe('TargetToolsView', () => {
       targetType: target.targetType,
       permissions: { canEdit: true },
       items: [{
-        id: 'prompt.resources.read',
-        label: 'Read prompt resources',
-        description: 'Read bounded evidence.',
+        id: 'http.fetch.get',
+        label: 'Fetch',
+        description: 'Fetch an allowed HTTPS URL.',
         enabled: true,
         origin: 'platform_native',
         capability: 'read',
         runtimeKind: 'function',
-        config: {}
+        config: { allowedUrlPatterns: ['https://api.example.com/*'] }
       }]
     };
 
@@ -72,5 +72,7 @@ describe('TargetToolsView', () => {
 
     expect(markup).toContain('<tbody class="divide-y divide-ui-bg">');
     expect(markup).toContain('data-target-capability-table-frame="true"');
+    expect(markup).toContain('data-target-tool-primary-actions="true"');
+    expect(markup).toContain('aria-label="Actions for Fetch"');
   });
 });
