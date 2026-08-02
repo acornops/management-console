@@ -74,7 +74,19 @@ gates.
     because this repository tracks route baselines only for Linux. The
     generated untracked macOS baselines were removed. Fixture and MCP parity
     stages were validated separately as recorded above.
-- Pending GitHub Actions timing evidence.
+- GitHub Actions run `30744022932`, attempt 1
+  - Preflight passed in 1m31s and correctly gated all browser jobs.
+  - A mobile-light route screenshot exposed a nondeterministic document scroll
+    on `workspace-incoming-webhooks`; matrix fail-fast cancelled the remaining
+    long-running jobs.
+- GitHub Actions run `30744022932`, attempt 2
+  - The failed and cancelled jobs passed unchanged, confirming the mismatch was
+    a harness race rather than a product or baseline regression.
+- GitHub Actions run `30744022932`, attempt 3
+  - A fresh full run reproduced the same incoming-webhooks scroll mismatch in
+    mobile-dark. The shared route preparation now waits for tab scroll effects
+    to settle and resets the document to the baseline scroll position.
+- Pending final GitHub Actions timing evidence after scroll stabilization.
 
 ## Completion criteria
 
