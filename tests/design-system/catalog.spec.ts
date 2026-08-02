@@ -63,6 +63,7 @@ test('action menus navigate, dismiss, restore focus, and stay in the nearest dia
   await page.getByRole('heading', { name: 'Fields and selection controls' }).click();
   await expect(menu).toHaveCount(0);
   await trigger.click();
+  await expect(menu.getByRole('menuitem', { name: 'Selected item' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(menu).toHaveCount(0);
 

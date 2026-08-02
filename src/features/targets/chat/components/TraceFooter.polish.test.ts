@@ -25,7 +25,7 @@ describe('trace footer polish contracts', () => {
     expect(traceFooter).toContain('const FOLLOW_LATEST_THRESHOLD_PX = 24;');
     expect(traceFooter).toContain('function isLatestEventInFollowZone');
     expect(traceFooter).toContain('shouldFollowLatestRef.current = isLatestEventInFollowZone');
-    expect(traceFooter).toContain('onScroll={handleTimelineScroll}');
+    expect(traceFooter).toContain("onScroll={timelineLayout === 'contained' ? handleTimelineScroll : undefined}");
     expect(traceFooter).toContain('if (!shouldFollowLatestRef.current) return;');
     expect(traceFooter).toContain('(!previousDisclosure.isExpanded && isExpanded)');
     expect(traceFooter).toContain('latestEvent.offsetTop + latestEvent.offsetHeight - scrollContainer.clientHeight');
