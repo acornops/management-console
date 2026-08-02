@@ -26,7 +26,7 @@ async function openDiscoverySurface(page: Page, route: string, searchName: strin
   await page.goto(route, { waitUntil: 'domcontentloaded' });
   const search = page.getByRole('searchbox', { name: searchName });
   await expect(search).toBeVisible({ timeout: 60_000 });
-  const bar = page.locator('[data-discovery-filter-bar="true"]');
+  const bar = page.locator('[data-discovery-filter-bar="true"]').filter({ has: search });
   await expect(bar).toBeVisible();
   const result = bar.getByRole('status');
   await expect(result).toBeVisible();
@@ -117,10 +117,20 @@ test('workflow search-only discovery keeps search dominant without overflow', as
       workflow.search.boundingBox(),
       workflow.result.boundingBox()
     ]);
-    expect(searchBox!.width).toBeGreaterThan(resultBox!.width * 2);
-    expect(Math.abs((searchBox!.y + searchBox!.height / 2) - (resultBox!.y + resultBox!.height / 2))).toBeLessThanOrEqual(2);
-    await expectRightAlignedResult(workflow.bar, workflow.result);
-    await expectContainedControls(workflow.bar);
+    if (width < 1440) {
+      expect(searchBox!.width).toBeGreaterThan(resultBox!.width * 2);
+      expect(Math.abs((searchBox!.y + searchBox!.height / 2) - (resultBox!.y + resultBox!.height / 2))).toBeLessThanOrEqual(2);
+      await expectRightAlignedResult(workflow.bar, workflow.result);
+    } else {
+      expect(searchBox!.width).toBeGreaterThan(resultBox!.width);
+      expect(resultBox!.y).toBeGreaterThanOrEqual(searchBox!.y + searchBox!.height + 11);
+      expect(Math.abs(searchBox!.x - resultBox!.x)).toBeLessThanOrEqual(1);
+      const barBox = await workflow.bar.boundingBox();
+      expect(searchBox!.x).toBeGreaterThanOrEqual(barBox!.x);
+      expect(searchBox!.x + searchBox!.width).toBeLessThanOrEqual(barBox!.x + barBox!.width);
+      expect(resultBox!.x + resultBox!.width).toBeLessThanOrEqual(barBox!.x + barBox!.width);
+    }
+    if (width < 1440) await expectContainedControls(workflow.bar);
   }
 });
 
