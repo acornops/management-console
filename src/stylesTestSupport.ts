@@ -96,8 +96,8 @@ export const thinkingAcorn = readSource(
 export const messageActions = readSource(
   'src/features/targets/chat/components/MessageActions.tsx'
 );
-export const generatedReportCard = readSource(
-  'src/features/targets/chat/components/GeneratedReportCard.tsx'
+export const generatedDocumentCard = readSource(
+  'src/features/targets/chat/components/GeneratedDocumentCard.tsx'
 );
 export const userMessageTurn = readSource(
   'src/features/targets/chat/components/UserMessageTurn.tsx'

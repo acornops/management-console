@@ -2,7 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { TFunction } from 'i18next';
-import { GeneratedReportCard } from './GeneratedReportCard';
+import { GeneratedDocumentCard } from './GeneratedDocumentCard';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 
 const t = ((key: string, options?: Record<string, unknown>) => {
@@ -19,10 +19,10 @@ function trace(toolCalls: LiveRunTrace['toolCalls']): LiveRunTrace {
   return { runId: 'run-1', status: 'completed', steps: [], toolCalls };
 }
 
-describe('GeneratedReportCard', () => {
-  it('renders the persisted report as an authenticated PDF download outside trace details', () => {
+describe('GeneratedDocumentCard', () => {
+  it('renders the persisted document as an authenticated PDF download outside trace details', () => {
     const html = renderToStaticMarkup(
-      <GeneratedReportCard
+      <GeneratedDocumentCard
         t={t}
         trace={trace([{
           callId: 'call-1',
@@ -33,7 +33,7 @@ describe('GeneratedReportCard', () => {
             documentId: 'document-1',
             title: 'Payments outage incident report',
             mediaType: 'application/pdf',
-            downloadUrl: '/api/v1/report-artifacts/report-1/download',
+            downloadUrl: '/api/v1/generated-documents/document-1/download',
             retentionExpiresAt: '2026-07-26T00:00:00.000Z'
           }
         }])}
@@ -43,14 +43,14 @@ describe('GeneratedReportCard', () => {
     expect(html).toContain('Generated document');
     expect(html).toContain('Payments outage incident report');
     expect(html).toContain('Download document');
-    expect(html).toContain('/api/v1/report-artifacts/report-1/download');
+    expect(html).toContain('/api/v1/generated-documents/document-1/download');
     expect(html).toContain('download=""');
     expect(html).not.toContain('role="alert"');
   });
 
-  it('renders an accessible error when the report function fails', () => {
+  it('renders an accessible error when document creation fails', () => {
     const html = renderToStaticMarkup(
-      <GeneratedReportCard
+      <GeneratedDocumentCard
         t={t}
         trace={trace([{
           callId: 'call-1',
@@ -68,7 +68,7 @@ describe('GeneratedReportCard', () => {
 
   it('renders a Markdown document download', () => {
     const html = renderToStaticMarkup(
-      <GeneratedReportCard
+      <GeneratedDocumentCard
         t={t}
         trace={trace([{
           callId: 'call-1',
@@ -79,7 +79,7 @@ describe('GeneratedReportCard', () => {
             documentId: 'document-2',
             title: 'Incident notes',
             mediaType: 'text/markdown',
-            downloadUrl: '/api/v1/report-artifacts/document-1/download'
+            downloadUrl: '/api/v1/generated-documents/document-1/download'
           }
         }])}
       />

@@ -8,7 +8,7 @@ import {
   chatGateDialog,
   chatTranscriptStates,
   conversationAssistantStatuses, chatSessionSync,
-  generatedReportCard,
+  generatedDocumentCard,
   chatSubmit, chatSubmitTypes,
   chatView,
   conversationHistory,
@@ -456,14 +456,14 @@ describe('target chat polish contracts', () => {
     expect(messageActions).toContain("aria-label={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}");
     expect(messageActions).not.toContain('onGeneratePdf');
     expect(messageActions).not.toContain('FileDown');
-    expect(chatView).not.toContain('createRunReportArtifact');
-    expect(assistantTurn).toContain('<GeneratedReportCard trace={trace} t={t} />');
-    expect(generatedReportCard).toContain("'acornops_create_document'");
-    expect(generatedReportCard).toContain("t('chat.generatedDocument')");
-    expect(generatedReportCard).toContain("t('chat.downloadDocument')");
-    expect(generatedReportCard).toContain('getControlPlaneUrl(document.downloadUrl).toString()');
-    expect(generatedReportCard).toContain('<InlineAlert tone="danger"');
-    expect(generatedReportCard).not.toContain('setTraceExpanded');
+    expect(chatView).not.toContain('createRunGeneratedDocument');
+    expect(assistantTurn).toContain('<GeneratedDocumentCard trace={trace} t={t} />');
+    expect(generatedDocumentCard).toContain("'acornops_create_document'");
+    expect(generatedDocumentCard).toContain("t('chat.generatedDocument')");
+    expect(generatedDocumentCard).toContain("t('chat.downloadDocument')");
+    expect(generatedDocumentCard).toContain('getControlPlaneUrl(document.downloadUrl).toString()');
+    expect(generatedDocumentCard).toContain('<InlineAlert tone="danger"');
+    expect(generatedDocumentCard).not.toContain('setTraceExpanded');
     expect(enLocale).toContain("generatedDocument: 'Generated document'");
     expect(zhLocale).toContain("generatedDocument: '已生成文档'");
     expect(messageActions).toContain("align === 'right' ? 'justify-end text-ui-text-muted' : 'justify-start'");

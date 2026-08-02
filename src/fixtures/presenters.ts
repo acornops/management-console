@@ -73,7 +73,7 @@ export function targetToolCatalog(state: FixtureState, targetId: string) {
       {
         id: 'documents.create',
         label: 'Create document',
-        description: 'Create a provenance-linked PDF or Markdown document from the current assistant conversation and available evidence.',
+        description: 'Create a PDF or Markdown document.',
         enabled: state.targetToolSettings['documents.create'] ?? true,
         toggleable: true,
         origin: 'platform_native',

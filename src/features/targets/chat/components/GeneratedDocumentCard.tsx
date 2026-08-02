@@ -6,23 +6,23 @@ import type { LiveRunTrace } from '@/features/targets/chat/types';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { IconTile, InlineAlert } from '@acornops/ui';
 
-interface GeneratedReportCardProps {
+interface GeneratedDocumentCardProps {
   trace?: LiveRunTrace;
   t: TFunction;
 }
 
-const REPORT_TOOL_NAMES = new Set([
+const DOCUMENT_TOOL_NAMES = new Set([
   'acornops_create_document',
   'documents.create'
 ]);
 
-export const GeneratedReportCard: React.FC<GeneratedReportCardProps> = ({ trace, t }) => {
+export const GeneratedDocumentCard: React.FC<GeneratedDocumentCardProps> = ({ trace, t }) => {
   const documentCalls = trace?.toolCalls.filter((call) => call.documentArtifact) || [];
   const documents = documentCalls
     .map((call) => call.documentArtifact!)
     .filter((document, index, items) => items.findIndex((item) => item.documentId === document.documentId) === index);
   const generationFailed = Boolean(trace?.toolCalls.some((call) => (
-    REPORT_TOOL_NAMES.has(call.tool)
+    DOCUMENT_TOOL_NAMES.has(call.tool)
     && call.status === 'completed'
     && call.isError
     && !call.documentArtifact
