@@ -28,7 +28,6 @@ async function prepareRoute(
   await page.evaluate(() => new Promise<void>((resolve) => {
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
   }));
-  await page.evaluate(() => document.querySelector<HTMLElement>('.page-shell')?.scrollTo(0, 0));
   await page.evaluate(() => window.scrollTo(0, 0));
 }
 

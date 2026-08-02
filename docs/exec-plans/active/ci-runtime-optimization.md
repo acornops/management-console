@@ -93,9 +93,13 @@ gates.
     page jump at the source while retaining compact-tab visibility.
 - GitHub Actions run `30745187201`, attempt 1
   - Mobile-light still reproduced the displacement because authenticated
-    routes scroll inside `.page-shell`, not the window. Route preparation now
-    resets that canonical scroller, and active-tab reveal preserves its
-    `scrollTop` directly.
+    routes scroll inside `.page-shell`, not the window. Active-tab reveal now
+    preserves that canonical scroller's `scrollTop` directly.
+- GitHub Actions run `30745526180`, attempt 1
+  - Incoming webhooks passed after preserving `.page-shell` scroll in compact
+    tabs. The generic harness reset then displaced the intentionally deep-linked
+    MCP registries route, so that reset was removed; route-specific scrolling
+    remains intact.
 - Pending final GitHub Actions timing evidence after scroll stabilization.
 
 ## Completion criteria
