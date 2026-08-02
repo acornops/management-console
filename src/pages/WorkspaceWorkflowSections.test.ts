@@ -98,7 +98,7 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain('<WorkspaceIncomingWebhooksPage');
     expect(schedulesPage).toContain('<PageShell embedded={embedded}');
     expect(webhooksPage).toContain('<PageShell embedded={embedded}');
-    expect(schedulesPage).toContain('<DialogFrame');
+    expect(schedulesPage).toContain('<WorkspaceScheduleDialog');
     expect(webhooksPage).toContain('<DialogFrame');
     expect(schedulesPage).toContain('<DataTable');
     expect(webhooksPage).toContain('<DataTable');

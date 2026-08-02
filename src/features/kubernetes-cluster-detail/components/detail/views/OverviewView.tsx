@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, Bot, CircleCheck, Cpu } from 'lucide-react';
+import { Activity, AlertTriangle, Bot, Box, CircleCheck, Cpu, Layers, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
@@ -79,7 +79,7 @@ function getPersistedMetricTimeline(points: ClusterMetricHistoryPoint[]): Metric
 }
 
 export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummary, onOpenCopilot }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const podCount = getPodCount(cluster);
   const telemetryFreshness = getTelemetryFreshness(cluster);
   const telemetryLabel = getTelemetryFreshnessLabel(telemetryFreshness);
@@ -192,6 +192,41 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const scopedResourceCount =
     cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
+  const hasNodeInventory = cluster.nodes.length > 0;
+  const observedNodeCount = cluster.resourceSummary?.nodeCount ?? cluster.nodes.length;
+  const readyNodeCount = cluster.nodes.filter((node) => node.status.toLowerCase() === 'ready').length;
+  const observedNamespaceCount = cluster.resourceSummary?.namespaceCount ?? cluster.namespaces.length;
+  const countFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
+  const clusterSummaryCards = [
+    {
+      label: t('clusterOverview.nodeReadiness'),
+      value: hasNodeInventory ? `${readyNodeCount}/${cluster.nodes.length}` : t('common.unknown'),
+      detail: hasNodeInventory
+        ? t('clusterOverview.nodesReadyDetail', { ready: readyNodeCount, total: cluster.nodes.length })
+        : observedNodeCount > 0
+          ? t('clusterOverview.nodesObserved', { count: observedNodeCount })
+          : t('clusterOverview.inventoryPending'),
+      Icon: Server
+    },
+    {
+      label: t('clusterOverview.runningPodsLabel'),
+      value: `${cluster.podStats.running}/${podCount}`,
+      detail: t('clusterOverview.podStateDetail', { pending: cluster.podStats.pending, failed: cluster.podStats.failed }),
+      Icon: Box
+    },
+    {
+      label: t('clusterOverview.namespacesObserved'),
+      value: countFormatter.format(observedNamespaceCount),
+      detail: t('clusterOverview.inventoryObservedDetail'),
+      Icon: Layers
+    },
+    {
+      label: t('clusterOverview.resourcesObserved'),
+      value: countFormatter.format(scopedResourceCount),
+      detail: t('clusterOverview.inventoryObservedDetail'),
+      Icon: Activity
+    }
+  ];
   const openIssueTriage = (issue: ControlPlaneIssueItem) => {
     const namespace = kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'));
     const scope = issueTargetScopeLabel(issue, namespace);
@@ -437,6 +472,23 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
           />
         </div>
       )}
+
+      <section aria-label={t('clusterOverview.inventorySummary')} className="mb-12 grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {clusterSummaryCards.map(({ label, value, detail, Icon }) => (
+          <div key={label} className="rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <IconTile size="sm" tone="metric">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </IconTile>
+              <div className="min-w-0">
+                <p className="type-micro-label text-ui-text-muted">{label}</p>
+                <p className="mt-1 type-data">{value}</p>
+              </div>
+            </div>
+            <p className="type-caption mt-3 truncate text-ui-text-muted">{detail}</p>
+          </div>
+        ))}
+      </section>
     </PageShell>
   );
 };
