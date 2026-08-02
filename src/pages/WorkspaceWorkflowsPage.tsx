@@ -352,6 +352,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const workflowToDelete = deleteWorkflowId
     ? workflows.find((workflow) => workflow.id === deleteWorkflowId)
     : undefined;
+  const usesBoundedWorkflowDetail = activeView !== 'runs';
   const closeDeleteWorkflowDialog = () => {
     if (deletingWorkflowId) return;
     setDeleteWorkflowId('');
@@ -376,8 +377,8 @@ export const WorkspaceWorkflowsPage: React.FC<{
   });
   return (
     <PageShell
-      className="lg:overflow-y-hidden"
-      contentClassName="lg:flex lg:h-full lg:min-h-0 lg:flex-col"
+      className={usesBoundedWorkflowDetail ? 'lg:overflow-y-hidden' : undefined}
+      contentClassName={usesBoundedWorkflowDetail ? 'lg:flex lg:h-full lg:min-h-0 lg:flex-col' : undefined}
     >
       <PageHeader
         title="Workflows"
@@ -397,7 +398,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
         id="workflow-section-all-panel"
         role="tabpanel"
         aria-labelledby="workflow-section-all-tab"
-        className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
+        className={usesBoundedWorkflowDetail ? 'lg:flex lg:min-h-0 lg:flex-1 lg:flex-col' : undefined}
       >
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
       {workflowOptionsError && <InlineAlert tone="danger" className="mb-4 type-body" title="Workflow options could not be loaded." action={<Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>}>
@@ -420,13 +421,13 @@ export const WorkspaceWorkflowsPage: React.FC<{
           />
         </div>
         <MasterDetailLayout
-        boundedOnDesktop
+        boundedOnDesktop={usesBoundedWorkflowDetail}
         showDetailOnCompact={hasExplicitWorkflowSelection}
         compactBackLabel="Back to workflows"
         onCompactBack={() => { const workflowId = selectedWorkflow?.id; clearWorkflowSelection(); if (workflowId) window.requestAnimationFrame(() => workflowRowRefs.current.get(workflowId)?.focus()); }}
         list={<WorkflowLibraryList workflows={workflows} visibleWorkflows={visibleWorkflows} selectedWorkflow={selectedWorkflow} ready={workflowCatalogReady} loadError={workflowLoadError} onSelectWorkflow={selectWorkflow} registerWorkflowRow={(workflowId, node) => { if (node) workflowRowRefs.current.set(workflowId, node); else workflowRowRefs.current.delete(workflowId); }} />}
         detail={selectedWorkflow ? (
-          <section className="min-w-0 overflow-hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col">
+          <section className={usesBoundedWorkflowDetail ? 'min-w-0 overflow-hidden lg:flex lg:h-full lg:min-h-0 lg:flex-col' : 'min-w-0'}>
             <MasterDetailPaneHeader
               badges={<><StatusBadge tone={workflowStatusTone(selectedWorkflow.status)}>{selectedWorkflow.status}</StatusBadge><WorkflowModeBadge mode={selectedWorkflow.policy.mode} /><span className="type-caption type-emphasis text-ui-text-muted">{selectedWorkflow.owner}</span></>}
               title={selectedWorkflow.name}
@@ -475,7 +476,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
               id={`workflow-detail-section-${activeView}-panel`}
               role="tabpanel"
               aria-labelledby={`workflow-detail-section-${activeView}-tab`}
-              className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:custom-scrollbar lg:stable-scrollbar-gutter"
+              className={usesBoundedWorkflowDetail ? 'lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain lg:custom-scrollbar lg:stable-scrollbar-gutter' : undefined}
             >
               {activeView === 'overview' && (
                 <WorkflowOverviewPanel

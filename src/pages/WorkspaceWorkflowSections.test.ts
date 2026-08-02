@@ -77,6 +77,8 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain("activeView === 'agents'");
     expect(workflowsPage).toContain("activeView === 'capabilities'");
     expect(workflowsPage).toContain("activeView === 'runs'");
+    expect(workflowsPage).toContain("const usesBoundedWorkflowDetail = activeView !== 'runs';");
+    expect(workflowsPage).toContain('boundedOnDesktop={usesBoundedWorkflowDetail}');
     expect(workflowsPage).toContain("activeView === 'settings'");
     expect(workflowsPage).toContain("onReviewCapabilities={() => selectWorkflowView('capabilities'");
     expect(workflowsPage).not.toContain("open={activeView === 'runs'}");
@@ -86,6 +88,8 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain('<WorkflowOverviewPanel');
     expect(workflowPanels).toContain('title="Capabilities"');
     expect(workflowsPage).toContain('<WorkflowRunsPanel');
+    expect(workflowPanels).toContain('timelineLayout="flow"');
+    expect(workflowPanels).toContain('className="-mx-4 max-w-none"');
     expect(workflowPanels).toContain('Use Launch in the workflow header');
   });
 

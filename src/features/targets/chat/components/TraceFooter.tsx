@@ -16,6 +16,7 @@ interface TraceFooterProps {
   compactStatusOnly?: boolean;
   activityLabelOverride?: string;
   activeOverride?: boolean;
+  timelineLayout?: 'contained' | 'flow';
   className?: string;
 }
 
@@ -151,6 +152,7 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   compactStatusOnly = false,
   activityLabelOverride,
   activeOverride,
+  timelineLayout = 'contained',
   className
 }) => {
   const contentId = React.useId();
@@ -245,12 +247,12 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
     const shouldResetFollow = previousDisclosure.runId !== runId || (!previousDisclosure.isExpanded && isExpanded);
     previousDisclosureRef.current = { runId, isExpanded };
     if (shouldResetFollow) shouldFollowLatestRef.current = true;
-    if (!isExpanded || !isInProgress || !timelineScrollRef.current || !latestTimelineEventRef.current) return;
+    if (timelineLayout !== 'contained' || !isExpanded || !isInProgress || !timelineScrollRef.current || !latestTimelineEventRef.current) return;
     if (!shouldFollowLatestRef.current) return;
     const scrollContainer = timelineScrollRef.current;
     const latestEvent = latestTimelineEventRef.current;
     scrollContainer.scrollTop = Math.max(0, latestEvent.offsetTop + latestEvent.offsetHeight - scrollContainer.clientHeight);
-  }, [isExpanded, isInProgress, latestTimelineEventKey, runId, timelineEvents.length]);
+  }, [isExpanded, isInProgress, latestTimelineEventKey, runId, timelineEvents.length, timelineLayout]);
 
   return (
     <div className={`${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}`}>
@@ -293,7 +295,12 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
             animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div ref={timelineScrollRef} className="relative max-h-80 overflow-y-auto overscroll-contain" onScroll={handleTimelineScroll}>
+            <div
+              ref={timelineScrollRef}
+              className="relative max-h-80 overflow-y-auto overscroll-contain"
+              style={timelineLayout === 'flow' ? { maxHeight: 'none', overflowY: 'visible' } : undefined}
+              onScroll={timelineLayout === 'contained' ? handleTimelineScroll : undefined}
+            >
               {timelineEvents.length > 0 ? (
                 <div className="divide-y divide-ui-border">
                   {timelineEvents.map((event) => (

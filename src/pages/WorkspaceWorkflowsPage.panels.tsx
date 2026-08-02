@@ -371,9 +371,9 @@ export const WorkflowRunsPanel: React.FC<{
           )}
           {isServerBackedRun && (
             <div className="mt-3 border-t border-ui-border pt-2">
-              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly
+              <TraceFooter runId={effectiveRunId} trace={runTrace} isExpanded={traceExpanded} setExpanded={(runId, expanded) => expanded ? void workflowActions.toggleRunLogs(runId) : setExpandedRunLogId('')} compactStatusOnly timelineLayout="flow"
                 activityLabelOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? t(`workflowActivity.status.${run.status === 'waiting_approval' ? 'waiting_for_approval' : run.status}`) : undefined}
-                activeOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? false : undefined} className="max-w-none" />
+                activeOverride={run.status === 'waiting_approval' || run.status === 'needs_review' ? false : undefined} className="-mx-4 max-w-none" />
             </div>
           )}
           {isServerBackedRun && traceExpanded && (
