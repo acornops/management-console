@@ -5,7 +5,7 @@ import { Button } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { Switch } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
@@ -175,7 +175,7 @@ export const McpServerToolsDialog: React.FC<{
           <CollectionState
             phase={toolsPhase}
             itemCount={server.tools.length}
-            loading={<InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="bg-ui-bg type-caption" />}
+            loading={<CollectionLoadingSkeleton label={t('mcpServers.loadingTools')} rows={3} className="rounded-lg border border-ui-border bg-ui-bg" />}
             empty={<div className="type-caption rounded-lg border border-ui-border bg-ui-bg px-4 py-3">{t('mcpServers.noToolsDiscovered')}</div>}
             error={<div className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{toolsError}</div>}
             feedback={toolsError ? (

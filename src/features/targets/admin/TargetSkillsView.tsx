@@ -6,7 +6,6 @@ import { Checkbox } from '@acornops/ui';
 import { DestructiveConfirmationDialog } from '@acornops/ui';
 import { TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import {
   controlPlaneApi,
@@ -33,6 +32,7 @@ import {
 } from '@/features/targets/admin/targetSkillsViewModel';
 import { TargetSkillEditorDialog } from '@/features/targets/admin/TargetSkillEditorDialog';
 import { TargetSkillsInventory } from '@/features/targets/admin/TargetSkillsInventory';
+import { TargetCapabilityInventoryLoading } from '@/features/targets/admin/TargetCapabilityInventoryLoading';
 
 export interface TargetSkillsDataSource {
   createSkill: (workspaceId: string, subjectId: string, input: CreateTargetSkillInput) => Promise<ControlPlaneTargetSkillDetail>;
@@ -411,7 +411,19 @@ export const TargetSkillsView: React.FC<TargetSkillsViewWithDataSourceProps> = (
 
       {catalogError && <div className="type-caption mb-5 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{catalogError}</div>}
 
-      {catalogLoading && !catalog && <InlineLoadingIndicator label={t('targetSkills.loading')} className="mb-5" />}
+      {catalogLoading && !catalog && (
+        <TargetCapabilityInventoryLoading
+          caption={t('targetSkills.tableLabel')}
+          label={t('targetSkills.loading')}
+          columns={[
+            { label: t('targetSkills.skillColumn') },
+            { label: t('targetSkills.assistantStateColumn') },
+            { label: t('targetSkills.enabledColumn') },
+            { label: t('targetSkills.filesColumn'), className: 'hidden md:table-cell' },
+            { label: t('targetSkills.actionsColumn'), numeric: true }
+          ]}
+        />
+      )}
 
       {catalog ? (
         <TargetSkillsInventory

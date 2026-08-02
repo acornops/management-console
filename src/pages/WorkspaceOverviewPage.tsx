@@ -3,6 +3,7 @@ import { ArrowRight, Bot, Clock3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, StatusBadge, buttonClassName } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
@@ -397,11 +398,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
           <CollectionState
             phase={issueCollection.phase}
             itemCount={attentionItems.length}
-            loading={
-              <div className="px-5 py-5 sm:px-6">
-                <InlineLoadingIndicator label={t('overview.loadingBoard')} />
-              </div>
-            }
+            loading={<CollectionLoadingSkeleton label={t('overview.loadingBoard')} />}
             empty={
               <EmptyState
                 embedded

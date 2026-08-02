@@ -8,8 +8,8 @@ import {
   DataTableGridHeaderCell,
   DataTableHeader,
   DataTableHeaderCell,
+  CollectionLoadingSkeleton,
   EmptyState,
-  InlineLoadingIndicator,
   PageHeader,
   PageShell,
   formInputClassName
@@ -233,9 +233,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 </Button>
               </div>
             ) : isLogsLoading ? (
-              <div className="px-4 py-5">
-                <InlineLoadingIndicator label={t('virtualMachines.resources.loadingLogs')} />
-              </div>
+              <CollectionLoadingSkeleton label={t('virtualMachines.resources.loadingLogs')} />
             ) : filteredLogs.length === 0 ? (
               <EmptyState
                 embedded
@@ -274,9 +272,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 </Button>
               </div>
             ) : isLoading ? (
-              <div className="px-4 py-5">
-                <InlineLoadingIndicator label={t('virtualMachines.resources.loading')} />
-              </div>
+              <CollectionLoadingSkeleton label={t('virtualMachines.resources.loading')} />
             ) : filteredInventory.length === 0 ? (
               <EmptyState
                 embedded

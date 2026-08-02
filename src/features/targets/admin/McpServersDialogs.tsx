@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, DestructiveConfirmationDialog, IconTile } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { Switch } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
@@ -202,7 +202,7 @@ export const McpServerFormDialog: React.FC<{
                   <div className="type-caption m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{mutationError}</div>
                 )}
                 {reviewToolsLoading ? (
-                  <InlineLoadingIndicator label={t('mcpServers.loadingTools')} className="m-4 bg-ui-surface type-caption" />
+                  <CollectionLoadingSkeleton label={t('mcpServers.loadingTools')} rows={3} className="m-4 overflow-hidden rounded-lg border border-ui-border bg-ui-surface" />
                 ) : reviewTools.length === 0 ? (
                   <div className="type-caption m-4 rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">{t('mcpServers.noToolsDiscovered')}</div>
                 ) : (

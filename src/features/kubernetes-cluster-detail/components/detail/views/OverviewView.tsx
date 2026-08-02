@@ -132,8 +132,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       };
     }
 
-    setMetricHistory((current) => current.length > 0 ? current : cluster.metricHistory || []);
-    if (!hasSessionDataCacheValue(metricHistoryCacheKey)) setMetricHistoryStatus('loading');
+    const hasCachedMetricHistory = hasSessionDataCacheValue(metricHistoryCacheKey);
+    if (!hasCachedMetricHistory) setMetricHistoryStatus('loading');
     void controlPlaneApi
       .getClusterMetricsHistory(cluster.workspaceId, cluster.id, {
         window: '6h',
@@ -147,7 +147,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       .catch((error) => {
         console.error('Failed loading cluster metric history', error);
         if (!isCurrent) return;
-        setMetricHistoryStatus(hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'error');
+        setMetricHistoryStatus(hasCachedMetricHistory ? 'ready' : 'error');
       });
 
     return () => {
@@ -196,14 +196,24 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const scopedResourceCount =
     cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
-  const hasNodeInventory = cluster.nodes.length > 0;
-  const readyNodeCount = cluster.nodes.filter((node) => node.status.toLowerCase() === 'ready').length;
+  const observedNodeCount = cluster.resourceSummary?.nodeCount ?? cluster.nodes.length;
+  const snapshotReadyNodeCount = cluster.resourceSummary?.readyNodeCount;
+  const hasSnapshotNodeReadiness = typeof snapshotReadyNodeCount === 'number'
+    && Number.isFinite(snapshotReadyNodeCount)
+    && snapshotReadyNodeCount >= 0
+    && snapshotReadyNodeCount <= observedNodeCount;
+  const readyNodeCount = hasSnapshotNodeReadiness
+    ? snapshotReadyNodeCount
+    : cluster.nodes.length > 0
+      ? cluster.nodes.filter((node) => node.status.toLowerCase() === 'ready').length
+      : undefined;
+  const hasNodeReadiness = typeof readyNodeCount === 'number' && observedNodeCount > 0;
   const observedNamespaceCount = cluster.resourceSummary?.namespaceCount ?? cluster.namespaces.length;
   const countFormatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
   const clusterSummaryCards = [
     {
       label: t('clusterOverview.nodeReadiness'),
-      value: hasNodeInventory ? `${readyNodeCount}/${cluster.nodes.length}` : t('common.unknown'),
+      value: hasNodeReadiness ? `${readyNodeCount}/${observedNodeCount}` : t('common.unknown'),
       Icon: Server
     },
     {

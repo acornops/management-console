@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { TargetToolCatalog, TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import { Button, CollectionState, InlineLoadingIndicator, PageShell } from '@acornops/ui';
+import { Button, CollectionState, PageShell } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
+import { McpServersCatalogLoading } from '@/features/targets/admin/TargetCapabilityInventoryLoading';
 import { DeleteMcpServerDialog, McpServerFormDialog } from '@/features/targets/admin/McpServersDialogs';
 import { McpServerToolsDialog } from '@/features/targets/admin/McpServerToolsDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
@@ -29,7 +30,6 @@ import {
 import { resolveMcpCatalogPhase, targetMcpServersDataSource, type McpServersViewProps } from '@/features/targets/admin/McpServersView.data';
 
 export type { McpServersDataSource } from '@/features/targets/admin/McpServersView.data';
-
 export const McpServersView: React.FC<McpServersViewProps> = ({
   subject,
   canManageMcp = false,
@@ -537,7 +537,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       <CollectionState
         phase={catalogPhase}
         itemCount={servers.length}
-        loading={<InlineLoadingIndicator label={t('mcpServers.loadingCatalog')} className="mb-5" />}
+        loading={<McpServersCatalogLoading caption={t('mcpServers.title')} label={t('mcpServers.loadingCatalog')}
+          labels={{ server: t('mcpServers.server'), status: t('mcpServers.status'), enabled: t('mcpServers.enabled'), tools: t('mcpServers.tools'), actions: t('mcpServers.actions') }}
+        />}
         empty={inventory}
         error={(
           <div className="type-caption mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">

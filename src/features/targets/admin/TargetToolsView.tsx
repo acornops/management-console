@@ -6,7 +6,7 @@ import { CollectionState } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
-import { InlineLoadingIndicator, PageHeader, PageShell } from '@acornops/ui';
+import { PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -19,6 +19,7 @@ import { TargetInsightsDialog } from '@/features/targets/admin/TargetInsightsDia
 import { TargetInsightsResetDialog } from '@/features/targets/admin/TargetInsightsResetDialog';
 import { TargetInsightsSettingsDialog } from '@/features/targets/admin/TargetInsightsSettingsDialog';
 import { TargetToolRow } from '@/features/targets/admin/TargetToolRow';
+import { TargetCapabilityInventoryLoading } from '@/features/targets/admin/TargetCapabilityInventoryLoading';
 import { formatError } from '@/features/targets/admin/targetSkillsViewModel';
 import { TextInput, Textarea } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
@@ -306,7 +307,17 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
       )}
 
       {catalogLoading && !catalog && (
-        <InlineLoadingIndicator label={t('tools.loading')} className="mb-5" />
+        <TargetCapabilityInventoryLoading
+          caption={t('tools.title')}
+          label={t('tools.loading')}
+          columns={[
+            { label: t('tools.toolColumn') },
+            { label: t('tools.capabilityColumn') },
+            { label: t('tools.enabledColumn') },
+            { label: t('tools.runtimeColumn'), className: 'hidden md:table-cell' },
+            { label: t('tools.actionsColumn'), numeric: true }
+          ]}
+        />
       )}
 
       {catalog ? (

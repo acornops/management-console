@@ -20,6 +20,13 @@ describe('overview refresh continuity', () => {
     expect(source).toContain('{isInitialIssueLoad ? (');
   });
 
+  it('uses the bounded cluster readiness summary before raw node inventory', () => {
+    const source = readSource('src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx');
+
+    expect(source).toContain('const snapshotReadyNodeCount = cluster.resourceSummary?.readyNodeCount;');
+    expect(source).toContain("const hasSnapshotNodeReadiness = typeof snapshotReadyNodeCount === 'number'");
+  });
+
   it('does not restart VM detail loading when the selected object is refreshed', () => {
     const source = readSource('src/pages/VirtualMachinesPage.tsx');
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton, InlineLoadingIndicator } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
 import { SelectOption } from '@acornops/ui';
 import { Workload } from '@/types';
@@ -105,6 +105,8 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
   const [hasManualResourceSelection, setHasManualResourceSelection] = useState(!persistedShowUnhealthyPodsOnly);
   const triageDefaultAppliedRef = useRef(shouldShowUnhealthyPodsInitially);
   const showUnhealthyWorkloadsOnly = activeResourceFamily === 'workloads' && showUnhealthyPodsOnly;
+  const hasLoadedResources = workloads.length + services.length + ingresses.length + pvcs.length + nodes.length + reportedNamespaces.length > 0;
+  const shouldShowInitialCollectionLoading = isLoadingInitial && !hasLoadedResources;
 
   useEffect(() => {
     try {
@@ -386,111 +388,121 @@ export const WorkloadsExplorer: React.FC<WorkloadsExplorerProps> = ({
         </div>
       </header>
 
-      <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
-        <ResourceCategoryTabs<ResourceFamily>
-          categories={resourceFamilyCategories}
-          active={activeResourceFamily}
-          counts={resourceFamilyCountsForTabs}
-          labelPrefix="resources.families"
-          ariaLabel={t('resources.families.label')}
-          idBase="resource-family"
-          controlsId="resource-family-panel"
-          onSelect={(family) => {
-            markResourceSelectionChanged();
-            setActiveResourceFamily(family);
-          }}
+      {shouldShowInitialCollectionLoading ? (
+        <CollectionLoadingSkeleton
+          label={t('resources.loading')}
+          rows={4}
+          className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface"
         />
-
-        <ResourceSearchFilterBar
-          activeResourceFamily={activeResourceFamily}
-          activeCategory={activeCategory}
-          activeNetworkCategory={activeNetworkCategory}
-          activeStorageCategory={activeStorageCategory}
-          activeClusterCategory={activeClusterCategory}
-          workloadCategoryCounts={workloadCategoryCounts}
-          networkCategoryCounts={networkCategoryCounts}
-          storageCategoryCounts={storageCategoryCounts}
-          clusterCategoryCounts={clusterCategoryCounts}
-          searchTerm={resourceSearchTerm}
-          onSearchChange={(nextSearchTerm) => {
-            markResourceSelectionChanged();
-            setResourceSearchTerm(nextSearchTerm);
-          }}
-          showNamespaceFilter={showNamespaceFilter}
-          selectedNamespace={selectedNamespace}
-          namespaceOptions={namespaceOptions}
-          onNamespaceChange={(namespace) => {
-            markResourceSelectionChanged();
-            setSelectedNamespace(namespace);
-          }}
-          onWorkloadCategorySelect={(category) => {
-            markResourceSelectionChanged();
-            setActiveCategory(category);
-            setShowUnhealthyPodsOnly(false);
-          }}
-          onNetworkCategorySelect={(category) => {
-            markResourceSelectionChanged();
-            setActiveNetworkCategory(category);
-          }}
-          onStorageCategorySelect={(category) => {
-            markResourceSelectionChanged();
-            setActiveStorageCategory(category);
-          }}
-          onClusterCategorySelect={(category) => {
-            markResourceSelectionChanged();
-            setActiveClusterCategory(category);
-          }}
-        >
-          {activeResourceFamily === 'workloads' && (
-            <WorkloadTriageShortcut
-              unhealthyPodCount={unhealthyPodCount}
-              showUnhealthyPodsOnly={showUnhealthyPodsOnly}
-              onToggle={() => {
+      ) : (
+        <>
+          <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">
+            <ResourceCategoryTabs<ResourceFamily>
+              categories={resourceFamilyCategories}
+              active={activeResourceFamily}
+              counts={resourceFamilyCountsForTabs}
+              labelPrefix="resources.families"
+              ariaLabel={t('resources.families.label')}
+              idBase="resource-family"
+              controlsId="resource-family-panel"
+              onSelect={(family) => {
                 markResourceSelectionChanged();
-                setShowUnhealthyPodsOnly((current) => {
-                  setActiveCategory('All');
-                  return !current;
-                });
+                setActiveResourceFamily(family);
               }}
             />
-          )}
-        </ResourceSearchFilterBar>
-      </div>
-      <div
-        id="resource-family-panel"
-        role="tabpanel"
-        tabIndex={0}
-        aria-labelledby={`resource-family-${activeResourceFamily}-tab`}
-        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
-      >
-        {activeResourceFamily === 'workloads' && (
-          <WorkloadsSection emptyMessage={filteredEmptyMessage} items={filteredWorkloads} onSelect={setSelectedWorkload} showUnhealthyOnly={showUnhealthyWorkloadsOnly} />
-        )}
-        {activeResourceFamily === 'network' && (
-          <NetworkSection
-            activeCategory={activeNetworkCategory}
-            emptyMessage={filteredEmptyMessage}
-            ingresses={filteredIngresses}
-            onSelect={setSelectedResource}
-            services={filteredServices}
-          />
-        )}
-        {activeResourceFamily === 'storage' && (
-          <StorageSection activeCategory={activeStorageCategory} emptyMessage={filteredEmptyMessage} items={filteredPVCs} onSelect={setSelectedResource} />
-        )}
-        {activeResourceFamily === 'cluster' && (
-          <ClusterSection
-            activeCategory={activeClusterCategory}
-            emptyMessage={filteredEmptyMessage}
-            namespaces={filteredNamespaceItems}
-            nodes={filteredNodes}
-            onSelect={setSelectedResource}
-          />
-        )}
-      </div>
+
+            <ResourceSearchFilterBar
+              activeResourceFamily={activeResourceFamily}
+              activeCategory={activeCategory}
+              activeNetworkCategory={activeNetworkCategory}
+              activeStorageCategory={activeStorageCategory}
+              activeClusterCategory={activeClusterCategory}
+              workloadCategoryCounts={workloadCategoryCounts}
+              networkCategoryCounts={networkCategoryCounts}
+              storageCategoryCounts={storageCategoryCounts}
+              clusterCategoryCounts={clusterCategoryCounts}
+              searchTerm={resourceSearchTerm}
+              onSearchChange={(nextSearchTerm) => {
+                markResourceSelectionChanged();
+                setResourceSearchTerm(nextSearchTerm);
+              }}
+              showNamespaceFilter={showNamespaceFilter}
+              selectedNamespace={selectedNamespace}
+              namespaceOptions={namespaceOptions}
+              onNamespaceChange={(namespace) => {
+                markResourceSelectionChanged();
+                setSelectedNamespace(namespace);
+              }}
+              onWorkloadCategorySelect={(category) => {
+                markResourceSelectionChanged();
+                setActiveCategory(category);
+                setShowUnhealthyPodsOnly(false);
+              }}
+              onNetworkCategorySelect={(category) => {
+                markResourceSelectionChanged();
+                setActiveNetworkCategory(category);
+              }}
+              onStorageCategorySelect={(category) => {
+                markResourceSelectionChanged();
+                setActiveStorageCategory(category);
+              }}
+              onClusterCategorySelect={(category) => {
+                markResourceSelectionChanged();
+                setActiveClusterCategory(category);
+              }}
+            >
+              {activeResourceFamily === 'workloads' && (
+                <WorkloadTriageShortcut
+                  unhealthyPodCount={unhealthyPodCount}
+                  showUnhealthyPodsOnly={showUnhealthyPodsOnly}
+                  onToggle={() => {
+                    markResourceSelectionChanged();
+                    setShowUnhealthyPodsOnly((current) => {
+                      setActiveCategory('All');
+                      return !current;
+                    });
+                  }}
+                />
+              )}
+            </ResourceSearchFilterBar>
+          </div>
+          <div
+            id="resource-family-panel"
+            role="tabpanel"
+            tabIndex={0}
+            aria-labelledby={`resource-family-${activeResourceFamily}-tab`}
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25"
+          >
+            {activeResourceFamily === 'workloads' && (
+              <WorkloadsSection emptyMessage={filteredEmptyMessage} items={filteredWorkloads} onSelect={setSelectedWorkload} showUnhealthyOnly={showUnhealthyWorkloadsOnly} />
+            )}
+            {activeResourceFamily === 'network' && (
+              <NetworkSection
+                activeCategory={activeNetworkCategory}
+                emptyMessage={filteredEmptyMessage}
+                ingresses={filteredIngresses}
+                onSelect={setSelectedResource}
+                services={filteredServices}
+              />
+            )}
+            {activeResourceFamily === 'storage' && (
+              <StorageSection activeCategory={activeStorageCategory} emptyMessage={filteredEmptyMessage} items={filteredPVCs} onSelect={setSelectedResource} />
+            )}
+            {activeResourceFamily === 'cluster' && (
+              <ClusterSection
+                activeCategory={activeClusterCategory}
+                emptyMessage={filteredEmptyMessage}
+                namespaces={filteredNamespaceItems}
+                nodes={filteredNodes}
+                onSelect={setSelectedResource}
+              />
+            )}
+          </div>
+        </>
+      )}
       <div ref={loadMoreSentinelRef} className="mt-5 flex flex-col items-center gap-3">
         {resourceListError && <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{resourceListError}</p>}
-        {isLoadingInitial && <InlineLoadingIndicator label={t('resources.loading')} />}
+        {isLoadingInitial && !shouldShowInitialCollectionLoading && <InlineLoadingIndicator label={t('resources.loading')} />}
         {hasMoreResources && (
           <Button
             type="button"
