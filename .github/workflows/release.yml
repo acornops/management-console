@@ -24,10 +24,12 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: npm ci
+      - name: Run preflight validation
+        run: npm run validate:ci:preflight
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-      - name: Run validation
-        run: npm run validate:ci
+      - name: Run browser validation
+        run: npm run validate:ci:browser
       - name: Upload browser failure artifacts
         if: failure()
         uses: actions/upload-artifact@v4

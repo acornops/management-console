@@ -65,13 +65,14 @@ The production-readiness release gate uses Node 22 and a clean install:
 ```bash
 npm ci
 git diff --check
-npm run lint
-npm run test
-npx playwright test --config=playwright.fixtures.config.ts --retries=0 --repeat-each=3
-npx playwright test --config=playwright.mcp-parity.config.ts --retries=0 --repeat-each=3
 VITE_APP_DATA_MODE=control-plane npm run validate:ci
 npm run smoke:nginx
 ```
+
+`validate:ci` runs the non-browser preflight checks before the browser gate. Each
+browser test runs once per invocation. GitHub Actions fans the browser suites
+and design-route projects out only after preflight passes; the release workflow
+uses the same two gates sequentially before building an image.
 
 For production image or nginx config changes, also run:
 

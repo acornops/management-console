@@ -1,0 +1,84 @@
+# CI Runtime Optimization
+
+## Goal
+
+Reduce full management-console GitHub Actions feedback from the observed
+23-minute baseline without removing validation coverage or weakening release
+gates.
+
+## Baseline
+
+- The successful full CI run on 2026-08-02 took 23m03s.
+- Fixture smoke used 93 logical tests repeated three times, for 279 executions.
+- MCP parity used 7 logical tests repeated three times, for 21 executions.
+- Design-route validation covered 39 routes across five projects through 35
+  serial route chunks plus one forced-colors invocation.
+- Browser validation accounted for 18m45s of the 20m33s validation step.
+
+## Constraints and decisions
+
+- Keep every logical fixture, MCP parity, snapshot, and design-route check.
+- Run each fixture and MCP parity test once; use targeted repetition only when
+  diagnosing a suspected timing race.
+- Run lint, type checks, unit coverage, contracts, harness checks, and the
+  production build before allocating browser runners.
+- Preserve `validate:ci` as the complete local and release validation entrypoint.
+- Parallelize design-route projects on isolated runners rather than raising
+  browser concurrency inside one runner.
+- Keep existing route chunk size, worker counts, retry policy, and visual
+  thresholds unchanged in this pass.
+- Measure browser installation after fan-out before adding a cache or pinned
+  container image.
+
+## Implementation
+
+1. Split `validate:ci` into explicit preflight and browser scripts.
+2. Remove `--repeat-each=3` from fixture and MCP parity scripts.
+3. Make GitHub CI run preflight first, then fan snapshots, fixtures, MCP parity,
+   and each design-route project out through a fail-fast browser matrix.
+4. Make image-release validation run the same preflight and browser gates in
+   sequence before building and publishing.
+5. Add harness assertions for the gate boundary and single-pass smoke policy.
+6. Update the operations guide and record validation and GitHub timing evidence.
+
+## Acceptance criteria
+
+- A preflight failure prevents all browser matrix jobs from starting.
+- Fixture smoke reports one execution per logical test.
+- MCP parity reports one execution per logical test.
+- All five design-route projects and the forced-colors check still run.
+- Coverage uploads once from preflight and browser failure artifacts have unique
+  names.
+- `npm run validate:ci` remains a complete, passing sequential release gate.
+- Full GitHub CI completes in less than 12 minutes initially, targeting a median
+  below 10 minutes across three representative full runs.
+
+## Validation log
+
+- `actionlint .github/workflows/ci.yml .github/workflows/release.yml`
+  - Passed.
+- `npm run harness:check`
+  - Passed.
+- `npm run validate:ci:preflight`
+  - Passed outside the filesystem sandbox so the route-smoke preview server
+    could bind to loopback.
+  - Unit coverage passed across 185 files and 858 tests.
+- `npm run design:snapshots`
+  - Passed: 25 tests; 1 intentional project-specific skip.
+- `npm run smoke:fixtures`
+  - Passed: 93 tests in one execution each; 4.4m locally with one macOS worker.
+- `npm run smoke:mcp-parity`
+  - Passed: 7 tests in one execution each; 49.6s locally.
+- `npm run validate:ci:browser`
+  - The snapshot stage passed, then local design-route validation stopped
+    because this repository tracks route baselines only for Linux. The
+    generated untracked macOS baselines were removed. Fixture and MCP parity
+    stages were validated separately as recorded above.
+- Pending GitHub Actions timing evidence.
+
+## Completion criteria
+
+- Required local validation passes with exact command results recorded here.
+- The first optimized full GitHub Actions run passes and its timing is recorded.
+- Any deferred cache, worker, or release-trust optimization is recorded as a
+  measured follow-up rather than included speculatively.
