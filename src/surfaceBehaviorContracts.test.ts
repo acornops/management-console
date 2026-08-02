@@ -125,6 +125,7 @@ describe('surface behavior contracts', () => {
     expect(resourceCategoryTabs).toContain('<SegmentedTabs');
     expect(compactControls).toContain('activeTab?.scrollIntoView');
     expect(compactControls).toContain("inline: 'nearest'");
+    expect(compactControls).toContain('pageShell.scrollTop = pageShellScrollTop');
     expect(compactControls).toContain('window.scrollTo(viewportX, viewportY)');
     expect(compactControls).toContain('ref={tablistRef}');
   });

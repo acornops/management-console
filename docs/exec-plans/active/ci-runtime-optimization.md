@@ -91,6 +91,11 @@ gates.
     reproduced the same late document scroll. The active-tab component now
     preserves the viewport around its horizontal `scrollIntoView`, fixing the
     page jump at the source while retaining compact-tab visibility.
+- GitHub Actions run `30745187201`, attempt 1
+  - Mobile-light still reproduced the displacement because authenticated
+    routes scroll inside `.page-shell`, not the window. Route preparation now
+    resets that canonical scroller, and active-tab reveal preserves its
+    `scrollTop` directly.
 - Pending final GitHub Actions timing evidence after scroll stabilization.
 
 ## Completion criteria
