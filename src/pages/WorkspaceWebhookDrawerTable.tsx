@@ -13,7 +13,7 @@ import {
   DataTableRow,
   EmptyState,
   InlineConfirmation,
-  InlineLoadingIndicator,
+  TableLoadingRows,
   StatusBadge
 } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -63,7 +63,7 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
         <div className="overflow-x-auto">
           <DataTable caption={t('eventTriggers.listTitle')} className="min-w-[42rem] w-full border-collapse text-left">
-            <DataTableHeader collectionState={{ phase, itemCount: triggers.length }}>
+            <DataTableHeader collectionState={{ phase, itemCount: triggers.length, showDuringInitialLoading: true }}>
               <DataTableRow>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.columns.trigger')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.secret.endpoint')}</DataTableHeaderCell>
@@ -107,13 +107,15 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
                     </div>
                   </DataTableCell>
                 </DataTableRow>
-              )) : (
+              )) : phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore' ? (
+                <TableLoadingRows columns={5} label={t('eventTriggers.loading')} showAvatarInFirstColumn />
+              ) : (
                 <DataTableRow>
                   <DataTableCell colSpan={5} className="p-0">
                     <CollectionState
                       phase={phase}
                       itemCount={0}
-                      loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
+                      loading={null}
                       empty={<EmptyState embedded icon={<ICONS.Zap />} title={t('eventTriggers.emptyTitle')} description={t('eventTriggers.emptyDescription')} />}
                       error={<EmptyState embedded role="alert" icon={<ICONS.AlertTriangle />} title={t('eventTriggers.loadError')} description={loadError} actions={<Button size="sm" variant="secondary" onClick={onRetry}>{t('common.retry')}</Button>} />}
                     >

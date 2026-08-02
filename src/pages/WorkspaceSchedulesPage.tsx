@@ -430,7 +430,6 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             deletingId={deletingScheduleId}
             empty={scheduleEmptyState}
             error={scheduleErrorState}
-            loading={scheduleLoadingState}
             onDelete={openDeleteDialog}
             onEdit={openEditDrawer}
             onRepair={openMcpRepairDrawer}

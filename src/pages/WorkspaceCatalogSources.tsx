@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button, InlineAlert } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { catalogApi, type CatalogSource, type CatalogSourceMutationInput } from '@/services/control-plane/catalogApi';
@@ -259,11 +260,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
         <CollectionState
           phase={phase}
           itemCount={sources.length}
-          loading={
-            <p role="status" className="p-5 type-body text-ui-text-muted">
-              {t('catalogSources.loading')}
-            </p>
-          }
+          loading={<CollectionLoadingSkeleton label={t('catalogSources.loading')} />}
           empty={
             <EmptyState
               embedded

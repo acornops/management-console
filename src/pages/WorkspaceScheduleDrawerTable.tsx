@@ -8,7 +8,8 @@ import {
   DataTableHeader,
   DataTableHeaderCell,
   DataTableRow,
-  StatusBadge
+  StatusBadge,
+  TableLoadingRows
 } from '@acornops/ui';
 import {
   isMcpAutoPause,
@@ -27,7 +28,6 @@ interface WorkspaceScheduleDrawerTableProps {
   deletingId: string;
   empty: React.ReactNode;
   error: React.ReactNode;
-  loading: React.ReactNode;
   onDelete: (schedule: WorkflowSchedule) => void;
   onEdit: (schedule: WorkflowSchedule) => void;
   onRepair: (schedule: WorkflowSchedule) => void;
@@ -45,7 +45,6 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
   deletingId,
   empty,
   error,
-  loading,
   onDelete,
   onEdit,
   onRepair,
@@ -60,7 +59,7 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
   return (
     <div className="overflow-x-auto">
       <DataTable caption={t('schedules.tableLabel')} className="min-w-[42rem] w-full border-collapse text-left">
-        <DataTableHeader collectionState={{ phase, itemCount: schedules.length }}>
+        <DataTableHeader collectionState={{ phase, itemCount: schedules.length, showDuringInitialLoading: true }}>
           <DataTableRow>
             <DataTableHeaderCell density="dense">{t('schedules.table.schedule')}</DataTableHeaderCell>
             <DataTableHeaderCell density="dense">{t('schedules.table.cadence')}</DataTableHeaderCell>
@@ -99,10 +98,12 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
                 </div>
               </DataTableCell>
             </DataTableRow>
-          )) : (
+          )) : phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore' ? (
+            <TableLoadingRows columns={5} label={t('schedules.loading')} />
+          ) : (
             <DataTableRow>
               <DataTableCell colSpan={5} className="p-0">
-                {phase === 'loading' ? loading : phase === 'error' ? error : empty}
+                {phase === 'error' ? error : empty}
               </DataTableCell>
             </DataTableRow>
           )}
