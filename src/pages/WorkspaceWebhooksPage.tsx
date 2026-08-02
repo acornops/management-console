@@ -229,6 +229,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
 
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const visibleWebhooks = workspaceStateCurrent ? webhooks : [];
+  const webhooksPending = !workspaceStateCurrent || isInitialLoading;
   const query = urlSearch.get('q') || '';
   const status = urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'disabled' ? (urlSearch.get('status') as Exclude<WebhookStatusFilter, 'all'>) : 'all';
   const normalizedQuery = query.trim().toLowerCase();
@@ -335,7 +336,9 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
           queryPlaceholder={t('workspaceWebhooks.filters.search')}
           queryClearLabel={t('common.clearSearch')}
           resultSummary={
-            hasActiveFilters
+            webhooksPending
+              ? t('workspaceWebhooks.loading')
+              : hasActiveFilters
               ? t('workspaceWebhooks.filters.showing', {
                   count: filteredWebhooks.length,
                   total: visibleWebhooks.length
@@ -352,17 +355,17 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
                 {
                   value: 'all',
                   label: t('workspaceWebhooks.filters.allStatuses'),
-                  count: visibleWebhooks.length
+                  count: webhooksPending ? undefined : visibleWebhooks.length
                 },
                 {
                   value: 'enabled',
                   label: t('workspaceWebhooks.enabled'),
-                  count: visibleWebhooks.filter((webhook) => webhook.enabled).length
+                  count: webhooksPending ? undefined : visibleWebhooks.filter((webhook) => webhook.enabled).length
                 },
                 {
                   value: 'disabled',
                   label: t('workspaceWebhooks.disabled'),
-                  count: visibleWebhooks.filter((webhook) => !webhook.enabled).length
+                  count: webhooksPending ? undefined : visibleWebhooks.filter((webhook) => !webhook.enabled).length
                 }
               ],
               onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })

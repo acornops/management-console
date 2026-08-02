@@ -4,7 +4,7 @@ import { Mail, MoreVertical, Search, UserPlus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow, TableLoadingRows } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
@@ -124,6 +124,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   });
   const { items: members, nextCursor, phase: memberPhase, error: listError = null } = memberCollection;
   const isLoadingInitial = memberPhase === 'loading' || memberPhase === 'refreshing';
+  const membersPending = isLoadingInitial && members.length === 0;
   const isLoadingMore = memberPhase === 'loadingMore';
   const canManageOwners = currentUserRole === 'owner';
   const roleTemplateByKey = new Map(roleTemplates.map((role) => [role.key, role]));
@@ -135,7 +136,9 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   const canEditSelectedMember = Boolean(selectedMember && canManageMembers && (canManageOwners || selectedMemberRoleTemplate?.protected === false));
   const hasCompleteUnfilteredMemberPage = !nextCursor && searchTerm.trim().length === 0 && roleFilter === 'all' && sourceFilter === 'all';
   const hasMemberFilters = searchTerm.trim().length > 0 || roleFilter !== 'all' || sourceFilter !== 'all';
-  const memberCountLabel = hasMemberFilters
+  const memberCountLabel = membersPending
+    ? t('members.loadingMembers')
+    : hasMemberFilters
     ? t('members.loadedMatchingCount', { count: members.length })
     : t('members.loadedTotalCount', {
         loaded: members.length,
@@ -384,7 +387,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
             <DataTableHeader
               collectionState={{
                 phase: isLoadingInitial ? 'loading' : listError ? 'error' : 'ready',
-                itemCount: members.length
+                itemCount: members.length,
+                showDuringInitialLoading: true
               }}
             >
               <DataTableRow>
@@ -467,6 +471,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
                     {t('members.loadingMembers')}
                   </div>
                 }
+                loadingRows={<TableLoadingRows columns={5} label={t('members.loadingMembers')} showAvatarInFirstColumn />}
                 empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Users />} title={memberEmptyTitle} description={memberEmptyDescription} />}
                 filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={memberEmptyTitle} description={memberEmptyDescription} />}
                 error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={memberEmptyTitle} description={memberEmptyDescription} />}

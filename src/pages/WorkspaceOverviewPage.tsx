@@ -190,6 +190,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     state?: {
       error?: string | null;
       isLoading?: boolean;
+      loadingLabel?: string;
       retainedError?: string | null;
       retry?: () => Promise<void>;
     }
@@ -205,13 +206,17 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             <Icon className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
             <h2 className="type-row-title truncate">{title}</h2>
           </div>
-          <span className="type-caption shrink-0 text-ui-text-muted">{t('overview.connectedTargetCount', { count: cards.length })}</span>
+          <span className="type-caption shrink-0 text-ui-text-muted">
+            {state?.isLoading && cards.length === 0
+              ? state.loadingLabel || t('common.loading')
+              : t('overview.connectedTargetCount', { count: cards.length })}
+          </span>
         </div>
       </div>
       <div>
         {state?.isLoading ? (
           <div className="px-4 py-5 sm:px-5">
-            <InlineLoadingIndicator label={t('overview.loadingVirtualMachines')} />
+            <InlineLoadingIndicator label={state.loadingLabel || t('common.loading')} />
           </div>
         ) : state?.error && state.retry ? (
           <div className="px-4 py-5 sm:px-5">{renderCollectionRecovery(state.error, state.retry)}</div>
@@ -448,6 +453,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
             {
               error: virtualMachineLoadError && !hasPriorVirtualMachineData ? virtualMachineLoadError : null,
               isLoading: isLoadingVirtualMachines,
+              loadingLabel: t('overview.loadingVirtualMachines'),
               retainedError: virtualMachineLoadError && hasPriorVirtualMachineData ? virtualMachineLoadError : null,
               retry: virtualMachineCollection.retry
             }

@@ -10,6 +10,7 @@ import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -218,7 +219,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
         itemCount={hasAnyApprovals ? visibleApprovalsByFilter.pending.length + visibleApprovalsByFilter.decided.length : 0}
         loading={(
           <DataSurface aria-label={t('approvals.queueTitle')}>
-            <InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />
+            <CollectionLoadingSkeleton label={t('common.loading')} />
           </DataSurface>
         )}
         empty={(

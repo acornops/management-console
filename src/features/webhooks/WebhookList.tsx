@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
@@ -92,7 +93,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
       <CollectionState
         phase={phase}
         itemCount={webhooks.length}
-        loading={<p className="p-5 type-body type-emphasis text-ui-text-muted">{t('workspaceWebhooks.loading')}</p>}
+        loading={<CollectionLoadingSkeleton label={t('workspaceWebhooks.loading')} />}
         empty={(
           <EmptyState
             embedded

@@ -6,7 +6,7 @@ import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import {
   WorkflowExecutionRow,
@@ -162,7 +162,9 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
             queryLabel={t('workflowActivity.filters.search')}
             queryPlaceholder={t('workflowActivity.filters.search')}
             queryClearLabel={t('common.clearSearch')}
-            resultSummary={`${t('workflowActivity.openCount', { count: page?.summary.openCount ?? workspaceActivity.openCount })} · ${t('workflowActivity.attentionCount', { count: page?.summary.attentionCount ?? workspaceActivity.attentionCount })}`}
+            resultSummary={phase === 'loading' && items.length === 0
+              ? t('workflowActivity.loading')
+              : `${t('workflowActivity.openCount', { count: page?.summary.openCount ?? workspaceActivity.openCount })} · ${t('workflowActivity.attentionCount', { count: page?.summary.attentionCount ?? workspaceActivity.attentionCount })}`}
             filters={[
           createDiscoveryFilterGroup<WorkflowActivityStateFilter>({
             id: 'state',
@@ -224,9 +226,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
             <DataTableGridHeaderCell numeric>{t('workflowActivity.columns.action')}</DataTableGridHeaderCell>
           </DataTableGridHeader>
           {phase === 'loading' ? (
-            <div className="flex min-h-48 items-center justify-center px-5 py-10">
-              <InlineLoadingIndicator label={t('workflowActivity.loading')} />
-            </div>
+            <CollectionLoadingSkeleton label={t('workflowActivity.loading')} />
           ) : phase === 'error' ? (
             <EmptyState
               embedded

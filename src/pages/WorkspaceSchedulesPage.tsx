@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
-import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell, TableLoadingRows } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
@@ -95,8 +96,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   const capabilityPreviewRequestRef = React.useRef(0);
   const scheduleActionButtonRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const canManageSchedules = hasWorkspacePermission(workspace, 'manage_workflows');
-  const refreshSchedules = async () => {
-    setSchedulePhase(schedulePage === null ? 'loading' : 'refreshing');
+  const refreshSchedules = async (initial = false) => {
+    setSchedulePhase(initial || schedulePage === null ? 'loading' : 'refreshing');
     setScheduleError('');
     try {
       const [schedulesResponse, workflowsResponse, loadedUser] = await Promise.all([
@@ -118,9 +119,13 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   };
 
   useEffect(() => {
+    setSchedulePage(null);
+    setWorkflows([]);
+    setCurrentUser(null);
     setDeleteTargetId('');
     setDeleteError('');
-    void refreshSchedules();
+    setSchedulePhase('loading');
+    void refreshSchedules(true);
   }, [workspace.id]);
 
   const schedules = schedulePage?.items || [];
@@ -152,6 +157,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     window.requestAnimationFrame(() => document.getElementById('workflow-triggers-search')?.focus());
   };
   const schedulesBusy = schedulePhase === 'loading' || schedulePhase === 'refreshing';
+  const schedulesPending = schedulePhase === 'loading';
   const openDeleteDialog = (schedule: WorkflowSchedule) => {
     setDeleteError('');
     setDeleteTargetId(schedule.id);
@@ -320,7 +326,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     }
   };
   const scheduleLoadingState = (
-    <InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />
+    <CollectionLoadingSkeleton label={t('schedules.loading')} />
   );
   const scheduleEmptyState = (
     <EmptyState
@@ -360,6 +366,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         onRefresh={() => void refreshSchedules()} onCreate={() => openCreateDrawer()}
         drawerToolbar={<WorkspaceScheduleDrawerToolbar
           busy={schedulesBusy} canCreate={canManageSchedules && activeWorkflows.length > 0}
+          loading={schedulesPending}
           count={visibleSchedules.length} total={schedules.length}
           onRefresh={() => void refreshSchedules()} onCreate={() => openCreateDrawer(constrainedWorkflowId)}
         />}
@@ -382,7 +389,9 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         queryLabel={t('schedules.filters.search')}
         queryPlaceholder={t('schedules.filters.search')}
         queryClearLabel={t('common.clearSearch')}
-        resultSummary={hasActiveFilters
+        resultSummary={schedulesPending
+          ? t('schedules.loading')
+          : hasActiveFilters
           ? t('schedules.filters.showing', { count: visibleSchedules.length, total: schedules.length })
           : t('schedules.filters.summary', {
               count: schedules.length,
@@ -395,9 +404,9 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
             value: status,
             defaultValue: 'all',
             options: [
-              { value: 'all', label: t('schedules.filters.allStatuses'), count: summary.total },
-              { value: 'enabled', label: t('schedules.status.active'), count: summary.active },
-              { value: 'paused', label: t('schedules.status.paused'), count: summary.paused }
+              { value: 'all', label: t('schedules.filters.allStatuses'), count: schedulesPending ? undefined : summary.total },
+              { value: 'enabled', label: t('schedules.status.active'), count: schedulesPending ? undefined : summary.active },
+              { value: 'paused', label: t('schedules.status.paused'), count: schedulesPending ? undefined : summary.paused }
             ],
             onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
           }),
@@ -471,7 +480,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         </div>
         <div className="hidden overflow-x-auto 2xl:block">
           <DataTable caption={t('schedules.tableLabel')} className="min-w-[58rem] w-full border-collapse text-left">
-            <DataTableHeader collectionState={{ phase: schedulePhase, itemCount: visibleSchedules.length }}>
+            <DataTableHeader collectionState={{ phase: schedulePhase, itemCount: visibleSchedules.length, showDuringInitialLoading: true }}>
               <DataTableRow>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.schedule')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" className="whitespace-nowrap">{t('schedules.table.workflow')}</DataTableHeaderCell>
@@ -498,12 +507,12 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
                   onToggle={() => void toggleSchedule(schedule)}
                   onDelete={() => openDeleteDialog(schedule)}
                 />
-              )) : (
+              )) : schedulePhase === 'loading' ? (
+                <TableLoadingRows columns={7} label={t('schedules.loading')} />
+              ) : (
                 <DataTableRow>
                   <DataTableCell colSpan={7} className="p-0">
-                    {schedulePhase === 'loading'
-                      ? scheduleLoadingState
-                      : schedulePhase === 'error'
+                    {schedulePhase === 'error'
                         ? scheduleErrorState
                         : scheduleEmptyState}
                   </DataTableCell>

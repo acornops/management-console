@@ -4,6 +4,7 @@ import { twMerge } from 'tailwind-merge';
 
 import { Button } from './Button';
 import { EmptyState } from './EmptyState';
+import { CollectionLoadingSkeleton } from './Loading';
 
 export interface MasterDetailLayoutProps {
   boundedOnDesktop?: boolean;
@@ -79,9 +80,9 @@ export const MasterDetailRow: React.FC<MasterDetailRowProps> = ({ title, descrip
 };
 
 export const MasterDetailLoading: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p data-master-detail-loading="true" role="status" className="type-body p-5 text-ui-text-muted">
-    {children}
-  </p>
+  <div data-master-detail-loading="true">
+    <CollectionLoadingSkeleton label={String(children)} rows={4} />
+  </div>
 );
 
 export const MasterDetailEmptyState: React.FC<{

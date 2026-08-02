@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
 import { Server, Settings, Trash2 } from 'lucide-react';
 import { ICONS } from '@/constants';
-import { Button, IconTile, InlineAlert } from '@acornops/ui';
+import { Button, CollectionLoadingSkeleton, IconTile, InlineAlert } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
@@ -135,6 +135,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
     [issueSummaryByVmId, items, query, status]
   );
   const hasActiveFilter = Boolean(query.trim()) || status !== 'all';
+  const catalogPending = isLoading && items.length === 0;
 
   const closeDeleteVmDialog = () => {
     setDeleteVmConfirmation('');
@@ -195,7 +196,9 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
               queryPlaceholder={t('virtualMachines.list.search')}
               queryClearLabel={t('common.clearSearch')}
               resultSummary={
-                hasActiveFilter
+                catalogPending
+                  ? t('virtualMachines.list.loadingTitle')
+                  : hasActiveFilter
                   ? t('virtualMachines.list.showingVms', {
                       count: visibleItems.length,
                       total: items.length
@@ -211,7 +214,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                   options: VM_STATUS_FILTERS.map((filter) => ({
                     value: filter,
                     label: statusLabels[filter],
-                    count: catalogCounts[filter]
+                    count: catalogPending ? undefined : catalogCounts[filter]
                   })),
                   onChange: onStatusChange
                 })
@@ -233,7 +236,15 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
           </InlineAlert>
         )}
 
-        {visibleItems.length > 0 ? (
+        {catalogPending ? (
+          <CollectionLoadingSkeleton
+            label={t('virtualMachines.list.loadingTitle')}
+            variant="card-grid"
+            rows={3}
+            gridClassName="resource-card-grid gap-4"
+            gridProps={{ 'data-vm-card-grid': 'true', 'data-resource-card-grid': 'true' }}
+          />
+        ) : visibleItems.length > 0 ? (
           <div data-vm-card-grid="true" data-resource-card-grid="true" className="resource-card-grid min-w-0 gap-4">
             {visibleItems.map((vm) => {
               const requiresAgentInstall = vm.status === 'unknown';

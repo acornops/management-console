@@ -9,7 +9,7 @@ import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
 import { createDiscoveryFilterGroup, DiscoveryFilterBar } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
-import { InlineLoadingIndicator } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { DataSurface, PageHeader, PageShell } from '@acornops/ui';
 import { Select, type SelectOption } from '@acornops/ui';
@@ -128,6 +128,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
 
   const workspaceStateCurrent = stateWorkspaceId === workspace.id;
   const triggers = workspaceStateCurrent ? triggerPage?.items || [] : [];
+  const triggersPending = !workspaceStateCurrent || phase === 'loading';
   const query = embedded ? '' : urlSearch.get('q') || '';
   const status = !embedded && (urlSearch.get('status') === 'enabled' || urlSearch.get('status') === 'paused')
     ? urlSearch.get('status') as Exclude<TriggerStatusFilter, 'all'>
@@ -348,7 +349,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
       {embedded && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="type-caption text-ui-text-muted">
-            {t('eventTriggers.count', { count: visibleTriggers.length })}
+            {triggersPending ? t('eventTriggers.loading') : t('eventTriggers.count', { count: visibleTriggers.length })}
           </p>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={() => void refresh()} disabled={phase === 'loading' || phase === 'refreshing'}>
@@ -405,7 +406,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         queryLabel={searchLabel}
         queryPlaceholder={searchLabel}
         queryClearLabel={t('common.clearSearch')}
-        resultSummary={hasActiveFilters
+        resultSummary={triggersPending
+          ? t('eventTriggers.loading')
+          : hasActiveFilters
           ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: triggers.length })
           : t('eventTriggers.count', { count: triggers.length })}
         filters={[
@@ -415,9 +418,9 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
             value: status,
             defaultValue: 'all',
             options: [
-              { value: 'all', label: t('eventTriggers.filters.allStatuses'), count: triggers.length },
-              { value: 'enabled', label: t('eventTriggers.status.enabled'), count: triggers.filter((trigger) => trigger.status === 'enabled').length },
-              { value: 'paused', label: t('eventTriggers.status.paused'), count: triggers.filter((trigger) => trigger.status === 'paused').length }
+              { value: 'all', label: t('eventTriggers.filters.allStatuses'), count: triggersPending ? undefined : triggers.length },
+              { value: 'enabled', label: t('eventTriggers.status.enabled'), count: triggersPending ? undefined : triggers.filter((trigger) => trigger.status === 'enabled').length },
+              { value: 'paused', label: t('eventTriggers.status.paused'), count: triggersPending ? undefined : triggers.filter((trigger) => trigger.status === 'paused').length }
             ],
             onChange: (value) => updateUrlSearch({ status: value === 'all' ? null : value })
           }),
@@ -475,7 +478,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         <CollectionState
           phase={workspaceStateCurrent ? phase : 'loading'}
           itemCount={visibleTriggers.length}
-          loading={<InlineLoadingIndicator label={t('common.loading')} className="w-full justify-center py-10" />}
+          loading={<CollectionLoadingSkeleton label={t('eventTriggers.loading')} />}
           empty={<EmptyState
             embedded
             icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Zap />}

@@ -8,6 +8,7 @@ interface WorkspaceScheduleDrawerToolbarProps {
   busy: boolean;
   canCreate: boolean;
   count: number;
+  loading?: boolean;
   onCreate: () => void;
   onRefresh: () => void;
   total: number;
@@ -17,6 +18,7 @@ export const WorkspaceScheduleDrawerToolbar: React.FC<WorkspaceScheduleDrawerToo
   busy,
   canCreate,
   count,
+  loading = false,
   onCreate,
   onRefresh,
   total
@@ -25,7 +27,7 @@ export const WorkspaceScheduleDrawerToolbar: React.FC<WorkspaceScheduleDrawerToo
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
       <p className="type-caption text-ui-text-muted">
-        {t('schedules.filters.showing', { count, total })}
+        {loading ? t('schedules.loading') : t('schedules.filters.showing', { count, total })}
       </p>
       <div className="flex items-center gap-2">
         <Button size="sm" variant="secondary" onClick={onRefresh} disabled={busy} aria-label={t('common.refresh')}>

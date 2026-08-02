@@ -408,6 +408,7 @@ export const en = {
   },
   schedules: {
     title: 'Schedules',
+    loading: 'Loading schedules…',
     subtitle: 'Recurring workflow dispatches for {{workspace}}.',
     tableLabel: 'Workflow schedules',
     permissionNotice: 'You need manage_workflows to create or edit schedules.',
@@ -483,6 +484,7 @@ export const en = {
   },
   eventTriggers: {
     title: 'Incoming Webhooks',
+    loading: 'Loading incoming webhooks…',
     subtitle: 'Signed endpoints that dispatch workflows in {{workspace}}.',
     permissionNotice: 'You need manage_workflows to create or edit workflow webhooks.',
     noActiveWorkflows: 'Activate a workflow before creating a webhook.',
@@ -3265,7 +3267,7 @@ export const en = {
     agents: {
       title: 'Agents', description: 'Browse workspace Agents and inspect the capabilities available to workflows.', catalogLabel: 'Agent catalog',
       toolbarLabel: 'Agent catalog search and filters', searchPlaceholder: 'Search agents', searchLabel: 'Search agents', statusFilterLabel: 'Filter agents by status',
-      resultCount: '{{visible}} of {{total}} agents', totalCount: '{{count}} agents', totalCount_one: '{{count}} agent', totalCount_other: '{{count}} agents', newAgent: 'New agent', createPermission: 'You need manage_agents to create agents.', emptyTitle: 'No agents in this workspace', emptyBody: 'Create an Agent to make capabilities available to workflows.', emptyReadOnlyBody: 'Agents will appear here after a workspace manager creates them.',
+      resultCount: '{{visible}} of {{total}} agents', loading: 'Loading Agents…', totalCount: '{{count}} agents', totalCount_one: '{{count}} agent', totalCount_other: '{{count}} agents', newAgent: 'New agent', createPermission: 'You need manage_agents to create agents.', emptyTitle: 'No agents in this workspace', emptyBody: 'Create an Agent to make capabilities available to workflows.', emptyReadOnlyBody: 'Agents will appear here after a workspace manager creates them.',
       noResultsTitle: 'No agents match', noResultsBody: 'Adjust the search or status filter.', filters: { all: 'All' },
       status: { active: 'Active', draft: 'Draft', disabled: 'Disabled' }, tabs: { overview: 'Overview', capabilities: 'Capabilities', settings: 'Settings' },
       fields: { identity: 'Agent', status: 'Status', capabilities: 'Capabilities', assignment: 'Assignment' },

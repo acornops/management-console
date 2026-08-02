@@ -29,7 +29,8 @@ describe('resource card grid', () => {
     expect(styles).toMatch(/\.resource-card-grid > \* \{[\s\S]*?width: 100%;[\s\S]*?min-width: 0;/);
     expect(styles).not.toMatch(/\.resource-card-grid > \* \{[^}]*max-width:/);
     expect(styles).toContain('container-name: resource-card-catalog');
-    expect(agentCatalog.match(/data-agent-card-grid="true"/g)).toHaveLength(2);
+    expect(agentCatalog.match(/data-agent-card-grid="true"/g)).toHaveLength(1);
+    expect(agentCatalog).toContain('<CollectionLoadingSkeleton');
     expect(styles).not.toContain("[data-agent-catalog-layout='docked'] .resource-card-grid");
     expect(styles).not.toContain('container-name: cluster-catalog');
     expect(designCheck).toContain("'display: grid'");

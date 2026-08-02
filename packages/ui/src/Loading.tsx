@@ -51,6 +51,83 @@ export const InlineLoadingIndicator: React.FC<InlineLoadingIndicatorProps> = ({ 
   </div>
 );
 
+const SkeletonLine: React.FC<{ className: string }> = ({ className }) => (
+  <span aria-hidden="true" className={twMerge(clsx('block animate-pulse rounded-full bg-ui-border/70', className))} />
+);
+
+export interface CollectionLoadingSkeletonProps {
+  /** Announces the pending collection without exposing decorative skeletons. */
+  label: string;
+  /** Uses a list for ledgers and a card grid for inventory-style collections. */
+  variant?: 'list' | 'card-grid';
+  /** Placeholder count. Defaults to four to fill the first viewport of a typical collection without implying a result total. */
+  rows?: number;
+  className?: string;
+  gridClassName?: string;
+  gridProps?: React.HTMLAttributes<HTMLDivElement> & Partial<Record<`data-${string}`, string | number | boolean>>;
+  announce?: boolean;
+}
+
+/**
+ * Shared loading anatomy for collection surfaces. It reserves the final
+ * reading rhythm instead of presenting an empty bordered container.
+ */
+export const CollectionLoadingSkeleton: React.FC<CollectionLoadingSkeletonProps> = ({
+  label,
+  variant = 'list',
+  rows = 4,
+  className,
+  gridClassName,
+  gridProps,
+  announce = true
+}) => {
+  const items = Array.from({ length: rows });
+
+  if (variant === 'card-grid') {
+    return (
+      <div role={announce ? 'status' : undefined} aria-live={announce ? 'polite' : undefined} className={twMerge('min-w-0', className)}>
+        <span className="sr-only">{label}</span>
+        <div {...gridProps} aria-hidden="true" className={twMerge('grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3', gridClassName, gridProps?.className)}>
+          {items.map((_, index) => (
+            <div key={index} className="min-h-44 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+              <div className="flex items-start gap-3 px-4 py-4">
+                <span className="h-10 w-10 shrink-0 animate-pulse rounded-lg bg-ui-border/70" />
+                <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+                  <SkeletonLine className="h-3.5 w-2/5" />
+                  <SkeletonLine className="h-2.5 w-24" />
+                </div>
+                <SkeletonLine className="mt-1 h-5 w-14" />
+              </div>
+              <div className="border-t border-ui-border px-4 py-4">
+                <SkeletonLine className="h-3 w-5/6" />
+                <SkeletonLine className="mt-3 h-2.5 w-2/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div role={announce ? 'status' : undefined} aria-live={announce ? 'polite' : undefined} className={twMerge('divide-y divide-ui-border', className)}>
+      <span className="sr-only">{label}</span>
+      <div aria-hidden="true">
+        {items.map((_, index) => (
+          <div key={index} className="flex min-h-20 items-center gap-4 px-5 py-4">
+            <span className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-ui-border/70" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <SkeletonLine className="h-3 w-2/5" />
+              <SkeletonLine className="h-2.5 w-3/5" />
+            </div>
+            <SkeletonLine className="hidden h-5 w-16 sm:block" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export interface TableLoadingRowsProps {
   columns: number;
   label: string;

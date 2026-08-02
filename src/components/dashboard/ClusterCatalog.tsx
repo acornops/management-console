@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile, InlineAlert } from '@acornops/ui';
+import { Button, CollectionLoadingSkeleton, IconTile, InlineAlert } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
@@ -354,16 +354,25 @@ const ClusterCatalogEmptyState: React.FC<{
   onRetry?: () => void;
 }> = ({ filtered, isLoading, loadError, onRetry }) => {
   const { t } = useTranslation();
+  if (isLoading) {
+    return (
+      <CollectionLoadingSkeleton
+        label={t('dashboard.loadingClusters')}
+        variant="card-grid"
+        rows={3}
+        gridClassName="resource-card-grid gap-4"
+        gridProps={{ 'data-cluster-card-grid': 'true', 'data-resource-card-grid': 'true' }}
+      />
+    );
+  }
   const EmptyIcon = loadError ? ICONS.AlertCircle : filtered ? ICONS.Search : ICONS.Layers;
   return (
     <EmptyState
       headingLevel={3}
       icon={<EmptyIcon />}
-      title={isLoading ? t('dashboard.loadingClusters') : loadError ? t('dashboard.clusterLoadFailed') : filtered ? t('dashboard.noMatchingClusters') : t('dashboard.noClusters')}
+      title={loadError ? t('dashboard.clusterLoadFailed') : filtered ? t('dashboard.noMatchingClusters') : t('dashboard.noClusters')}
       description={
-        isLoading
-          ? t('dashboard.loadingClustersBody')
-          : loadError
+        loadError
           ? t('dashboard.clusterLoadFailedBody')
           : filtered
           ? t('dashboard.noMatchingClustersBody')

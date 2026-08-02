@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import {
   Button,
   CollectionState,
+  CollectionLoadingSkeleton,
   createDiscoveryFilterGroup,
   DiscoveryFilterBar,
   EmptyState,
@@ -95,11 +96,11 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
   const { t } = useTranslation();
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   const filterOptions = React.useMemo<Array<DiscoveryFilterOption<AgentFocusFilter>>>(() => [
-    { value: 'all', label: t('agentsWorkflows.agents.filters.all'), count: agents.length },
-    { value: 'active', label: t('agentsWorkflows.agents.status.active'), count: agents.filter((agent) => agent.status === 'active').length },
-    { value: 'draft', label: t('agentsWorkflows.agents.status.draft'), count: agents.filter((agent) => agent.status === 'draft').length },
-    { value: 'disabled', label: t('agentsWorkflows.agents.status.disabled'), count: agents.filter((agent) => agent.status === 'disabled').length }
-  ], [agents, t]);
+    { value: 'all', label: t('agentsWorkflows.agents.filters.all'), count: loading ? undefined : agents.length },
+    { value: 'active', label: t('agentsWorkflows.agents.status.active'), count: loading ? undefined : agents.filter((agent) => agent.status === 'active').length },
+    { value: 'draft', label: t('agentsWorkflows.agents.status.draft'), count: loading ? undefined : agents.filter((agent) => agent.status === 'draft').length },
+    { value: 'disabled', label: t('agentsWorkflows.agents.status.disabled'), count: loading ? undefined : agents.filter((agent) => agent.status === 'disabled').length }
+  ], [agents, loading, t]);
   const hasActiveFilters = Boolean(query.trim()) || hasActiveAgentCatalogFilters(catalogFilters);
 
   return (
@@ -116,7 +117,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
           queryLabel={t('agentsWorkflows.agents.searchLabel')}
           queryPlaceholder={t('agentsWorkflows.agents.searchPlaceholder')}
           queryClearLabel={t('common.clearSearch')}
-          resultSummary={loading ? t('common.loading') : t('agentsWorkflows.agents.resultCount', { visible: visibleAgents.length, total: agents.length })}
+          resultSummary={loading ? t('agentsWorkflows.agents.loading') : t('agentsWorkflows.agents.resultCount', { visible: visibleAgents.length, total: agents.length })}
           filters={[createDiscoveryFilterGroup<AgentFocusFilter>({
             id: 'status',
             label: t('common.status'),
@@ -136,11 +137,13 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         itemCount={visibleAgents.length}
         filtered={hasActiveFilters && agents.length > 0}
         loading={
-          <div data-agent-card-grid="true" data-resource-card-grid="true" className="resource-card-grid gap-4" aria-hidden="true">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-44 rounded-lg border border-ui-border bg-ui-surface shadow-sm" />
-            ))}
-          </div>
+          <CollectionLoadingSkeleton
+            label={t('agentsWorkflows.agents.loading')}
+            variant="card-grid"
+            gridClassName="resource-card-grid gap-4"
+            gridProps={{ 'data-agent-card-grid': 'true', 'data-resource-card-grid': 'true' }}
+            announce={false}
+          />
         }
         empty={<EmptyState embedded icon={<ICONS.Bot />} title={t('agentsWorkflows.agents.emptyTitle')} description={t(canManageAgents ? 'agentsWorkflows.agents.emptyBody' : 'agentsWorkflows.agents.emptyReadOnlyBody')} />}
         filteredEmpty={<EmptyState embedded icon={<ICONS.Search />} title={t('agentsWorkflows.agents.noResultsTitle')} description={t('agentsWorkflows.agents.noResultsBody')} />}

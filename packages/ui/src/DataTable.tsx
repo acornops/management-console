@@ -239,6 +239,8 @@ export interface DataTableStateRowProps extends React.HTMLAttributes<HTMLTableRo
   itemCount: number;
   filtered?: boolean;
   loading: React.ReactNode;
+  /** Optional table-valid skeleton rows for initial ledger loading. */
+  loadingRows?: React.ReactNode;
   empty: React.ReactNode;
   filteredEmpty?: React.ReactNode;
   error: React.ReactNode;
@@ -252,10 +254,12 @@ export const DataTableStateRow: React.FC<DataTableStateRowProps> = ({
   filteredEmpty,
   itemCount,
   loading,
+  loadingRows,
   phase,
   ...props
 }) => {
   if (itemCount > 0) return null;
+  if ((phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore') && loadingRows) return <>{loadingRows}</>;
   const content = phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore'
     ? loading
     : phase === 'error'

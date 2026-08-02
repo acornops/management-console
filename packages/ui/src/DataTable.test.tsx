@@ -11,7 +11,8 @@ import {
   DataTableHeader,
   DataTableHeaderCell,
   DataTableRow,
-  DataTableStateRow
+  DataTableStateRow,
+  TableLoadingRows
 } from '@acornops/ui';
 
 describe('DataTable primitives', () => {
@@ -113,6 +114,28 @@ describe('DataTable primitives', () => {
 
     expect(markup).toContain('Refreshing targets');
     expect(markup).not.toContain('No targets');
+  });
+
+  it('can replace a loading state row with table-valid skeleton rows', () => {
+    const markup = renderToStaticMarkup(
+      <table>
+        <tbody>
+          <DataTableStateRow
+            columns={2}
+            phase="loading"
+            itemCount={0}
+            loading={<span>Loading targets</span>}
+            loadingRows={<TableLoadingRows columns={2} label="Loading targets" />}
+            empty={<span>No targets</span>}
+            error={null}
+          />
+        </tbody>
+      </table>
+    );
+
+    expect(markup).toContain('Loading targets');
+    expect(markup).toContain('animate-pulse');
+    expect(markup).toContain('colSpan="2" role="status"');
   });
 
   it('shares one visible header anatomy across semantic tables and responsive ledgers', () => {

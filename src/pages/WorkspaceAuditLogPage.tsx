@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { CloseButton, FilterToggleGroup, type CompactControlItem } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { DataTableHeader, DataTableHeaderCell, DataTableStateRow } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell, DataTableStateRow, TableLoadingRows } from '@acornops/ui';
 import { DateTimePicker, PageSearchInput } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
@@ -237,6 +237,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
   });
   const { items: events, nextCursor, phase: auditPhase, error: errorMessage = '' } = auditCollection;
   const isLoading = auditPhase === 'loading' || auditPhase === 'refreshing';
+  const isInitialAuditLoading = isLoading && events.length === 0;
   const isLoadingMore = auditPhase === 'loadingMore';
 
   useEffect(() => {
@@ -440,14 +441,17 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           )}
         </form>
         <div className="flex items-center justify-between gap-3 border-b border-ui-border px-4 py-3">
-          <p className="type-caption text-ui-text-muted">{t('auditLog.loadedCount', { count: visibleCount })}</p>
+          <p className="type-caption text-ui-text-muted">
+            {isInitialAuditLoading ? t('auditLog.loading') : t('auditLog.loadedCount', { count: visibleCount })}
+          </p>
         </div>
         <div className="min-w-0">
           <DataTable caption={t('auditLog.title')} className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
             <DataTableHeader
               collectionState={{
                 phase: isLoading ? 'loading' : errorMessage ? 'error' : 'ready',
-                itemCount: events.length
+                itemCount: events.length,
+                showDuringInitialLoading: true
               }}
             >
               <DataTableRow>
@@ -515,6 +519,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                     {t('auditLog.loading')}
                   </div>
                 }
+                loadingRows={<TableLoadingRows columns={5} label={t('auditLog.loading')} />}
                 empty={<EmptyState embedded headingLevel={3} icon={<ICONS.Activity />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
                 filteredEmpty={<EmptyState embedded headingLevel={3} icon={<ICONS.Search />} title={t('auditLog.emptyTitle')} description={t('auditLog.empty')} />}
                 error={<EmptyState embedded headingLevel={3} icon={<ICONS.AlertCircle />} title={t('auditLog.loadFailed')} description={errorMessage} />}

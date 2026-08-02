@@ -306,6 +306,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       ),
     [visibleClusters, metricHistoryByClusterId]
   );
+  const catalogPending = isLoading && kubernetesClusters.length === 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -335,7 +336,9 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
                 queryPlaceholder={t('dashboard.searchClusters')}
                 queryClearLabel={t('common.clearSearch')}
                 resultSummary={
-                  hasActiveFilter
+                  catalogPending
+                    ? t('dashboard.loadingClusters')
+                    : hasActiveFilter
                     ? t('dashboard.showingClusters', {
                         count: clustersWithMetricHistory.length,
                         total: totalClusterCount ?? kubernetesClusters.length
@@ -353,7 +356,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
                     options: CLUSTER_STATUS_FILTERS.map((filter) => ({
                       value: filter,
                       label: statusLabels[filter],
-                      count: catalogCounts[filter]
+                      count: catalogPending ? undefined : catalogCounts[filter]
                     })),
                     onChange: handleStatusChange
                   })

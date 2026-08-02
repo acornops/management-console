@@ -408,6 +408,7 @@ export const zh = {
   },
   schedules: {
     title: '计划',
+    loading: '正在加载计划…',
     subtitle: '{{workspace}} 的周期性工作流调度。',
     tableLabel: '工作流计划',
     permissionNotice: '需要 manage_workflows 权限才能创建或编辑计划。',
@@ -483,6 +484,7 @@ export const zh = {
   },
   eventTriggers: {
     title: '传入 Webhook',
+    loading: '正在加载传入 Webhook…',
     subtitle: '用于调度 {{workspace}} 中工作流的签名端点。',
     permissionNotice: '需要 manage_workflows 权限才能创建或编辑工作流 Webhook。',
     noActiveWorkflows: '请先激活工作流，再创建 Webhook。',
@@ -3265,7 +3267,7 @@ export const zh = {
     agents: {
       title: 'Agents', description: '浏览工作区 Agent，并检查工作流可用的能力。', catalogLabel: 'Agent 目录',
       toolbarLabel: 'Agent 目录搜索和筛选', searchPlaceholder: '搜索 Agent', searchLabel: '搜索 Agent', statusFilterLabel: '按状态筛选 Agent',
-      resultCount: '显示 {{visible}} 个，共 {{total}} 个 Agent', totalCount: '{{count}} 个 Agent', totalCount_one: '{{count}} 个 Agent', totalCount_other: '{{count}} 个 Agent', newAgent: '新建 Agent', createPermission: '需要 manage_agents 权限才能创建 Agent。', emptyTitle: '此工作区暂无 Agent', emptyBody: '创建 Agent，为工作流提供能力。', emptyReadOnlyBody: '工作区管理员创建 Agent 后，它们会显示在这里。',
+      resultCount: '显示 {{visible}} 个，共 {{total}} 个 Agent', loading: '正在加载 Agent…', totalCount: '{{count}} 个 Agent', totalCount_one: '{{count}} 个 Agent', totalCount_other: '{{count}} 个 Agent', newAgent: '新建 Agent', createPermission: '需要 manage_agents 权限才能创建 Agent。', emptyTitle: '此工作区暂无 Agent', emptyBody: '创建 Agent，为工作流提供能力。', emptyReadOnlyBody: '工作区管理员创建 Agent 后，它们会显示在这里。',
       noResultsTitle: '没有匹配的 Agent', noResultsBody: '请调整搜索或状态筛选。', filters: { all: '全部' },
       status: { active: '已启用', draft: '草稿', disabled: '已停用' }, tabs: { overview: '概览', capabilities: '能力', settings: '设置' },
       fields: { identity: 'Agent', status: '状态', capabilities: '能力', assignment: '工作流分配' },

@@ -3,6 +3,7 @@ import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DialogFrame } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
+import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { WorkspaceInvitation } from '@/types';
@@ -47,6 +48,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
   const [replacementInviteErrorMessage, setReplacementInviteErrorMessage] = useState<string | null>(null);
 
   const visibleInvitations = invitations.filter((invitation) => invitation.status === 'pending' || invitation.status === 'expired');
+  const invitationsPending = phase === 'loading' && visibleInvitations.length === 0;
   const shouldShowInvitations = isExpanded || Boolean(inviteErrorMessage) || Boolean(loadError);
 
   const copyExistingInviteLink = async (invitation: WorkspaceInvitation) => {
@@ -146,7 +148,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="type-label w-fit rounded-full border border-ui-border bg-ui-bg px-3 py-1">
-              {t('members.inviteLinksCount', {
+              {invitationsPending ? t('members.loadingInvitations') : t('members.inviteLinksCount', {
                 count: visibleInvitations.length
               })}
             </span>
@@ -166,7 +168,7 @@ export const WorkspaceInvitationsPanel: React.FC<WorkspaceInvitationsPanelProps>
           <CollectionState
             phase={phase}
             itemCount={visibleInvitations.length}
-            loading={null}
+            loading={<CollectionLoadingSkeleton label={t('members.loadingInvitations')} rows={3} />}
             empty={noInvitationsState}
             error={noInvitationsState}
             feedback={isLoadingMoreInvitations ? <span className="sr-only">{t('members.loadingInvitations')}</span> : null}
