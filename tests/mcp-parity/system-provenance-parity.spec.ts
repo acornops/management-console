@@ -42,13 +42,14 @@ test('installed and custom workflows use the same workspace-owned treatment', as
   await page.goto(`/workspaces/${workspaceId}/workflows?workflow=${workflowId}`);
   const addedRow = page.getByRole('button', { name: /Select workflow Infrastructure remediation/ });
   await expect(addedRow.getByText('Provided by AcornOps')).toHaveCount(0);
+  await expect(addedRow.getByText('Test User', { exact: true })).toBeVisible();
   const addedHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(addedHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(addedHeader.getByText('Built-in', { exact: true })).toHaveCount(0);
-  await expect(addedHeader.getByText('Owner: Test User', { exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: /Select workflow Production health review/ }).click();
+  const customRow = page.getByRole('button', { name: /Select workflow Production health review/ });
+  await expect(customRow.getByText('Test User', { exact: true })).toBeVisible();
+  await customRow.click();
   const customHeader = page.locator('[data-master-detail-pane-header="true"]');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(customHeader.getByText('Owner: Test User', { exact: true })).toBeVisible();
 });
