@@ -59,7 +59,10 @@ export const SegmentedTabs = <T extends string>({ activeValue, allPanelsMounted 
     if (!idBase) return undefined;
     const frame = window.requestAnimationFrame(() => {
       const activeTab = tablistRef.current?.querySelector<HTMLElement>(`#${CSS.escape(`${idBase}-${activeValue}-tab`)}`);
+      const viewportX = window.scrollX;
+      const viewportY = window.scrollY;
       activeTab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      window.scrollTo(viewportX, viewportY);
     });
     return () => window.cancelAnimationFrame(frame);
   }, [activeValue, idBase]);

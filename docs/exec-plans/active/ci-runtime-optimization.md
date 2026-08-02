@@ -86,6 +86,11 @@ gates.
   - A fresh full run reproduced the same incoming-webhooks scroll mismatch in
     mobile-dark. The shared route preparation now waits for tab scroll effects
     to settle and resets the document to the baseline scroll position.
+- GitHub Actions run `30744896755`, attempt 1
+  - Mobile-dark passed with the route preparation change, but mobile-light
+    reproduced the same late document scroll. The active-tab component now
+    preserves the viewport around its horizontal `scrollIntoView`, fixing the
+    page jump at the source while retaining compact-tab visibility.
 - Pending final GitHub Actions timing evidence after scroll stabilization.
 
 ## Completion criteria
