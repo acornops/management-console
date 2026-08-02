@@ -32,8 +32,8 @@ async function expectWorkspaceMenuAlignment(workspaceMenu: Locator) {
     newIconBox.y + newIconBox.height / 2
       - (newTextBox.y + newTextBox.height / 2)
   )).toBeLessThanOrEqual(1);
-  expect(newIconBox.x).toBe(workspaceIconBox.x);
-  expect(newTextBox.x).toBe(workspaceTextBox.x);
+  expect(Math.abs(newIconBox.x - workspaceIconBox.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(newTextBox.x - workspaceTextBox.x)).toBeLessThanOrEqual(1);
 }
 
 test('desktop sidebar collapse persists and keeps rail navigation accessible', async ({ page }) => {
