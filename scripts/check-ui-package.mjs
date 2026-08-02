@@ -61,6 +61,7 @@ for (const subpath of ['./tokens.css', './fonts', './tailwind-preset']) {
 await access(resolve(packageRoot, 'dist/index.js'));
 await access(resolve(packageRoot, 'dist/index.d.ts'));
 await access(resolve(packageRoot, 'tokens.css'));
+await access(resolve(packageRoot, 'CHANGELOG.md'));
 
 if (!preset.default?.theme?.extend?.colors?.['ui-surface']) {
   throw new Error('Tailwind preset does not expose canonical semantic colors.');
