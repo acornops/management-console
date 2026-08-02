@@ -29,7 +29,7 @@ export function getMcpCreateFlowCopyKeys(authType: ServerFormState['authType']) 
   }
   if (authType !== 'none') {
     return {
-      nextStep: 'mcpServers.stepConnect',
+      nextStep: 'mcpServers.stepAddCredential',
       help: 'mcpServers.credentialCreateHelp',
       pending: 'mcpServers.addingServer',
       action: 'mcpServers.continueToCredentials'
@@ -322,6 +322,7 @@ export const McpServerFormDialog: React.FC<{
                       <label className="space-y-1">
                         <span className="type-label px-1">{t('mcpServers.headerName')}</span>
                         <TextInput
+                          aria-describedby={mode === 'create' ? 'mcp-header-name-help' : undefined}
                           value={form.headerName}
                           onChange={(event) =>
                             onFormChange((current) => ({
@@ -332,11 +333,18 @@ export const McpServerFormDialog: React.FC<{
                           placeholder={t('mcpServers.headerNamePlaceholder')}
                           className={mcpServerInputClassName}
                         />
+                        {mode === 'create' && (
+                          <span id="mcp-header-name-help" className="type-caption block px-1 text-ui-text-muted">
+                            {t('mcpServers.headerNameCreateHelp')}
+                          </span>
+                        )}
                       </label>
                     )}
-                    <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
-                      {t(form.authType === 'oauth' ? 'mcpServers.oauthCredentialSetupHelp' : 'mcpServers.credentialSetupHelp')}
-                    </p>
+                    {(mode === 'edit' || form.authType === 'oauth') && (
+                      <p className="type-caption rounded-lg border border-ui-border bg-ui-surface px-4 py-3 text-ui-text-muted">
+                        {t(form.authType === 'oauth' ? 'mcpServers.oauthCredentialSetupHelp' : 'mcpServers.credentialSetupHelp')}
+                      </p>
+                    )}
                   </div>
                 )}
 
