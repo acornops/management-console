@@ -6,6 +6,7 @@ import { toVirtualMachineTargetDescriptor } from '@/features/targets/targetDescr
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { ChatSession, Workspace } from '@/types';
 import { assistantSessionFromLocation } from '@/utils/routes';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface VirtualMachineChatViewProps {
   vm: ControlPlaneVirtualMachine;
@@ -39,7 +40,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   onOpenAiSettings,
   onInitialInputConsumed
 }) => {
-  const [chatSessions, setChatSessions] = React.useState<ChatSession[]>([]);
+  const [chatSessions, setChatSessions] = useSessionCachedState<ChatSession[]>(`workspace:${workspace.id}:target:${vm.id}:chat-sessions`, []);
   const assistantMarkdownComponents = React.useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
   const initialActiveSessionId = assistantSessionFromLocation(window.location);

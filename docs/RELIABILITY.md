@@ -24,6 +24,15 @@
 
 - Prefer additive UI mapping for evolving payloads.
 - Show explicit degraded states instead of hiding failures.
+- Route-level control-plane reads use session-scoped, in-memory data continuity:
+  a previously loaded snapshot remains visible across route unmounts while the
+  route revalidates in the background. Only a first visit without a usable
+  snapshot presents an initial loading surface. Cache keys include the
+  workspace, resource identity, and active filters or detail identity.
+- Cached control-plane payloads are bounded and never persisted to browser
+  storage. They are cleared whenever the authenticated user changes or signs
+  out. Cached permissions improve continuity only; the control plane remains
+  authoritative for every operation.
 - Capture new UI invariants in docs or structural checks when they become durable.
 - Session bootstrap distinguishes an initial unauthenticated `401` from network
   and control-plane `5xx` failures. The former opens sign-in; the latter keeps a

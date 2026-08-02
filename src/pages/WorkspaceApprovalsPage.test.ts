@@ -7,10 +7,11 @@ const root = resolve(__dirname, '../..');
 const page = readFileSync(resolve(root, 'src/pages/WorkspaceApprovalsPage.tsx'), 'utf8');
 
 describe('WorkspaceApprovalsPage asynchronous isolation', () => {
-  it('clears prior rows and ignores stale loads when workspace or focus changes', () => {
+  it('scopes retained rows and ignores stale loads when workspace or focus changes', () => {
     expect(page).toContain("const scopeKey = `${workspace.id}\\u0000${runId || ''}\\u0000${approvalId || ''}`");
     expect(page).toContain('approvalRequestSequence.current === requestSequence');
-    expect(page).toContain('setApprovalsByFilter({ pending: [], decided: [] })');
+    expect(page).toContain('useSessionCachedState<Record<ApprovalFilter, WorkspaceApprovalInboxRow[]>>(approvalRowsCacheKey');
+    expect(page).not.toContain('setApprovalsByFilter({ pending: [], decided: [] })');
     expect(page).toContain('void loadApprovals(true)');
     expect(page).toContain('const scopeStateCurrent = stateScopeKey === scopeKey');
     expect(page).toContain('const visibleApprovalPhase = scopeStateCurrent ? approvalPhase : \'loading\'');

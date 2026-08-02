@@ -12,6 +12,7 @@ import {
   Zap, 
   GitBranch, 
   Send, 
+  Webhook,
   Sun, 
   Moon,
   Shield,
@@ -49,13 +50,13 @@ import {
   Mail,
   Smartphone,
   Languages,
+  CalendarClock,
   Clock,
   RefreshCw,
   Save,
   Bot,
   CircleHelp,
-  PanelLeftClose,
-  PanelLeftOpen
+  PanelLeft
 } from 'lucide-react';
 
 export const ICONS = {
@@ -72,6 +73,7 @@ export const ICONS = {
   Zap,
   GitBranch,
   Send,
+  Webhook,
   Sun,
   Moon,
   Shield,
@@ -109,13 +111,13 @@ export const ICONS = {
   Mail,
   Smartphone,
   Languages,
+  CalendarClock,
   Clock,
   RefreshCw,
   Save,
   Bot,
   CircleHelp,
-  PanelLeftClose,
-  PanelLeftOpen
+  PanelLeft
 };
 
 export const THEME_CLASSES = {

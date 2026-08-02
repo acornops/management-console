@@ -69,6 +69,7 @@ export interface DiscoveryFilterBarProps {
   embedded?: boolean;
   searchWidth?: 'fluid' | 'fixed';
   filterWidth?: 'default' | 'compact';
+  denseBreakpoint?: 'xl' | '2xl';
   stacked?: boolean;
   className?: string;
 }
@@ -95,6 +96,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
   embedded = false,
   searchWidth = 'fluid',
   filterWidth = 'default',
+  denseBreakpoint = '2xl',
   stacked = false,
   className
 }) => {
@@ -176,7 +178,7 @@ export const DiscoveryFilterBar: React.FC<DiscoveryFilterBarProps> = ({
 
   return (
     <div data-discovery-filter-bar="true" className={className}>
-      <SearchFilterFrame embedded={embedded} searchWidth={searchWidth} filterWidth={filterWidth} stacked={stacked} search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
+      <SearchFilterFrame embedded={embedded} searchWidth={searchWidth} filterWidth={filterWidth} denseBreakpoint={denseBreakpoint} stacked={stacked} search={search} filterControls={filterControls} trailingActions={clearAllAction} resultSummary={liveResultSummary} />
     </div>
   );
 };

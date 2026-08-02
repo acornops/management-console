@@ -26,7 +26,6 @@ interface WorkflowSettingsPanelProps {
   onUpdateDraft: (update: Partial<WorkflowEditDraft>) => void;
   tagDraft: string;
   updateError: string;
-  updateResult: string;
   updating: boolean;
   workflow: WorkflowDefinition;
   workflowDeleteBlocker: string;
@@ -46,13 +45,11 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
   onUpdateDraft,
   tagDraft,
   updateError,
-  updateResult,
   updating,
   workflow,
   workflowDeleteBlocker
 }) => {
   const error = updateError || deleteError;
-  const feedback = error || updateResult;
   return (
     <WorkflowPanel
       title="Settings"
@@ -63,15 +60,10 @@ export const WorkflowSettingsPanel: React.FC<WorkflowSettingsPanelProps> = ({
             You can inspect workflow settings. Ask a workspace manager for manage_workflows to change this workflow.
           </InlineAlert>
         )}
-        {feedback && (
-          <div
-            role={error ? 'alert' : 'status'}
-            aria-live={error ? 'assertive' : 'polite'}
-            aria-atomic="true"
-            className={`rounded-md border px-3 py-2 type-caption type-emphasis ${error ? 'border-status-danger/30 bg-status-danger-soft text-status-danger-text' : 'border-status-success/30 bg-status-success-soft text-status-success-text'}`}
-          >
-            {feedback}
-          </div>
+        {error && (
+          <InlineAlert tone="danger" role="alert" aria-live="assertive" aria-atomic="true">
+            {error}
+          </InlineAlert>
         )}
         <WorkflowSection title="Availability">
           <div className="mt-3 flex items-center justify-between gap-4 rounded-md border border-ui-border bg-ui-bg px-4 py-3">

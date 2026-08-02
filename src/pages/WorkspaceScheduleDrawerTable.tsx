@@ -92,15 +92,15 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
         <DataTableBody className="divide-y divide-ui-border">
           {schedules.length > 0 ? schedules.map((schedule) => (
             <DataTableRow key={schedule.id}>
-              <DataTableCell as="th" scope="row" className="px-4 py-3 type-emphasis text-ui-text">{schedule.name}</DataTableCell>
-              <DataTableCell className="px-4 py-3 text-ui-text-muted"><code>{schedule.cron}</code><span className="mt-1 block type-caption">{schedule.timezone}</span></DataTableCell>
-              <DataTableCell className="px-4 py-3 text-ui-text">{formatScheduleDateTime(schedule.nextRunAt, t('schedules.nextRunUnavailable'))}</DataTableCell>
-              <DataTableCell className="px-4 py-3">
+              <DataTableCell as="th" scope="row" density="dense" className="py-3 type-emphasis text-ui-text">{schedule.name}</DataTableCell>
+              <DataTableCell density="dense" className="py-3 text-ui-text-muted"><code>{schedule.cron}</code><span className="mt-1 block type-caption">{schedule.timezone}</span></DataTableCell>
+              <DataTableCell density="dense" className="py-3 text-ui-text">{formatScheduleDateTime(schedule.nextRunAt, t('schedules.nextRunUnavailable'))}</DataTableCell>
+              <DataTableCell density="dense" className="py-3">
                 <StatusBadge tone={schedule.status === 'enabled' ? 'success' : 'neutral'}>
                   {schedule.status === 'enabled' ? t('schedules.status.active') : t('schedules.status.paused')}
                 </StatusBadge>
               </DataTableCell>
-              <DataTableCell className="px-4 py-3">
+              <DataTableCell density="dense" className="py-3">
                 <div className="flex justify-end">
                   <WorkspaceScheduleActionMenu
                     schedule={schedule}
@@ -121,7 +121,7 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
             </DataTableRow>
           )) : (
             <DataTableRow>
-              <DataTableCell colSpan={5} className="p-0">
+              <DataTableCell colSpan={5} density="dense" className="p-0">
                 {phase === 'loading' ? loading : phase === 'error' ? error : empty}
               </DataTableCell>
             </DataTableRow>

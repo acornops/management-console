@@ -20,6 +20,7 @@ Use the shared CSS role classes from `src/styles.css` instead of repeating ad ho
 | `type-row-title` | Table/list row names and compact item headings |
 | `type-body` | Explanatory prose and helper copy |
 | `type-ui` | Buttons, select triggers, and standard UI controls |
+| `type-compact-ui` | Nested tabs and compact controls that retain full-size interaction targets |
 | `type-emphasis` | Inline emphasis that must inherit its surrounding size and line height |
 | `type-wordmark` | AcornOps wordmark lettering only |
 | `type-caption` | Secondary metadata and dense supporting copy |

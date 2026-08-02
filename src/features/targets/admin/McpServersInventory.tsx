@@ -11,7 +11,7 @@ import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcp
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
 import { TextInput } from '@acornops/ui';
-import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
 
 interface McpServersInventoryProps {
   servers: TargetToolCatalogServer[];

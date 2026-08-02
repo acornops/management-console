@@ -20,6 +20,7 @@ import { ICONS } from '@/constants';
 import { WorkspaceWebhookActionMenu, WorkspaceWebhookCard } from '@/pages/WorkspaceWebhookCard';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 interface WorkspaceWebhookDrawerTableProps {
   actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
@@ -105,19 +106,19 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
             <DataTableBody className="divide-y divide-ui-border">
               {triggers.length > 0 ? triggers.map((trigger) => (
                 <DataTableRow key={trigger.id}>
-                  <DataTableCell as="th" scope="row" className="px-4 py-3 type-emphasis text-ui-text">{trigger.name}</DataTableCell>
-                  <DataTableCell className="max-w-64 px-4 py-3">
+                  <DataTableCell as="th" scope="row" density="dense" className="py-3 type-emphasis text-ui-text">{trigger.name}</DataTableCell>
+                  <DataTableCell density="dense" className="max-w-64 py-3">
                     <code className="block truncate type-caption text-ui-text-muted" title={trigger.endpointUrl}>{trigger.endpointUrl || '—'}</code>
                   </DataTableCell>
-                  <DataTableCell className="px-4 py-3">
+                  <DataTableCell density="dense" className="py-3">
                     <StatusBadge tone={trigger.status === 'enabled' ? 'success' : 'neutral'}>
                       {trigger.status === 'enabled' ? t('eventTriggers.status.enabled') : t('eventTriggers.status.paused')}
                     </StatusBadge>
                   </DataTableCell>
-                  <DataTableCell className="px-4 py-3 type-caption text-ui-text-muted">
-                    {trigger.lastStatus ? trigger.lastStatus.replaceAll('_', ' ') : t('eventTriggers.emptyDescription')}
+                  <DataTableCell density="dense" className="py-3 type-caption text-ui-text-muted">
+                    {trigger.lastStatus ? formatIdentifierLabel(trigger.lastStatus) : t('eventTriggers.emptyDescription')}
                   </DataTableCell>
-                  <DataTableCell className="px-4 py-3">
+                  <DataTableCell density="dense" className="py-3">
                     <div className="flex justify-end">
                       <WorkspaceWebhookActionMenu
                         trigger={trigger}
@@ -139,7 +140,7 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
                 </DataTableRow>
               )) : (
                 <DataTableRow>
-                  <DataTableCell colSpan={5} className="p-0">
+                  <DataTableCell colSpan={5} density="dense" className="p-0">
                     <CollectionState
                       phase={phase}
                       itemCount={0}

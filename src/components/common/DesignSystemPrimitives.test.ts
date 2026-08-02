@@ -9,6 +9,7 @@ import { buttonClassName, PageBackLink } from '@acornops/ui';
 
 const root = resolve(__dirname, '../../..');
 const pageComposition = readFileSync(resolve(root, 'packages/ui/src/PageComposition.tsx'), 'utf8');
+const tokens = readFileSync(resolve(root, 'packages/ui/tokens.css'), 'utf8');
 const overlayFrames = readFileSync(resolve(root, 'packages/ui/src/OverlayFrames.tsx'), 'utf8');
 const formControls = readFileSync(resolve(root, 'packages/ui/src/FormControls.tsx'), 'utf8');
 const catalog = readFileSync(resolve(root, 'src/design-system.tsx'), 'utf8');
@@ -26,6 +27,7 @@ describe('design-system primitives', () => {
     expect(pageComposition).toMatch(/embedded\s*\? 'page-shell--embedded'/);
     expect(pageComposition).toContain('px-[var(--ao-route-padding-x)]');
     expect(pageComposition).toContain('mb-[var(--ao-header-content-gap)]');
+    expect(tokens).toContain('--ao-header-content-gap: 1.25rem;');
     expect(pageComposition).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageComposition).toContain('DataSurfaceState');
     expect(pageComposition).toContain('<TableToolbar>');

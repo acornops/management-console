@@ -4,17 +4,19 @@ import { isAiRuntimeReady, resolveAiRuntimeReadiness } from '@/features/ai/aiRun
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceAiSettings } from '@/types';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 export function useWorkspaceAiRuntimeReadiness(workspaceId: string, refreshToken: number) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<WorkspaceAiSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const settingsCacheKey = `workspace:${workspaceId}:ai-runtime-settings`;
+  const [settings, setSettings] = useSessionCachedState<WorkspaceAiSettings | null>(settingsCacheKey, null);
+  const [isLoading, setIsLoading] = useState(() => !hasSessionDataCacheValue(settingsCacheKey));
   const [error, setError] = useState('');
   const readiness = resolveAiRuntimeReadiness({ settings, isLoading, error });
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
+    setIsLoading(!hasSessionDataCacheValue(settingsCacheKey));
     setError('');
     controlPlaneApi.getWorkspaceAiSettings(workspaceId)
       .then((nextSettings) => {
@@ -22,8 +24,9 @@ export function useWorkspaceAiRuntimeReadiness(workspaceId: string, refreshToken
       })
       .catch((loadError) => {
         if (cancelled) return;
-        setSettings(null);
-        setError(formatControlPlaneError(loadError, t('workspaceAiSettings.loadFailed'), { area: 'aiSettings' }));
+        if (!hasSessionDataCacheValue(settingsCacheKey)) {
+          setError(formatControlPlaneError(loadError, t('workspaceAiSettings.loadFailed'), { area: 'aiSettings' }));
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -31,7 +34,7 @@ export function useWorkspaceAiRuntimeReadiness(workspaceId: string, refreshToken
     return () => {
       cancelled = true;
     };
-  }, [refreshToken, t, workspaceId]);
+  }, [refreshToken, settingsCacheKey, t, workspaceId]);
 
   return { settings, isLoading, error, isReady: isAiRuntimeReady(readiness) };
 }

@@ -12,7 +12,7 @@ export function getCurrentUserRoleForWorkspaceValue(
 
 export function getWorkspacePermissionValue(
   workspaceById: Map<string, Workspace>,
-  userEmail: string | undefined,
+  _userEmail: string | undefined,
   workspaceId: string,
   permission: keyof NonNullable<Workspace['permissions']>
 ): boolean {

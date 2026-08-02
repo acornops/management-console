@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   executionDuration,
   executionTimestamp,
-  workflowExecutionActionKey
+  workflowExecutionActionKey,
+  workflowExecutionActorLabel
 } from './WorkflowActivityUi';
 import type { WorkflowExecutionSummary } from '@/services/control-plane/workflowApi';
 
@@ -23,6 +24,15 @@ function summary(
 }
 
 describe('workflow activity timing', () => {
+  it('shows a member label for the operator who ran the workflow', () => {
+    const actors = new Map([['user-1', 'Test User']]);
+    const labels = { acornOps: 'AcornOps', unavailable: 'Unavailable' };
+
+    expect(workflowExecutionActorLabel('user-1', actors, labels)).toBe('Test User');
+    expect(workflowExecutionActorLabel('system', actors, labels)).toBe('AcornOps');
+    expect(workflowExecutionActorLabel(undefined, actors, labels)).toBe('Unavailable');
+  });
+
   it('labels attention states with a clear review action', () => {
     expect(workflowExecutionActionKey('waiting_for_approval')).toBe('reviewRun');
     expect(workflowExecutionActionKey('running')).toBe('openRun');

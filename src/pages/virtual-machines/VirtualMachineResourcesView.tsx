@@ -19,6 +19,9 @@ import { formatUserDateTime } from '@/utils/dateTime';
 import { TextInput } from '@acornops/ui';
 import { DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
+const virtualMachineLogGridClass =
+  'md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]';
+
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';
 
 interface VirtualMachineResourcesViewProps {
@@ -243,13 +246,13 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
               />
             ) : (
               <div>
-                <DataTableGridHeader showAt="md" className="md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]">
+                <DataTableGridHeader showAt="md" className={virtualMachineLogGridClass}>
                   <DataTableGridHeaderCell>{t('virtualMachines.resources.logTime')}</DataTableGridHeaderCell>
                   <DataTableGridHeaderCell>{t('virtualMachines.resources.logSource')}</DataTableGridHeaderCell>
                   <DataTableGridHeaderCell>{t('virtualMachines.resources.logMessage')}</DataTableGridHeaderCell>
                 </DataTableGridHeader>
                 {filteredLogs.map((entry, index) => (
-                  <article key={String(entry.entryId || index)} className="grid gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)] lg:px-8 lg:py-6">
+                  <article key={String(entry.entryId || index)} className={`grid gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 lg:px-8 lg:py-6 ${virtualMachineLogGridClass}`}>
                     <span className="type-code text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: String(entry.timestamp || '') })}</span>
                     <span className="type-row-title truncate">{String(entry.source || t('virtualMachines.resources.host'))}</span>
                     <span className="type-body min-w-0 break-words">{String(entry.message || '')}</span>

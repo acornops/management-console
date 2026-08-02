@@ -128,7 +128,7 @@ test('short desktop viewports preserve navigation rhythm and scroll destinations
   const navigation = sidebar.getByRole('navigation', { name: 'Workspace navigation' });
   const clusters = sidebar.getByRole('link', { name: 'Kubernetes Clusters' });
   const virtualMachines = sidebar.getByRole('link', { name: 'Virtual Machines' });
-  const outboundWebhooks = sidebar.getByRole('link', { name: 'Webhooks' });
+  const webhooks = sidebar.getByRole('link', { name: 'Webhooks' });
   const governanceTitle = sidebar.getByText('Governance', { exact: true });
   const approvals = sidebar.getByRole('link', { name: 'Approvals' });
   const workspaceSettings = sidebar.getByRole('link', { name: 'Workspace Settings' });
@@ -150,7 +150,7 @@ test('short desktop viewports preserve navigation rhythm and scroll destinations
   await expect(approvals).toBeVisible();
   await expect(approvals.locator('[data-nav-count-badge="default"]')).toHaveAttribute('aria-label', '1');
   expect(await rowCadence()).toBe(44);
-  const webhooksBox = await outboundWebhooks.boundingBox();
+  const webhooksBox = await webhooks.boundingBox();
   const governanceTitleBox = await governanceTitle.boundingBox();
   const approvalsBox = await approvals.boundingBox();
   expect(webhooksBox).not.toBeNull();

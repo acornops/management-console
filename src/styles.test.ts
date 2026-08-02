@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   addMcpServerAction,
   addClusterModal,
-  appDialogs,
   appPageContent,
   appShell,
   buttonComponent,
@@ -27,7 +26,6 @@ import {
   markdownComponents,
   mcpServerCard,
   mcpServerToolsDialog,
-  mcpServersDialogs,
   mcpServersInventory,
   mcpServersView,
   mcpServersViewHeader,

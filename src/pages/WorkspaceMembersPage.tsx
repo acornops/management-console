@@ -19,6 +19,7 @@ import { MemberRoleCell } from '@/pages/workspace-members/MemberRoleCell';
 import { WorkspaceMemberDetailsPanel } from '@/pages/workspace-members/WorkspaceMemberDetailsPanel';
 import { mergeCreatedInvitation } from '@/pages/workspace-members/invitationList';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
 import { TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -54,8 +55,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | ProjectMember['role']>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | ProjectMember['source']>('all');
-  const [roleTemplates, setRoleTemplates] = useState<WorkspaceRoleTemplate[]>([]);
-  const [invitations, setInvitations] = useState<WorkspaceInvitation[]>(workspace.invitations || []);
+  const [roleTemplates, setRoleTemplates] = useSessionCachedState<WorkspaceRoleTemplate[]>(`workspace:${workspace.id}:role-templates`, []);
+  const [invitations, setInvitations] = useSessionCachedState<WorkspaceInvitation[]>(`workspace:${workspace.id}:member-invitations`, workspace.invitations || []);
   const [roleLoadError, setRoleLoadError] = useState<string | null>(null);
   const [pendingRole, setPendingRole] = useState<ProjectMember['role']>('viewer');
   const [isSaving, setIsSaving] = useState(false);
@@ -82,6 +83,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     [t, workspace.id]
   );
   const memberCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:members`,
     filters: appliedMemberFilters,
     getKey: (member: ProjectMember) => member.userId || member.email,
     loadPage: loadMemberPage,
@@ -116,6 +118,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     [t, workspace.id]
   );
   const invitationCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:invitations`,
     filters: { workspaceId: workspace.id },
     getKey: (invitation: WorkspaceInvitation) => invitation.id,
     loadPage: loadInvitationPage,
@@ -123,7 +126,7 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     strategy: 'sentinel'
   });
   const { items: members, nextCursor, phase: memberPhase, error: listError = null } = memberCollection;
-  const isLoadingInitial = memberPhase === 'loading' || memberPhase === 'refreshing';
+  const isLoadingInitial = memberPhase === 'loading';
   const membersPending = isLoadingInitial && members.length === 0;
   const isLoadingMore = memberPhase === 'loadingMore';
   const canManageOwners = currentUserRole === 'owner';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, PackageOpen, X } from 'lucide-react';
+import { ChevronRight, PackageOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   CloseButton,
@@ -13,6 +13,7 @@ import {
   classNames,
   ResourceMetaPair,
   ResourceStatusPill,
+  resourceLedgerGridClass,
   resourceMetricGridClass,
   resourceRowActionClass,
   resourceRowGridClass
@@ -44,7 +45,7 @@ export const ResourceList = <T,>({ items, emptyMessage, renderItem }: { items: T
       <DataTableGridHeader
         data-resource-list-header="true"
         showAt="xl"
-        className="xl:grid-cols-[minmax(24rem,1.8fr)_minmax(14rem,0.7fr)_minmax(15rem,max-content)] xl:gap-5"
+        className={resourceLedgerGridClass}
       >
         <DataTableGridHeaderCell>{t('resources.table.resource')}</DataTableGridHeaderCell>
         <DataTableGridHeaderCell>{t('resources.table.metrics')}</DataTableGridHeaderCell>

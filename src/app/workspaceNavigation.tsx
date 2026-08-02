@@ -7,7 +7,7 @@ import type { Workspace } from '@/types';
 import { AppPaths } from '@/utils/routes';
 
 export interface WorkspaceNavigationItem {
-  id: 'overview' | 'clusters' | 'virtualMachines' | 'agents' | 'workflows' | 'activity' | 'outboundWebhooks' | 'approvals' | 'workspaceAuditLog' | 'workspaceSettings' | 'help';
+  id: 'overview' | 'clusters' | 'virtualMachines' | 'agents' | 'workflows' | 'activity' | 'webhooks' | 'approvals' | 'workspaceAuditLog' | 'workspaceSettings' | 'help';
   label: string;
   path: string;
   icon: React.ElementType;
@@ -77,10 +77,10 @@ export function getWorkspaceNavigationGroups({
           experimentalBadge: t('app.experimental')
         },
         {
-          id: 'outboundWebhooks',
-          label: t('app.outboundWebhooks'),
+          id: 'webhooks',
+          label: t('app.webhooks'),
           path: AppPaths.workspaceWebhooks(workspace.id),
-          icon: ICONS.Send,
+          icon: ICONS.Webhook,
           active: activeResourceNav === 'workspaceWebhooks'
         }
       ]

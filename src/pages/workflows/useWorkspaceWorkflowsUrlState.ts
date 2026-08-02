@@ -28,10 +28,18 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
     const nextRouteWorkflow = findWorkflowByRouteSelection(options.workflows, getWorkflowRouteSelection(`?${urlSearch.toString()}`));
     const routeView = urlSearch.get('tab') as WorkflowView | null;
     const panel = urlSearch.get('panel');
+    const legacyTriggerView: WorkflowView | null = panel === 'schedules' || panel === 'schedule'
+      ? 'schedules'
+      : panel === 'webhooks'
+        ? 'webhooks'
+        : null;
     if (nextRouteWorkflow) options.setSelectedWorkflowId(nextRouteWorkflow.id);
     options.setQuery(urlSearch.get('q') || '');
-    options.setActiveView(routeView && workflowViews.includes(routeView) ? routeView : 'overview');
+    options.setActiveView(routeView && workflowViews.includes(routeView) ? routeView : legacyTriggerView || 'overview');
     options.setCreatePanelOpen(panel === 'create');
+    if (legacyTriggerView) {
+      updateUrlSearch({ panel: null, tab: legacyTriggerView }, { replace: true });
+    }
   }, [urlSearch, options.workflows]);
   React.useEffect(() => {
     if (!options.routeHydrated) return;
@@ -66,7 +74,7 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
     selectWorkflowView(view: WorkflowView, previewWorkflowId = options.selectedWorkflowId) {
       if (previewWorkflowId) options.setSelectedWorkflowId(previewWorkflowId);
       options.setActiveView(view);
-      updateUrlSearch({ workflow: previewWorkflowId || null, tab: view === 'overview' ? null : view });
+      updateUrlSearch({ workflow: previewWorkflowId || null, tab: view === 'overview' ? null : view, panel: null });
     }
   };
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Filter, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
 import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
@@ -10,6 +10,7 @@ import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import {
   WorkflowExecutionRow,
+  workflowExecutionActorLabel,
   workflowExecutionLedgerGridClass
 } from '@/features/workflow-activity/WorkflowActivityUi';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
@@ -28,6 +29,10 @@ import {
   type WorkflowActivityStateFilter
 } from '@/utils/routes';
 import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { ICONS } from '@/constants';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
+import type { ProjectMember } from '@/types';
 
 interface WorkspaceActivityPageProps {
   workspace: Workspace;
@@ -59,13 +64,22 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const workspaceActivity = useWorkspaceWorkflowActivity();
-  const [page, setPage] = React.useState<WorkflowExecutionPage | null>(null);
-  const [items, setItems] = React.useState<WorkflowExecutionSummary[]>([]);
-  const [workflows, setWorkflows] = React.useState<WorkflowApiDefinition[]>([]);
-  const [phase, setPhase] = React.useState<'loading' | 'ready' | 'error'>('loading');
+  const activityScope = `${routeState.q || ''}:${routeState.state || 'open'}:${routeState.origin || 'all'}:${routeState.workflowId || 'all'}`;
+  const activityCacheKey = `workspace:${workspace.id}:workflow-activity:${activityScope}`;
+  const activityPageCacheKey = `${activityCacheKey}:page`;
+  const [page, setPage] = useSessionCachedState<WorkflowExecutionPage | null>(activityPageCacheKey, null);
+  const [items, setItems] = useSessionCachedState<WorkflowExecutionSummary[]>(`${activityCacheKey}:items`, []);
+  const [workflows, setWorkflows] = useSessionCachedState<WorkflowApiDefinition[]>(`workspace:${workspace.id}:workflow-activity:workflows`, []);
+  const [activityMembers, setActivityMembers] = useSessionCachedState<ProjectMember[]>(
+    `workspace:${workspace.id}:workflow-activity:members`,
+    workspace.members || []
+  );
+  const [phase, setPhase] = React.useState<'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(activityPageCacheKey) ? 'ready' : 'loading');
   const [error, setError] = React.useState('');
   const [loadingMore, setLoadingMore] = React.useState(false);
   const loadRequestRef = React.useRef(0);
+  const retainedPageRef = React.useRef(page);
+  retainedPageRef.current = page;
   const deferredQuery = React.useDeferredValue(routeState.q || '');
 
   const replaceState = React.useCallback((patch: Partial<WorkflowActivityRouteState>, options?: { replace?: boolean }) => {
@@ -74,13 +88,13 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
 
   const load = React.useCallback(async (cursor?: string) => {
     const requestId = ++loadRequestRef.current;
-    if (!cursor) setPhase('loading');
+    if (!cursor && retainedPageRef.current === null) setPhase('loading');
     else setLoadingMore(true);
     setError('');
     try {
       const next = await listWorkspaceWorkflowExecutions(workspace.id, {
         search: deferredQuery,
-        state: routeState.state || 'open',
+        state: routeState.state || 'all',
         origin: routeState.origin,
         workflowId: routeState.workflowId,
         limit: 50,
@@ -93,7 +107,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
     } catch (loadError) {
       if (requestId !== loadRequestRef.current) return;
       setError(loadError instanceof Error ? loadError.message : t('workflowActivity.loadError'));
-      setPhase(cursor ? 'ready' : 'error');
+      setPhase(cursor || retainedPageRef.current !== null ? 'ready' : 'error');
     } finally {
       if (requestId === loadRequestRef.current) setLoadingMore(false);
     }
@@ -116,17 +130,33 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
       .then((next) => {
         if (!cancelled) setWorkflows(next);
       })
-      .catch(() => {
-        if (!cancelled) setWorkflows([]);
-      });
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [workspace.id]);
 
+  React.useEffect(() => {
+    let cancelled = false;
+    setActivityMembers((current) => current.length > 0 ? current : workspace.members || []);
+    if (workspace.permissions?.read_members !== true) return () => { cancelled = true; };
+    void controlPlaneApi.listWorkspaceMembers(workspace.id, { limit: 50 })
+      .then((memberPage) => {
+        if (!cancelled) setActivityMembers(memberPage.items);
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [setActivityMembers, workspace.id, workspace.members, workspace.permissions?.read_members]);
+
+  const actorLabelsByUserId = React.useMemo(() => new Map(
+    activityMembers.flatMap((member) => member.userId
+      ? [[member.userId, member.name || member.email] as const]
+      : [])
+  ), [activityMembers]);
+
   const filterCount = [
     routeState.q,
-    routeState.state && routeState.state !== 'open',
+    routeState.state && routeState.state !== 'all',
     routeState.origin,
     routeState.workflowId
   ].filter(Boolean).length;
@@ -156,8 +186,10 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
         className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col"
       >
         <DiscoveryFilterBar
+            className="mb-4 shrink-0"
             searchWidth="fluid"
             filterWidth="compact"
+            denseBreakpoint="xl"
             idPrefix="workflow-runs"
             query={routeState.q || ''}
             queryLabel={t('workflowActivity.filters.search')}
@@ -170,10 +202,10 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
           createDiscoveryFilterGroup<WorkflowActivityStateFilter>({
             id: 'state',
             label: t('workflowActivity.filters.state'),
-            value: routeState.state || 'open',
-            defaultValue: 'open',
+            value: routeState.state || 'all',
+            defaultValue: 'all',
             options: stateOptions.map((option) => ({ value: option.value, label: t(option.labelKey) })),
-            onChange: (state) => replaceState({ state: state === 'open' ? undefined : state })
+            onChange: (state) => replaceState({ state: state === 'all' ? undefined : state })
           }),
           createDiscoveryFilterGroup<'all' | WorkflowActivityOriginFilter>({
             id: 'origin',
@@ -217,11 +249,12 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
         <div className="min-w-0">
           <DataTableGridHeader
             showAt="xl"
+            density="dense"
             className={`gap-3 ${workflowExecutionLedgerGridClass}`}
             collectionState={{ phase, itemCount: items.length }}
           >
             <DataTableGridHeaderCell>{t('workflowActivity.columns.run')}</DataTableGridHeaderCell>
-            <DataTableGridHeaderCell>{t('workflowActivity.columns.scope')}</DataTableGridHeaderCell>
+            <DataTableGridHeaderCell>{t('workflowActivity.columns.runBy')}</DataTableGridHeaderCell>
             <DataTableGridHeaderCell>{t('workflowActivity.columns.time')}</DataTableGridHeaderCell>
             <DataTableGridHeaderCell>{t('workflowActivity.columns.duration')}</DataTableGridHeaderCell>
             <DataTableGridHeaderCell numeric>{t('workflowActivity.columns.action')}</DataTableGridHeaderCell>
@@ -240,9 +273,9 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
           ) : items.length === 0 ? (
             <EmptyState
               embedded
-              icon={<Filter />}
-              title={filterCount ? t('workflowActivity.emptyFilteredTitle') : t('workflowActivity.emptyOpenTitle')}
-              description={filterCount ? t('workflowActivity.emptyFilteredDescription') : t('workflowActivity.emptyOpenDescription')}
+              icon={<ICONS.Activity />}
+              title={filterCount ? t('workflowActivity.emptyFilteredTitle') : t('workflowActivity.emptyAllTitle')}
+              description={filterCount ? t('workflowActivity.emptyFilteredDescription') : t('workflowActivity.emptyAllDescription')}
               actions={filterCount ? <Button variant="secondary" size="sm" onClick={() => navigate(AppPaths.workspaceActivity(workspace.id))}>{t('common.clearFilters')}</Button> : undefined}
             />
           ) : (
@@ -251,6 +284,10 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
                 <WorkflowExecutionRow
                   key={execution.id}
                   execution={execution}
+                  actorLabel={workflowExecutionActorLabel(execution.createdBy, actorLabelsByUserId, {
+                    acornOps: t('workflowActivity.acornOps'),
+                    unavailable: t('workflowActivity.runByUnavailable')
+                  })}
                   navigate={navigate}
                 />
               ))}

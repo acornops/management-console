@@ -193,7 +193,6 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['workspace.audit.read', 'issue.read'],
-      contextScope: ['workspace'], contextGrants: ['workspace.summary'],
       readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Repository inspection and issue triage', createdAt: EARLIER, updatedAt: NOW
     },
@@ -206,7 +205,6 @@ export function createFixtureState(): FixtureState {
       createdBy: FIXTURE_IDS.user, ownerUserId: FIXTURE_IDS.user,
       tools: [], skills: ['fixture-kubernetes-triage'],
       permissionMode: 'ask_before_changes', semanticCapabilityIds: ['infrastructure.diagnostics.read'],
-      contextScope: [], contextGrants: [],
       readiness: { status: 'ready', reasons: [] }, capabilitySummary: 'Kubernetes inspection and diagnostics', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -218,8 +216,7 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
-      tools: ['documents.create'],
-      contextScope: [], contextGrants: [], readiness: { status: 'ready', reasons: [] },
+      tools: ['documents.create'], readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Kubernetes MCP tools', createdAt: EARLIER, updatedAt: NOW
     },
     {
@@ -232,8 +229,7 @@ export function createFixtureState(): FixtureState {
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read'],
       tools: ['documents.create'],
-      contextScope: [],
-      contextGrants: [], readiness: { status: 'ready', reasons: [] },
+      readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Virtual-machine MCP tools', createdAt: EARLIER, updatedAt: NOW
     }
   ];
@@ -450,13 +446,13 @@ export function createFixtureState(): FixtureState {
     workflows,
     automationTemplates,
     workflowSchedules: [
-      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
-      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', approvedContextGrants: ['workspace.summary'], principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
+      { id: 'fixture-schedule', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'Weekday morning review', status: 'enabled', cron: '0 9 * * 1-5', timezone: 'Asia/Singapore', principal: { type: 'user', id: FIXTURE_IDS.user }, createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, lastRunAt: NOW, lastStatus: 'dispatched', lastExecutionId: 'fixture-execution-scheduled-running', lastRunId: 'fixture-execution-scheduled-running-run', latestExecution: workflowExecutions.find((item) => item.id === 'fixture-execution-scheduled-running'), updatedAt: NOW },
+      { id: 'fixture-mcp-auto-pause', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow, name: 'MCP recovery review', status: 'paused', cron: '15 9 * * 1-5', timezone: 'Asia/Singapore', principal: { type: 'user', id: FIXTURE_IDS.user }, lastStatus: 'auto_paused', lastError: 'MCP_CONNECTION_REQUIRED: credential connection is missing for a required approved MCP tool.', createdBy: { userId: FIXTURE_IDS.user, displayName: 'Test User' }, updatedAt: NOW }
     ],
     workflowWebhooks: [
       {
         id: 'fixture-workflow-webhook', workspaceId: FIXTURE_IDS.workspace, workflowId: FIXTURE_IDS.workflow,
-        name: 'External production review', status: 'paused', approvedContextGrants: ['workspace.summary'],
+        name: 'External production review', status: 'paused',
         principal: { type: 'user', id: FIXTURE_IDS.user },
         endpointUrl: '/api/v1/workflow-webhooks/fixture-workflow-webhook/events',
         lastReceivedAt: NOW, lastStatus: 'failed', lastError: 'Dispatch rejected because the configured principal no longer has permission. No execution was created.'

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Activity, CalendarClock, GitBranch, Webhook } from 'lucide-react';
+import { GitBranch } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { SegmentedTabs } from '@acornops/ui';
+import { ICONS } from '@/constants';
 import { useWorkspaceWorkflowActivity } from '@/features/workflow-activity/WorkspaceWorkflowActivityContext';
 import { AppPaths, type WorkflowSection } from '@/utils/routes';
 
@@ -25,14 +26,11 @@ export const WorkflowSections: React.FC<WorkflowSectionsProps> = ({
   const activity = useWorkspaceWorkflowActivity();
 
   return (
-    <div className={`mb-5 flex min-w-0 items-end gap-4 ${className}`}>
-      <span className="type-micro-label hidden shrink-0 pb-3 text-ui-text-muted xl:block">
-        {t('workflows.sections.scope')}
-      </span>
+    <div className={`mb-5 min-w-0 ${className}`}>
       <SegmentedTabs<WorkflowPageSection>
         activeValue={activeSection}
         ariaLabel={t('workflows.sections.label')}
-        className="min-w-0 flex-1 gap-0"
+        className="min-w-0 flex-1 gap-0 [&_button]:px-2 sm:[&_button]:px-3 [&_button>span:first-child]:hidden sm:[&_button>span:first-child]:inline-flex"
         idBase="workflow-section"
         allPanelsMounted={false}
         items={[
@@ -44,17 +42,12 @@ export const WorkflowSections: React.FC<WorkflowSectionsProps> = ({
         {
           value: 'schedules',
           label: t('workflows.sections.schedules'),
-          icon: <CalendarClock className="h-4 w-4" aria-hidden="true" />
-        },
-        {
-          value: 'incomingWebhooks',
-          label: t('workflows.sections.incomingWebhooks'),
-          icon: <Webhook className="h-4 w-4" aria-hidden="true" />
+          icon: <ICONS.CalendarClock className="h-4 w-4" aria-hidden="true" />
         },
         {
           value: 'activity',
           label: t('workflows.sections.activity'),
-          icon: <Activity className="h-4 w-4" aria-hidden="true" />,
+          icon: <ICONS.Activity className="h-4 w-4" aria-hidden="true" />,
           count: activity.openCount > 0 ? activity.openCount : undefined
         }
         ]}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import { ChatMessage, ChatSession, PendingApproval } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -351,8 +352,9 @@ export function useControlPlaneChatSessionSync(args: {
     listSessions = controlPlaneApi.listTargetSessions
   } = args;
   const sessionListKey = `${target.workspaceId}:${target.id}`;
-  const [isSessionListRequestInFlight, setIsSessionListRequestInFlight] = useState(true);
-  const [loadedSessionListKey, setLoadedSessionListKey] = useState<string | null>(null);
+  const loadedSessionListCacheKey = `workspace:${target.workspaceId}:target:${target.id}:chat-session-list-loaded`;
+  const [isSessionListRequestInFlight, setIsSessionListRequestInFlight] = useState(() => !hasSessionDataCacheValue(loadedSessionListCacheKey));
+  const [loadedSessionListKey, setLoadedSessionListKey] = useSessionCachedState<string | null>(loadedSessionListCacheKey, null);
   const isSessionsLoading = isSessionListRequestInFlight || loadedSessionListKey !== sessionListKey;
   const hydratingBackendSessionsRef = useRef<Set<string>>(new Set());
   const latestSessionsRef = useRef<ChatSession[]>(target.chatSessions);

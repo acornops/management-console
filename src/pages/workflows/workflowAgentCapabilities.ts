@@ -1,15 +1,14 @@
-import { getAgentEffectiveActionPolicy, type AgentDefinition } from '@/pages/agents/agentModel';
+import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
-type WorkflowCapabilityAgentSource = Pick<AgentDefinition, 'id' | 'name' | 'mcpServers' | 'mcpInstallations' | 'tools' | 'skills' | 'skillInstallations' | 'semanticCapabilityIds' | 'permissionMode' | 'capabilities'>;
+type WorkflowCapabilityAgentSource = Pick<AgentDefinition, 'id' | 'name' | 'avatarEmoji' | 'mcpServers' | 'mcpInstallations' | 'tools' | 'skills' | 'skillInstallations' | 'permissionMode' | 'capabilities'>;
 
 export type WorkflowAgentCapabilityReview = {
   agentId: string;
   name: string;
-  role: string;
-  required: boolean;
+  avatarEmoji?: string;
   mcpServers: string[];
-  semanticCapabilityIds: string[];
   tools: Array<{
     id: string;
     label: string;
@@ -19,8 +18,19 @@ export type WorkflowAgentCapabilityReview = {
   }>;
   skills: string[];
   writeAccess: string;
-  capabilityRules: string[];
   missingAgentData: boolean;
+};
+
+export type WorkflowCapabilityOverviewSummary = {
+  agentCount: number;
+  missingAgentCount: number;
+  tools: {
+    read: number;
+    write: number;
+    unknown: number;
+  };
+  mcpServers: string[];
+  skills: string[];
 };
 
 function uniqueInOrder(values: string[]): string[] {
@@ -33,24 +43,11 @@ function uniqueInOrder(values: string[]): string[] {
 }
 
 function titleCaseAgentId(agentId: string): string {
-  return agentId
-    .replace(/^agent-/, '')
-    .replaceAll('-', ' ')
-    .replace(/\b\w/g, (value) => value.toUpperCase());
+  return formatIdentifierLabel(agentId.replace(/^agent-/, ''), 'title');
 }
 
 function capabilityDisplayName(id: string): string {
-  return id
-    .replace(/^fixture-/, '')
-    .replaceAll('_', ' ')
-    .replaceAll('-', ' ')
-    .replace(/\b\w/g, (value) => value.toUpperCase());
-}
-
-function formatCapabilityRule(capability: WorkflowCapabilityAgentSource['capabilities'][number]): string {
-  const resource = capability.resourceScope || capability.resourceType;
-  const tool = capability.toolId ? ` via ${capability.toolId}` : '';
-  return `${capability.operation} ${capability.resourceType} ${resource}${tool}`;
+  return formatIdentifierLabel(id.replace(/^fixture-/, ''), 'title');
 }
 
 function toolReviews(agent: WorkflowCapabilityAgentSource): WorkflowAgentCapabilityReview['tools'] {
@@ -92,24 +89,55 @@ export function getWorkflowAgentCapabilityReview(
     return {
       agentId,
       name: agent?.name || workflowAgent?.name || titleCaseAgentId(agentId),
-      role: workflowAgent?.role || 'Assigned Agent',
-      required: workflowAgent?.required ?? false,
+      avatarEmoji: agent?.avatarEmoji,
       mcpServers: (agent?.mcpServers || []).map((serverId) => (
         agent?.mcpInstallations?.find((server) => server.id === serverId)?.name || capabilityDisplayName(serverId)
       )),
-      semanticCapabilityIds: agent?.semanticCapabilityIds || [],
       tools: agent ? toolReviews(agent) : [],
       skills: (agent?.skills || []).map((skillId) => (
         agent?.skillInstallations?.find((skill) => skill.id === skillId)?.name || capabilityDisplayName(skillId)
       )),
       writeAccess: agent ? (() => {
-        const policy = getAgentEffectiveActionPolicy(agent.permissionMode);
-        if (agent.permissionMode === 'read_only') return policy.approvalGate;
-        if (agent.permissionMode === 'ask_before_changes') return 'Approval required before every write-capable tool';
-        return 'Routine writes run automatically; approval is required for high-risk or destructive writes';
+        if (agent.permissionMode === 'read_only') return 'Writes disabled';
+        if (agent.permissionMode === 'ask_before_changes') return 'Approval required for writes';
+        return 'Routine writes automatic; high-risk changes require approval';
       })() : '',
-      capabilityRules: agent ? agent.capabilities.map(formatCapabilityRule) : [],
       missingAgentData: !agent
     };
   });
+}
+
+export function getWorkflowCapabilityOverviewSummary(
+  workflow: WorkflowDefinition,
+  agents: WorkflowCapabilityAgentSource[]
+): WorkflowCapabilityOverviewSummary {
+  const reviews = getWorkflowAgentCapabilityReview(workflow, agents);
+  const toolsById = new Map<string, WorkflowAgentCapabilityReview['tools'][number]>();
+
+  reviews.flatMap((review) => review.tools).forEach((tool) => {
+    const current = toolsById.get(tool.id);
+    if (!current) {
+      toolsById.set(tool.id, tool);
+      return;
+    }
+    const accessRank = { unknown: 0, read: 1, write: 2 } as const;
+    toolsById.set(tool.id, {
+      ...current,
+      access: accessRank[tool.access] > accessRank[current.access] ? tool.access : current.access,
+      requiresApproval: current.requiresApproval || tool.requiresApproval
+    });
+  });
+
+  const tools = [...toolsById.values()];
+  return {
+    agentCount: reviews.length,
+    missingAgentCount: reviews.filter((review) => review.missingAgentData).length,
+    tools: {
+      read: tools.filter((tool) => tool.access === 'read').length,
+      write: tools.filter((tool) => tool.access === 'write').length,
+      unknown: tools.filter((tool) => tool.access === 'unknown').length
+    },
+    mcpServers: uniqueInOrder(reviews.flatMap((review) => review.mcpServers)),
+    skills: uniqueInOrder(reviews.flatMap((review) => review.skills))
+  };
 }

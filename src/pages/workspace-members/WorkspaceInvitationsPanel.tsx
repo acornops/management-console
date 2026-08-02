@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, ChevronDown, Copy, Loader2, Trash2, X } from 'lucide-react';
+import { Check, ChevronDown, Copy, Loader2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DialogFrame } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BotMessageSquare, Check, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
+import { BotMessageSquare, KeyRound, Loader2, MailPlus, Plus, Trash2, Users, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, CloseButton, DialogFrame, FieldValidationMessage, fieldInvalidClass, IconTile, ModalStepIndicator, Select, TextInput } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';

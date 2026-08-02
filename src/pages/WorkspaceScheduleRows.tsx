@@ -147,7 +147,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
         </div>
         <div>
           <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.approvalGate')}</dt>
-          <dd className="type-caption mt-1 text-ui-text">{t('schedules.contextGrantCount', { count: schedule.approvedContextGrants.length })}</dd>
+          <dd className="type-caption mt-1 text-ui-text">{t('schedules.accessInherited')}</dd>
         </div>
       </dl>
       <div className="mt-4 border-t border-ui-border pt-4">
@@ -181,15 +181,15 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
 
   return (
     <DataTableRow className="bg-ui-surface type-body">
-      <DataTableCell as="th" scope="row" className="px-4 py-4 type-emphasis text-ui-text">{schedule.name}</DataTableCell>
-      <DataTableCell className="px-4 py-4 type-ui text-ui-text">{scheduleWorkflowName(workflows, schedule.workflowId)}</DataTableCell>
-      <DataTableCell className="px-4 py-4 text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</DataTableCell>
-      <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{nextRun}</DataTableCell>
-      <DataTableCell className="px-4 py-4 text-ui-text-muted">
-        <span className="block">{t('schedules.contextGrantCount', { count: schedule.approvedContextGrants.length })}</span>
+      <DataTableCell as="th" scope="row" density="dense" className="type-emphasis text-ui-text">{schedule.name}</DataTableCell>
+      <DataTableCell density="dense" className="type-ui text-ui-text">{scheduleWorkflowName(workflows, schedule.workflowId)}</DataTableCell>
+      <DataTableCell density="dense" className="text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</DataTableCell>
+      <DataTableCell density="dense" className="type-emphasis text-ui-text">{nextRun}</DataTableCell>
+      <DataTableCell density="dense" className="text-ui-text-muted">
+        <span className="block">{t('schedules.accessInherited')}</span>
       </DataTableCell>
-      <DataTableCell className="px-4 py-4">
-        <div className="min-w-[15rem]">
+      <DataTableCell density="dense">
+        <div className="min-w-[12rem]">
           <WorkspaceScheduleExecutionFacts
             schedule={schedule}
             mcpAutoPaused={mcpAutoPaused}
@@ -197,7 +197,7 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
           />
         </div>
       </DataTableCell>
-      <DataTableCell className="px-4 py-4">
+      <DataTableCell density="dense">
         <div className="flex items-center justify-end gap-2">
           {mcpAutoPaused && (
             <Button size="sm" variant="primary" onClick={props.onRepair} disabled={!props.canManage || props.updating}>

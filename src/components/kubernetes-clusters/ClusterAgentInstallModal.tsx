@@ -5,7 +5,6 @@ import { Button } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters/ClusterAgentAccessModeSelector';
-import { ICONS } from '@/constants';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { AgentAccessMode } from '@/services/control-plane/types';

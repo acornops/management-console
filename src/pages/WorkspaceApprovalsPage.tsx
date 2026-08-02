@@ -26,6 +26,7 @@ import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
@@ -67,21 +68,22 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
   workspace,
   onApprovalDecision,
   runId,
-  approvalId,
-  navigate
+  approvalId
 }) => {
   const { t } = useTranslation();
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('pending');
-  const [approvalsByFilter, setApprovalsByFilter] = useState<Record<ApprovalFilter, WorkspaceApprovalInboxRow[]>>({
+  const scopeKey = `${workspace.id}\u0000${runId || ''}\u0000${approvalId || ''}`;
+  const approvalCachePrefix = `workspace:${workspace.id}:approvals:${scopeKey}:`;
+  const approvalRowsCacheKey = `${approvalCachePrefix}rows`;
+  const [approvalsByFilter, setApprovalsByFilter] = useSessionCachedState<Record<ApprovalFilter, WorkspaceApprovalInboxRow[]>>(approvalRowsCacheKey, {
     pending: [],
     decided: []
   });
-  const [pendingApprovalCount, setPendingApprovalCount] = useState<number | undefined>(undefined);
-  const [approvalPhase, setApprovalPhase] = useState<CursorCollectionPhase>('loading');
+  const [pendingApprovalCount, setPendingApprovalCount] = useSessionCachedState<number | undefined>(`${approvalCachePrefix}pending-count`, undefined);
+  const [approvalPhase, setApprovalPhase] = useState<CursorCollectionPhase>(() => hasSessionDataCacheValue(approvalRowsCacheKey) ? 'ready' : 'loading');
   const [approvalError, setApprovalError] = useState('');
   const [decisionState, setDecisionState] = useState<Record<string, 'approved' | 'rejected' | 'loading'>>({});
   const approvalRequestSequence = useRef(0);
-  const scopeKey = `${workspace.id}\u0000${runId || ''}\u0000${approvalId || ''}`;
   const [stateScopeKey, setStateScopeKey] = useState(scopeKey);
   const currentScopeKey = useRef(scopeKey);
   currentScopeKey.current = scopeKey;
@@ -98,7 +100,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
     const requestedScopeKey = scopeKey;
     const isCurrentRequest = () => currentScopeKey.current === requestedScopeKey
       && approvalRequestSequence.current === requestSequence;
-    setApprovalPhase(initial ? 'loading' : 'refreshing');
+    setApprovalPhase(initial && !hasSessionDataCacheValue(approvalRowsCacheKey) ? 'loading' : 'refreshing');
     setApprovalError('');
     try {
       if (focusedApproval) {
@@ -131,15 +133,13 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
     } catch (err) {
       if (!isCurrentRequest()) return;
       setApprovalError(formatControlPlaneError(err, t('approvals.loadError')));
-      setApprovalPhase('error');
+      setApprovalPhase(hasSessionDataCacheValue(approvalRowsCacheKey) ? 'ready' : 'error');
     }
-  }, [approvalId, focusedApproval, runId, scopeKey, t, workspace.id]);
+  }, [approvalId, approvalRowsCacheKey, focusedApproval, runId, scopeKey, t, workspace.id]);
 
   useEffect(() => {
     approvalRequestSequence.current += 1;
     setStateScopeKey(scopeKey);
-    setApprovalsByFilter({ pending: [], decided: [] });
-    setPendingApprovalCount(undefined);
     setApprovalError('');
     setDecisionState({});
     void loadApprovals(true);
@@ -318,18 +318,18 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                   );
                   return (
                     <DataTableRow key={approval.approvalId} className={`type-body ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
-                      <DataTableCell as="th" scope="row" className="px-4 py-4 type-emphasis text-ui-text">{approval.summary}</DataTableCell>
-                      <DataTableCell className="px-4 py-4 type-ui text-ui-text">
+                      <DataTableCell as="th" scope="row" density="dense" className="type-emphasis text-ui-text">{approval.summary}</DataTableCell>
+                      <DataTableCell density="dense" className="type-ui text-ui-text">
                         <span className="block">{approval.sessionTitle || approval.workflowId || sourceLabel(approval, t)}</span>
                         <span className="mt-1 block type-caption text-ui-text-muted">{approval.runId}</span>
                       </DataTableCell>
-                      <DataTableCell className="px-4 py-4 text-ui-text-muted">
+                      <DataTableCell density="dense" className="text-ui-text-muted">
                         {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : approval.requestedBy || t('approvals.system')}
                       </DataTableCell>
-                      <DataTableCell className="px-4 py-4 type-emphasis text-ui-text">{sourceLabel(approval, t)}</DataTableCell>
-                      <DataTableCell className="px-4 py-4 text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</DataTableCell>
-                      <DataTableCell className="px-4 py-4"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
-                      <DataTableCell className="px-4 py-4">
+                      <DataTableCell density="dense" className="type-emphasis text-ui-text">{sourceLabel(approval, t)}</DataTableCell>
+                      <DataTableCell density="dense" className="text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</DataTableCell>
+                      <DataTableCell density="dense"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
+                      <DataTableCell density="dense">
                         <div className="flex gap-2">
                           <Button size="sm" variant="secondary" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
                             {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}

@@ -21,7 +21,6 @@ function workflow(
     tags: [],
     lastRun: 'No runs yet',
     agents: [],
-    contextGrants: [],
     policy: { mode: 'read_only', approvals: [] },
     starterPrompt: 'Inspect production health.',
     runs: []

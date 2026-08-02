@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@acornops/ui';
+import { Button, DestructiveConfirmationDialog } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
@@ -478,7 +478,6 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
             <SettingSection title={t('workspaceAiSettings.credentialsTitle')} description={t('workspaceAiSettings.credentialsBody')} sectionRef={credentialsSectionRef} className="scroll-mt-8">
               {displayedProviderStatuses.map((providerStatus) => {
                 const provider = providerStatus.provider;
-                const isDeleteConfirming = deleteCandidate === provider;
                 const isEditingCredential = credentialEditorProvider === provider;
                 const credentialError = credentialErrors[provider];
                 const isWorkspaceOverride = providerStatus.source === 'workspace';
@@ -540,17 +539,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                 <ICONS.CheckCircle2 className="h-4 w-4" />
                                 {isWorkspaceOverride ? t('workspaceAiSettings.rotateKey') : t('workspaceAiSettings.addWorkspaceKey')}
                               </Button>
-                              {isWorkspaceOverride && (isDeleteConfirming ? (
-                                <>
-                                  <Button type="button" variant="danger" size="sm" onClick={() => handleDeleteProviderKey(provider)} disabled={!currentAiSettings || isSaving} aria-label={t('workspaceAiSettings.confirmDeleteForProvider', { provider: providerLabel(provider) })}>
-                                    <ICONS.Trash2 className="h-4 w-4" />
-                                    {t('workspaceAiSettings.confirmDelete')}
-                                  </Button>
-                                  <Button type="button" variant="secondary" size="sm" onClick={() => setDeleteCandidate(null)} disabled={isSaving}>
-                                    {t('app.cancel')}
-                                  </Button>
-                                </>
-                              ) : (
+                              {isWorkspaceOverride && (
                                 <Button
                                   type="button"
                                   variant="danger"
@@ -568,7 +557,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                                   <ICONS.Trash2 className="h-4 w-4" />
                                   {t('workspaceAiSettings.deleteKey')}
                                 </Button>
-                              ))}
+                              )}
                             </div>
                           )}
                           {isEditingCredential && (
@@ -634,6 +623,23 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
           </>
         )}
       </div>
+      <DestructiveConfirmationDialog
+        open={Boolean(deleteCandidate)}
+        titleId="delete-workspace-ai-provider-key-title"
+        title={deleteCandidate ? t('workspaceAiSettings.deleteKeyTitle', { provider: providerLabel(deleteCandidate) }) : ''}
+        subtitle={t('common.irreversibleAction')}
+        description={t('workspaceAiSettings.deleteKeyDescription')}
+        error={deleteCandidate ? credentialErrors[deleteCandidate] : null}
+        cancelLabel={t('app.cancel')}
+        confirmLabel={t('workspaceAiSettings.deleteKey')}
+        loadingLabel={t('workspaceAiSettings.saving')}
+        confirmDisabled={!canManageAiSettings || !currentAiSettings}
+        pending={Boolean(deleteCandidate && savingAction === `delete:${deleteCandidate}`)}
+        onCancel={() => setDeleteCandidate(null)}
+        onConfirm={() => {
+          if (deleteCandidate) void handleDeleteProviderKey(deleteCandidate);
+        }}
+      />
     </PageShell>
   );
 };

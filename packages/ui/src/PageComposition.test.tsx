@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { PageShell } from './PageComposition';
+import { PageHeader, PageShell } from './PageComposition';
 
 describe('PageShell', () => {
   it('allows a route to bound its content without changing the shared shell', () => {
@@ -14,5 +14,20 @@ describe('PageShell', () => {
     expect(markup).toContain('lg:overflow-y-hidden');
     expect(markup).toContain('max-w-none lg:flex lg:h-full lg:min-h-0 lg:flex-col');
     expect(markup).toContain('Route content');
+  });
+});
+
+describe('PageHeader', () => {
+  it('allows a route to widen its description measure', () => {
+    const markup = renderToStaticMarkup(
+      <PageHeader
+        title="Workflows"
+        description="Choose who runs each automation."
+        descriptionClassName="max-w-[96ch]"
+      />
+    );
+
+    expect(markup).toContain('max-w-[96ch]');
+    expect(markup).not.toContain('max-w-[72ch]');
   });
 });

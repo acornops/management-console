@@ -8,7 +8,6 @@ export interface ScheduleDraft {
   cron: string;
   timezone: string;
   enabled: boolean;
-  approvedContextGrants: string;
   runsAsUserId: string;
 }
 
@@ -77,7 +76,6 @@ export const createEmptyDraft = (): ScheduleDraft => ({
   cron: '0 9 * * 1-5',
   timezone: getUserTimeZone(),
   enabled: true,
-  approvedContextGrants: 'workspace_metadata',
   runsAsUserId: ''
 });
 
@@ -93,14 +91,6 @@ export function scheduleToDraft(schedule: WorkflowSchedule): ScheduleDraft {
     cron: schedule.cron,
     timezone: schedule.timezone,
     enabled: schedule.status === 'enabled',
-    approvedContextGrants: schedule.approvedContextGrants.join('\n'),
     runsAsUserId: schedule.principal.id
   };
-}
-
-export function approvedContextGrants(value: string): string[] {
-  return value
-    .split(/\n|,/)
-    .map((grant) => grant.trim())
-    .filter(Boolean);
 }

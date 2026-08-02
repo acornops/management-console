@@ -11,9 +11,12 @@ not drift.
 
 - Overview is the explicit workspace landing destination.
 - Inventory contains Kubernetes Clusters and Virtual Machines.
-- Automation keeps Agents, Workflows, and Outbound webhooks adjacent. Workflows
-  exposes All Workflows, Schedules, Incoming Webhooks, and Activity as
-  route-level tabs.
+- Automation keeps Agents, Workflows, and Webhooks adjacent. Webhooks is the
+  workspace integration inventory, with Outbound and Inbound route-backed tabs.
+  Its Inbound tab aggregates workflow-owned endpoints; each workflow remains the
+  canonical place to configure its own Inbound Webhooks. Outbound subscriptions
+  remain workspace-owned and are managed directly from the hub. Workflows
+  exposes Workflows, Schedules, and Runs as route-level tabs.
 - Governance contains Approvals for workspace-data readers and Audit Log for
   audit-log readers. Omit the group when neither destination is permitted.
 - Utilities contains Workspace Settings and Help and is visually separated from
@@ -31,14 +34,17 @@ not drift.
 Every destination is a genuine, base-path-aware anchor. Unmodified same-tab
 clicks use client navigation; modified clicks and open-in-new-tab retain browser
 behavior. Keep workflow, activity, webhook, approval, and schedule-creation URLs
-directly shareable. `/workflows/schedules` and `/workflows/incoming-webhooks`
-activate the Workflows destination and its matching tab. Legacy `/runs`,
-`/triggers`, `/schedules`, and `/event-triggers` URLs redirect to Activity or
-the appropriate Workflows tab.
+directly shareable. `/workflows/schedules` activates its matching Workflows tab.
+The former `/workflows/incoming-webhooks` aggregate route remains available for
+bookmarked-link compatibility but does not appear in workspace tab navigation.
+Legacy `/runs`, `/triggers`, `/schedules`, and `/event-triggers` URLs redirect to
+Activity or the appropriate compatibility route.
 
-`/webhooks` remains a stable workspace route, but its navigation owner is
-Automation rather than Workspace Settings. The user-facing label is Outbound
-webhooks so it cannot be confused with Incoming webhook triggers.
+`/webhooks` remains a stable workspace route owned by Automation rather than
+Workspace Settings. It defaults to Outbound for compatibility, while
+`/webhooks?direction=inbound` selects the aggregate Inbound inventory. Switching
+direction clears direction-specific discovery filters so an outbound status or
+query cannot silently constrain the inbound ledger, or vice versa.
 
 Only the active destination or workflow tab uses `aria-current="page"`. Desktop and mobile
 navigation regions have accessible labels. The workspace switcher keeps a

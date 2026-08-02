@@ -9,10 +9,14 @@ catalog, pagination, and schedule-preview contracts.
 ## UX Acceptance Criteria
 
 - URL parameters restore selected resources, filters, and drawers.
-- Workflows exposes All Workflows, Schedules, Incoming Webhooks, and Activity as
+- Workflows exposes All Workflows, Schedules, Inbound Webhooks, and Activity as
   route-backed top-level tabs.
-- Workflow detail exposes Overview, Agents, Capabilities, Runs, and Settings as
-  route-backed inline tabs, including compatibility with existing `tab=` links.
+- Workflow detail exposes Overview, Capabilities, Schedules, Webhooks, and Runs
+  as route-backed inline tabs. Settings opens through Edit, with compatibility
+  retained for existing `tab=` links.
+- Workflow Overview groups Agent assignment and a compact effective-access
+  summary under Execution setup. Detailed scopes, tools, MCP servers, skills,
+  and write rules appear only in the Capabilities tab.
 - The workflow header exposes text-labelled Edit, Schedules, Webhooks, and
   Launch or Activate actions in a separate row below the workflow description.
 - Workflow-filtered schedule and webhook drawers lead with compact tables.
@@ -20,9 +24,12 @@ catalog, pagination, and schedule-preview contracts.
 - Workflow prompts are plain text. Authoring, launch, schedules, and incoming
   webhooks expose no runtime template parameters, values, or prompt-reference
   insertion.
+- Workflow run detail is read-only after launch: operators can inspect output,
+  approvals, traces, and coordination, but cannot send follow-up instructions
+  or steer the active run from the console.
 - Workflow creation has two decision-bearing steps, Describe and Agents.
-  Settings and agent assignment tabs open directly in their actionable state
-  for authorized operators rather than nesting another edit mode.
+  Settings and the Agent assignment editor in Overview open directly in their
+  actionable state for authorized operators rather than nesting another edit mode.
 - Compact workflow detail hides collection-only section and discovery chrome
   until Back returns to the workflow library.
 - Desktop Workflows keeps its route canvas fixed while the compact workflow
@@ -39,7 +46,7 @@ catalog, pagination, and schedule-preview contracts.
   `draft`, and `disabled`; readiness terminology and locally derived health are
   not part of the Agents UI.
 - Schedule creation leads with frequency, time, weekdays, timezone, typed
-  inputs, context grants, and a readable server preview; cron and JSON are
+  inputs and a readable server preview; cron and JSON are
   synchronized advanced controls.
 - A 390px viewport has no page-level horizontal overflow.
 - Unavailable catalogs, loading, retry, permission, and mutation states explain
@@ -47,14 +54,14 @@ catalog, pagination, and schedule-preview contracts.
 - Agent profile actions use the shared button sizes and refresh icon treatment.
 - Agents are ordinary workspace-owned definitions with the same edit, restore,
   duplicate, disable, and delete rules.
-- Default and recommended workflows are ordinary workspace-owned definitions.
+- Provisioned starter and custom workflows are ordinary workspace-owned definitions.
   They are directly editable and AcornOps never overwrites, upgrades, or
   automatically restores them.
 - Agent deletion explains dependent workflows, and managed-response workflows
   label the hidden entry Agent as an AcornOps-managed coordinator without
   exposing its ID.
 - The disconnected workflow scope editor and its update action remain removed.
-  The `tab=` parser selects the four visible workflow inspection panels and the
+  The `tab=` parser selects the five visible workflow detail panels and the
   route-backed Settings view opened through Edit.
 
 ## Validation Plan
@@ -98,8 +105,8 @@ catalog, pagination, and schedule-preview contracts.
   and 672 tests, 19 Playwright design tests with one expected skip, 162 repeated
   standalone fixture checks, 21 repeated control-plane parity checks,
   membership/contracts/harness checks, production build, and route smoke.
-- Live local verification confirmed workspace ownership labels, the canonical
-  `panel=recommendations` route, compatibility with legacy `panel=templates`
-  links, localized recommendation status labels, and route cleanup on close.
+- Manual template installation was retired from the console. Provisioned
+  starter workflows appear directly in the library and use the same edit and
+  delete decisions as other workspace-owned definitions.
 - The production output contains no MSW fixture chunk. A production build with
   `VITE_APP_DATA_MODE=mock` is rejected with the configured startup error.

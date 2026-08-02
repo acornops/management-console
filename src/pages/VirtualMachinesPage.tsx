@@ -42,6 +42,7 @@ import { useVirtualMachineAgentSetup } from '@/pages/virtual-machines/useVirtual
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
 import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
 
 interface VirtualMachinesPageProps {
@@ -95,19 +96,25 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   onPendingTargetPromptConsumed
 }) => {
   const { t } = useTranslation();
-  const [inventory, setInventory] = React.useState<Record<string, unknown>[]>([]);
-  const [issues, setIssues] = React.useState<ControlPlaneIssueItem[] | null>(null);
+  const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
+  const vmDetailCachePrefix = `workspace:${workspace.id}:virtual-machine:${selectedId || 'none'}:`;
+  const inventoryCacheKey = `${vmDetailCachePrefix}inventory`;
+  const issueCacheKey = `${vmDetailCachePrefix}issues`;
+  const logsCacheKey = `${vmDetailCachePrefix}logs`;
+  const metricHistoryCacheKey = `${vmDetailCachePrefix}metric-history`;
+  const [inventory, setInventory] = useSessionCachedState<Record<string, unknown>[]>(inventoryCacheKey, []);
+  const [issues, setIssues] = useSessionCachedState<ControlPlaneIssueItem[] | null>(issueCacheKey, null);
   const [isLoadingIssueEvidence, setIsLoadingIssueEvidence] = React.useState(false);
   const [issueLoadFailed, setIssueLoadFailed] = React.useState(false);
-  const [logs, setLogs] = React.useState<Record<string, unknown>[]>([]);
-  const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [logs, setLogs] = useSessionCachedState<Record<string, unknown>[]>(logsCacheKey, []);
+  const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'idle');
   const [resourceError, setResourceError] = React.useState<string | null>(null);
-  const [logsStatus, setLogsStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [logsStatus, setLogsStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'idle');
   const [logsError, setLogsError] = React.useState<string | null>(null);
-  const [metricHistory, setMetricHistory] = React.useState<ControlPlaneVirtualMachineMetricHistoryPoint[]>([]);
-  const [metricHistoryByVmId, setMetricHistoryByVmId] = React.useState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>({});
-  const [metricLoadStateByVmId, setMetricLoadStateByVmId] = React.useState<Record<string, VmMetricLoadState>>({});
-  const [metricHistoryStatus, setMetricHistoryStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [metricHistory, setMetricHistory] = useSessionCachedState<ControlPlaneVirtualMachineMetricHistoryPoint[]>(metricHistoryCacheKey, []);
+  const [metricHistoryByVmId, setMetricHistoryByVmId] = useSessionCachedState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>(`workspace:${workspace.id}:virtual-machine-card-metrics`, {});
+  const [metricLoadStateByVmId, setMetricLoadStateByVmId] = useSessionCachedState<Record<string, VmMetricLoadState>>(`workspace:${workspace.id}:virtual-machine-card-metric-states`, {});
+  const [metricHistoryStatus, setMetricHistoryStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'idle');
   const [pendingChatPrompt, setPendingChatPrompt] = React.useState('');
   const [resourceCategory, setResourceCategory] = React.useState<VmResourceCategory>('all');
   const activeCatalogState = route.kind === 'workspaceVirtualMachines' ? route : route.catalogState;
@@ -118,7 +125,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     status: status === 'all' ? undefined : status
   };
   const metricHistoryRequestSeqRef = React.useRef(0);
-  const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
   const selectedTargetId = selected?.id || null;
@@ -234,7 +240,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }, [onPendingTargetPromptConsumed, pendingTargetPrompt, selectedId, view, workspace.id]);
 
   const loadVmInventory = React.useCallback(async (vmId: string) => {
-    setResourceStatus('loading');
+    if (!hasSessionDataCacheValue(inventoryCacheKey)) setResourceStatus('loading');
     setResourceError(null);
     try {
       const page = await controlPlaneApi.listVirtualMachineInventory(workspace.id, vmId);
@@ -242,13 +248,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       setResourceStatus('ready');
     } catch (error) {
       console.error('Failed loading virtual machine inventory', error);
-      setInventory([]);
       setResourceError(formatControlPlaneError(error, t('virtualMachines.resources.loadFailed'), { area: 'virtualMachines' }));
-      setResourceStatus('error');
+      setResourceStatus(hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'error');
     }
-  }, [t, workspace.id]);
+  }, [inventoryCacheKey, t, workspace.id]);
   const loadVmLogs = React.useCallback(async (vmId: string) => {
-    setLogsStatus('loading');
+    if (!hasSessionDataCacheValue(logsCacheKey)) setLogsStatus('loading');
     setLogsError(null);
     try {
       const payload = await controlPlaneApi.getVirtualMachineLogs(workspace.id, vmId);
@@ -256,11 +261,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       setLogsStatus('ready');
     } catch (error) {
       console.error('Failed loading virtual machine logs', error);
-      setLogs([]);
       setLogsError(formatControlPlaneError(error, t('virtualMachines.resources.logsLoadFailed'), { area: 'virtualMachines' }));
-      setLogsStatus('error');
+      setLogsStatus(hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'error');
     }
-  }, [t, workspace.id]);
+  }, [logsCacheKey, t, workspace.id]);
 
   React.useEffect(() => {
     if (!selectedTargetId) {
@@ -277,9 +281,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     }
     if (view === 'overview') {
       let isCurrent = true;
-      setIssues(null);
       setIssueLoadFailed(false);
-      setIsLoadingIssueEvidence(true);
+      setIsLoadingIssueEvidence(!hasSessionDataCacheValue(issueCacheKey));
       void controlPlaneApi.listTargetIssues(workspace.id, selectedTargetId, { limit: 50 })
         .then((page) => {
           if (!isCurrent) return;
@@ -288,14 +291,13 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         .catch((error) => {
           console.error('Failed loading virtual machine issues', error);
           if (!isCurrent) return;
-          setIssues(null);
           setIssueLoadFailed(true);
         })
         .finally(() => {
           if (!isCurrent) return;
           setIsLoadingIssueEvidence(false);
         });
-      setMetricHistoryStatus('loading');
+      if (!hasSessionDataCacheValue(metricHistoryCacheKey)) setMetricHistoryStatus('loading');
       void controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, selectedTargetId)
         .then((payload) => {
           if (!isCurrent) return;
@@ -305,8 +307,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         .catch((error) => {
           console.error('Failed loading virtual machine metric history', error);
           if (!isCurrent) return;
-          setMetricHistory([]);
-          setMetricHistoryStatus('error');
+          setMetricHistoryStatus(hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'error');
         });
       return () => {
         isCurrent = false;
@@ -315,10 +316,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     setIsLoadingIssueEvidence(false);
     setIssueLoadFailed(false);
   }, [
+    issueCacheKey,
     loadVmInventory,
     loadVmLogs,
     selectedTargetId,
     view,
+    metricHistoryCacheKey,
     workspace.id
   ]);
 

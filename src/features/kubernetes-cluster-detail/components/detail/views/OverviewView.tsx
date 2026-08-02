@@ -24,6 +24,7 @@ import {
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface OverviewViewProps {
   cluster: KubernetesCluster;
@@ -83,8 +84,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const podCount = getPodCount(cluster);
   const telemetryFreshness = getTelemetryFreshness(cluster);
   const telemetryLabel = getTelemetryFreshnessLabel(telemetryFreshness);
-  const [metricHistory, setMetricHistory] = useState<ClusterMetricHistoryPoint[]>(cluster.metricHistory || []);
-  const [metricHistoryStatus, setMetricHistoryStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const clusterCachePrefix = `workspace:${cluster.workspaceId}:cluster:${cluster.id}:overview:`;
+  const metricHistoryCacheKey = `${clusterCachePrefix}metric-history`;
+  const issueCacheKey = `${clusterCachePrefix}issues`;
+  const [metricHistory, setMetricHistory] = useSessionCachedState<ClusterMetricHistoryPoint[]>(metricHistoryCacheKey, cluster.metricHistory || []);
+  const [metricHistoryStatus, setMetricHistoryStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'idle');
   const [metricHistoryRequestVersion, setMetricHistoryRequestVersion] = useState(0);
   const persistedMetricTimeline = useMemo(() => getPersistedMetricTimeline(metricHistory), [metricHistory]);
 
@@ -110,8 +114,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   );
   const hasMetricSamples = cpuSeries.length > 0 || memorySeries.length > 0;
 
-  const [clusterIssues, setClusterIssues] = useState<ControlPlaneIssueItem[] | null>(null);
-  const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [clusterIssues, setClusterIssues] = useSessionCachedState<ControlPlaneIssueItem[] | null>(issueCacheKey, null);
+  const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'idle');
   const [issueRequestVersion, setIssueRequestVersion] = useState(0);
   const issueSectionTitleId = React.useId();
   useVisibilityAwareRefresh(() => {
@@ -128,8 +132,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       };
     }
 
-    setMetricHistory(cluster.metricHistory || []);
-    setMetricHistoryStatus('loading');
+    setMetricHistory((current) => current.length > 0 ? current : cluster.metricHistory || []);
+    if (!hasSessionDataCacheValue(metricHistoryCacheKey)) setMetricHistoryStatus('loading');
     void controlPlaneApi
       .getClusterMetricsHistory(cluster.workspaceId, cluster.id, {
         window: '6h',
@@ -143,17 +147,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       .catch((error) => {
         console.error('Failed loading cluster metric history', error);
         if (!isCurrent) return;
-        setMetricHistoryStatus('error');
+        setMetricHistoryStatus(hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'error');
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState, metricHistoryRequestVersion]);
+  }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState, metricHistoryCacheKey, metricHistoryRequestVersion]);
 
   useEffect(() => {
     let isCurrent = true;
-    setIssueLoadStatus('loading');
+    if (!hasSessionDataCacheValue(issueCacheKey)) setIssueLoadStatus('loading');
 
     void controlPlaneApi
       .listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
@@ -165,13 +169,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
       .catch((error) => {
         console.error('Failed loading cluster issues', error);
         if (!isCurrent) return;
-        setIssueLoadStatus('error');
+        setIssueLoadStatus(hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'error');
       });
 
     return () => {
       isCurrent = false;
     };
-  }, [cluster.id, cluster.workspaceId, issueRequestVersion]);
+  }, [cluster.id, cluster.workspaceId, issueCacheKey, issueRequestVersion]);
 
   const reportedIssues = useMemo(
     () =>

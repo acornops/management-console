@@ -10,8 +10,9 @@ export const WorkflowLoadErrorNotice: React.FC<{ onRetry: () => void }> = ({ onR
   </div>
 );
 
-export const WorkflowModeBadge: React.FC<{ mode: string }> = ({ mode }) => {
-  const label = mode === 'read_write' ? 'read-write run' : mode === 'write_only' ? 'write-only run' : 'read-only run';
-  const tone = mode === 'read_write' ? 'warning' : mode === 'write_only' ? 'danger' : 'success';
-  return <StatusBadge tone={tone}>{label}</StatusBadge>;
+export const WorkflowModeLabel: React.FC<{ mode: string }> = ({ mode }) => {
+  const label = mode === 'read_write' ? 'Read/write policy' : mode === 'write_only' ? 'Write-only policy' : 'Read-only policy';
+  const tone = mode === 'write_only' ? 'danger' : 'neutral';
+  const className = `${mode === 'read_write' ? 'bg-ui-surface-strong text-ui-text' : ''} type-caption normal-case tracking-normal`;
+  return <StatusBadge tone={tone} className={className}>{label}</StatusBadge>;
 };

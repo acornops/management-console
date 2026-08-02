@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, WorkspaceAiSettings } from '@/types';
+import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 import type {
   ControlPlaneSession,
   ControlPlaneSessionListPage,

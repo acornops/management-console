@@ -15,9 +15,10 @@ import type {
   WorkflowRunSummary
 } from '@/services/control-plane/workflowApi';
 import { formatElapsedDuration } from '@/utils/dateTime';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 
-export const workflowViews: WorkflowView[] = ['overview', 'agents', 'capabilities', 'runs', 'settings'];
+export const workflowViews: WorkflowView[] = ['overview', 'capabilities', 'schedules', 'webhooks', 'runs', 'settings'];
 
 export type CreateWorkflowDraft = {
   name: string;
@@ -63,10 +64,7 @@ export const WorkflowAvailabilitySwitch: React.FC<{
 );
 
 export function titleFromInputName(name: string): string {
-  return name
-    .replace(/([A-Z])/g, ' $1')
-    .replaceAll('_', ' ')
-    .replace(/^\w/, (value) => value.toUpperCase());
+  return formatIdentifierLabel(name);
 }
 
 export function uniqueValues(values: string[]): string[] {
@@ -79,15 +77,6 @@ export function isRunActive(status: WorkflowDefinition['runs'][number]['status']
 
 export function isTerminalRunStatus(status: WorkflowDefinition['runs'][number]['status']): boolean {
   return status === 'completed' || status === 'failed' || status === 'cancelled';
-}
-
-export type RunDiscussionState = 'active' | 'waiting_session' | 'terminal';
-
-export function getRunDiscussionState(run: WorkflowDefinition['runs'][number], workflowSessionId: string): RunDiscussionState {
-  if (isRunActive(run.status)) {
-    return workflowSessionId ? 'active' : 'waiting_session';
-  }
-  return 'terminal';
 }
 
 export function workflowRunTraceStatus(status: WorkflowDefinition['runs'][number]['status']): LiveRunTrace['status'] {
@@ -237,10 +226,7 @@ function workflowOwnerLabel(
 }
 
 function titleCaseAgentId(agentId: string): string {
-  return agentId
-    .replace(/^agent-/, '')
-    .replaceAll('-', ' ')
-    .replace(/\b\w/g, (value) => value.toUpperCase());
+  return formatIdentifierLabel(agentId.replace(/^agent-/, ''), 'title');
 }
 
 export function mapApiWorkflowToDefinition(
@@ -259,13 +245,14 @@ export function mapApiWorkflowToDefinition(
   const capabilityRestrictionMode = 'inherit' as const;
   const executionMode = workflow.executionMode || (agentIds.length > 1 ? 'coordinated' : 'direct');
   const agentOptionLabels = new Map((options?.agents || []).map((agent) => [agent.value, agent.label]));
-  const contextGrants = uniqueValues(assignedAgents.flatMap((agent) => agent.contextScope));
   const fallbackAssignments = fallback?.agents || [];
   const apiAssignments = agentIds.map((agentId) => {
     const fallbackAgent = fallbackAssignments.find((agent) => agent.agentId === agentId);
+    const assignedAgent = assignedAgents.find((agent) => agent.id === agentId);
     return {
       agentId,
       name: fallbackAgent?.name || agentOptionLabels.get(agentId) || titleCaseAgentId(agentId),
+      avatarEmoji: assignedAgent?.avatarEmoji || fallbackAgent?.avatarEmoji,
       role: executionMode === 'direct' ? 'Direct' : 'AcornOps-coordinated',
       required: true
     };
@@ -286,7 +273,6 @@ export function mapApiWorkflowToDefinition(
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
     lastRun: fallback?.lastRun || 'No runs yet',
     agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
-    contextGrants,
     policy: {
       mode: assignedAgents.some((agent) => agent.permissionMode !== 'read_only') ? 'read_write' : 'read_only',
       approvals: []
@@ -314,19 +300,22 @@ export function mapWorkflowRunSummary(run: WorkflowRunSummary): WorkflowDefiniti
                 : run.status === 'needs_review'
                   ? 'needs_review'
                 : 'waiting_approval';
+  const startedAt = run.startedAt || run.requestedAt;
+  const terminalWithoutDuration = ['completed', 'failed', 'cancelled', 'needs_review'].includes(status);
+  const duration = run.endedAt && startedAt
+    ? formatElapsedDuration(startedAt, run.endedAt)
+    : terminalWithoutDuration
+      ? 'Duration unavailable'
+      : startedAt
+        ? formatElapsedDuration(startedAt, Date.now())
+        : 'Not started';
   return {
     id: run.id,
     executionId: run.executionId,
     runId: run.id,
     status,
     actor: run.createdBy || 'Operator',
-    duration: run.endedAt && run.startedAt
-      ? formatElapsedDuration(run.startedAt, run.endedAt)
-      : status === 'waiting_approval'
-        ? 'Waiting for approval'
-        : ['completed', 'failed', 'cancelled', 'needs_review'].includes(status)
-          ? 'Duration unavailable'
-          : 'In progress',
+    duration,
     approvals: 0,
     output: run.assistantMessage?.content
       || (status === 'waiting_approval'
@@ -334,7 +323,7 @@ export function mapWorkflowRunSummary(run: WorkflowRunSummary): WorkflowDefiniti
         : ['completed', 'failed', 'cancelled', 'needs_review'].includes(status)
           ? 'No assistant output was recorded.'
           : 'Workflow run is in progress.'),
-    startedAt: run.requestedAt || run.startedAt || 'Unknown'
+    startedAt: startedAt || 'Unknown'
   };
 }
 

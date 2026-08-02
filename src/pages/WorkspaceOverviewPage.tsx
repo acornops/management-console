@@ -68,6 +68,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     [t, workspace.id]
   );
   const issueCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:issues`,
     filters: { workspaceId: workspace.id },
     getKey: (issue: ControlPlaneIssueItem) => issue.id,
     loadPage: loadIssuePage,
@@ -83,6 +84,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     }
   }, [t, workspace.id]);
   const virtualMachineCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:virtual-machines`,
     filters: { workspaceId: workspace.id },
     getKey: (virtualMachine: ControlPlaneVirtualMachine) => virtualMachine.id,
     loadPage: loadVirtualMachinePage,
@@ -93,10 +95,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     () => workspaceVirtualMachines.filter((virtualMachine) => virtualMachine.status === 'online' || virtualMachine.status === 'degraded'),
     [workspaceVirtualMachines]
   );
-  const {
-    summaryByTargetId: issueSummaryByVmId,
-    refresh: refreshVmIssueSummaries
-  } = useTargetIssueSummaries(connectedWorkspaceVirtualMachines);
+  const { summaryByTargetId: issueSummaryByVmId } = useTargetIssueSummaries(connectedWorkspaceVirtualMachines);
   const workspaceIssues = issueCollection.items;
   const hasPriorVirtualMachineData = hasLoadedWorkspaceVirtualMachines || workspaceVirtualMachines.length > 0;
   const isLoadingVirtualMachines =

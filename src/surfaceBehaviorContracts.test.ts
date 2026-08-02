@@ -70,9 +70,19 @@ describe('surface behavior contracts', () => {
     expect(workflowActivityUi).toContain('sm:grid-cols-2 sm:gap-x-6');
     expect(workflowActivityUi).toContain('sm:col-span-2 xl:col-span-1');
     expect(workspaceActivityPage).toContain('workflowExecutionLedgerGridClass');
+    expect(workspaceActivityPage).toContain('density="dense"');
+    expect(workspaceActivityPage).toContain('className="mb-4 shrink-0"');
+    expect(workflowActivityUi).not.toContain('xl:px-8 xl:py-6');
     expect(workflowActivityUi.match(/xl:grid-cols-\[minmax\(18rem,1fr\)/g)).toHaveLength(1);
     expect(workflowActivityUi.match(/text-ui-text-muted xl:hidden/g)).toHaveLength(3);
     expect(workflowActivityUi.match(/xl:mt-0/g)).toHaveLength(3);
+  });
+
+  it('keeps workflow empty states compact and aligned with their section icons', () => {
+    expect(workspaceSchedulesPage).toContain('icon={<ICONS.CalendarClock />}');
+    expect(workspaceSchedulesPage).toContain("visibleSchedules.length === 0 && schedulePhase !== 'loading'");
+    expect(workspaceActivityPage).toContain('icon={<ICONS.Activity />}');
+    expect(workspaceActivityPage).not.toContain('icon={<Filter />}');
   });
 
   it('offers the permission-gated connect action in both infrastructure inventory empty states', () => {

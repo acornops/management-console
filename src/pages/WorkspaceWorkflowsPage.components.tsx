@@ -1,29 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile, InlineAlert } from '@acornops/ui';
-import { CloseButton } from '@acornops/ui';
-import { CollectionState } from '@acornops/ui';
-import { DialogFrame } from '@acornops/ui';
-import { DiscoveryFilterBar } from '@acornops/ui';
-import { MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, masterDetailDiscoverySpacingClass } from '@acornops/ui';
-import { StatusBadge } from '@acornops/ui';
-import { TextInput } from '@acornops/ui';
+import { Button, CloseButton, CollectionState, DialogFrame, DiscoveryFilterBar, IconTile, InlineAlert, MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, StatusBadge, TextInput, masterDetailDiscoverySpacingClass } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
 import { McpOAuthDialog } from '@/features/catalog/McpOAuthDialog';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
 import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition } from '@/pages/workflows/workflowModel';
-import { titleFromInputName, workflowStatusTone } from '@/pages/workflows/workflowPageHelpers';
-import { formatUserDateTime } from '@/utils/dateTime';
+import { workflowStatusTone } from '@/pages/workflows/workflowPageHelpers';
 import type { WorkflowCapabilitiesPreview, WorkflowCapabilityToolPreview, WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
-
+import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 export { WorkflowLaunchActions } from '@/pages/workflows/WorkflowLaunchActions';
-function workflowProvenanceLabel(workflow: WorkflowDefinition): string {
-  return workflow.owner;
-}
-function formatWorkflowTimestamp(value: string, fallback: string): string {
-  return formatUserDateTime(value, { fallback });
-}
+function workflowProvenanceLabel(workflow: WorkflowDefinition): string { return workflow.owner; }
 export const WorkflowSearchTagSuggestions: React.FC<{
   query: string;
   workflowSearchTags: string[];
@@ -38,7 +25,6 @@ export const WorkflowSearchTagSuggestions: React.FC<{
       ))}
     </div>
   ) : null;
-
 export const WorkflowDiscovery: React.FC<{
   embedded?: boolean;
   idPrefix?: string;
@@ -56,13 +42,14 @@ export const WorkflowDiscovery: React.FC<{
         embedded={embedded}
         stacked={embedded}
         searchWidth="fluid"
+        className={embedded ? undefined : '[&_[data-search-filter-frame-summary=true]>span]:min-h-0'}
         idPrefix={idPrefix}
         query={query}
         queryLabel="Search workflow library"
         queryPlaceholder="Search workflows"
         queryClearLabel="Clear search"
         queryKeyShortcuts="/"
-        resultSummary={ready ? `${query.trim() ? `${visibleCount} of ${totalCount}` : totalCount} ${totalCount === 1 ? 'workflow' : 'workflows'}${embedded ? ' · Press / to search' : ''}` : 'Loading workflows'}
+        resultSummary={ready ? `${query.trim() ? `${visibleCount} of ${totalCount}` : totalCount} ${totalCount === 1 ? 'workflow' : 'workflows'}${embedded ? ' · Press / to focus search' : ''}` : 'Loading workflows'}
         filters={[]}
         clearAllLabel="Clear all"
         onQueryChange={onQueryChange}
@@ -72,17 +59,27 @@ export const WorkflowDiscovery: React.FC<{
     </div>
   ) : null;
 };
+const workflowAgentMetadata = (agents: WorkflowAgentReference[]) => {
+  const names = agents.map((agent) => agent.name.trim()).filter(Boolean);
+  const visibleNames = names.slice(0, 2).join(', ');
+  return {
+    accessibleLabel: names.length > 0 ? `Assigned agents: ${names.join(', ')}` : 'No assigned agents',
+    fullLabel: names.join(', '),
+    visibleLabel: names.length > 2 ? `${visibleNames} +${names.length - 2}` : visibleNames || 'No assigned agents'
+  };
+};
 
 export const WorkflowLibraryList: React.FC<{
   discovery?: React.ReactNode;
   workflows: WorkflowDefinition[];
   visibleWorkflows: WorkflowDefinition[];
   selectedWorkflow?: WorkflowDefinition;
+  selectedWorkflowIsExplicit?: boolean;
   ready: boolean;
   loadError: string;
   onSelectWorkflow: (workflowId: string) => void;
   registerWorkflowRow: (workflowId: string, node: HTMLButtonElement | null) => void;
-}> = ({ discovery, workflows, visibleWorkflows, selectedWorkflow, ready, loadError, onSelectWorkflow, registerWorkflowRow }) => {
+}> = ({ discovery, workflows, visibleWorkflows, selectedWorkflow, selectedWorkflowIsExplicit = false, ready, loadError, onSelectWorkflow, registerWorkflowRow }) => {
   const rowRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const focusRelativeRow = (workflowId: string, direction: -1 | 1 | 'first' | 'last') => {
     const currentIndex = visibleWorkflows.findIndex((workflow) => workflow.id === workflowId);
@@ -96,49 +93,62 @@ export const WorkflowLibraryList: React.FC<{
   };
   return (
     <section aria-label="Workflow library" className="min-w-0 w-full max-w-full">
-      {discovery && <div className="hidden border-b border-ui-border p-4 lg:block">{discovery}</div>}
+      {discovery && <div className="hidden border-b border-ui-border p-4 min-[1440px]:block">{discovery}</div>}
       <MasterDetailListHeader>Workflow library</MasterDetailListHeader>
       {!ready && <MasterDetailLoading>Loading workflows…</MasterDetailLoading>}
       {ready && visibleWorkflows.length > 0 && (
         <ul className="divide-y divide-ui-border">
-          {visibleWorkflows.map((workflow) => (
-            <li key={workflow.id}>
-              <MasterDetailRow
-                buttonRef={(node) => {
-                  if (node) rowRefs.current.set(workflow.id, node);
-                  else rowRefs.current.delete(workflow.id);
-                  registerWorkflowRow(workflow.id, node);
-                }}
-                title={workflow.name}
-                description={workflow.description}
-                status={(
-                  <span className="flex items-center gap-2">
-                    <StatusBadge tone={workflowStatusTone(workflow.status)}>{workflow.status}</StatusBadge>
-                    <ICONS.ChevronRight className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
-                  </span>
-                )}
-                metadata={
-                  <>
-                    <span>{workflowProvenanceLabel(workflow)}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{pluralize(workflow.agents.length, 'agent')}</span>
-                  </>
-                }
-                selected={workflow.id === selectedWorkflow?.id}
-                ariaLabel={`Select workflow ${workflow.name}${workflow.id === selectedWorkflow?.id ? ', selected' : ''}`}
-                onClick={() => onSelectWorkflow(workflow.id)}
-                onKeyDown={(event) => {
-                  if (event.key === 'ArrowDown') { event.preventDefault(); focusRelativeRow(workflow.id, 1); }
-                  if (event.key === 'ArrowUp') { event.preventDefault(); focusRelativeRow(workflow.id, -1); }
-                  if (event.key === 'Home') { event.preventDefault(); focusRelativeRow(workflow.id, 'first'); }
-                  if (event.key === 'End') { event.preventDefault(); focusRelativeRow(workflow.id, 'last'); }
-                }}
-              />
-            </li>
-          ))}
+          {visibleWorkflows.map((workflow) => {
+            const agentMetadata = workflowAgentMetadata(workflow.agents);
+            const isCurrentWorkflow = workflow.id === selectedWorkflow?.id;
+            const isSelectedWorkflow = isCurrentWorkflow && selectedWorkflowIsExplicit;
+            return (
+              <li key={workflow.id}>
+                <MasterDetailRow
+                  buttonRef={(node) => {
+                    if (node) rowRefs.current.set(workflow.id, node);
+                    else rowRefs.current.delete(workflow.id);
+                    registerWorkflowRow(workflow.id, node);
+                  }}
+                  title={workflow.name}
+                  description={workflow.description}
+                  status={(
+                    <span className="flex items-center gap-2">
+                      {workflow.status !== 'active' && (
+                        <StatusBadge tone={workflowStatusTone(workflow.status)}>{workflow.status}</StatusBadge>
+                      )}
+                      <ICONS.ChevronRight className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
+                    </span>
+                  )}
+                  metadata={
+                    <>
+                      <span>{workflowProvenanceLabel(workflow)}</span>
+                      <span aria-hidden="true">·</span>
+                      <span
+                        aria-label={agentMetadata.accessibleLabel}
+                        title={agentMetadata.fullLabel || undefined}
+                      >
+                        {agentMetadata.visibleLabel}
+                      </span>
+                    </>
+                  }
+                  selected={isSelectedWorkflow}
+                  previewed={isCurrentWorkflow}
+                  ariaLabel={`Select workflow ${workflow.name}${isSelectedWorkflow ? ', selected' : ''}`}
+                  onClick={() => onSelectWorkflow(workflow.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'ArrowDown') { event.preventDefault(); focusRelativeRow(workflow.id, 1); }
+                    if (event.key === 'ArrowUp') { event.preventDefault(); focusRelativeRow(workflow.id, -1); }
+                    if (event.key === 'Home') { event.preventDefault(); focusRelativeRow(workflow.id, 'first'); }
+                    if (event.key === 'End') { event.preventDefault(); focusRelativeRow(workflow.id, 'last'); }
+                  }}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
-      {ready && visibleWorkflows.length === 0 && !loadError && <MasterDetailEmptyState title={workflows.length === 0 ? 'No workflows configured.' : 'No workflows match this search.'} description={workflows.length === 0 ? 'Add a recommended workflow to start quickly, or create one with your own Agents, access, and governed run policy.' : 'Clear the search to return to the full workflow library.'} />}
+      {ready && visibleWorkflows.length === 0 && !loadError && <MasterDetailEmptyState title={workflows.length === 0 ? 'No workflows configured.' : 'No workflows match this search.'} description={workflows.length === 0 ? 'Create a workflow with your own Agents, access, and governed run policy.' : 'Clear the search to return to the full workflow library.'} />}
     </section>
   );
 };
@@ -174,7 +184,7 @@ export const WorkflowDeleteDialog: React.FC<{
         <InlineAlert tone="warning" className="type-ui leading-6">Deleting {workflowToDelete.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</InlineAlert>
         <div>
           <label htmlFor="delete-workflow-confirmation-input" className="type-label mb-1.5 block px-1">
-            Type the workflow name to confirm deletion.
+            Type <span className="normal-case type-emphasis text-status-danger-text">{workflowToDelete.name}</span> to confirm
           </label>
           <TextInput id="delete-workflow-confirmation-input" value={deleteWorkflowConfirmation} onChange={(event) => setDeleteWorkflowConfirmation(event.target.value)} disabled={deletingWorkflowId === workflowToDelete.id} autoComplete="off" spellCheck={false} className="focus:border-status-danger/45 focus:ring-status-danger/20" />
         </div>
@@ -195,11 +205,6 @@ export const WorkflowDeleteDialog: React.FC<{
     </DialogFrame>
   );
 };
-
-function pluralize(count: number, singular: string): string {
-  const plural = singular.endsWith('y') ? `${singular.slice(0, -1)}ies` : `${singular}s`;
-  return `${count} ${count === 1 ? singular : plural}`;
-}
 
 export const WorkflowPanel: React.FC<{
   title: string;
@@ -235,7 +240,7 @@ export const WorkflowSection: React.FC<{
   <section className="min-w-0 border-t border-ui-border pt-5 first:border-t-0 first:pt-0">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <h4 className="type-row-title">{title}</h4>
+        <h4 className="type-panel-title">{title}</h4>
         {description && <p className="type-caption mt-1 max-w-2xl text-ui-text-muted">{description}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
@@ -246,7 +251,7 @@ export const WorkflowSection: React.FC<{
 export const AgentAssignmentList: React.FC<{
   className?: string;
   agents: WorkflowAgentReference[];
-  labelForAgent?: string | ((agent: WorkflowAgentReference) => string);
+  labelForAgent?: string | null | ((agent: WorkflowAgentReference) => string | null);
 }> = ({ className = '', agents, labelForAgent = 'Selected' }) => {
   const rows = agents.map((agent) => ({
     agent,
@@ -265,26 +270,22 @@ export const AgentAssignmentList: React.FC<{
 };
 const AgentAssignmentRow: React.FC<{
   agent: WorkflowAgentReference;
-  label: string;
+  label: string | null;
 }> = ({ agent, label }) => {
-  const showRole = agent.role.trim().toLowerCase() !== label.trim().toLowerCase();
-  return <div className="grid gap-3 py-3 first:pt-0 last:pb-0 sm:grid-cols-[2.25rem_1fr_auto] sm:items-center">
-    <IconTile size="sm">
-      <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
-    </IconTile>
+  const showRole = label ? agent.role.trim().toLowerCase() !== label.trim().toLowerCase() : false;
+  return <div className={`grid grid-cols-[2.25rem_minmax(0,1fr)] gap-3 py-3 first:pt-0 last:pb-0 sm:items-center ${label ? 'sm:grid-cols-[2.25rem_1fr_auto]' : ''}`}>
+    <AgentAvatar emoji={agent.avatarEmoji} size="sm" />
     <div className="min-w-0">
-      <div className="break-words type-body type-emphasis text-ui-text [overflow-wrap:anywhere]">{agent.name}</div>
+      <div className="break-words type-ui leading-6 text-ui-text [overflow-wrap:anywhere]">{agent.name}</div>
       {showRole && <div className="type-caption mt-1 break-words text-ui-text-muted [overflow-wrap:anywhere]">{agent.role}</div>}
     </div>
-    <div className="flex items-start justify-start sm:justify-end">
-      <span className="rounded-md border border-ui-border bg-ui-surface px-2.5 py-1 type-caption type-emphasis text-ui-text-muted">{label}</span>
-    </div>
+    {label && (
+      <div className="col-start-2 flex items-start justify-start sm:col-start-auto sm:justify-end">
+        <span className="rounded-md border border-ui-border bg-ui-surface px-2.5 py-1 type-caption type-emphasis text-ui-text-muted">{label}</span>
+      </div>
+    )}
   </div>;
 };
-
-function formatWorkflowScopeValue(value: string): string {
-  return titleFromInputName(value).replace(/\bMcp\b/g, 'MCP');
-}
 
 export const CapabilityReviewRow: React.FC<{
   label: string;
@@ -303,7 +304,7 @@ export const CapabilityReviewRow: React.FC<{
         <ul className="grid gap-1.5">
           {values.map((value) => (
             <li key={value} className={technical ? 'break-words font-mono type-body leading-6 text-ui-text [overflow-wrap:anywhere]' : 'break-words type-ui leading-6 text-ui-text [overflow-wrap:anywhere]'}>
-              {technical ? value : formatWorkflowScopeValue(value)}
+              {value}
             </li>
           ))}
         </ul>
@@ -329,6 +330,13 @@ function workflowWriteAccess(preview: WorkflowCapabilitiesPreview): {
   if (preview.approvalRequirements.length > 0) return { label: 'Approval required', tone: 'warning' };
   return { label: 'Allowed automatically', tone: 'warning' };
 }
+
+const WorkflowWriteAccessValue: React.FC<{ preview: WorkflowCapabilitiesPreview }> = ({ preview }) => {
+  const access = workflowWriteAccess(preview);
+  return access.tone === 'warning'
+    ? <StatusBadge tone="warning">{access.label}</StatusBadge>
+    : <span className="type-ui text-ui-text-muted">{access.label}</span>;
+};
 
 const WorkflowPreviewToolRows: React.FC<{
   label: string;
@@ -552,7 +560,7 @@ export const WorkflowCapabilityLedger: React.FC<{
             <h4 className="type-row-title">Run capabilities</h4>
             <p className="type-caption mt-1 text-ui-text-muted">Tools and integrations available to this run. Launch revalidates the scope.</p>
           </div>
-          {preview && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
+          {preview && preview.status !== 'ready' && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
         </div>
         <CollectionState
           phase={loading ? 'loading' : error ? 'error' : 'ready'}
@@ -573,7 +581,7 @@ export const WorkflowCapabilityLedger: React.FC<{
             <dl className="mt-4 divide-y divide-ui-border">
               <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
                 <dt className="type-row-title">Write access</dt>
-                <dd><StatusBadge tone={workflowWriteAccess(preview).tone}>{workflowWriteAccess(preview).label}</StatusBadge></dd>
+                <dd><WorkflowWriteAccessValue preview={preview} /></dd>
               </div>
               <WorkflowPreviewAuthRow requirements={preview.mcpRequirements} onConnectCredential={setCredentialRequirement} />
               <WorkflowPreviewToolRows label="Read tools" tools={preview.tools.read} />
@@ -599,10 +607,10 @@ export const WorkflowCapabilitySummary: React.FC<{
   const [credentialRequirement, setCredentialRequirement] = React.useState<WorkflowMcpRequirementPreview | null>(null);
   return (
     <>
-      <section aria-label="Capability summary" className="mt-4 border-y border-ui-border py-4">
+      <section aria-label="Capability summary" className="mt-4 rounded-md border border-ui-border bg-ui-surface px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <p className="type-caption max-w-[70ch] text-ui-text-muted">Tools inherited from the assigned Agents. Launch checks these capabilities again.</p>
-          {preview && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
+          <p className="type-caption max-w-[70ch] text-ui-text-muted">Inherited from selected Agents. Checked again at launch.</p>
+          {preview && preview.status !== 'ready' && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
         </div>
         <CollectionState
           phase={loading ? 'loading' : error ? 'error' : 'ready'}
@@ -616,17 +624,18 @@ export const WorkflowCapabilitySummary: React.FC<{
           empty={null}
         >
           {preview && !loading && !error && (
-            <dl className="mt-4 divide-y divide-ui-border">
-              <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
+            <dl className="mt-4 grid gap-4">
+              <div className="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
                 <dt className="type-row-title">Tools</dt>
-                <dd className="flex flex-wrap gap-2">
-                  <StatusBadge tone="success">{preview.counts.readTools} read</StatusBadge>
-                  <StatusBadge tone={preview.counts.writeTools > 0 ? 'warning' : 'neutral'}>{preview.counts.writeTools} write</StatusBadge>
+                <dd className="flex flex-wrap items-center gap-2 type-ui tabular-nums text-ui-text">
+                  <span>{preview.counts.readTools} read</span>
+                  <span aria-hidden="true" className="text-ui-text-muted">·</span>
+                  <span>{preview.counts.writeTools} write</span>
                 </dd>
               </div>
-              <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
+              <div className="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
                 <dt className="type-row-title">Write access</dt>
-                <dd><StatusBadge tone={workflowWriteAccess(preview).tone}>{workflowWriteAccess(preview).label}</StatusBadge></dd>
+                <dd><WorkflowWriteAccessValue preview={preview} /></dd>
               </div>
               <WorkflowPreviewAuthRow requirements={preview.mcpRequirements} onConnectCredential={setCredentialRequirement} />
             </dl>

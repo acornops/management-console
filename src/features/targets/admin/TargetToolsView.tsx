@@ -35,7 +35,6 @@ import {
   toolRuntimeLabel,
   toolSearchInputClassName,
   type TargetInsightsAction,
-  type TargetToolsDataSource,
   type TargetToolsViewProps,
   type ToolDraft
 } from '@/features/targets/admin/TargetToolsView.helpers';

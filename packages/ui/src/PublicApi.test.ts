@@ -66,6 +66,10 @@ describe('@acornops/ui public API', () => {
     expect(segmentedTabButtonClassName({ isActive: true })).not.toContain(
       'text-accent-readable'
     );
+    const compactTabClassName = segmentedTabButtonClassName({ isActive: true, labelSize: 'compact' });
+    expect(compactTabClassName).toContain('type-compact-ui');
+    expect(compactTabClassName).toContain('min-h-11');
+    expect(compactTabClassName).not.toContain('type-ui');
     expect(filterToggleButtonClassName({ isActive: true })).toContain(
       'bg-ui-surface'
     );

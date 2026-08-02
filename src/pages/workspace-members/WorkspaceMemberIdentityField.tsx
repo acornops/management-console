@@ -5,7 +5,6 @@ import { CollectionState, ComboboxListbox, ComboboxOption, StatusBadge } from '@
 import { TextInput } from '@acornops/ui';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { WorkspaceMemberCandidate, WorkspaceMemberDiscoveryMode } from '@/types';
-import { Button } from '@acornops/ui';
 
 interface WorkspaceMemberIdentityFieldProps {
   workspaceId: string;

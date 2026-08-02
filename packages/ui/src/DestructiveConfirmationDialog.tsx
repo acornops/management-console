@@ -10,6 +10,8 @@ import { InlineAlert } from './InlineAlert';
 
 export interface DestructiveConfirmationDialogProps {
   cancelLabel?: string;
+  closeLabel?: string;
+  confirmDisabled?: boolean;
   confirmLabel: string;
   description: React.ReactNode;
   error?: string | null;
@@ -17,6 +19,7 @@ export interface DestructiveConfirmationDialogProps {
   onCancel: () => void;
   onConfirm: () => void;
   open: boolean;
+  overlayClassName?: string;
   pending?: boolean;
   subtitle: string;
   title: string;
@@ -25,6 +28,8 @@ export interface DestructiveConfirmationDialogProps {
 
 export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDialogProps> = ({
   cancelLabel,
+  closeLabel,
+  confirmDisabled = false,
   confirmLabel,
   description,
   error,
@@ -32,6 +37,7 @@ export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDial
   onCancel,
   onConfirm,
   open,
+  overlayClassName,
   pending = false,
   subtitle,
   title,
@@ -41,6 +47,8 @@ export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDial
     open={open}
     onClose={onCancel}
     closeDisabled={pending}
+    closeLabel={closeLabel}
+    overlayClassName={overlayClassName}
     titleId={titleId}
     title={(
       <span className="flex items-center gap-3">
@@ -56,6 +64,7 @@ export const DestructiveConfirmationDialog: React.FC<DestructiveConfirmationDial
       <DestructiveConfirmationActions
         cancelLabel={cancelLabel}
         confirmLabel={confirmLabel}
+        disabled={confirmDisabled}
         loadingLabel={loadingLabel}
         onCancel={onCancel}
         onConfirm={onConfirm}

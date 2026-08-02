@@ -7,10 +7,8 @@ import {
   InlineAlert,
   InlineLoadingIndicator,
   Select,
-  Textarea,
   TextInput,
-  formInputClassName,
-  formTextareaClassName
+  formInputClassName
 } from '@acornops/ui';
 import {
   cronFromScheduleBuilder,
@@ -32,7 +30,6 @@ import type {
 export type ScheduleDraftField = 'workflowId' | 'name' | 'cron' | 'timezone' | 'runsAsUserId';
 
 const inputClassName = formInputClassName('mt-2');
-const scheduleTextareaClassName = formTextareaClassName('mt-2');
 const timeZoneSuggestions = [
   'UTC',
   'America/Los_Angeles',
@@ -197,11 +194,6 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
     <label className="flex items-center gap-3 type-body type-emphasis text-ui-text">
       <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
       {t('schedules.form.enabled')}
-    </label>
-    <label className="block type-body type-emphasis text-ui-text">
-      {t('schedules.form.approvedContextGrants')}
-      <Textarea value={draft.approvedContextGrants} onChange={(event) => setDraft((current) => ({ ...current, approvedContextGrants: event.target.value }))} className={scheduleTextareaClassName} />
-      <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.approvedContextGrantsHelp')}</span>
     </label>
     {draftOwnerIsCurrentUser ? (
       <section aria-labelledby="schedule-credential-readiness" className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">

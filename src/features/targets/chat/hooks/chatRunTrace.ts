@@ -13,6 +13,7 @@ import {
 } from '@/features/targets/chat/lib/trace-utils';
 import { LiveRunTrace } from '@/features/targets/chat/types';
 import { PendingApproval } from '@/types';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 export function isRunInProgress(status: ControlPlaneRun['status']): boolean {
   return status === 'queued' || status === 'dispatching' || status === 'running' || status === 'waiting_for_approval' || status === 'cancelling';
@@ -84,7 +85,7 @@ function toolResultDetail(result: unknown, contextMeta?: LiveRunTrace['toolCalls
     ? serialized
     : 'Structured evidence exceeded the 16,384-character trace viewer limit.';
   if (!contextMeta) return evidence;
-  const projection = contextMeta.strategy.replaceAll('_', ' ');
+  const projection = formatIdentifierLabel(contextMeta.strategy, 'lower');
   const status = contextMeta.truncated
     ? `${contextMeta.omissions?.length || 1} explicit omission(s)`
     : 'no explicit projection omissions';

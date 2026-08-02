@@ -2,8 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkloadsExplorer } from '@/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer';
 import type {
-  ResourceFamily,
-  WorkloadExplorerItem
+  ResourceFamily
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { mapClusterResourcePageItems } from '@/services/control-plane/clusterMappers';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -42,6 +41,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
     }
   }, [cluster.id, cluster.workspaceId, t]);
   const resourceCollection = useCursorCollection({
+    cacheKey: `workspace:${cluster.workspaceId}:cluster:${cluster.id}:resources`,
     filters: resourceQuery,
     getKey: (item: ControlPlaneResourcePageItem) => `${item.kind}:${item.namespace || ''}:${item.name}`,
     loadPage: loadResourcePage,
@@ -49,7 +49,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
     strategy: 'sentinel'
   });
   const resourceItems = resourceCollection.items;
-  const isLoadingInitial = resourceCollection.phase === 'loading' || resourceCollection.phase === 'refreshing';
+  const isLoadingInitial = resourceCollection.phase === 'loading';
   const isLoadingMore = resourceCollection.phase === 'loadingMore';
   const resourceListError = resourceCollection.error || null;
   const mappedPageResources = useMemo(

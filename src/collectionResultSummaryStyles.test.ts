@@ -7,7 +7,7 @@ const sources = [
   'features/targets/admin/TargetSkillsInventory.tsx',
   'features/targets/admin/TargetToolsView.tsx',
   'pages/WorkspaceMembersPage.tsx',
-  'pages/WorkspaceScheduleDrawerToolbar.tsx',
+  'pages/workflows/WorkflowTriggerToolbar.tsx',
   'pages/workspace-members/WorkspaceInvitationsPanel.tsx'
 ].map((path) => readFileSync(resolve(__dirname, path), 'utf8'));
 

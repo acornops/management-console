@@ -47,6 +47,44 @@ test('ready Agent cards omit routine positive status', async ({ page }) => {
   await expect(readyCard.getByText('Ready', { exact: true })).toHaveCount(0);
 });
 
+test('Agent lifecycle uses inline confirmation for disable and a modal for delete', async ({ page }) => {
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  const disableButton = page.getByRole('button', { name: 'Disable agent' });
+  await disableButton.click();
+  const disableConfirmation = page.locator('#agent-disable-confirmation');
+  await expect(disableConfirmation).toHaveAttribute('role', 'alert');
+  await expect(disableConfirmation.getByText('Disable this Agent?')).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Disable this Agent?' })).toHaveCount(0);
+  await disableConfirmation.getByRole('button', { name: 'Cancel' }).click();
+  await expect(disableButton).toBeFocused();
+
+  const deleteButton = page.getByRole('button', { name: 'Delete agent' });
+  await deleteButton.click();
+  const deleteDialog = page.getByRole('dialog', { name: 'Delete this Agent?' });
+  await expect(deleteDialog).toBeVisible();
+  await expect(deleteDialog.getByText('This action cannot be undone.')).toBeVisible();
+  await expect(deleteDialog.getByText('This permanently removes the Agent and its conversation history.')).toBeVisible();
+  await deleteDialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(deleteDialog).toHaveCount(0);
+  await expect(deleteButton).toBeFocused();
+});
+
+test('Agent duplication lives in the card overflow menu instead of Settings', async ({ page }) => {
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('button', { name: 'Duplicate', exact: true })).toHaveCount(0);
+
+  await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'Actions for Kubernetes Specialist' }).click();
+  const menu = page.getByRole('menu', { name: 'Actions for Kubernetes Specialist' });
+  await expect(menu.getByRole('menuitem', { name: 'Duplicate' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
+
+  await menu.getByRole('menuitem', { name: 'Duplicate' }).click();
+  await expect(page.getByRole('heading', { name: 'Edit agent' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Kubernetes Specialist copy');
+});
+
 test('Agent cards open route-backed Chat and can maximize to full Chat', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
@@ -285,7 +323,7 @@ test('Agent target mentions support keyboard-only Tab completion', async ({ page
 test('Agent lifecycle confirmations announce themselves, receive focus, and restore focus', async ({ page }) => {
   await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
 
-  const disable = page.getByRole('button', { name: 'Disable', exact: true }).first();
+  const disable = page.getByRole('button', { name: 'Disable agent', exact: true }).first();
   await disable.click();
 
   const confirmation = page.getByRole('alert');
@@ -295,6 +333,54 @@ test('Agent lifecycle confirmations announce themselves, receive focus, and rest
   await confirmation.getByRole('button', { name: 'Cancel' }).click();
   await expect(disable).toBeFocused();
   await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('Agent Settings follows the shared settings-page content measure', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  const heading = page.getByRole('heading', { level: 1, name: 'Agent Settings' });
+  const content = page.locator('[data-agent-settings-content="true"]');
+  const [headingBox, contentBox] = await Promise.all([heading.boundingBox(), content.boundingBox()]);
+
+  expect(headingBox).not.toBeNull();
+  expect(contentBox).not.toBeNull();
+  expect(contentBox!.width).toBeLessThanOrEqual(896);
+  expect(Math.abs(contentBox!.x - headingBox!.x)).toBeLessThanOrEqual(1);
+});
+
+test('Agent Settings uses default-size lifecycle actions on desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  for (const name of ['Edit agent', 'Disable agent', 'Delete agent']) {
+    await expect(page.getByRole('button', { name, exact: true }).first()).toHaveCSS('min-height', '44px');
+  }
+});
+
+test('Agent Settings uses full-width lifecycle actions on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  for (const name of ['Disable agent', 'Delete agent']) {
+    const action = page.getByRole('button', { name, exact: true }).first();
+    const widthDelta = await action.evaluate((button) => Math.abs(
+      button.getBoundingClientRect().width - (button.parentElement?.getBoundingClientRect().width ?? 0)
+    ));
+    expect(widthDelta).toBeLessThanOrEqual(1);
+  }
+});
+
+test('Agent Settings localizes lifecycle actions', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('app_language', 'zh');
+    window.localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:language', 'zh');
+  });
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('button', { name: '编辑 Agent', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '停用 Agent', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '删除 Agent', exact: true })).toBeVisible();
 });
 
 test('Agent Chat follows the selected Chinese application locale', async ({ page }) => {

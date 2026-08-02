@@ -59,13 +59,15 @@ The management console is the browser client for the control-plane API. Keep thi
 - Capability review renders semantic capabilities, direct MCP servers,
   installed skills, and direct tools as distinct sources. Launch uses the
   workflow capability-preview endpoint to show tools inherited from assigned
-  Agents, remains blocked while that preview is loading, stale, failed, or
-  blocked, and never presents target selection as workflow setup. Compiled scopes
-  remain internal; the console uses only the bounded capability preview and
-  public run status after dispatch.
+  Agents. Browsing or selecting workflows does not request a preview; opening
+  launch review starts the check and remains blocked while it is loading,
+  stale, failed, or blocked. Workflow setup never presents target selection.
+  Compiled scopes remain internal; the console uses only the bounded capability
+  preview and public run status after dispatch.
 - Agent **Capabilities → Tools** lists AcornOps native tools separately from
   MCP-discovered tools. Native grant and revoke require `manage_agents` only,
-  and Workflow traces expose authenticated PDF downloads.
+  the native assignment itself satisfies coordinated Workflow routing without a
+  second mapping review, and Workflow traces expose authenticated PDF downloads.
 - Every Agent exposes the managed **AcornOps Targets** MCP server in its MCP
   table. Users may toggle the server and its `list_targets`, `get_target`, and
   `list_target_issues` tools, but cannot edit its connection or delete it.
@@ -101,7 +103,7 @@ The management console is the browser client for the control-plane API. Keep thi
   consent before browser navigation. Multiple advertised issuers require an
   explicit selection. Fixture mode rejects external OAuth before any request.
 - The console does not expose a built-in repository-review Agent, workflow, provider profile, or template setup branch. Workspace managers create a specialist Agent, attach and review any compatible MCP server from the Agent's generic MCP page, and then create a workflow selecting that Agent. Credential values remain write-only and never enter preview state or browser storage.
-- Manual workflow creation sends only operator-controlled metadata and Agent IDs. Mode, tools, MCP servers, skills, context grants, permissions, approvals, execution duration, and report retention are not Workflow fields. Creation fails closed until the authoritative Agent options catalog has loaded.
+- Manual workflow creation sends only operator-controlled metadata and Agent IDs. Mode, tools, MCP servers, skills, permissions, approvals, execution duration, and report retention are not Workflow fields. Creation fails closed until the authoritative Agent options catalog has loaded.
 - AI behavior drafts remain empty until workspace AI settings arrive, so the console does not invent a provider or model. An omitted production control-plane API base uses same-origin requests; local development retains the localhost fallback.
 - A blocked workflow capability preview opens the matching individual
   credential or OAuth authorization dialog from `serverId`, `authType`, owner,
@@ -137,10 +139,11 @@ The management console is the browser client for the control-plane API. Keep thi
   never implies that an execution is running.
 - The console consumes automation-template metadata and exposes explicit idempotent install and activation actions. The Workflow Library lists only definitions installed in the workspace. Automatic templates are provisioned active; opt-in Infrastructure remediation and Incident investigation remain in the template catalog until installation, then stay paused until setup is complete and the user activates them.
 - Workflow authoring sends only a unique, non-empty `agentIds` set. One selected
-  Agent is labeled `Direct`; multiple selected Agents are labeled
-  `AcornOps-coordinated`. The console treats every selected Agent as a peer and
-  never sends or renders entry-Agent, delegation-policy, Manager, coordinator
-  identity, selection-order, or client-derived routing fields.
+  Agent is summarized as running the workflow directly without a redundant row
+  label; multiple selected Agents are labeled `AcornOps-coordinated`. The
+  console treats every selected Agent as a peer and never sends or renders
+  entry-Agent, delegation-policy, Manager, coordinator identity,
+  selection-order, or client-derived routing fields.
 - Coordinated run detail renders the sanitized `AcornOps coordination` parent
   and bounded child capability, Agent, status, and failure fields. It
   does not infer coordinator records or display hidden execution scope.

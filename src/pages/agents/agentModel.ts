@@ -1,4 +1,5 @@
 import type { AgentCapability, AgentMcpServerApi, AgentProviderType, AgentSkillApi, AgentStatus, RunPermissionMode } from '@/services/control-plane/agentApi';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 export interface AgentDefinition {
   id: string;
@@ -20,7 +21,6 @@ export interface AgentDefinition {
   skills: string[];
   skillInstallations?: AgentSkillApi[];
   semanticCapabilityIds: string[];
-  contextScope: string[];
   permissionMode: RunPermissionMode;
   trustPolicy: {
     boundary: string;
@@ -33,15 +33,9 @@ export interface AgentDefinition {
   };
 }
 
-const titleCase = (value: string): string =>
-  value
-    .replaceAll('_', ' ')
-    .replaceAll('-', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
 export function getAgentAccessClass(agent: AgentDefinition): string {
   const resourceTypes = Array.from(new Set(agent.capabilities.map((capability) => capability.resourceType).filter(Boolean)));
-  const resourceLabel = resourceTypes.length === 1 ? titleCase(resourceTypes[0]) : resourceTypes.length > 1 ? 'Mixed resources' : 'Workspace';
+  const resourceLabel = resourceTypes.length === 1 ? formatIdentifierLabel(resourceTypes[0], 'title') : resourceTypes.length > 1 ? 'Mixed resources' : 'Workspace';
   if (agent.permissionMode === 'read_only') return `${resourceLabel} read only`;
   if (agent.permissionMode === 'ask_before_changes') return `${resourceLabel} read, changes gated`;
   return `${resourceLabel} routine changes allowed`;
@@ -77,7 +71,6 @@ export function filterAgentDefinitions(agents: AgentDefinition[], query: string)
       agent.mcpServers.join(' '),
       agent.tools.join(' '),
       agent.skills.join(' '),
-      agent.contextScope.join(' '),
       agent.trustPolicy.boundary,
       agent.trustPolicy.dataEgress
     ].join(' ').toLowerCase();

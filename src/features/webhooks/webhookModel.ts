@@ -3,6 +3,7 @@ import {
   type ControlPlaneWebhookEventType,
   type ControlPlaneWebhookSubscription
 } from '@/services/controlPlaneApi';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 export interface WebhookDraft {
   name: string;
@@ -111,5 +112,9 @@ export function toggleWebhookEventGroup(
 }
 
 export function webhookEventLabel(eventType: string): string {
-  return eventType.replace(/\.v1$/, '').replaceAll('.', ' / ').replaceAll('_', ' ');
+  return eventType
+    .replace(/\.v1$/, '')
+    .split('.')
+    .map((segment) => formatIdentifierLabel(segment))
+    .join(' / ');
 }

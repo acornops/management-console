@@ -229,6 +229,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
     [t, workspace.id]
   );
   const auditCollection = useCursorCollection({
+    cacheKey: `workspace:${workspace.id}:audit-events`,
     filters: appliedFilters,
     getKey: (event: WorkspaceAuditEvent) => event.id,
     loadPage: loadAuditPage,
@@ -236,8 +237,8 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
     strategy: 'sentinel'
   });
   const { items: events, nextCursor, phase: auditPhase, error: errorMessage = '' } = auditCollection;
-  const isLoading = auditPhase === 'loading' || auditPhase === 'refreshing';
-  const isInitialAuditLoading = isLoading && events.length === 0;
+  const isLoading = auditPhase === 'loading';
+  const isInitialAuditLoading = auditPhase === 'loading' && events.length === 0;
   const isLoadingMore = auditPhase === 'loadingMore';
 
   useEffect(() => {
@@ -447,6 +448,13 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
         </div>
         <div className="min-w-0">
           <DataTable caption={t('auditLog.title')} className="w-full table-fixed text-left" aria-label={t('auditLog.title')}>
+            <colgroup>
+              <col className="w-[30%] xl:w-[17%]" />
+              <col className="w-[58%] xl:w-[31%]" />
+              <col className="hidden xl:table-column xl:w-[18%]" />
+              <col className="hidden xl:table-column xl:w-[26%]" />
+              <col className="w-[12%] xl:w-[8%]" />
+            </colgroup>
             <DataTableHeader
               collectionState={{
                 phase: isLoading ? 'loading' : errorMessage ? 'error' : 'ready',

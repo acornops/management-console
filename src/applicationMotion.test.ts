@@ -8,7 +8,6 @@ const readSource = (path: string) => readFileSync(resolve(root, path), 'utf8');
 describe('focused application motion source contracts', () => {
   const app = readSource('src/App.tsx');
   const loginPage = readSource('src/pages/LoginPage.tsx');
-  const desktopSidebar = readSource('src/app/AppDesktopSidebar.tsx');
   const desktopAccountMenu = readSource('src/app/AppDesktopAccountMenu.tsx');
   const mobileNavigation = readSource('src/app/AppMobileNavigation.tsx');
   const settingsPage = readSource('src/pages/SettingsPage.tsx');
