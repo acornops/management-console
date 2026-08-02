@@ -4,6 +4,7 @@ export interface ControlPlaneClusterSummary {
   criticalFindingCount: number;
   namespaceCount: number;
   nodeCount: number;
+  readyNodeCount?: number;
   resourceFamilyCounts?: {
     workloads: number;
     network: number;

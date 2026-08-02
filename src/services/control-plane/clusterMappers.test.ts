@@ -173,6 +173,7 @@ describe('mapControlPlaneClusterToKubernetesCluster', () => {
         criticalFindingCount: 1,
         namespaceCount: 1,
         nodeCount: 2,
+        readyNodeCount: 1,
         resourceFamilyCounts: {
           workloads: 4,
           network: 1,
