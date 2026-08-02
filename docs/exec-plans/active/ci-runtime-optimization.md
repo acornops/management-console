@@ -100,7 +100,20 @@ gates.
     tabs. The generic harness reset then displaced the intentionally deep-linked
     MCP registries route, so that reset was removed; route-specific scrolling
     remains intact.
-- Pending final GitHub Actions timing evidence after scroll stabilization.
+- GitHub Actions run `30745830338`, attempt 1
+  - Passed every preflight and browser job on the first attempt.
+  - Completed in 6m00s wall-clock, down from 23m03s (17m03s / 74% faster).
+  - Preflight completed in 1m29s before any browser runner started.
+  - The fixture shard remained the critical path at 4m11s; all other browser
+    shards completed in 2m48s or less.
+  - Dependency installation took 10-11s and Playwright browser installation
+    took 20-29s per shard. Caching or a pinned browser image is deferred because
+    it offers materially less benefit than the completed test fan-out and may
+    add cache maintenance or invalidation risk.
+
+The initial sub-12-minute target is satisfied. Establishing the below-10-minute
+median still requires two more representative full runs rather than rerunning
+identical CI solely to manufacture timing samples.
 
 ## Completion criteria
 
