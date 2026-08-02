@@ -62,6 +62,13 @@ describe('surface behavior contracts', () => {
     expect(markdownComponents).toContain('<tr className={`transition-colors ${tableRowHoverClass}`}>{children}</tr>');
   });
 
+  it('keeps cluster inventory summary cards limited to labels and values', () => {
+    expect(clusterOverviewView).not.toContain("t('clusterOverview.nodesReadyDetail'");
+    expect(clusterOverviewView).not.toContain("t('clusterOverview.podStateDetail'");
+    expect(clusterOverviewView).not.toContain("t('clusterOverview.inventoryObservedDetail'");
+    expect(clusterOverviewView).not.toContain('type-caption mt-3 truncate text-ui-text-muted');
+  });
+
   it('keeps the populated workflow ledger compact and leaves field labels to compact layouts', () => {
     expect(workspaceActivityPage).toContain('<PageShell');
     expect(workspaceActivityPage).not.toContain('<PageShell width=');
