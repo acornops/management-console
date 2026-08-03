@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_HISTORY_NAVIGATION_EVENT } from '@/hooks/useAppRouter';
 
 export type AgentDiscardRequest = {
   panel: 'create' | 'edit';
@@ -42,7 +43,7 @@ export function useAgentDrawerDiscardGuard({
     const warnBeforeUnload = (event: BeforeUnloadEvent) => {
       if (createDirtyRef.current || editDirtyRef.current) event.preventDefault();
     };
-    const guardHistoryExit = () => {
+    const guardHistoryExit = (event: Event) => {
       if (skipNextPopstateRef.current) {
         skipNextPopstateRef.current = false;
         return;
@@ -54,15 +55,16 @@ export function useAgentDrawerDiscardGuard({
         panel = 'edit';
       }
       if (!panel) return;
+      event.preventDefault();
       skipNextPopstateRef.current = true;
       window.history.forward();
       setDiscardRequest({ panel, fromHistory: true });
     };
     window.addEventListener('beforeunload', warnBeforeUnload);
-    window.addEventListener('popstate', guardHistoryExit, { capture: true });
+    window.addEventListener(APP_HISTORY_NAVIGATION_EVENT, guardHistoryExit);
     return () => {
       window.removeEventListener('beforeunload', warnBeforeUnload);
-      window.removeEventListener('popstate', guardHistoryExit, { capture: true });
+      window.removeEventListener(APP_HISTORY_NAVIGATION_EVENT, guardHistoryExit);
     };
   }, []);
 

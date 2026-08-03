@@ -99,8 +99,72 @@ test('Agent duplication lives in the card overflow menu instead of Settings', as
   await expect(menu.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
 
   await menu.getByRole('menuitem', { name: 'Duplicate' }).click();
-  await expect(page.getByRole('heading', { name: 'Edit agent' })).toBeVisible();
+  await expect(page).toHaveURL(/\/workspaces\/fixture-workspace\/agents\/[^/]+\/settings/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Agent Settings' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Agent definition' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Edit agent' })).toHaveCount(0);
   await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Kubernetes Specialist copy');
+});
+
+test('Agent definition edits stay inline on Settings', async ({ page }) => {
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Edit agent' })).toHaveCount(0);
+  const name = page.getByRole('textbox', { name: 'Name' });
+  await expect(name).toHaveValue('Kubernetes Specialist');
+  await name.fill('Kubernetes Response Specialist');
+  await expect(page.getByText('Identity, purpose, or instructions changed')).toBeVisible();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Agent updated. Review affected workflows before the next run.')).toBeVisible();
+  await expect(name).toHaveValue('Kubernetes Response Specialist');
+  await expect(page.getByRole('dialog', { name: 'Edit agent' })).toHaveCount(0);
+});
+
+test('Agent definition can collapse without losing an unsaved draft', async ({ page }) => {
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  const name = page.getByRole('textbox', { name: 'Name' });
+  await name.fill('Collapsed response specialist');
+  const collapse = page.getByRole('button', { name: 'Collapse Agent definition' });
+  await expect(collapse).toHaveAttribute('aria-expanded', 'true');
+  await collapse.click();
+
+  const expand = page.getByRole('button', { name: 'Expand Agent definition' });
+  await expect(expand).toHaveAttribute('aria-expanded', 'false');
+  await expect(name).toBeHidden();
+  await expect(page.getByText('Unsaved changes are preserved.')).toBeVisible();
+
+  await expand.click();
+  await expect(name).toBeVisible();
+  await expect(name).toHaveValue('Collapsed response specialist');
+});
+
+test('legacy Agent edit links resolve to inline Settings', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/agents?panel=edit&agent=fixture-specialist', { waitUntil: 'domcontentloaded' });
+
+  await expect(page).toHaveURL(agentDetailPath('settings'));
+  await expect(page.getByRole('heading', { name: 'Agent definition' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Edit agent' })).toHaveCount(0);
+});
+
+test('browser Back guards unsaved inline Agent edits', async ({ page }) => {
+  await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
+  await page.getByRole('link', { name: 'Agent Settings' }).click();
+  const name = page.getByRole('textbox', { name: 'Name' });
+  await name.fill('Unsaved response specialist');
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+
+  await page.goBack();
+  const discardDialog = page.getByRole('dialog', { name: 'Discard unsaved agent changes?' });
+  await expect(discardDialog).toBeVisible();
+  await discardDialog.getByRole('button', { name: 'Keep editing' }).click();
+  await expect(page).toHaveURL(agentDetailPath('settings'));
+  await expect(name).toHaveValue('Unsaved response specialist');
+
+  await page.goBack();
+  await discardDialog.getByRole('button', { name: 'Discard changes' }).click();
+  await expect(page).toHaveURL(agentDetailPath('chat'));
 });
 
 test('Agent cards open route-backed Chat and can maximize to full Chat', async ({ page }) => {
@@ -477,7 +541,8 @@ test('Agent Settings uses default-size lifecycle actions on desktop', async ({ p
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
 
-  for (const name of ['Edit agent', 'Disable agent', 'Delete agent']) {
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
+  for (const name of ['Disable agent', 'Delete agent']) {
     await expect(page.getByRole('button', { name, exact: true }).first()).toHaveCSS('min-height', '44px');
   }
 });
@@ -502,7 +567,7 @@ test('Agent Settings localizes lifecycle actions', async ({ page }) => {
   });
   await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('button', { name: '编辑 Agent', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '编辑 Agent', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: '停用 Agent', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '删除 Agent', exact: true })).toBeVisible();
 });

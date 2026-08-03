@@ -80,11 +80,13 @@ export const AgentEmojiPicker: React.FC<{
   onChange: (emoji: string) => void;
   label?: string;
   description?: string;
+  disabled?: boolean;
 }> = ({
   value,
   onChange,
   label = 'Agent emoji',
-  description = 'Choose a visual identity. Status is always shown separately.'
+  description = 'Choose a visual identity. Status is always shown separately.',
+  disabled = false
 }) => {
   const selectedIsCurated = AGENT_EMOJI_OPTIONS.includes(value as (typeof AGENT_EMOJI_OPTIONS)[number]);
   const [customValue, setCustomValue] = React.useState(selectedIsCurated ? '' : value);
@@ -100,7 +102,7 @@ export const AgentEmojiPicker: React.FC<{
   }, [value]);
 
   return (
-    <fieldset>
+    <fieldset disabled={disabled}>
       <legend className="type-micro-label">{label}</legend>
       <p className="type-caption mt-1 text-ui-text-muted">{description}</p>
       <div

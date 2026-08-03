@@ -4,7 +4,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
 import { PageShell } from '@acornops/ui';
-import { CreateAgentDrawer, EditAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
+import { CreateAgentDrawer } from '@/pages/WorkspaceAgentsDrawers';
 import { agentProfileTabs, type AgentProfileTab } from '@/pages/WorkspaceAgentDetailPanel';
 import { WorkspaceAgentDetailPanel } from '@/pages/WorkspaceAgentDetailPanel';
 import { AgentChatPanel } from '@/pages/agents/AgentChatPanel';
@@ -25,6 +25,7 @@ import { AppPaths } from '@/utils/routes';
 import { UnsavedChangesDialog } from '@/features/capabilities/UnsavedChangesDialog';
 import { useAgentDrawerDiscardGuard } from '@/pages/agents/useAgentDrawerDiscardGuard';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { AgentDefinitionSettingsSection } from '@/pages/agents/AgentDefinitionSettingsSection';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace, currentUserId, isDark, routeState, navigate }) => {
   const urlSearch = useUrlSearchState();
@@ -46,10 +47,8 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [agentCatalogReloadKey, setAgentCatalogReloadKey] = useState(0);
   const [ownerUsersReloadKey, setOwnerUsersReloadKey] = useState(0);
   const [createPanelOpen, setCreatePanelOpen] = useState(initialUrlSearch.get('panel') === 'create');
-  const [editPanelOpen, setEditPanelOpen] = useState(initialUrlSearch.get('panel') === 'edit');
   const initialAgentTab = initialUrlSearch.get('agentTab');
   const [agentTab, setAgentTab] = useState<AgentProfileTab>(routeState?.tab || (agentProfileTabs.includes(initialAgentTab as AgentProfileTab) ? initialAgentTab as AgentProfileTab : 'chat'));
-  const [editingAgentId, setEditingAgentId] = useState('');
   const [createDraft, setCreateDraft] = useState<AgentDraft>({ name: '', avatarEmoji: DEFAULT_AGENT_EMOJI, description: '', instructions: '', providerType: 'internal' });
   const [editDraft, setEditDraft] = useState<AgentEditDraft | null>(null);
   const editDraftSourceRef = React.useRef<AgentEditDraftSource | null>(null);
@@ -59,7 +58,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [duplicatingAgentId, setDuplicatingAgentId] = useState('');
   const [disableConfirmAgentId, setDisableConfirmAgentId] = useState('');
   const [deleteConfirmAgentId, setDeleteConfirmAgentId] = useState('');
-  const editAgentNameInputRef = React.useRef<HTMLInputElement>(null);
   const canManageAgents = canManageWorkspaceAgents(workspace);
   const canManageMcp = workspace.permissions?.manage_mcp === true;
   const canManageSkills = workspace.permissions?.manage_skills === true;
@@ -78,14 +76,15 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       focus: routeFocus === 'active' || routeFocus === 'draft' || routeFocus === 'disabled' ? routeFocus : 'all'
     });
     setCreatePanelOpen(panel === 'create');
-    setEditPanelOpen(panel === 'edit');
     const routeTab = urlSearch.get('agentTab');
     if (!routeState) setAgentTab(agentProfileTabs.includes(routeTab as AgentProfileTab) ? routeTab as AgentProfileTab : 'chat');
     if (panel === 'profile' && routeTab && !agentProfileTabs.includes(routeTab as AgentProfileTab)) {
       updateUrlSearch({ panel: 'profile', agent: routeAgentId, agentTab: 'chat' }, { replace: true });
     }
-    if (panel === 'edit' && routeAgentId) setEditingAgentId(routeAgentId);
-  }, [routeState, urlSearch]);
+    if (!routeState && panel === 'edit' && routeAgentId) {
+      navigate(AppPaths.workspaceAgentDetail(workspace.id, routeAgentId, 'settings'), { replace: true });
+    }
+  }, [navigate, routeState, urlSearch, workspace.id]);
   const ownerLabelsByUserId = useMemo(() => new Map(
     ownerUserOptions
       .filter((member) => member.userId)
@@ -152,7 +151,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const activeAgentTab = routeState?.tab || agentTab;
   const quickChatOpen = !routeState && urlSearch.get('panel') === 'chat';
   const [quickChatLayoutReserved, setQuickChatLayoutReserved] = useState(quickChatOpen);
-  const editingAgent = editingAgentId ? agents.find((agent) => agent.id === editingAgentId) : undefined;
+  const editingAgent = activeAgentTab === 'settings' ? selectedAgent : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
   const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions || createDraft.avatarEmoji !== DEFAULT_AGENT_EMOJI);
   const editDirty = editChangeSummary.length > 0;
@@ -160,7 +159,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     setCreateDraft({ name: '', avatarEmoji: DEFAULT_AGENT_EMOJI, description: '', instructions: '', providerType: 'internal' });
   };
   const clearEditAgentDraft = () => {
-    setEditingAgentId('');
     setEditDraft(null);
     editDraftSourceRef.current = null;
   };
@@ -168,14 +166,11 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     resetCreateAgentDraft();
     updateUrlSearch({ panel: null });
   };
-  const closeEditAgentDrawerImmediately = () => {
-    if (routeState) {
-      updateUrlSearch({ panel: null, agent: null, agentTab: null }, { replace: true });
-      navigate(AppPaths.workspaceAgentDetail(workspace.id, editingAgentId, 'settings'), { replace: true });
-    } else {
-      updateUrlSearch({ panel: 'profile', agent: editingAgentId, agentTab });
-    }
-    clearEditAgentDraft();
+  const resetEditAgentDraft = () => {
+    if (!editingAgent) return;
+    const nextDraft = createAgentEditDraft(editingAgent);
+    editDraftSourceRef.current = { agentId: editingAgent.id, draft: nextDraft };
+    setEditDraft(nextDraft);
   };
   const {
     cancelDiscard,
@@ -187,25 +182,24 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     createDirty,
     createPanelOpen,
     editDirty,
-    editPanelOpen,
+    editPanelOpen: Boolean(routeState && activeAgentTab === 'settings'),
     onCloseCreate: closeCreateAgentDrawerImmediately,
-    onCloseEdit: closeEditAgentDrawerImmediately,
+    onCloseEdit: resetEditAgentDraft,
     onDiscardCreateHistory: resetCreateAgentDraft,
     onDiscardEditHistory: clearEditAgentDraft
   });
-  const editDrawerVisible = editPanelOpen || discardRequest?.panel === 'edit';
   React.useEffect(() => {
     if (quickChatOpen) setQuickChatLayoutReserved(true);
   }, [quickChatOpen]);
   React.useEffect(() => {
-    if (!agentCatalogReady || !editPanelOpen || !editingAgent) return;
+    if (!agentCatalogReady || !routeState || activeAgentTab !== 'settings' || !editingAgent) return;
     const nextDraft = createAgentEditDraft(editingAgent);
     setEditDraft((current) => {
       if (!shouldRefreshAgentEditDraft(editingAgent.id, current, editDraftSourceRef.current)) return current;
       editDraftSourceRef.current = { agentId: editingAgent.id, draft: nextDraft };
       return nextDraft;
     });
-  }, [agentCatalogReady, editPanelOpen, editingAgent]);
+  }, [activeAgentTab, agentCatalogReady, editingAgent, routeState]);
   const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => [
     { value: '', label: 'Keep current owner' },
     ...ownerUserOptions
@@ -214,18 +208,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   ], [ownerUserOptions]);
   const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
-  };
-  const openEditAgentDrawer = (agent: AgentDefinition) => {
-    setEditingAgentId(agent.id);
-    if (agentCatalogReady) {
-      const draft = createAgentEditDraft(agent);
-      editDraftSourceRef.current = { agentId: agent.id, draft };
-      setEditDraft(draft);
-    } else {
-      editDraftSourceRef.current = null;
-      setEditDraft(null);
-    }
-    updateUrlSearch({ agent: agent.id, panel: 'edit' });
   };
   const openAgentManagement = (agent?: AgentDefinition) => {
     if (agent) setSelectedAgentId(agent.id);
@@ -239,9 +221,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   };
   const closeQuickChat = () => {
     updateUrlSearch({ panel: null, agent: null, agentTab: null });
-  };
-  const openEditAgentDrawerFromDetails = (agent: AgentDefinition) => {
-    openEditAgentDrawer(agent);
   };
   const disableSelectedAgent = async () => {
     if (!selectedAgent || !canManageAgents) return;
@@ -338,11 +317,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const draft = createAgentEditDraft(mapped);
       setAgents((current) => [mapped, ...current.filter((agent) => agent.id !== mapped.id)]);
       setSelectedAgentId(mapped.id);
-      setEditingAgentId(mapped.id);
       editDraftSourceRef.current = { agentId: mapped.id, draft };
       setEditDraft(draft);
       setLocalNotice({ tone: 'success', message: `Duplicated ${agent.name} as a draft.` });
-      updateUrlSearch({ agent: mapped.id, panel: 'edit', agentTab: null });
+      navigate(AppPaths.workspaceAgentDetail(workspace.id, mapped.id, 'settings'));
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not duplicate this agent.' });
     } finally {
@@ -370,8 +348,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const mapped = { ...mappedBase, owner: mappedOwner?.name || mappedOwner?.email || mappedBase.owner };
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
       setSelectedAgentId(mapped.id);
+      const savedDraft = createAgentEditDraft(mapped);
+      editDraftSourceRef.current = { agentId: mapped.id, draft: savedDraft };
+      setEditDraft(savedDraft);
       setLocalNotice({ tone: 'success', message: 'Agent updated. Review affected workflows before the next run.' });
-      closeEditAgentDrawerImmediately();
     } catch (error) {
       setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update this agent.' });
     } finally {
@@ -423,19 +403,6 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       {(createPanelOpen || discardRequest?.panel === 'create') && (
         <CreateAgentDrawer createDraft={createDraft} setCreateDraft={setCreateDraft} creatingAgent={creatingAgent} onClose={requestCloseCreate} onSave={() => void createControlPlaneAgent()} />
       )}
-      {editDrawerVisible && editingAgent && editDraft && (
-        <EditAgentDrawer
-          editingAgent={editingAgent}
-          editDraft={editDraft}
-          setEditDraft={setEditDraft}
-          ownerSelectOptions={ownerSelectOptions}
-          editChangeSummary={editChangeSummary}
-          updatingAgentId={updatingAgentId}
-          nameInputRef={editAgentNameInputRef}
-          onClose={requestCloseEdit}
-          onSave={() => void saveAgentEdits()}
-        />
-      )}
       {discardRequest && (
         <UnsavedChangesDialog
           title="Discard unsaved agent changes?"
@@ -475,7 +442,20 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       deleteConfirmAgentId={deleteConfirmAgentId}
       deleteError={deleteConfirmAgentId && localNotice?.tone === 'danger' ? localNotice.message : null}
       setDeleteConfirmAgentId={setDeleteConfirmAgentId}
-      onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
+      definitionSettings={activeAgentTab === 'settings' && editingAgent && editDraft ? (
+        <AgentDefinitionSettingsSection
+          key={editingAgent.id}
+          agent={editingAgent}
+          canManageAgents={canManageAgents}
+          draft={editDraft}
+          setDraft={setEditDraft}
+          ownerSelectOptions={ownerSelectOptions}
+          changeSummary={editChangeSummary}
+          saving={updatingAgentId === editingAgent.id}
+          onReset={requestCloseEdit}
+          onSave={() => void saveAgentEdits()}
+        />
+      ) : undefined}
       onUpdatePermissionMode={updateSelectedAgentPermissionMode}
       onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
       onDisableSelectedAgent={() => void disableSelectedAgent()}

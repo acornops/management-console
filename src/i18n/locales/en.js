@@ -1813,7 +1813,7 @@ export const en = {
       },
       settings: {
         title: 'Agent Settings',
-        description: 'Manage run permissions and lifecycle actions for {{name}}.'
+        description: 'Manage the definition, run permissions, and lifecycle actions for {{name}}.'
       }
     },
     permissionSettings: {

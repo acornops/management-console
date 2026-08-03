@@ -33,7 +33,7 @@ interface WorkspaceAgentDetailPanelProps {
   deleteConfirmAgentId: string;
   deleteError?: string | null;
   setDeleteConfirmAgentId: React.Dispatch<React.SetStateAction<string>>;
-  onOpenEditAgentDrawer: (agent: AgentDefinition) => void;
+  definitionSettings?: React.ReactNode;
   onUpdatePermissionMode: (permissionMode: AgentDefinition['permissionMode']) => void | Promise<void>;
   onReactivateSelectedAgent: () => void;
   onDisableSelectedAgent: () => void;
@@ -72,19 +72,11 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
           )}
           description={routeDescription}
           descriptionClassName="pl-14"
-          actions={(
-            <>
-              {selectedAgent.status === 'disabled' && (
-                <Button size="md" variant="secondary" onClick={props.onReactivateSelectedAgent} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}>
-                  {t('agentsWorkflows.agents.reactivate')}
-                </Button>
-              )}
-              <Button size="md" variant="primary" onClick={() => props.onOpenEditAgentDrawer(selectedAgent)} disabled={!props.canManageAgents}>
-                <ICONS.Pencil className="h-4 w-4" aria-hidden="true" />
-                {t('agentsWorkflows.agents.edit')}
-              </Button>
-            </>
-          )}
+          actions={selectedAgent.status === 'disabled' ? (
+            <Button size="md" variant="secondary" onClick={props.onReactivateSelectedAgent} disabled={!props.canManageAgents || props.updatingAgentId === selectedAgent.id}>
+              {t('agentsWorkflows.agents.reactivate')}
+            </Button>
+          ) : undefined}
         />
       )}
 
@@ -101,6 +93,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
         )}
         {props.activeTab === 'settings' && (
           <div className="max-w-4xl space-y-5" data-agent-settings-content="true">
+            {props.definitionSettings}
             <RunPermissionSettingsSection
               titleId="agent-permission-settings-title"
               title={t('agentChat.permissionSettings.title')}

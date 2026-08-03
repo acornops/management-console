@@ -1,6 +1,8 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppRoute, parseAppRoute } from '@/utils/routes';
 
+export const APP_HISTORY_NAVIGATION_EVENT = 'acornops:before-history-navigation';
+
 function normalizeBasePath(baseUrl: string): string {
   if (!baseUrl || baseUrl === '/') return '/';
   const normalized = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
@@ -46,6 +48,8 @@ export function useAppRouter(): {
 
   useEffect(() => {
     const handlePopstate = () => {
+      const guardEvent = new Event(APP_HISTORY_NAVIGATION_EVENT, { cancelable: true });
+      if (!window.dispatchEvent(guardEvent)) return;
       startTransition(() => {
         setAppPath(getCurrentAppPath(basePath));
       });

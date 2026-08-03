@@ -13,6 +13,9 @@ workspace-owned automation definitions.
   Agent-specific contextual navigation surface on desktop and mobile.
 - Agent navigation opens directly to Chat under Operations, groups MCP Servers,
   Skills, and Tools under Capabilities, and keeps Agent Settings separate.
+- Agent Settings exposes the Agent definition as an inline form. Editing does
+  not open a drawer, the form can collapse without losing its draft, and legacy
+  edit-panel links resolve to the Settings route.
 - Agent detail routes remain shareable and restore the selected section.
 - Each Agent card exposes a distinct Chat action with an Agent-specific accessible name.
 - Chat opens as a full-height dock beside the catalog on desktop and as
@@ -48,7 +51,9 @@ workspace-owned automation definitions.
 - Chat renders directly into the app content region.
 - MCP Servers, Skills, and Tools reuse the shared target administration views;
   Agent-specific data-source adapters keep their requests on Agent APIs.
-- Settings and the Agents catalog each use one standard `PageShell`.
+- Settings and the Agents catalog each use one standard `PageShell`. Agent
+  definition edits stay inside the Settings content measure with inline reset,
+  change review, and save controls.
 - Agent cards expose route-backed Chat. It docks beside the catalog on
   wide screens, uses the shared assistant frame's card-aware opening width,
   remains user-resizable, falls back to a modal drawer on narrow screens, and
@@ -84,3 +89,14 @@ workspace-owned automation definitions.
   Behavioral design-system coverage passed; no snapshot was accepted blindly
   or added to this feature.
 - `git diff --check` — passed.
+
+### Inline Agent definition follow-up
+
+- `npm run validate` — passed: 198 test files and 968 tests, design-system and
+  adoption checks, membership and contract checks, harness checks, production
+  build, bundle budget, and route smoke checks.
+- Focused Agent Settings fixture coverage — passed: 7 tests covering inline
+  save, collapsible draft retention, duplication-to-Settings, legacy edit-link
+  migration, guarded browser Back, lifecycle action sizing, and localization.
+- Visual inspection of the desktop Agent Settings fixture confirmed the form
+  stays within the standard Settings content measure without an edit overlay.

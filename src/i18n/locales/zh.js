@@ -1813,7 +1813,7 @@ export const zh = {
       },
       settings: {
         title: 'Agent 设置',
-        description: '管理 {{name}} 的运行权限和生命周期操作。'
+        description: '管理 {{name}} 的定义、运行权限和生命周期操作。'
       }
     },
     permissionSettings: {
