@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { handleAppLinkClick } from '@/app/workspaceNavigation';
-import { Button, InlineAlert, StatusBadge } from '@acornops/ui';
+import { Button, InlineAlert, SettingsSection, StatusBadge } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
@@ -28,20 +28,6 @@ interface UserSettingsPageProps {
   onSetLanguage: (language: AppLanguageCode) => void;
   embedded?: boolean;
 }
-
-const SettingSection: React.FC<{
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}> = ({ title, description, children }) => (
-  <div className="mb-12">
-    <div className="mb-6 px-1">
-      <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="type-body text-ui-text-muted">{description}</p>
-    </div>
-    <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
-  </div>
-);
 
 const SettingRow: React.FC<{
   icon: React.ElementType;
@@ -224,7 +210,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
       )}
 
       <div className="max-w-4xl">
-        <SettingSection title={t('settings.profileTitle')} description={t('settings.profileBody')}>
+        <SettingsSection className="mb-12 last:mb-12" title={t('settings.profileTitle')} description={t('settings.profileBody')}>
           <SettingRow icon={ICONS.User} label={t('settings.fullName')} description={user.name} />
           <SettingRow
             icon={ICONS.Mail}
@@ -238,9 +224,9 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             }
           />
           <SettingRow icon={ICONS.LayoutGrid} label={t('settings.workspacesJoined')} description={formatQuota(user.quota?.workspaceMemberships, t('settings.quotaUnavailable'))} />
-        </SettingSection>
+        </SettingsSection>
 
-        <SettingSection title={t('settings.securityTitle')} description={t('settings.securityBody')}>
+        <SettingsSection className="mb-12 last:mb-12" title={t('settings.securityTitle')} description={t('settings.securityBody')}>
           {securityError && <InlineAlert tone="danger" role="alert" className="rounded-none border-x-0 border-t-0 px-6 py-3 type-body">{securityError}</InlineAlert>}
           {securityNotice && <InlineAlert tone="success" className="rounded-none border-x-0 border-t-0 px-6 py-3 type-body">{securityNotice}</InlineAlert>}
           <SettingRow
@@ -288,13 +274,13 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             label={t('settings.twoFactor')}
             description={!authMethods ? t('settings.loadingAuthMethods') : oidcMethod ? t('settings.twoFactorManagedByProvider') : t('settings.twoFactorUnavailable')}
           />
-        </SettingSection>
+        </SettingsSection>
 
-        <SettingSection title={t('settings.externalIntegrationsTitle')} description={t('settings.externalIntegrationsBody')}>
+        <SettingsSection className="mb-12 last:mb-12" title={t('settings.externalIntegrationsTitle')} description={t('settings.externalIntegrationsBody')}>
           <ExternalIntegrationSettingsPanel />
-        </SettingSection>
+        </SettingsSection>
 
-        <SettingSection title={t('settings.preferencesTitle')} description={t('settings.preferencesBody')}>
+        <SettingsSection className="mb-12 last:mb-12" title={t('settings.preferencesTitle')} description={t('settings.preferencesBody')}>
           <SettingRow
             icon={ICONS.Languages}
             label={t('settings.language')}
@@ -314,9 +300,9 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
             }
           />
           <SettingRow icon={ICONS.Bell} label={t('settings.notifications')} description={t('settings.notificationsBody')} />
-        </SettingSection>
+        </SettingsSection>
 
-        <SettingSection title={t('settings.accountTitle')} description={t('settings.accountBody')}>
+        <SettingsSection className="mb-12 last:mb-12" title={t('settings.accountTitle')} description={t('settings.accountBody')}>
           <SettingRow
             icon={ICONS.LogOut}
             label={t('app.logout')}
@@ -328,7 +314,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
               </Button>
             }
           />
-        </SettingSection>
+        </SettingsSection>
       </div>
       {activeDialog === 'password' && (
         <SecurityDialog

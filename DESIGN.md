@@ -314,7 +314,7 @@ than affordance.
 
 ### Route composition and spacing
 
-Authenticated routes compose through `PageShell`, `PageBackLink`, and `PageHeader`. `PageShell` owns scrolling, responsive route margins, width constraints, and embedded mode. When a route needs an explicit return destination, `PageBackLink` renders immediately before `PageHeader` and owns the left-chevron icon, typography, target height, hover treatment, and focus boundary. Route-level Back navigation is never restyled as a header action. `PageHeader` owns route title hierarchy, description width, context or breadcrumbs, action wrapping, and responsive alignment.
+Authenticated routes compose through `PageShell`, `PageBackLink`, and `PageHeader`. `PageShell` owns scrolling, responsive route margins, width constraints, and embedded mode. When a route needs an explicit return destination, `PageBackLink` renders immediately before `PageHeader` and owns the left-chevron icon, typography, target height, hover treatment, and focus boundary. Route-level Back navigation is never restyled as a header action. `PageHeader` owns route title hierarchy, description width, context or breadcrumbs, action wrapping, and responsive alignment. `SettingsSection` owns the repeated settings-section anatomy: an accessible heading and description followed by one bordered surface. Its description uses the parent content measure by default; the route or task surface owns any narrower reading constraint.
 
 The canonical rhythm is token-driven:
 

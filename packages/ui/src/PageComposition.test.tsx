@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { PageHeader, PageShell } from './PageComposition';
+import { PageHeader, PageShell, SettingsSection } from './PageComposition';
 
 describe('PageShell', () => {
   it('allows a route to bound its content without changing the shared shell', () => {
@@ -29,5 +29,20 @@ describe('PageHeader', () => {
 
     expect(markup).toContain('max-w-[96ch]');
     expect(markup).not.toContain('max-w-[72ch]');
+  });
+});
+
+describe('SettingsSection', () => {
+  it('uses the available parent measure for its description by default', () => {
+    const markup = renderToStaticMarkup(
+      <SettingsSection title="Run permissions" description="Set the maximum change access this Agent can request.">
+        <div>Permission controls</div>
+      </SettingsSection>
+    );
+
+    expect(markup).toContain('aria-labelledby=');
+    expect(markup).toContain('max-w-none');
+    expect(markup).toContain('rounded-xl border border-ui-border bg-ui-surface shadow-sm');
+    expect(markup).toContain('Permission controls');
   });
 });

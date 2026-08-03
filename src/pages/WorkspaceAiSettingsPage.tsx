@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, DestructiveConfirmationDialog } from '@acornops/ui';
+import { Button, DestructiveConfirmationDialog, SettingsSection } from '@acornops/ui';
 import { InlineAlert } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
@@ -25,7 +25,6 @@ import {
   reasoningPolicyDisabled,
   REASONING_EFFORTS,
   REASONING_SUMMARY_MODES,
-  SettingSection,
   WorkspaceAiSettingsSkeleton,
   type BehaviorDraft,
   type WorkspaceAiSettingsPageProps
@@ -343,7 +342,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
 
         {currentAiSettings && behaviorDraft && (
           <>
-            <SettingSection title={t('workspaceAiSettings.readinessTitle')} description={t('workspaceAiSettings.readinessBody')}>
+            <SettingsSection title={t('workspaceAiSettings.readinessTitle')} description={t('workspaceAiSettings.readinessBody')}>
               <div className="grid gap-px bg-ui-border sm:grid-cols-3">
                 <div className="bg-ui-surface p-5">
                   <p className="mb-2 type-label">{t('workspaceAiSettings.defaultRuntime')}</p>
@@ -391,9 +390,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                   </div>
                 )}
               </div>
-            </SettingSection>
+            </SettingsSection>
 
-            <SettingSection title={t('workspaceAiSettings.behaviorTitle')} description={t('workspaceAiSettings.behaviorBody')} sectionRef={behaviorSectionRef} className="scroll-mt-8">
+            <SettingsSection title={t('workspaceAiSettings.behaviorTitle')} description={t('workspaceAiSettings.behaviorBody')} ref={behaviorSectionRef} className="scroll-mt-8">
               <div className="p-6">
                 <div className="mb-5 flex min-w-0 items-center gap-4">
                   <IconTile>
@@ -473,9 +472,9 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                   {savingAction === 'behavior' ? t('workspaceAiSettings.saving') : t('workspaceAiSettings.saveBehavior')}
                 </Button>
               </div>
-            </SettingSection>
+            </SettingsSection>
 
-            <SettingSection title={t('workspaceAiSettings.credentialsTitle')} description={t('workspaceAiSettings.credentialsBody')} sectionRef={credentialsSectionRef} className="scroll-mt-8">
+            <SettingsSection title={t('workspaceAiSettings.credentialsTitle')} description={t('workspaceAiSettings.credentialsBody')} ref={credentialsSectionRef} className="scroll-mt-8">
               {displayedProviderStatuses.map((providerStatus) => {
                 const provider = providerStatus.provider;
                 const isEditingCredential = credentialEditorProvider === provider;
@@ -619,7 +618,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
                   </div>
                 );
               })}
-            </SettingSection>
+            </SettingsSection>
           </>
         )}
       </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
-import { DangerZone, DangerZoneRow } from '@acornops/ui';
+import { DangerZone, DangerZoneRow, SettingsSection } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -22,20 +22,6 @@ interface WorkspaceSettingsPageProps {
   onSelectMembers: () => void;
   embedded?: boolean;
 }
-
-const SettingSection: React.FC<{
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}> = ({ title, description, children }) => (
-  <section className="mb-10 last:mb-0">
-    <div className="mb-6 px-1">
-      <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
-    </div>
-    <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
-  </section>
-);
 
 const SettingRow: React.FC<{
   icon: React.ElementType;
@@ -114,14 +100,14 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
       <div className="max-w-4xl">
         {canReadWorkspaceData ? (
           <>
-            <SettingSection title={t('workspaceSettings.organizationTitle')} description={t('workspaceSettings.organizationBody')}>
+            <SettingsSection title={t('workspaceSettings.organizationTitle')} description={t('workspaceSettings.organizationBody')}>
               <SettingRow icon={ICONS.LayoutGrid} label={t('workspaceSettings.workspaceName')} description={workspace.name} />
               <SettingRow icon={ICONS.Globe} label={t('workspaceSettings.plan')} description={workspace.plan?.name || t('workspaceSettings.planUnavailable')} />
-            </SettingSection>
+            </SettingsSection>
 
             <WorkspaceCatalogSources workspaceId={workspace.id} canManage={Boolean(workspace.permissions?.manage_catalog_sources)} />
 
-            <SettingSection title={t('workspaceSettings.quotasTitle')} description={t('workspaceSettings.quotasBody')}>
+            <SettingsSection title={t('workspaceSettings.quotasTitle')} description={t('workspaceSettings.quotasBody')}>
               <SettingRow
                 icon={ICONS.Users}
                 label={t('workspaceSettings.workspaceMembers')}
@@ -137,9 +123,9 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                 label={t('workspaceSettings.virtualMachines')}
                 description={formatQuota(workspace.quota?.virtualMachines, t('workspaceSettings.quotaUnavailable'))}
               />
-            </SettingSection>
+            </SettingsSection>
 
-            <SettingSection title={t('workspaceSettings.accessTitle')} description={t('workspaceSettings.accessBody')}>
+            <SettingsSection title={t('workspaceSettings.accessTitle')} description={t('workspaceSettings.accessBody')}>
               <SettingRow
                 icon={ICONS.Users}
                 label={t('workspaceSettings.members')}
@@ -169,7 +155,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                   </span>
                 }
               />
-            </SettingSection>
+            </SettingsSection>
           </>
         ) : (
           <section className="mb-10 rounded-xl border border-ui-border bg-ui-surface p-6 shadow-sm sm:p-8">

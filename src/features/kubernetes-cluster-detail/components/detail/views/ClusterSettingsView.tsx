@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@acornops/ui';
+import { Button, SettingsSection } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
@@ -30,20 +30,6 @@ interface ClusterSettingsViewProps {
 type WriteConfirmationPolicyValue = 'required' | 'not_required';
 
 const clusterSettingsInputClassName = formInputClassName('min-h-10');
-
-const SettingSection: React.FC<{
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}> = ({ title, description, children }) => (
-  <section className="mb-10 last:mb-0">
-    <div className="mb-6 px-1">
-      <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
-    </div>
-    <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
-  </section>
-);
 
 const SettingRow: React.FC<{
   icon: React.ElementType;
@@ -173,7 +159,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
       </header>
 
       <div className="max-w-4xl">
-        <SettingSection title={t('clusterSettings.clusterTitle')} description={t('clusterSettings.clusterBody')}>
+        <SettingsSection title={t('clusterSettings.clusterTitle')} description={t('clusterSettings.clusterBody')}>
           <SettingRow
             icon={ICONS.Server}
             label={t('clusterSettings.clusterName')}
@@ -244,9 +230,9 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
             }
           />
           <SettingRow icon={ICONS.Clock} label={t('clusterSettings.lastTelemetry')} description={formatLastUpdated(cluster.lastUpdate)} />
-        </SettingSection>
+        </SettingsSection>
 
-        <SettingSection title={t('clusterSettings.collectionTitle')} description={t('clusterSettings.collectionBody')}>
+        <SettingsSection title={t('clusterSettings.collectionTitle')} description={t('clusterSettings.collectionBody')}>
           <SettingRow
             icon={ICONS.Layers}
             label={t('clusterSetup.namespaceScope')}
@@ -267,7 +253,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
               ) : undefined
             }
           />
-        </SettingSection>
+        </SettingsSection>
 
         <TargetAutoTriageSettingsSection
           workspaceId={cluster.workspaceId}
@@ -277,7 +263,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           canCreateReadWriteRuns={canCreateReadWriteRuns}
         />
 
-        <SettingSection
+        <SettingsSection
           title={t('clusterSettings.writeSafetyTitle')}
           description={t('clusterSettings.writeSafetyBody')}
         >
@@ -304,7 +290,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
               ) : undefined
             }
           />
-        </SettingSection>
+        </SettingsSection>
 
         {canManageCluster && onDeleteCluster && (
           <TargetDeleteZone

@@ -1,7 +1,7 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile, InlineAlert } from '@acornops/ui';
+import { Button, IconTile, InlineAlert, SettingsSection } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
@@ -9,20 +9,6 @@ import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { formatSnapshotTime, getVmStatusLabel } from '@/pages/virtual-machines/virtualMachineUi';
-
-const SettingSection: React.FC<{
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}> = ({ title, description, children }) => (
-  <section className="mb-10 last:mb-0">
-    <div className="mb-6 px-1">
-      <h2 className="mb-1 type-section-title">{title}</h2>
-      <p className="max-w-3xl type-body leading-6 text-ui-text-muted">{description}</p>
-    </div>
-    <div className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">{children}</div>
-  </section>
-);
 
 const SettingRow: React.FC<{
   icon: React.ElementType;
@@ -73,7 +59,7 @@ export const VirtualMachineSettingsView: React.FC<{
       <PageHeader title={t('virtualMachines.settings.title')} description={t('virtualMachines.settings.subtitle', { name: vm.name })} />
 
       <div className="max-w-4xl">
-        <SettingSection
+        <SettingsSection
           title={t('virtualMachines.settings.identityTitle')}
           description={t('virtualMachines.settings.identityBody')}
         >
@@ -97,9 +83,9 @@ export const VirtualMachineSettingsView: React.FC<{
             label={t('virtualMachines.settings.lastSnapshot')}
             description={formatSnapshotTime(vm)}
           />
-        </SettingSection>
+        </SettingsSection>
 
-        <SettingSection
+        <SettingsSection
           title={t('virtualMachines.settings.collectionTitle')}
           description={t('virtualMachines.settings.collectionBody')}
         >
@@ -123,7 +109,7 @@ export const VirtualMachineSettingsView: React.FC<{
             label={t('virtualMachines.settings.snapshotCadence')}
             description={t('virtualMachines.settings.defaultSnapshotCadence')}
           />
-        </SettingSection>
+        </SettingsSection>
 
         <TargetAutoTriageSettingsSection
           workspaceId={workspace.id}
@@ -133,7 +119,7 @@ export const VirtualMachineSettingsView: React.FC<{
           canCreateReadWriteRuns={canCreateReadWriteRuns}
         />
 
-        <SettingSection
+        <SettingsSection
           title={t('virtualMachines.settings.agentInstallTitle')}
           description={t('virtualMachines.settings.agentInstallBody')}
         >
@@ -157,7 +143,7 @@ export const VirtualMachineSettingsView: React.FC<{
               </pre>
             </div>
           )}
-        </SettingSection>
+        </SettingsSection>
 
         {onDeleteVirtualMachine && (
           <TargetDeleteZone

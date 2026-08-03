@@ -345,7 +345,7 @@ describe('theme color contract', () => {
   });
 
   it('keeps same-level settings headings aligned and member actions in sentence case', () => {
-    expect(workspaceSettingsPage).toContain('<h2 className="mb-1 type-section-title">{title}</h2>');
+    expect(pageComposition).toContain('<h2 id={resolvedTitleId} className="mb-1 type-section-title">{title}</h2>');
     expect(membersPage).toContain('<h2 className="type-section-title">{t(\'members.title\')}</h2>');
     expect(membersPage).toContain('className="type-ui whitespace-nowrap"');
     expect(membersPage).not.toContain('className="type-label whitespace-nowrap"');

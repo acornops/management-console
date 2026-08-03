@@ -122,6 +122,53 @@ export const PageSection: React.FC<PageSectionProps> = ({ actions, children, cla
   </section>
 );
 
+export interface SettingsSectionProps extends Omit<React.HTMLAttributes<HTMLElement>, 'aria-labelledby' | 'title'> {
+  children: React.ReactNode;
+  description?: React.ReactNode;
+  descriptionClassName?: string;
+  surfaceClassName?: string;
+  title: React.ReactNode;
+  titleId?: string;
+}
+
+/** Reusable settings section with a labeled bordered surface. */
+export const SettingsSection = React.forwardRef<HTMLElement, SettingsSectionProps>(({
+  children,
+  className,
+  description,
+  descriptionClassName,
+  surfaceClassName,
+  title,
+  titleId,
+  ...props
+}, ref) => {
+  const generatedTitleId = React.useId();
+  const resolvedTitleId = titleId || generatedTitleId;
+
+  return (
+    <section
+      ref={ref}
+      aria-labelledby={resolvedTitleId}
+      className={twMerge('mb-10 last:mb-0', className)}
+      {...props}
+    >
+      <div className="mb-6 px-1">
+        <h2 id={resolvedTitleId} className="mb-1 type-section-title">{title}</h2>
+        {description && (
+          <div className={twMerge('max-w-none type-body leading-6 text-ui-text-muted', descriptionClassName)}>
+            {description}
+          </div>
+        )}
+      </div>
+      <div className={twMerge('overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm', surfaceClassName)}>
+        {children}
+      </div>
+    </section>
+  );
+});
+
+SettingsSection.displayName = 'SettingsSection';
+
 export type DataSurfaceState = 'ready' | 'loading' | 'refreshing' | 'loadingMore' | 'empty' | 'filtered-empty' | 'error';
 
 export interface DataSurfaceProps extends React.HTMLAttributes<HTMLElement> {
