@@ -17,7 +17,7 @@ describe('overview refresh continuity', () => {
     const source = readSource('src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx');
 
     expect(source).toContain("const isInitialIssueLoad = issueLoadStatus === 'loading' && !hasIssueRows;");
-    expect(source).toContain('{isInitialIssueLoad ? (');
+    expect(source).toContain('isLoading={isInitialIssueLoad}');
   });
 
   it('uses the bounded cluster readiness summary before raw node inventory', () => {

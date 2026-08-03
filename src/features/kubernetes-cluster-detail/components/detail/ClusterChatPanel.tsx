@@ -1,5 +1,5 @@
 import React from 'react';
-import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
+import { ControlledTargetChatView } from '@/features/targets/chat/components/ControlledTargetChatView';
 import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
 import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
@@ -46,103 +46,31 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
   const canDeleteSessions = Boolean(currentWorkspacePermissions?.delete_sessions);
   const canManageAiSettings = Boolean(currentWorkspacePermissions?.manage_ai_settings);
 
-  const {
-    sessions,
-    activeSessionId,
-    composerRuntimeSelection,
-    workspaceAiSettings,
-    isWorkspaceAiSettingsLoading,
-    workspaceAiSettingsError,
-    isActiveSessionOwner,
-    conversationNotice,
-    recentActivityWarning,
-    inputValue,
-    isRunActive,
-    isSessionsLoading,
-    isLoadingEarlierMessages,
-    hasEarlierMessages,
-    activeRunId,
-    isCancellingRun,
-    visibleMessages,
-    runTracesByRunId,
-    sessionAssistantStatuses,
-    transcriptRef,
-    setActiveSessionId,
-    handleCreateSession,
-    handleDismissRecentActivityWarning,
-    handleOpenRecentActivitySession,
-    handleDeleteSession,
-    handleCancelRun,
-    setInputValue,
-    setComposerRuntimeSelection,
-    handleCreateSessionWithInput,
-    handleChatScroll,
-    handleLoadEarlierMessages,
-    handleSend,
-    handleEditLastUserMessage,
-    handleApprove,
-    handleReject,
-    isInFlightAssistantPlaceholder
-  } = chatController;
 
   React.useEffect(() => {
     if (!initialPrompt || handledPromptIdRef.current === initialPrompt.id) {
       return;
     }
     handledPromptIdRef.current = initialPrompt.id;
-    void handleCreateSessionWithInput(initialPrompt.text);
+    void chatController.handleCreateSessionWithInput(initialPrompt.text);
     onInitialPromptHandled();
-  }, [handleCreateSessionWithInput, initialPrompt, onInitialPromptHandled]);
+  }, [chatController.handleCreateSessionWithInput, initialPrompt, onInitialPromptHandled]);
 
   return (
-    <TargetChatView
+    <ControlledTargetChatView
+      controller={chatController}
       subject={target}
       isDark={isDark}
       canChat={canChat}
-      isConversationOwner={isActiveSessionOwner}
-      conversationNotice={conversationNotice}
-      recentActivityWarning={recentActivityWarning}
       canRequestWriteRuns={canRequestWriteRuns}
       canApproveWriteActions={canRequestWriteRuns}
       canCancelRuns={canCancelRuns}
       canDeleteSessions={canDeleteSessions}
       canManageAiSettings={canManageAiSettings}
-      isRunActive={isRunActive}
-      isSessionsLoading={isSessionsLoading}
-      isLoadingEarlierMessages={isLoadingEarlierMessages}
-      hasEarlierMessages={hasEarlierMessages}
-      activeRunId={activeRunId}
-      isCancellingRun={isCancellingRun}
-      inputValue={inputValue}
-      sessions={sessions}
-      activeSessionId={activeSessionId}
-      composerRuntimeSelection={composerRuntimeSelection}
-      workspaceAiSettings={workspaceAiSettings}
-      isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
-      workspaceAiSettingsError={workspaceAiSettingsError}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
-      visibleMessages={visibleMessages}
-      runTracesByRunId={runTracesByRunId}
-      sessionAssistantStatuses={sessionAssistantStatuses}
-      transcriptRef={transcriptRef}
       footerKey={resolveClusterChatFooterKey(cluster, canRequestWriteRuns)}
-      onChatScroll={handleChatScroll}
-      onLoadEarlierMessages={handleLoadEarlierMessages}
       onOpenAiSettings={onOpenAiSettings}
-      onInputChange={setInputValue}
-      onComposerRuntimeSelectionChange={setComposerRuntimeSelection}
-      onSend={handleSend}
-      onEditLastUserMessage={handleEditLastUserMessage}
-      onApprove={handleApprove}
-      onReject={handleReject}
-      onSelectSession={setActiveSessionId}
-      onCreateSession={handleCreateSession}
-      onDismissRecentActivityWarning={handleDismissRecentActivityWarning}
-      onOpenRecentActivitySession={handleOpenRecentActivitySession}
-      onDeleteSession={handleDeleteSession}
-      onCancelRun={handleCancelRun}
-      isInFlightAssistantPlaceholder={isInFlightAssistantPlaceholder}
       displayMode="panel"
       onClose={onClose}
       onMaximize={onMaximize}

@@ -23,6 +23,7 @@ import type {
   WorkflowSchedule
 } from '@/services/control-plane/workflowApi';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
+import { ResponsiveLedger } from '@/components/common/ResponsiveLedger';
 
 interface WorkspaceScheduleDrawerTableProps {
   actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
@@ -59,8 +60,8 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
 }) => {
   const { t } = useTranslation();
   return (
-    <>
-      <div className="divide-y divide-ui-border lg:hidden">
+    <ResponsiveLedger
+      compact={<>
         {schedules.length > 0 ? schedules.map((schedule) => (
           <WorkspaceScheduleMobileCard
             key={schedule.id}
@@ -79,9 +80,8 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
         )) : phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore' ? (
           <CollectionLoadingSkeleton label={t('schedules.loading')} />
         ) : phase === 'error' ? error : empty}
-      </div>
-      <div className="hidden overflow-x-auto lg:block">
-      <DataTable caption={t('schedules.tableLabel')} className="min-w-[42rem] w-full border-collapse text-left">
+      </>}
+      wide={<DataTable caption={t('schedules.tableLabel')} className="min-w-[42rem] w-full border-collapse text-left">
         <DataTableHeader collectionState={{ phase, itemCount: schedules.length, showDuringInitialLoading: true }}>
           <DataTableRow>
             <DataTableHeaderCell density="dense">{t('schedules.table.schedule')}</DataTableHeaderCell>
@@ -131,8 +131,7 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
             </DataTableRow>
           )}
         </DataTableBody>
-      </DataTable>
-      </div>
-    </>
+      </DataTable>}
+    />
   );
 };

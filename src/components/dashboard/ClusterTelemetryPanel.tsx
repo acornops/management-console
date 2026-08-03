@@ -7,44 +7,10 @@ import { ICONS } from '@/constants';
 import { KubernetesCluster } from '@/types';
 import { formatCompactRelativeTime } from '@/utils/dateTime';
 import { getAgentConnectionState, getTelemetryFreshness } from '@/utils/telemetry';
-
-type SparklinePoint = { timestamp: number; value: number };
+import { TelemetryFactGrid } from '@/components/common/TelemetryFactGrid';
+import { projectTelemetrySeries, telemetryGapThreshold } from '@/components/common/telemetryChart';
 
 const DEFAULT_SPARKLINE_GAP_MS = 15 * 60 * 1000;
-const SPARKLINE_GAP_MULTIPLIER = 2.5;
-
-function getSparklineGapThreshold(points: SparklinePoint[]): number {
-  const intervals = points
-    .slice(1)
-    .map((point, index) => point.timestamp - points[index].timestamp)
-    .filter((interval) => Number.isFinite(interval) && interval > 0)
-    .sort((left, right) => left - right);
-  if (intervals.length === 0) return DEFAULT_SPARKLINE_GAP_MS;
-  const medianInterval = intervals[Math.floor(intervals.length / 2)];
-  return Math.max(DEFAULT_SPARKLINE_GAP_MS, medianInterval * SPARKLINE_GAP_MULTIPLIER);
-}
-
-function buildSparklinePath(points: SparklinePoint[], startTimestamp: number, endTimestamp: number, width = 180, height = 92): string {
-  if (points.length === 0) return '';
-  const finitePoints = points.filter((point) => Number.isFinite(point.timestamp) && Number.isFinite(point.value));
-  if (finitePoints.length === 0) return '';
-  const values = finitePoints.map((point) => point.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min;
-  const timeRange = endTimestamp - startTimestamp;
-  const gapThreshold = getSparklineGapThreshold(finitePoints);
-  return finitePoints
-    .map((point, index) => {
-      const x = timeRange <= 0 ? width / 2 : ((point.timestamp - startTimestamp) / timeRange) * width;
-      const normalized = range === 0 ? 0.5 : (point.value - min) / range;
-      const y = height - normalized * height;
-      const previousPoint = finitePoints[index - 1];
-      const command = !previousPoint || point.timestamp - previousPoint.timestamp > gapThreshold ? 'M' : 'L';
-      return `${command} ${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(' ');
-}
 
 export const ClusterTelemetryPanel: React.FC<{
   cluster: KubernetesCluster;
@@ -59,10 +25,26 @@ export const ClusterTelemetryPanel: React.FC<{
   const hasMemoryTrend = memoryPoints.length >= 2;
   const hasTrend = hasCpuTrend || hasMemoryTrend;
   const hasAnyMetric = cpuPoints.length > 0 || memoryPoints.length > 0;
-  const startTimestamp = timeline[0]?.timestamp ?? 0;
-  const endTimestamp = timeline[timeline.length - 1]?.timestamp ?? startTimestamp;
-  const cpuPath = React.useMemo(() => buildSparklinePath(cpuPoints, startTimestamp, endTimestamp), [cpuPoints, endTimestamp, startTimestamp]);
-  const memoryPath = React.useMemo(() => buildSparklinePath(memoryPoints, startTimestamp, endTimestamp), [endTimestamp, memoryPoints, startTimestamp]);
+  const cpuPath = React.useMemo(() => projectTelemetrySeries(
+    cpuPoints.map((point) => ({ position: point.timestamp, value: point.value })),
+    {
+      xStart: 0,
+      xEnd: 180,
+      yStart: 0,
+      yEnd: 92,
+      gapThreshold: telemetryGapThreshold(cpuPoints.map((point) => point.timestamp), DEFAULT_SPARKLINE_GAP_MS)
+    }
+  ).path, [cpuPoints]);
+  const memoryPath = React.useMemo(() => projectTelemetrySeries(
+    memoryPoints.map((point) => ({ position: point.timestamp, value: point.value })),
+    {
+      xStart: 0,
+      xEnd: 180,
+      yStart: 0,
+      yEnd: 92,
+      gapThreshold: telemetryGapThreshold(memoryPoints.map((point) => point.timestamp), DEFAULT_SPARKLINE_GAP_MS)
+    }
+  ).path, [memoryPoints]);
   const axisStartLabel = timeline.length >= 2 ? formatCompactRelativeTime(timeline[0].timestamp, { now }) : t('dashboard.telemetryAxisEarlier');
   const axisEndLabel =
     timeline.length >= 2
@@ -72,15 +54,17 @@ export const ClusterTelemetryPanel: React.FC<{
       : t('dashboard.telemetryAxisNow');
   const metricItems = [
     {
+      id: 'cpu',
       label: t('dashboard.cpu'),
       value: cpuDisplay,
-      Icon: ICONS.Cpu,
+      icon: ICONS.Cpu,
       markerClassName: 'bg-accent-strong'
     },
     {
+      id: 'memory',
       label: t('dashboard.memory'),
       value: memoryDisplay,
-      Icon: ICONS.HardDrive,
+      icon: ICONS.HardDrive,
       markerClassName: 'bg-metric-blue'
     }
   ];
@@ -136,20 +120,7 @@ export const ClusterTelemetryPanel: React.FC<{
 
     return (
       <section data-cluster-telemetry-panel="compact" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 px-4 pb-3">
-        <dl className="grid min-w-0 grid-cols-2 gap-4 border-t border-ui-border/60 py-3">
-          {metricItems.map(({ label, value, Icon, markerClassName }) => (
-            <div key={label} className="min-w-0">
-              <dt className="type-micro-label flex items-center gap-1.5 text-ui-text-muted">
-                <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />
-                {label}
-              </dt>
-              <dd className="type-caption mt-1 truncate type-emphasis text-ui-text" title={String(value)}>
-                {value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <TelemetryFactGrid items={metricItems} variant="compact" />
         <div>
           <div className="relative h-[88px] min-w-0 overflow-hidden">
             <svg viewBox="0 0 180 108" preserveAspectRatio="none" className="h-full w-full" aria-hidden="true">
@@ -212,20 +183,7 @@ export const ClusterTelemetryPanel: React.FC<{
 
   return (
     <section data-cluster-telemetry-panel="true" aria-label={t('dashboard.telemetryAria', { name: cluster.name })} className="shrink-0 overflow-hidden rounded-md bg-ui-bg/35">
-      <dl className="grid min-w-0 grid-cols-2 overflow-hidden border-b border-ui-border bg-ui-surface/70">
-        {metricItems.map(({ label, value, Icon, markerClassName }, index) => (
-          <div key={label} className={`min-w-0 border-ui-border px-3 py-2.5 ${index === 0 ? 'border-r' : ''}`}>
-            <dt className="type-micro-label flex min-w-0 items-center gap-1.5 text-ui-text-muted">
-              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {markerClassName && <span className={`h-1.5 w-3 shrink-0 rounded-full ${markerClassName}`} aria-hidden="true" />}
-              <span>{label}</span>
-            </dt>
-            <dd className="type-caption mt-0.5 min-w-0 break-words type-emphasis text-ui-text" title={String(value)}>
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <TelemetryFactGrid items={metricItems} variant="strip" />
 
       <div className="min-w-0 px-3 py-3">
         <div className="relative h-[132px] min-w-0 overflow-hidden px-2.5 py-2">

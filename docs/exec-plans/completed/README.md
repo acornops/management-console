@@ -16,3 +16,5 @@ Keep only completed plans that remain useful as durable design or validation con
 - [Capability Navigation Continuity](capability-navigation-continuity.md)
 - [Table Column Sizing Policy](table-column-sizing-policy.md)
 - [Stale Code and Unused Symbol Cleanup](stale-code-and-unused-symbol-cleanup.md)
+- [Managed Subject UI Deduplication](managed-subject-ui-deduplication.md)
+- [Component Deduplication Closure](component-dedup-closure.md)

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
-import { OverflowActionMenu } from '@acornops/ui';
+import { ActionMenu } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkspaceScheduleExecutionFacts } from '@/pages/WorkspaceScheduleExecutionFacts';
 import { agentMcpConfigurationPath } from '@/services/control-plane/mcpReadinessRecovery';
@@ -90,7 +90,7 @@ export function WorkspaceScheduleActionMenu(props: WorkspaceScheduleRowProps & {
   };
 
   return (
-    <OverflowActionMenu
+    <ActionMenu
       ref={(node) => {
         if (node) actionButtonRefs.current.set(schedule.id, node);
         else actionButtonRefs.current.delete(schedule.id);
@@ -118,7 +118,7 @@ export function WorkspaceScheduleActionMenu(props: WorkspaceScheduleRowProps & {
           {t('schedules.actions.delete')}
         </MenuItem>
       </>}
-    </OverflowActionMenu>
+    </ActionMenu>
   );
 }
 

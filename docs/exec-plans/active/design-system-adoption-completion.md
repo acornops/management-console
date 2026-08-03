@@ -207,7 +207,9 @@ control-plane-mode validation suite all pass.
   - Added public `ActionMenu`, `MenuSurface`, `MenuLink`,
     `ComboboxListbox`, `ComboboxGroup`, and `ComboboxOption` primitives;
     extended `SegmentedTabs`, `InlineAlert`, and `StatusBadge`; retained
-    `OverflowActionMenu` and `ResourceCategoryTabs` as compatibility adapters.
+    `ResourceCategoryTabs` as a compatibility adapter. The later component
+    deduplication closure migrated `OverflowActionMenu` consumers to the
+    canonical `ActionMenu` and removed the behaviorless alias.
   - Migrated feature-owned tabs, action menus, autocomplete listboxes,
     semantic callouts, and status pills to the shared vocabulary without API
     or control-plane contract changes; removed the unused `HealthBadge`.

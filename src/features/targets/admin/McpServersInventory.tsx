@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { CollectionResultSummary, DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
@@ -12,6 +12,11 @@ import type { McpConnection } from '@/services/control-plane/catalogApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
 import { TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
+import {
+  TargetCapabilityInventorySummary,
+  TargetCapabilityInventoryTable,
+  TargetCapabilityInventoryToolbar
+} from '@/features/targets/admin/TargetCapabilityInventoryShell';
 
 interface McpServersInventoryProps {
   servers: TargetToolCatalogServer[];
@@ -108,34 +113,31 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
 
   return (
     <>
-      {servers.length > 0 && <section data-mcp-server-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
-          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
-            <h2 className="type-row-title">{t('mcpServers.serverInventoryTitle')}</h2>
-            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
-          </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r xl:col-span-1">
-            <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
-            <p className="type-data mt-0.5">{toolAccessSummary.serverCount}</p>
-          </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r xl:col-span-1">
-            <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-            <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}<span className="type-caption text-ui-text-muted"> / {toolAccessSummary.totalTools}</span></p>
-          </div>
-          <div className="px-5 py-3.5 xl:col-span-1">
-            <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-            <p data-mcp-write-capable-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
-              {toolAccessSummary.writeCapableTools}
-              <span className="h-2 w-2 rounded-full bg-status-warning" />
-            </p>
-          </div>
-        </div>
-      </section>}
+      {servers.length > 0 && (
+        <TargetCapabilityInventorySummary
+          data-mcp-server-access-summary="true"
+          title={t('mcpServers.serverInventoryTitle')}
+          description={t('mcpServers.serverInventoryBody')}
+          metrics={[
+            { label: t('mcpServers.serversMetric'), value: toolAccessSummary.serverCount },
+            {
+              label: t('mcpServers.enabledToolsMetric'),
+              value: <>{toolAccessSummary.enabledTools}<span className="type-caption text-ui-text-muted"> / {toolAccessSummary.totalTools}</span></>
+            },
+            {
+              label: t('mcpServers.writeCapableTools'),
+              value: toolAccessSummary.writeCapableTools,
+              indicator: 'warning',
+              valueProps: { 'data-mcp-write-capable-count': 'true' } as React.HTMLAttributes<HTMLParagraphElement>
+            }
+          ]}
+        />
+      )}
 
       <section data-mcp-server-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         {(servers.length > 0 || hasActiveFilters) && (
-          <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-            <div className="relative min-w-0">
+          <TargetCapabilityInventoryToolbar
+            search={<div className="relative min-w-0">
               <label htmlFor="mcp-server-search" className="sr-only">
                 {t('mcpServers.searchServers')}
               </label>
@@ -148,18 +150,16 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                 placeholder={t('mcpServers.searchServers')}
                 className={mcpServerSearchInputClassName}
               />
-            </div>
-            <Select<typeof serverFilter>
+            </div>}
+            filter={<Select<typeof serverFilter>
               value={serverFilter}
               options={serverFilterOptions}
               onChange={setServerFilter}
               className="w-full"
               ariaLabel={t('mcpServers.filterServers')}
-            />
-            <CollectionResultSummary className="xl:justify-end">
-              {t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })}
-            </CollectionResultSummary>
-          </div>
+            />}
+            resultSummary={t('mcpServers.showingServers', { count: filteredServers.length, total: servers.length })}
+          />
         )}
         <div className="min-w-0">
           {filteredServers.length === 0 ? (
@@ -171,7 +171,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
               description={t(hasActiveFilters ? 'mcpServers.noServerMatchesHelp' : 'mcpServers.emptyHelp')}
             />
           ) : (
-            <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
+            <TargetCapabilityInventoryTable>
               <DataTable caption={t('mcpServers.title')} className="w-full table-fixed text-left" aria-label={t('mcpServers.title')}>
                 <colgroup>
                   <col className="w-[34%]" />
@@ -217,7 +217,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                   ))}
                 </DataTableBody>
               </DataTable>
-            </DataTableFrame>
+            </TargetCapabilityInventoryTable>
           )}
         </div>
       </section>

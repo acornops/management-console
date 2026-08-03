@@ -1,9 +1,17 @@
-export interface CapabilitySubject {
+interface CapabilitySubjectBase {
   id: string;
   workspaceId: string;
   name: string;
-  targetType?: 'kubernetes' | 'virtual_machine';
 }
+
+export type CapabilitySubject =
+  | (CapabilitySubjectBase & {
+      kind: 'target';
+      targetType: 'kubernetes' | 'virtual_machine';
+    })
+  | (CapabilitySubjectBase & {
+      kind: 'agent';
+    });
 
 export { McpServersView as CapabilityMcpServersView } from '@/features/targets/admin/McpServersView';
 export type { McpServersDataSource as CapabilityMcpDataSource } from '@/features/targets/admin/McpServersView';
@@ -11,6 +19,7 @@ export { TargetSkillsView as CapabilitySkillsView } from '@/features/targets/adm
 export type { TargetSkillsDataSource as CapabilitySkillsDataSource } from '@/features/targets/admin/TargetSkillsView';
 export { TargetToolsView as CapabilityToolsView } from '@/features/targets/admin/TargetToolsView';
 export type { TargetToolsDataSource as CapabilityToolsDataSource } from '@/features/targets/admin/TargetToolsView';
+export { CapabilityAdminView } from '@/features/capabilities/CapabilityAdminView';
 
 export type {
   CreateTargetMcpServerInput as CreateMcpServerInput,

@@ -1,7 +1,7 @@
 import React from 'react';
-import { ActionMenu, CollectionResultSummary, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
+import { ActionMenu, IconTile, MenuItem, StatusBadge, Switch } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { BookOpen, Edit3, Eye, GitBranch, MoreVertical, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Select } from '@acornops/ui';
@@ -11,6 +11,11 @@ import type { ControlPlaneTargetSkillsCatalog } from '@/services/controlPlaneApi
 import { sourceLabel, summarizeBytes, syncLabel } from '@/features/targets/admin/targetSkillsViewModel';
 import { Button, TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import {
+  TargetCapabilityInventorySummary,
+  TargetCapabilityInventoryTable,
+  TargetCapabilityInventoryToolbar
+} from '@/features/targets/admin/TargetCapabilityInventoryShell';
 
 type TargetSkillSummary = ControlPlaneTargetSkillsCatalog['items'][number];
 
@@ -185,37 +190,26 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
 
   return (
     <>
-      {skills.length > 0 && <section data-target-skill-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
-          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
-            <h2 className="type-row-title">{t('targetSkills.inventoryTitle')}</h2>
-            <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('targetSkills.inventoryBody')}</p>
-          </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
-            <p className="type-caption text-ui-text-muted">{t('targetSkills.enabledSkillsMetric')}</p>
-            <p className="type-data mt-0.5">{summary.enabled}<span className="type-caption text-ui-text-muted"> / {summary.total}</span></p>
-          </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
-            <p className="type-caption text-ui-text-muted">{t('targetSkills.needsFixes')}</p>
-            <p className="type-data mt-0.5 inline-flex items-center gap-2">
-              {summary.needsFixes}
-              <span className="h-2 w-2 rounded-full bg-status-warning" />
-            </p>
-          </div>
-          <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
-            <p className="type-data mt-0.5 inline-flex items-center gap-2">
-              {summary.assistantVisible}
-              <span className="h-2 w-2 rounded-full bg-status-success" />
-            </p>
-          </div>
-        </div>
-      </section>}
+      {skills.length > 0 && (
+        <TargetCapabilityInventorySummary
+          data-target-skill-access-summary="true"
+          title={t('targetSkills.inventoryTitle')}
+          description={t('targetSkills.inventoryBody')}
+          metrics={[
+            {
+              label: t('targetSkills.enabledSkillsMetric'),
+              value: <>{summary.enabled}<span className="type-caption text-ui-text-muted"> / {summary.total}</span></>
+            },
+            { label: t('targetSkills.needsFixes'), value: summary.needsFixes, indicator: 'warning' },
+            { label: t('targetSkills.assistantVisibleSkills'), value: summary.assistantVisible, indicator: 'success' }
+          ]}
+        />
+      )}
 
       <section data-target-skill-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         {(skills.length > 0 || hasActiveFilters) && (
-          <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-            <div className="relative min-w-0">
+          <TargetCapabilityInventoryToolbar
+            search={<div className="relative min-w-0">
               <label htmlFor="target-skill-search" className="sr-only">
                 {t('targetSkills.searchSkills')}
               </label>
@@ -228,15 +222,13 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
                 placeholder={t('targetSkills.searchSkills')}
                 className={targetSkillSearchInputClassName}
               />
-            </div>
-            <Select<typeof skillFilter> value={skillFilter} options={filterOptions} onChange={setSkillFilter} className="w-full" ariaLabel={t('targetSkills.filterSkills')} />
-            <CollectionResultSummary className="xl:justify-end">
-              {t('targetSkills.showingItems', {
+            </div>}
+            filter={<Select<typeof skillFilter> value={skillFilter} options={filterOptions} onChange={setSkillFilter} className="w-full" ariaLabel={t('targetSkills.filterSkills')} />}
+            resultSummary={t('targetSkills.showingItems', {
                 count: filteredSkills.length,
                 total: skills.length
               })}
-            </CollectionResultSummary>
-          </div>
+          />
         )}
         <div className="min-w-0">
           {filteredSkills.length === 0 ? (
@@ -248,7 +240,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
               description={t(hasActiveFilters ? 'targetSkills.noSkillMatchesHelp' : 'targetSkills.emptyHelp')}
             />
           ) : (
-            <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
+            <TargetCapabilityInventoryTable>
               <DataTable caption={t('targetSkills.tableLabel')} className="w-full table-fixed text-left" aria-label={t('targetSkills.tableLabel')}>
                 <colgroup>
                   <col className="w-[34%]" />
@@ -280,7 +272,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
                   ))}
                 </DataTableBody>
               </DataTable>
-            </DataTableFrame>
+            </TargetCapabilityInventoryTable>
           )}
         </div>
       </section>

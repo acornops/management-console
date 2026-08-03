@@ -3,11 +3,11 @@ import { ICONS } from '@/constants';
 import { FieldValidationMessage, InlineAlert, fieldInvalidClass } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { Button, IconTile, TextInput } from '@acornops/ui';
+import { PasswordField as SharedPasswordField } from '@/components/common/PasswordField';
 
 export const fieldWrapClass = 'relative block';
 export const inputClass = formInputClassName('px-4');
 export const iconInputClass = `${inputClass} pl-10`;
-export const passwordInputClass = `${iconInputClass} pr-11`;
 export const invalidInputClass = fieldInvalidClass;
 export const primaryButtonClass =
   'type-ui flex w-full items-center justify-center gap-2 rounded-lg border border-control-boundary bg-control-primary px-4 py-3 text-control-primary-fg transition-colors hover:bg-control-primary-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-control-boundary focus-visible:ring-offset-2 focus-visible:ring-offset-ui-bg disabled:cursor-not-allowed disabled:opacity-60';
@@ -97,31 +97,22 @@ export function PasswordField({
   error?: string;
   inputId?: string;
 }) {
-  const reactId = React.useId();
-  const id = inputId || `password-field-${reactId}`;
-  const errorId = `${id}-error`;
   return (
-    <label className="block" htmlFor={id}>
-      <span className="mb-2 block type-label">{label}</span>
-      <span className={fieldWrapClass}>
-        <ICONS.Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted/60" />
-        <TextInput
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          type={showPassword ? 'text' : 'password'}
-          autoComplete={autoComplete}
-          placeholder="••••••••"
-          className={`${passwordInputClass} ${error ? invalidInputClass : ''}`}
-          disabled={disabled}
-          minLength={minLength}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorId : undefined}
-        />
-        {renderPasswordToggle()}
-      </span>
-      <FieldValidationMessage id={errorId} message={error} />
-    </label>
+    <SharedPasswordField
+      id={inputId}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      showPassword={showPassword}
+      autoComplete={autoComplete}
+      label={label}
+      minLength={minLength}
+      error={error}
+      icon={<ICONS.Lock className="h-4 w-4" />}
+      inputClassName="px-4"
+      placeholder="••••••••"
+      trailingAction={renderPasswordToggle()}
+    />
   );
 }
 

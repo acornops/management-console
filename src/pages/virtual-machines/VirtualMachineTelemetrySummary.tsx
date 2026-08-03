@@ -1,7 +1,7 @@
 import React from 'react';
 import { Activity, Gauge, HardDrive } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { IconTile } from '@acornops/ui';
+import { TelemetryFactGrid } from '@/components/common/TelemetryFactGrid';
 import {
   formatVmBytes,
   formatVmLoad,
@@ -57,24 +57,11 @@ export const VirtualMachineTelemetrySummary: React.FC<VirtualMachineTelemetrySum
   ].filter(({ id }) => mode === 'all' || id === 'swap' || id === 'root-disk');
 
   return (
-    <div
-      className={`grid w-full grid-cols-1 gap-4 md:grid-cols-2 ${mode === 'all' ? 'xl:grid-cols-4' : ''}`}
+    <TelemetryFactGrid
+      items={cards}
+      variant="cards"
+      className={mode === 'all' ? 'xl:grid-cols-4' : ''}
       data-vm-telemetry-facts={mode}
-    >
-      {cards.map(({ label, value, detail, icon: Icon }) => (
-        <div key={label} className="rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <IconTile size="sm" tone="metric">
-              <Icon className="h-4 w-4" />
-            </IconTile>
-            <div className="min-w-0">
-              <p className="type-micro-label text-ui-text-muted">{label}</p>
-              <p className="mt-1 type-data">{value}</p>
-            </div>
-          </div>
-          <p className="type-caption mt-3 truncate text-ui-text-muted">{detail}</p>
-        </div>
-      ))}
-    </div>
+    />
   );
 };

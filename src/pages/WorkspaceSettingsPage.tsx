@@ -10,6 +10,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import type { ProjectMember, Workspace } from '@/types';
 import { WorkspaceCatalogSources } from '@/pages/WorkspaceCatalogSources';
 import { useUrlSearchState } from '@/hooks/useUrlSearchState';
+import { SettingsRow } from '@/components/common/SettingsRow';
 
 interface WorkspaceSettingsPageProps {
   workspace: Workspace;
@@ -22,26 +23,6 @@ interface WorkspaceSettingsPageProps {
   onSelectMembers: () => void;
   embedded?: boolean;
 }
-
-const SettingRow: React.FC<{
-  icon: React.ElementType;
-  label: string;
-  description: string;
-  action?: React.ReactNode;
-}> = ({ icon: Icon, label, description, action }) => (
-  <div className="flex flex-col gap-5 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex min-w-0 items-center gap-4">
-      <IconTile>
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </IconTile>
-      <div className="min-w-0">
-        <p className="mb-0.5 type-row-title">{label}</p>
-        <p className="type-caption leading-5 text-ui-text-muted">{description}</p>
-      </div>
-    </div>
-    {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
-  </div>
-);
 
 function formatQuota(value: { used: number; limit: number } | undefined, fallback: string): string {
   return value ? `${value.used} / ${value.limit}` : fallback;
@@ -101,24 +82,24 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
         {canReadWorkspaceData ? (
           <>
             <SettingsSection title={t('workspaceSettings.organizationTitle')} description={t('workspaceSettings.organizationBody')}>
-              <SettingRow icon={ICONS.LayoutGrid} label={t('workspaceSettings.workspaceName')} description={workspace.name} />
-              <SettingRow icon={ICONS.Globe} label={t('workspaceSettings.plan')} description={workspace.plan?.name || t('workspaceSettings.planUnavailable')} />
+              <SettingsRow icon={ICONS.LayoutGrid} label={t('workspaceSettings.workspaceName')} description={workspace.name} />
+              <SettingsRow icon={ICONS.Globe} label={t('workspaceSettings.plan')} description={workspace.plan?.name || t('workspaceSettings.planUnavailable')} />
             </SettingsSection>
 
             <WorkspaceCatalogSources workspaceId={workspace.id} canManage={Boolean(workspace.permissions?.manage_catalog_sources)} />
 
             <SettingsSection title={t('workspaceSettings.quotasTitle')} description={t('workspaceSettings.quotasBody')}>
-              <SettingRow
+              <SettingsRow
                 icon={ICONS.Users}
                 label={t('workspaceSettings.workspaceMembers')}
                 description={formatQuota(workspace.quota?.members, t('workspaceSettings.quotaUnavailable'))}
               />
-              <SettingRow
+              <SettingsRow
                 icon={ICONS.Activity}
                 label={t('workspaceSettings.kubernetesClusters')}
                 description={formatQuota(workspace.quota?.kubernetesClusters, t('workspaceSettings.quotaUnavailable'))}
               />
-              <SettingRow
+              <SettingsRow
                 icon={ICONS.Server}
                 label={t('workspaceSettings.virtualMachines')}
                 description={formatQuota(workspace.quota?.virtualMachines, t('workspaceSettings.quotaUnavailable'))}
@@ -126,7 +107,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
             </SettingsSection>
 
             <SettingsSection title={t('workspaceSettings.accessTitle')} description={t('workspaceSettings.accessBody')}>
-              <SettingRow
+              <SettingsRow
                 icon={ICONS.Users}
                 label={t('workspaceSettings.members')}
                 description={t('workspaceSettings.membersBody')}
@@ -145,7 +126,7 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
                   </Button>
                 }
               />
-              <SettingRow
+              <SettingsRow
                 icon={ICONS.Shield}
                 label={t('workspaceSettings.rbac')}
                 description={t('workspaceSettings.rbacBody')}

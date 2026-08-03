@@ -1,6 +1,8 @@
 export type ClusterSubview = 'overview' | 'resources' | 'mcpServers' | 'skills' | 'tools' | 'health' | 'chat' | 'settings';
 export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'network' | 'logs' | 'mcpServers' | 'skills' | 'tools' | 'chat' | 'settings';
 export type AgentSubview = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'settings';
+export type CapabilitySubview = 'mcpServers' | 'skills' | 'tools';
+export type ManagedSubjectSubview = 'chat' | 'settings' | CapabilitySubview;
 export type ClusterCatalogStatusFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 export type VmCatalogStatusFilter = ClusterCatalogStatusFilter;
 export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
@@ -73,61 +75,38 @@ export type AppRoute =
   | { kind: 'workspaceKubernetesClusterDiagnostics'; workspaceId: string; clusterId: string; tab?: ClusterSubview; catalogState?: ClusterCatalogReturnState }
   | { kind: 'notFound'; path: string };
 
-function parseClusterSubview(value?: string): ClusterSubview | undefined {
+const clusterSubviews = new Set<ClusterSubview>([
+  'overview', 'resources', 'mcpServers', 'skills', 'tools', 'health', 'chat', 'settings'
+]);
+const vmSubviews = new Set<VmSubview>([
+  'overview', 'resources', 'services', 'processes', 'network', 'logs', 'mcpServers', 'skills', 'tools', 'chat', 'settings'
+]);
+const agentSubviews = new Set<AgentSubview>(['chat', 'mcpServers', 'skills', 'tools', 'settings']);
+
+function normalizeSubviewSegment(value?: string): string | undefined {
   if (!value) return undefined;
-  if (value === 'mcp-servers') return 'mcpServers';
-  if (value === 'skills') return 'skills';
-  if (value === 'tools') return 'tools';
-  if (
-    value === 'overview' ||
-    value === 'resources' ||
-    value === 'health' ||
-    value === 'chat' ||
-    value === 'settings'
-  ) {
-    return value;
-  }
-  return undefined;
+  return value === 'mcp-servers' ? 'mcpServers' : value;
 }
 
-function parseAgentSubview(value?: string): AgentSubview {
-  if (value === 'mcp-servers') return 'mcpServers';
-  if (value === 'chat' || value === 'skills' || value === 'tools' || value === 'settings') return value;
-  return 'chat';
+function parseSupportedSubview<T extends string>(value: string | undefined, supported: ReadonlySet<T>): T | undefined {
+  const normalized = normalizeSubviewSegment(value);
+  return normalized && supported.has(normalized as T) ? normalized as T : undefined;
 }
 
-function agentSubviewPathSegment(tab: AgentSubview): string {
+export function managedSubviewPathSegment(tab: string): string {
   return tab === 'mcpServers' ? 'mcp-servers' : tab;
 }
 
-function clusterSubviewPathSegment(tab: ClusterSubview): string {
-  if (tab === 'mcpServers') return 'mcp-servers';
-  return tab;
+export function parseClusterSubview(value?: string): ClusterSubview | undefined {
+  return parseSupportedSubview(value, clusterSubviews);
 }
 
-function parseVmSubview(value?: string): VmSubview | undefined {
-  if (!value) return undefined;
-  if (value === 'mcp-servers') return 'mcpServers';
-  if (value === 'skills') return 'skills';
-  if (value === 'tools') return 'tools';
-  if (
-    value === 'overview' ||
-    value === 'resources' ||
-    value === 'services' ||
-    value === 'processes' ||
-    value === 'network' ||
-    value === 'logs' ||
-    value === 'chat' ||
-    value === 'settings'
-  ) {
-    return value;
-  }
-  return undefined;
+export function parseAgentSubview(value?: string): AgentSubview {
+  return parseSupportedSubview(value, agentSubviews) || 'chat';
 }
 
-function vmSubviewPathSegment(tab: VmSubview): string {
-  if (tab === 'mcpServers') return 'mcp-servers';
-  return tab;
+export function parseVmSubview(value?: string): VmSubview | undefined {
+  return parseSupportedSubview(value, vmSubviews);
 }
 
 function decodeParam(value: string): string {
@@ -537,7 +516,7 @@ export const AppPaths = {
   workspaceAgents: (workspaceId: string): string =>
     `/workspaces/${encodeURIComponent(workspaceId)}/agents`,
   workspaceAgentDetail: (workspaceId: string, agentId: string, tab: AgentSubview = 'chat'): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/${agentSubviewPathSegment(tab)}`,
+    `/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/${managedSubviewPathSegment(tab)}`,
   workspaceAgentMcp: (workspaceId: string, agentId: string, action?: 'connect_by_url'): string => {
     const params = new URLSearchParams();
     if (action) params.set('mcpAction', action);
@@ -602,7 +581,7 @@ export const AppPaths = {
     withVmCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`, state),
   workspaceVirtualMachineDetail: (workspaceId: string, vmId: string, tab?: VmSubview, catalogState?: VmCatalogReturnState): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`;
-    return withClusterCatalogReturnState(tab ? `${base}/${vmSubviewPathSegment(tab)}` : base, catalogState);
+    return withClusterCatalogReturnState(tab ? `${base}/${managedSubviewPathSegment(tab)}` : base, catalogState);
   },
   workspaceTargetMcp: (
     workspaceId: string,
@@ -619,10 +598,10 @@ export const AppPaths = {
   },
   kubernetesClusterDiagnostics: (clusterId: string, tab?: ClusterSubview, catalogState?: ClusterCatalogReturnState): string => {
     const base = `/kubernetes-clusters/${encodeURIComponent(clusterId)}`;
-    return withClusterCatalogReturnState(tab ? `${base}/${clusterSubviewPathSegment(tab)}` : base, catalogState);
+    return withClusterCatalogReturnState(tab ? `${base}/${managedSubviewPathSegment(tab)}` : base, catalogState);
   },
   workspaceKubernetesClusterDiagnostics: (workspaceId: string, clusterId: string, tab?: ClusterSubview, catalogState?: ClusterCatalogReturnState): string => {
     const base = `/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}`;
-    return withClusterCatalogReturnState(tab ? `${base}/${clusterSubviewPathSegment(tab)}` : base, catalogState);
+    return withClusterCatalogReturnState(tab ? `${base}/${managedSubviewPathSegment(tab)}` : base, catalogState);
   }
 };

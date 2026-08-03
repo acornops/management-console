@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataTable, DataTableBody, DataTableCell, DataTableHeader, DataTableHeaderCell, DataTableRow } from '@acornops/ui';
+import { projectTelemetrySeries } from '@/components/common/telemetryChart';
 
 export const MetricChart: React.FC<{
   title: string;
@@ -22,7 +23,6 @@ export const MetricChart: React.FC<{
   const plotTop = 18;
   const plotBottom = height - 30;
   const yAxisLabelGap = 6;
-  const plotWidth = plotRight - plotLeft;
   const plotHeight = plotBottom - plotTop;
   const numberFormatter = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 2 });
   const formatMetricValue = (value: number | string) => `${value}${unit === '%' ? unit : unit ? ` ${unit}` : ''}`;
@@ -78,14 +78,19 @@ export const MetricChart: React.FC<{
 
   const maxObservedValue = Math.max(...points.map((point) => point.value), 0);
   const maxValue = Math.max(maxObservedValue * 1.12, 1);
-  const coords = points.map((point, index) => {
-    const x = points.length === 1
-      ? width / 2
-      : plotLeft + (index * plotWidth) / (points.length - 1);
-    const y = plotTop + (1 - Math.max(0, Math.min(1, point.value / maxValue))) * plotHeight;
-    return { x, y, ...point };
-  });
-  const linePath = coords.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const projectedSeries = projectTelemetrySeries(
+    points.map((point, index) => ({ position: index, value: point.value, source: point })),
+    {
+      xStart: plotLeft,
+      xEnd: plotRight,
+      yStart: plotTop,
+      yEnd: plotBottom,
+      minValue: 0,
+      maxValue
+    }
+  );
+  const coords = projectedSeries.points.map(({ source, x, y }) => ({ ...source!, x, y }));
+  const linePath = projectedSeries.path;
   const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${plotBottom} L ${coords[0].x} ${plotBottom} Z`;
   const stroke = type === 'area' ? 'var(--ao-brand-orange)' : 'rgb(var(--ao-metric-blue-rgb))';
 

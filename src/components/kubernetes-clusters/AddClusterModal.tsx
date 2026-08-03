@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Check, Copy, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ICONS } from '@/constants';
-import { Button, Checkbox, CollectionState, IconTile, Switch } from '@acornops/ui';
-import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
+import { Button, Checkbox, CollectionState, Switch } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
@@ -12,6 +10,7 @@ import { ClusterAgentAccessModeSelector } from '@/components/kubernetes-clusters
 import { parseNamespaceList } from '@/app/useAppSupport';
 import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import { TextInput } from '@acornops/ui';
+import { AgentInstallInstructionsStep } from '@/components/common/AgentInstallInstructionsStep';
 
 interface AddClusterModalProps {
   isOpen: boolean;
@@ -131,7 +130,6 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   onConfirmInstalled
 }) => {
   const { t } = useTranslation();
-  const [hasCopiedCommand, setHasCopiedCommand] = useState(false);
   const [agentAccessMode, setAgentAccessMode] = useState<AgentAccessMode>('read_only');
   const [isNamespaceScopeRequired, setIsNamespaceScopeRequired] = useState(
     () => parseNamespaceList(includeNamespaces).length > 0 || parseNamespaceList(excludeNamespaces).length > 0
@@ -176,17 +174,6 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
   if (!isOpen) {
     return null;
   }
-
-  const copyInstallCommand = async () => {
-    try {
-      if (!displayedInstallCommand) return;
-      await navigator.clipboard.writeText(displayedInstallCommand);
-      setHasCopiedCommand(true);
-      window.setTimeout(() => setHasCopiedCommand(false), 2200);
-    } catch {
-      setHasCopiedCommand(false);
-    }
-  };
 
   const handleNamespaceScopeRequiredChange = (required: boolean) => {
     setIsNamespaceScopeRequired(required);
@@ -330,69 +317,39 @@ export const AddClusterModal: React.FC<AddClusterModalProps> = ({
           </div>
         </>
       ) : (
-        <>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
-            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
-              <div className="flex items-start gap-3">
-                <IconTile size="xs" tone="accent" className="mt-0.5">
-                  <ICONS.Terminal className="h-4 w-4" />
-                </IconTile>
-                <p>{t('clusterSetup.installBody')}</p>
-              </div>
+        <AgentInstallInstructionsStep
+          introduction={t('clusterSetup.installBody')}
+          command={displayedInstallCommand}
+          commandLabel={t('clusterSetup.installCommand')}
+          copyLabel={t('clusterSetup.copy')}
+          copiedLabel={t('clusterSetup.copied')}
+          missingCommandMessage={t('clusterSetup.missingInstallCommand')}
+          isConnected={isAgentConnected}
+          waitingLabel={t('clusterSetup.waitingForAgent')}
+          connectedLabel={t('clusterSetup.agentConnected')}
+          isSubmitting={isCreatingCluster}
+          submittingLabel={t('clusterSetup.checkingConnection')}
+          connectedActionLabel={t('clusterSetup.done')}
+          pendingActionLabel={t('clusterSetup.installedAgent')}
+          onConfirmInstalled={onConfirmInstalled}
+          notices={clusterInstallWarnings.length > 0 ? (
+            <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
+              {clusterInstallWarnings.map((warning) => <p key={warning}>{warning}</p>)}
             </div>
-
-            {displayedInstallCommand ? (
-              <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
-                <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                  <span className="type-micro-label">{t('clusterSetup.installCommand')}</span>
-                  <Button
-                    type="button"
-                    variant="icon"
-                    size="icon"
-                    onClick={() => void copyInstallCommand()}
-                    className="control-target inline-flex h-9 w-9 items-center justify-center rounded-lg border border-ui-border bg-ui-surface text-ui-text-muted shadow-sm transition-colors hover:bg-ui-bg hover:text-ui-text"
-                    aria-label={hasCopiedCommand ? t('clusterSetup.copied') : t('clusterSetup.copy')}
-                  >
-                    {hasCopiedCommand ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono type-caption leading-6 text-ui-text custom-scrollbar">
-                  <pre className="whitespace-pre">{displayedInstallCommand}</pre>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis text-status-warning-text">
-                {t('clusterSetup.missingInstallCommand')}
-              </div>
-            )}
-            {clusterInstallWarnings.length > 0 && (
-              <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
-                {clusterInstallWarnings.map((warning) => (
-                  <p key={warning}>{warning}</p>
-                ))}
-              </div>
-            )}
+          ) : undefined}
+          summary={(
             <div className="grid gap-3 rounded-lg border border-ui-border bg-ui-surface p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div>
                 <p className="type-label text-ui-text-muted">{t('clusterSetup.clusterName')}</p>
-                <p className="type-row-title mt-1 truncate" title={newClusterName}>
-                  {newClusterName}
-                </p>
+                <p className="type-row-title mt-1 truncate" title={newClusterName}>{newClusterName}</p>
               </div>
               <div>
                 <p className="type-label text-ui-text-muted">{t('clusterSetup.namespaceScope')}</p>
                 <p className="type-caption mt-1 text-ui-text-muted">{namespaceScopeSummary}</p>
               </div>
             </div>
-            <AgentConnectionStatus isConnected={isAgentConnected} waitingLabel={t('clusterSetup.waitingForAgent')} connectedLabel={t('clusterSetup.agentConnected')} />
-          </div>
-          <div className="flex items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
-            <Button onClick={() => void onConfirmInstalled()} disabled={isCreatingCluster} variant="primary" size="sm" className="rounded-lg">
-              <Zap className="h-4 w-4" />
-              {isCreatingCluster ? t('clusterSetup.checkingConnection') : isAgentConnected ? t('clusterSetup.done') : t('clusterSetup.installedAgent')}
-            </Button>
-          </div>
-        </>
+          )}
+        />
       )}
     </DialogFrame>
   );

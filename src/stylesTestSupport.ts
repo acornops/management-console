@@ -67,6 +67,9 @@ export const targetSkillsInventory = readSource(
 export const targetToolsView = readSource(
   'src/features/targets/admin/TargetToolsView.tsx'
 );
+export const targetCapabilityInventoryShell = readSource(
+  'src/features/targets/admin/TargetCapabilityInventoryShell.tsx'
+);
 export const targetInsightsDialog = readSource(
   'src/features/targets/admin/TargetInsightsDialog.tsx'
 );
@@ -127,6 +130,9 @@ export const useTargetChatScrollAnchor = readSource(
 );
 export const clusterOverviewView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx'
+);
+export const targetIssuesPanel = readSource(
+  'src/features/targets/issues/TargetIssuesPanel.tsx'
 );
 export const clusterSettingsView = readSource(
   'src/features/kubernetes-cluster-detail/components/detail/views/ClusterSettingsView.tsx'

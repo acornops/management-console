@@ -1,39 +1,26 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
+import { ControlledTargetChatView } from '@/features/targets/chat/components/ControlledTargetChatView';
 import { ClusterSettingsView } from '@/features/kubernetes-cluster-detail/components/detail/views/ClusterSettingsView';
-import { McpServersView } from '@/features/targets/admin/McpServersView';
+import { CapabilityAdminView } from '@/features/capabilities/CapabilityAdminView';
 import { NamespaceScopeDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/NamespaceScopeDialog';
 import { OverviewView } from '@/features/kubernetes-cluster-detail/components/detail/views/OverviewView';
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
-import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
-import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
 import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
 import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
 import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { KubernetesClusterDetailProps, View } from '@/features/kubernetes-cluster-detail/types';
 import { toKubernetesTargetDescriptor } from '@/features/targets/targetDescriptor';
+import { managedSubviewPathSegment, parseClusterSubview } from '@/utils/routes';
 
 interface KubernetesClusterDetailLocationState {
   view: View;
   sessionId: string | null;
 }
 
-const VIEWS: View[] = ['overview', 'resources', 'mcpServers', 'skills', 'tools', 'chat', 'settings'];
-
-function normalizeView(value: string | null): View | null {
-  if (value === 'mcp-servers') return 'mcpServers';
-  if (value === 'tools') return 'tools';
-  return isView(value) ? value : null;
-}
-
-function viewPathSegment(view: View): string {
-  if (view === 'mcpServers') return 'mcp-servers';
-  return view;
-}
-
-function isView(value: string | null): value is View {
-  return value !== null && VIEWS.includes(value as View);
+function parseDetailView(value?: string | null): View | null {
+  const view = parseClusterSubview(value || undefined);
+  return view && view !== 'health' ? view : null;
 }
 
 function parseViewFromPath(pathname: string): View | null {
@@ -42,17 +29,17 @@ function parseViewFromPath(pathname: string): View | null {
     return null;
   }
   const lastSegment = segments[segments.length - 1] || null;
-  return normalizeView(lastSegment);
+  return parseDetailView(lastSegment);
 }
 
 function buildPathWithView(pathname: string, view: View): string {
   const segments = pathname.split('/').filter(Boolean);
-  const segment = viewPathSegment(view);
+  const segment = managedSubviewPathSegment(view);
   if (segments.length === 0) {
     return `/${segment}`;
   }
   const lastSegment = segments[segments.length - 1];
-  if (normalizeView(lastSegment || null)) {
+  if (parseDetailView(lastSegment)) {
     segments[segments.length - 1] = segment;
   } else {
     segments.push(segment);
@@ -66,7 +53,7 @@ function parseLocationState(): KubernetesClusterDetailLocationState {
   const viewFromPath = parseViewFromPath(window.location.pathname);
   const sessionParam = params.get('session');
 
-  const view: View = normalizeView(viewParam) || viewFromPath || 'overview';
+  const view: View = parseDetailView(viewParam) || viewFromPath || 'overview';
 
   return {
     view,
@@ -127,42 +114,8 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
 
   const {
     currentUserId,
-    sessions,
     activeSessionId,
-    composerRuntimeSelection,
-    workspaceAiSettings,
-    isWorkspaceAiSettingsLoading,
-    workspaceAiSettingsError,
-    isActiveSessionOwner,
-    conversationNotice,
-    sessionDeepLinkError,
-    recentActivityWarning,
-    inputValue,
-    isRunActive,
-    isSessionsLoading,
-    isLoadingEarlierMessages,
-    hasEarlierMessages,
-    activeRunId,
-    isCancellingRun,
-    visibleMessages,
-    runTracesByRunId,
-    sessionAssistantStatuses,
-    transcriptRef,
-    setActiveSessionId,
-    handleCreateSession,
-    handleDismissRecentActivityWarning,
-    handleOpenRecentActivitySession,
-    handleDeleteSession,
-    handleCancelRun,
-    setInputValue,
-    setComposerRuntimeSelection,
-    handleChatScroll,
-    handleLoadEarlierMessages,
-    handleSend,
-    handleEditLastUserMessage,
-    handleApprove,
-    handleReject,
-    isInFlightAssistantPlaceholder
+    setInputValue
   } = chatController;
 
   const analyzePod = (podName: string) => {
@@ -242,87 +195,47 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
               />
             )}
             {activeView === 'resources' && <ResourcesView cluster={cluster} canReadPodLogs={canReadPodLogs} onAnalyzePod={analyzePod} />}
-            {activeView === 'mcpServers' && (
-              <McpServersView
-                key={targetCacheKey}
+            {(activeView === 'mcpServers' || activeView === 'skills' || activeView === 'tools') && (
+              <CapabilityAdminView
+                cacheKey={targetCacheKey}
+                section={activeView}
                 subject={target}
-                canManageMcp={canManageMcp}
-                canManageTools={canManageTools}
-                canRequestWriteRuns={canRequestWriteRuns}
-                initialCatalog={cachedCapabilityCatalogs?.mcpServers}
-                onCatalogChange={cacheMcpServersCatalog}
-                onSyncTools={onSyncTools}
-              />
-            )}
-            {activeView === 'skills' && (
-              <TargetSkillsView
-                key={targetCacheKey}
-                subject={target}
-                canManageSkills={Boolean(currentWorkspacePermissions?.manage_skills)}
-                initialCatalog={cachedCapabilityCatalogs?.skills}
-                onCatalogChange={cacheSkillsCatalog}
-              />
-            )}
-            {activeView === 'tools' && (
-              <TargetToolsView
-                key={targetCacheKey}
-                subject={target}
-                canManageTools={canManageTools}
-                initialCatalog={cachedCapabilityCatalogs?.tools}
-                onCatalogChange={cacheToolsCatalog}
+                mcp={{
+                  canManageMcp,
+                  canManageTools,
+                  canRequestWriteRuns,
+                  initialCatalog: cachedCapabilityCatalogs?.mcpServers,
+                  onCatalogChange: cacheMcpServersCatalog,
+                  onSyncTools
+                }}
+                skills={{
+                  canManageSkills: Boolean(currentWorkspacePermissions?.manage_skills),
+                  initialCatalog: cachedCapabilityCatalogs?.skills,
+                  onCatalogChange: cacheSkillsCatalog
+                }}
+                tools={{
+                  canManageTools,
+                  initialCatalog: cachedCapabilityCatalogs?.tools,
+                  onCatalogChange: cacheToolsCatalog
+                }}
               />
             )}
             {activeView === 'chat' && (
-              <TargetChatView
+              <ControlledTargetChatView
+                controller={chatController}
                 currentUserId={currentUserId}
+                subject={target}
                 isDark={isDark}
                 canChat={canChat}
-                isConversationOwner={isActiveSessionOwner}
-                conversationNotice={conversationNotice}
-                sessionDeepLinkError={sessionDeepLinkError}
-                recentActivityWarning={recentActivityWarning}
                 canRequestWriteRuns={canRequestWriteRuns}
                 canApproveWriteActions={canRequestWriteRuns}
                 canCancelRuns={canCancelRuns}
                 canDeleteSessions={canDeleteSessions}
                 canManageAiSettings={canManageAiSettings}
-                isRunActive={isRunActive}
-                isSessionsLoading={isSessionsLoading}
-                isLoadingEarlierMessages={isLoadingEarlierMessages}
-                hasEarlierMessages={hasEarlierMessages}
-                activeRunId={activeRunId}
-                isCancellingRun={isCancellingRun}
-                inputValue={inputValue}
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                composerRuntimeSelection={composerRuntimeSelection}
-                workspaceAiSettings={workspaceAiSettings}
-                isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
-                workspaceAiSettingsError={workspaceAiSettingsError}
-                subject={target}
                 assistantMarkdownComponents={assistantMarkdownComponents}
                 userMarkdownComponents={userMarkdownComponents}
-                visibleMessages={visibleMessages}
-                runTracesByRunId={runTracesByRunId}
-                sessionAssistantStatuses={sessionAssistantStatuses}
-                transcriptRef={transcriptRef}
                 footerKey={resolveClusterChatFooterKey(cluster, canRequestWriteRuns)}
-                onChatScroll={handleChatScroll}
-                onLoadEarlierMessages={handleLoadEarlierMessages}
                 onOpenAiSettings={onOpenAiSettings}
-                onInputChange={setInputValue}
-                onComposerRuntimeSelectionChange={setComposerRuntimeSelection}
-                onSend={handleSend}
-                onEditLastUserMessage={handleEditLastUserMessage}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                onSelectSession={setActiveSessionId}
-                onCreateSession={handleCreateSession}
-                onDismissRecentActivityWarning={handleDismissRecentActivityWarning}
-                onOpenRecentActivitySession={handleOpenRecentActivitySession}
-                onDeleteSession={handleDeleteSession}
-                onCancelRun={handleCancelRun}
-                isInFlightAssistantPlaceholder={isInFlightAssistantPlaceholder}
               />
             )}
             {activeView === 'settings' && (

@@ -19,6 +19,7 @@ export interface TargetMcpToolSummary {
 }
 
 export interface TargetDescriptor {
+  kind: 'target';
   id: string;
   workspaceId: string;
   targetType: TargetType;
@@ -48,6 +49,7 @@ function mapVirtualMachineConnectionState(
 
 export function toKubernetesTargetDescriptor(cluster: KubernetesCluster): TargetDescriptor {
   return {
+    kind: 'target',
     id: cluster.id,
     workspaceId: cluster.workspaceId,
     targetType: 'kubernetes',
@@ -68,6 +70,7 @@ export function toVirtualMachineTargetDescriptor(
   chatSessions: ChatSession[] = []
 ): TargetDescriptor {
   return {
+    kind: 'target',
     id: vm.id,
     workspaceId: vm.workspaceId,
     targetType: 'virtual_machine',

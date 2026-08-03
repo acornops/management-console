@@ -3,8 +3,6 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { MobileNavigation } from '@acornops/ui';
 
-import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
-import { NavCountBadge } from '@/app/NavCountBadge';
 import { DrawerFrame } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -12,43 +10,30 @@ import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { canReadWorkspaceData } from '@/app/workspacePermissions';
 import { appHref, getWorkspaceNavigationGroups, handleAppLinkClick } from '@/app/workspaceNavigation';
 import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
-import { AgentSubview, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
+import { NavCountBadge } from '@/app/NavCountBadge';
+import { AppPaths } from '@/utils/routes';
 import type { AppMobileNavigationProps } from '@/app/AppNavigation.types';
 import { ThemeMenu } from '@/components/common/ThemeMenu';
 import { Button } from '@acornops/ui';
+import { AppManagedSubjectMobileNavigation } from '@/app/AppManagedSubjectMobileNavigation';
 
 const MotionButton = motion.create(Button);
 
 export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
-  activeAgentSubview,
-  activeClusterSubview,
-  activeVmSubview,
   activePrimaryNav,
   activeResourceNav,
   pendingApprovalCount,
-  isAgentSidebar,
-  isClusterSidebar,
-  isVirtualMachineSidebar,
+  managedSubjectNavigation,
   themePreference,
   resolvedTheme,
   isMobileNavOpen,
-  selectedClusterIssueCount,
-  clusterAssistantNavStatus,
-  selectedVmIssueCount,
-  selectedSidebarAgent,
-  selectedSidebarCluster,
-  selectedSidebarVm,
   selectedWorkspace,
   selectedWorkspaceId,
   user,
   workspaceClusterCounts,
   workspaces,
   navigate,
-  onBackToWorkspaceSidebar,
   onLogout,
-  onNavigateAgentSubview,
-  onNavigateClusterSubview,
-  onNavigateVmSubview,
   onSelectWorkspaceContext,
   onSetAccountMenuOpen,
   onSetMobileNavOpen,
@@ -161,314 +146,15 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
               </section>
 
               <section className="px-4 py-3">
-                {(isAgentSidebar || isClusterSidebar || isVirtualMachineSidebar) && (
-                  <p className="mb-2 type-label tracking-normal">
-                    {t(isAgentSidebar ? 'app.agentDestinations' : isClusterSidebar ? 'app.clusterDestinations' : 'app.virtualMachineDestinations')}
-                  </p>
-                )}
                 <div className="grid grid-cols-1 gap-1">
-                  {isAgentSidebar ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="tertiary"
-                        onClick={() => {
-                          onSetMobileNavOpen(false);
-                          onBackToWorkspaceSidebar();
-                        }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
-                      >
-                        {t('agentChat.backToAgents')}
-                      </Button>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 type-label tracking-normal">{t('app.operations')}</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {([
-                            ['chat', t('app.agentAssistant'), ICONS.BotMessageSquare]
-                          ] as Array<[AgentSubview, string, React.ElementType]>).map(([tab, label, Icon]) => (
-                            <Button
-                              key={tab}
-                              type="button"
-                              variant="tertiary"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                onNavigateAgentSubview(tab);
-                              }}
-                              disabled={!selectedSidebarAgent}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
-                                activeAgentSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Icon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">{label}</span>
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 type-label tracking-normal">{t('app.capabilities')}</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {([
-                            ['mcpServers', t('app.mcpServers'), ICONS.Server],
-                            ['skills', t('app.skills'), ICONS.BookOpen],
-                            ['tools', t('app.tools'), ICONS.Wrench]
-                          ] as Array<[AgentSubview, string, React.ElementType]>).map(([tab, label, Icon]) => (
-                            <Button
-                              key={tab}
-                              type="button"
-                              variant="tertiary"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                onNavigateAgentSubview(tab);
-                              }}
-                              disabled={!selectedSidebarAgent}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
-                                activeAgentSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Icon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">{label}</span>
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <Button
-                          type="button"
-                          variant="tertiary"
-                          onClick={() => {
-                            onSetMobileNavOpen(false);
-                            onNavigateAgentSubview('settings');
-                          }}
-                          disabled={!selectedSidebarAgent}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left transition-colors ${
-                            activeAgentSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <ICONS.Settings className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{t('app.agentSettings')}</span>
-                          </span>
-                        </Button>
-                      </div>
-                    </>
-                  ) : isClusterSidebar ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="tertiary"
-                        onClick={() => {
-                          onSetMobileNavOpen(false);
-                          onBackToWorkspaceSidebar();
-                        }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
-                      >
-                        {t('app.backToWorkspace')}
-                      </Button>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 type-label tracking-normal">{t('app.operations')}</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {(
-                            [
-                              ['overview', t('app.overview'), ICONS.LayoutGrid, selectedClusterIssueCount],
-                              ['chat', t('app.clusterAssistant'), ICONS.BotMessageSquare, 0],
-                              ['resources', t('app.resources'), ICONS.Activity, 0]
-                            ] as Array<[ClusterSubview, string, React.ElementType, number]>
-                          ).map(([tab, label, Icon, badge]) => (
-                            <Button
-                              key={tab}
-                              type="button"
-                              variant="tertiary"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                onNavigateClusterSubview(tab);
-                              }}
-                              disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
-                                activeClusterSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex w-full items-center justify-between gap-3">
-                                <span className="flex min-w-0 items-center gap-2">
-                                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                                  <span className="truncate">{label}</span>
-                                </span>
-                                <span className="flex shrink-0 items-center gap-2">
-                                  {badge > 0 && <NavCountBadge count={badge} />}
-                                  <AssistantNavStatusIndicator
-                                    status={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
-                                    label={tab === 'chat' && clusterAssistantNavStatus !== 'idle' ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`) : undefined}
-                                    withTooltip={false}
-                                  />
-                                </span>
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 type-label tracking-normal">{t('app.capabilities')}</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {(
-                            [
-                              ['mcpServers', t('app.mcpServers'), ICONS.Server],
-                              ['skills', t('app.skills'), ICONS.BookOpen],
-                              ['tools', t('app.tools'), ICONS.Wrench]
-                            ] as Array<[ClusterSubview, string, React.ElementType]>
-                          ).map(([tab, label, Icon]) => (
-                            <Button
-                              key={tab}
-                              type="button"
-                              variant="tertiary"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                onNavigateClusterSubview(tab);
-                              }}
-                              disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
-                                activeClusterSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Icon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">{label}</span>
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <Button
-                          type="button"
-                          variant="tertiary"
-                          onClick={() => {
-                            onSetMobileNavOpen(false);
-                            onNavigateClusterSubview('settings');
-                          }}
-                          disabled={!selectedSidebarCluster}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left transition-colors ${
-                            activeClusterSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <ICONS.Settings className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{t('app.clusterSettings')}</span>
-                          </span>
-                        </Button>
-                      </div>
-                    </>
-                  ) : isVirtualMachineSidebar ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="tertiary"
-                        onClick={() => {
-                          onSetMobileNavOpen(false);
-                          onBackToWorkspaceSidebar();
-                        }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
-                      >
-                        {t('app.backToWorkspace')}
-                      </Button>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 type-label tracking-normal">{t('app.operations')}</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {(
-                            [
-                              ['overview', t('app.overview'), ICONS.LayoutGrid, selectedVmIssueCount],
-                              ['chat', t('app.vmAssistant'), ICONS.BotMessageSquare, 0],
-                              ['resources', t('app.resources'), ICONS.Activity, 0]
-                            ] as Array<[VmSubview, string, React.ElementType, number]>
-                          ).map(([tab, label, Icon, badge]) => (
-                            <Button
-                              key={tab}
-                              type="button"
-                              variant="tertiary"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                onNavigateVmSubview(tab);
-                              }}
-                              disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
-                                (
-                                  tab === 'resources'
-                                    ? activeVmSubview === 'resources' ||
-                                      activeVmSubview === 'services' ||
-                                      activeVmSubview === 'processes' ||
-                                      activeVmSubview === 'network' ||
-                                      activeVmSubview === 'logs'
-                                    : activeVmSubview === tab
-                                )
-                                  ? 'bg-accent-soft text-accent-strong'
-                                  : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex w-full items-center justify-between gap-3">
-                                <span className="flex min-w-0 items-center gap-2">
-                                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                                  <span className="truncate">{label}</span>
-                                </span>
-                                {badge > 0 && <NavCountBadge count={badge} />}
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <p className="mb-2 type-label tracking-normal">{t('app.capabilities')}</p>
-                        <div className="grid grid-cols-1 gap-1">
-                          {(
-                            [
-                              ['mcpServers', t('app.mcpServers'), ICONS.Server],
-                              ['skills', t('app.skills'), ICONS.BookOpen],
-                              ['tools', t('app.tools'), ICONS.Wrench]
-                            ] as Array<[VmSubview, string, React.ElementType]>
-                          ).map(([tab, label, Icon]) => (
-                            <Button
-                              key={tab}
-                              type="button"
-                              variant="tertiary"
-                              onClick={() => {
-                                onSetMobileNavOpen(false);
-                                onNavigateVmSubview(tab);
-                              }}
-                              disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
-                                activeVmSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Icon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">{label}</span>
-                              </span>
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-3 border-t border-ui-border pt-3">
-                        <Button
-                          type="button"
-                          variant="tertiary"
-                          onClick={() => {
-                            onSetMobileNavOpen(false);
-                            onNavigateVmSubview('settings');
-                          }}
-                          disabled={!selectedSidebarVm}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left transition-colors ${
-                            activeVmSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <ICONS.Settings className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{t('app.vmSettings')}</span>
-                          </span>
-                        </Button>
-                      </div>
-                    </>
+                  {managedSubjectNavigation ? (
+                    <AppManagedSubjectMobileNavigation
+                      model={managedSubjectNavigation}
+                      navigate={(path) => {
+                        onSetMobileNavOpen(false);
+                        navigate(path);
+                      }}
+                    />
                   ) : (
                     <>
                       <nav aria-label={t('app.workspaceNavigation')} className="space-y-3">

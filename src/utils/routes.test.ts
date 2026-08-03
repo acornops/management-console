@@ -3,12 +3,26 @@ import { describe, expect, it } from 'vitest';
 import {
   AppPaths,
   assistantSessionFromLocation,
+  managedSubviewPathSegment,
   parseAppRoute,
+  parseAgentSubview,
+  parseClusterSubview,
+  parseVmSubview,
   validateAssistantReturnTo,
   withAssistantSession
 } from '@/utils/routes';
 
 describe('routes', () => {
+  it('uses one codec for managed-subject subview segments', () => {
+    expect(managedSubviewPathSegment('mcpServers')).toBe('mcp-servers');
+    expect(parseClusterSubview('mcp-servers')).toBe('mcpServers');
+    expect(parseVmSubview('mcp-servers')).toBe('mcpServers');
+    expect(parseAgentSubview('mcp-servers')).toBe('mcpServers');
+    expect(parseClusterSubview('not-a-view')).toBeUndefined();
+    expect(parseVmSubview('not-a-view')).toBeUndefined();
+    expect(parseAgentSubview('not-a-view')).toBe('chat');
+  });
+
   it('reads assistant session deep links from direct and hash routes', () => {
     expect(assistantSessionFromLocation({
       hash: '',

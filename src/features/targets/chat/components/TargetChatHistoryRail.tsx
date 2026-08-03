@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Button, Tooltip } from '@acornops/ui';
 
 interface TargetChatHistoryRailProps {
+  showInvestigations?: boolean;
   canCreateSession: boolean;
   desktopHistoryPanelId: string;
   historyControlLabel: string;
   historySearchPageId: string;
   isChatsActive: boolean;
+  isHistoryOpen?: boolean;
   isInvestigationsActive: boolean;
   isSearchActive: boolean;
   mobileHistoryPanelId: string;
@@ -21,11 +23,13 @@ interface TargetChatHistoryRailProps {
 }
 
 export function TargetChatHistoryRail({
+  showInvestigations = true,
   canCreateSession,
   desktopHistoryPanelId,
   historyControlLabel,
   historySearchPageId,
   isChatsActive,
+  isHistoryOpen = isChatsActive,
   isInvestigationsActive,
   isSearchActive,
   mobileHistoryPanelId,
@@ -37,7 +41,11 @@ export function TargetChatHistoryRail({
   unseenInvestigationCount
 }: TargetChatHistoryRailProps) {
   const { t } = useTranslation();
-  const historyPanelIds = `${desktopHistoryPanelId} ${mobileHistoryPanelId}`;
+  const historyPanelIds = showInvestigations
+    ? `${desktopHistoryPanelId} ${mobileHistoryPanelId}`
+    : isHistoryOpen
+      ? desktopHistoryPanelId
+      : undefined;
   const investigationLabel = isInvestigationsActive
     ? t('chat.hideInvestigations')
     : unseenInvestigationCount > 0
@@ -95,7 +103,7 @@ export function TargetChatHistoryRail({
           <MessagesSquare className="h-4 w-4" aria-hidden="true" />
         </Button>
       </Tooltip>
-      <Tooltip content={investigationLabel} side="right">
+      {showInvestigations && <Tooltip content={investigationLabel} side="right">
         <Button
           type="button"
           variant="tertiary"
@@ -118,7 +126,7 @@ export function TargetChatHistoryRail({
             </span>
           )}
         </Button>
-      </Tooltip>
+      </Tooltip>}
     </nav>
   );
 }

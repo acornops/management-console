@@ -7,7 +7,7 @@ import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
-import { OverflowActionMenu } from '@acornops/ui';
+import { ActionMenu } from '@acornops/ui';
 import { DataSurface } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -168,7 +168,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                   </div>
                   {canManageWebhooks && (
                     <div className="col-start-2 row-start-1 flex justify-end xl:col-start-auto xl:row-start-auto">
-                      <OverflowActionMenu
+                      <ActionMenu
                         ref={(node) => {
                           if (node) actionButtonRefs.current.set(webhook.id, node);
                           else actionButtonRefs.current.delete(webhook.id);
@@ -191,7 +191,7 @@ export const WebhookList: React.FC<WebhookListProps> = ({
                             {deleting ? t('workspaceWebhooks.deleting') : t('workspaceWebhooks.delete')}
                           </MenuItem>
                         </>}
-                      </OverflowActionMenu>
+                      </ActionMenu>
                     </div>
                   )}
                   {!canManageWebhooks && (

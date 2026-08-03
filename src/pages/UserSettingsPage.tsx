@@ -4,11 +4,11 @@ import { handleAppLinkClick } from '@/app/workspaceNavigation';
 import { Button, InlineAlert, SettingsSection, StatusBadge } from '@acornops/ui';
 import { CloseButton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
-import { IconTile } from '@acornops/ui';
 import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
-import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
+import { PasswordField } from '@/components/common/PasswordField';
+import { SettingsRow } from '@/components/common/SettingsRow';
 import { ExternalIntegrationSettingsPanel } from '@/features/external-integrations/ExternalIntegrationSettingsPanel';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -16,7 +16,6 @@ import { controlPlaneApi, ControlPlaneAuthMethods } from '@/services/controlPlan
 import { User } from '@/types';
 import { formatUserDate } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
-import { TextInput } from '@acornops/ui';
 import { useSessionCachedState } from '@/hooks/sessionDataCache';
 
 interface UserSettingsPageProps {
@@ -29,28 +28,6 @@ interface UserSettingsPageProps {
   embedded?: boolean;
 }
 
-const SettingRow: React.FC<{
-  icon: React.ElementType;
-  label: string;
-  description: string;
-  action?: React.ReactNode;
-}> = ({ icon: Icon, label, description, action }) => (
-  <div className="flex flex-col gap-4 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex w-full min-w-0 items-center gap-4">
-      <IconTile>
-        <Icon className="h-5 w-5" />
-      </IconTile>
-      <div className="min-w-0">
-        <p className="mb-0.5 type-row-title">{label}</p>
-        <p className="break-words type-caption text-ui-text-muted">{description}</p>
-      </div>
-    </div>
-    {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
-  </div>
-);
-
-const inputClassName = formInputClassName();
-
 function formatDate(value?: string): string | undefined {
   if (!value) return undefined;
   return formatUserDate(value, { fallback: undefined });
@@ -59,19 +36,6 @@ function formatDate(value?: string): string | undefined {
 function formatQuota(value: { used: number; limit: number } | undefined, fallback: string): string {
   return value ? `${value.used} / ${value.limit}` : fallback;
 }
-
-const PasswordField: React.FC<{
-  id: string;
-  label: string;
-  value: string;
-  autoComplete: string;
-  onChange: (value: string) => void;
-}> = ({ id, label, value, autoComplete, onChange }) => (
-  <label className="block">
-    <span className="mb-2 block type-label">{label}</span>
-    <TextInput id={id} type="password" value={value} autoComplete={autoComplete} onChange={(event) => onChange(event.target.value)} className={inputClassName} />
-  </label>
-);
 
 const SecurityDialog: React.FC<{
   title: string;
@@ -211,8 +175,8 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
 
       <div className="max-w-4xl">
         <SettingsSection className="mb-12 last:mb-12" title={t('settings.profileTitle')} description={t('settings.profileBody')}>
-          <SettingRow icon={ICONS.User} label={t('settings.fullName')} description={user.name} />
-          <SettingRow
+          <SettingsRow icon={ICONS.User} label={t('settings.fullName')} description={user.name} />
+          <SettingsRow
             icon={ICONS.Mail}
             label={t('settings.email')}
             description={user.email}
@@ -223,13 +187,13 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
               </StatusBadge>
             }
           />
-          <SettingRow icon={ICONS.LayoutGrid} label={t('settings.workspacesJoined')} description={formatQuota(user.quota?.workspaceMemberships, t('settings.quotaUnavailable'))} />
+          <SettingsRow icon={ICONS.LayoutGrid} label={t('settings.workspacesJoined')} description={formatQuota(user.quota?.workspaceMemberships, t('settings.quotaUnavailable'))} />
         </SettingsSection>
 
         <SettingsSection className="mb-12 last:mb-12" title={t('settings.securityTitle')} description={t('settings.securityBody')}>
           {securityError && <InlineAlert tone="danger" role="alert" className="rounded-none border-x-0 border-t-0 px-6 py-3 type-body">{securityError}</InlineAlert>}
           {securityNotice && <InlineAlert tone="success" className="rounded-none border-x-0 border-t-0 px-6 py-3 type-body">{securityNotice}</InlineAlert>}
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Lock}
             label={t('settings.password')}
             description={
@@ -251,7 +215,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
               ) : undefined
             }
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Shield}
             label={t('settings.sso')}
             description={
@@ -269,7 +233,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
               ) : undefined
             }
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Smartphone}
             label={t('settings.twoFactor')}
             description={!authMethods ? t('settings.loadingAuthMethods') : oidcMethod ? t('settings.twoFactorManagedByProvider') : t('settings.twoFactorUnavailable')}
@@ -281,7 +245,7 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
         </SettingsSection>
 
         <SettingsSection className="mb-12 last:mb-12" title={t('settings.preferencesTitle')} description={t('settings.preferencesBody')}>
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Languages}
             label={t('settings.language')}
             description={selectedLanguage?.nativeLabel || language}
@@ -299,11 +263,11 @@ export const UserSettingsPage: React.FC<UserSettingsPageProps> = ({ user, langua
               />
             }
           />
-          <SettingRow icon={ICONS.Bell} label={t('settings.notifications')} description={t('settings.notificationsBody')} />
+          <SettingsRow icon={ICONS.Bell} label={t('settings.notifications')} description={t('settings.notificationsBody')} />
         </SettingsSection>
 
         <SettingsSection className="mb-12 last:mb-12" title={t('settings.accountTitle')} description={t('settings.accountBody')}>
-          <SettingRow
+          <SettingsRow
             icon={ICONS.LogOut}
             label={t('app.logout')}
             description={t('settings.logoutBody')}

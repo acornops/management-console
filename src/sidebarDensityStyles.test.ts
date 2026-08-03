@@ -20,8 +20,11 @@ describe('short desktop sidebar spacing contract', () => {
   });
 
   it('keeps target context navigation quiet and aligned with section headings', () => {
-    expect(desktopSidebar.match(/variant="tertiary"\s+size="sm"\s+onClick=\{onBackToWorkspaceSidebar\}/g)).toHaveLength(3);
-    expect(desktopSidebar).toContain('w-full justify-start gap-3 rounded-md px-3');
+    expect(desktopSidebar).toContain('<ManagedSubjectSidebar');
+    expect(desktopSidebarParts).toContain('onClick={() => navigate(model.backPath)}');
+    expect(desktopSidebarParts).toContain(
+      "'mb-1 justify-center px-0 [&>span:first-child]:justify-center [&>span:first-child]:gap-0"
+    );
     expect(desktopSidebar).not.toContain('rounded-lg border border-ui-border bg-ui-bg px-4');
     expect(desktopSidebarParts).toContain("'border-y border-ui-border bg-ui-surface px-2 py-3'");
   });

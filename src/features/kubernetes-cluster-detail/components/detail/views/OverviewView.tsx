@@ -1,30 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, Bot, Box, CircleCheck, Cpu, Layers, Server } from 'lucide-react';
+import { Activity, AlertTriangle, Box, Cpu, Layers, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
-  DataTableHeader,
-  DataTableHeaderCell,
   IconTile,
   InlineAlert,
   PageHeader,
-  PageShell,
-  StatusBadge
+  PageShell
 } from '@acornops/ui';
 import { MetricChart } from '@/components/common/MetricChart';
-import { issueSeverityTone, issueStatusTone, issueSupportingText, issueTargetScopeLabel, kubernetesIssueNamespace, shouldShowIssueStatus } from '@/pages/issues/issueUi';
+import { issueTargetScopeLabel, kubernetesIssueNamespace } from '@/pages/issues/issueUi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { ClusterMetricHistoryPoint, KubernetesCluster } from '@/types';
-import { formatRelativeTime as formatReadableRelativeTime, formatUserTime } from '@/utils/dateTime';
+import { formatUserTime } from '@/utils/dateTime';
 import { formatLastUpdated, getAgentConnectionState, getTelemetryFreshness, getTelemetryFreshnessLabel } from '@/utils/telemetry';
-import {
-  AutomaticInvestigationActivity,
-  shouldShowManualAssistantFallback
-} from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
-import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { TargetIssuesPanel } from '@/features/targets/issues/TargetIssuesPanel';
 
 interface OverviewViewProps {
   cluster: KubernetesCluster;
@@ -39,24 +32,6 @@ function getPodCount(cluster: KubernetesCluster): number {
 
 function formatTime(timestamp: number): string {
   return formatUserTime(timestamp, { fallback: '-' });
-}
-
-function formatRelativeTime(timestamp: number, now = Date.now()): string {
-  return formatReadableRelativeTime(timestamp, { now });
-}
-
-function severityRank(severity: ControlPlaneIssueItem['severity']): number {
-  if (severity === 'critical') return 0;
-  if (severity === 'warning') return 1;
-  return 2;
-}
-
-function issueTimestamp(issue: ControlPlaneIssueItem): number {
-  return Date.parse(issue.lastSeenAt || issue.updatedAt) || Date.now();
-}
-
-function issueFirstSeenTimestamp(issue: ControlPlaneIssueItem): number {
-  return Date.parse(issue.firstSeenAt || issue.createdAt) || issueTimestamp(issue);
 }
 
 interface MetricTimelinePoint {
@@ -117,7 +92,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const [clusterIssues, setClusterIssues] = useSessionCachedState<ControlPlaneIssueItem[] | null>(issueCacheKey, null);
   const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'idle');
   const [issueRequestVersion, setIssueRequestVersion] = useState(0);
-  const issueSectionTitleId = React.useId();
   useVisibilityAwareRefresh(() => {
     setIssueRequestVersion((value) => value + 1);
   });
@@ -177,22 +151,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
     };
   }, [cluster.id, cluster.workspaceId, issueCacheKey, issueRequestVersion]);
 
-  const reportedIssues = useMemo(
-    () =>
-      [...(clusterIssues || [])].sort((left, right) => {
-        const severityDelta = severityRank(left.severity) - severityRank(right.severity);
-        if (severityDelta !== 0) return severityDelta;
-        return issueTimestamp(right) - issueTimestamp(left);
-      }),
-    [clusterIssues]
-  );
   const hasIssueRows = clusterIssues !== null;
   const isInitialIssueLoad = issueLoadStatus === 'loading' && !hasIssueRows;
   const hasIssueCounts = issueSummary !== null || hasIssueRows;
-  const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
-  const criticalIssues = issueSummary ? issueSummary.critical : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'critical').length : 0;
-  const warningIssues = issueSummary ? issueSummary.warning : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'warning').length : 0;
-  const shouldShowIssueLoadFailure = issueLoadStatus === 'error' && (!issueSummary || issueSummary.total > 0);
+  const issueCount = issueSummary?.total ?? (clusterIssues?.length || 0);
   const scopedResourceCount =
     cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
@@ -263,179 +225,48 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
         }
       />
 
-      <section
-        aria-labelledby={issueSectionTitleId}
-        aria-busy={issueLoadStatus === 'loading' || undefined}
-        className="mb-8 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm"
-      >
-        <div className="flex flex-col gap-6 border-b border-ui-border bg-ui-bg px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex min-w-0 items-start gap-4">
-            <IconTile tone="accent" className="mt-1 bg-accent-soft text-accent-readable">
-              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-            </IconTile>
-            <div className="min-w-0">
-              <h2 id={issueSectionTitleId} className="type-row-title">
-                {t('clusterOverview.activeIssues')}
-              </h2>
+      <TargetIssuesPanel
+        workspaceId={cluster.workspaceId}
+        targetId={cluster.id}
+        targetType="kubernetes"
+        issues={clusterIssues}
+        issueSummary={issueSummary}
+        isLoading={isInitialIssueLoad}
+        loadFailed={issueLoadStatus === 'error'}
+        sourceForIssue={(issue) => kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}
+        onOpenAssistant={onOpenCopilot ? openIssueTriage : undefined}
+        onRetry={retryIssues}
+        labels={{
+          title: t('clusterOverview.activeIssues'),
+          description: (
+            <>
               <p className="type-caption mt-2 max-w-3xl">
-                {t('clusterOverview.activeIssuesScope', {
-                  pods: podCount,
-                  resources: scopedResourceCount
-                })}
+                {t('clusterOverview.activeIssuesScope', { pods: podCount, resources: scopedResourceCount })}
               </p>
               {hasIssueCounts && <p className="type-body mt-2 max-w-3xl">{t('clusterOverview.activeIssuesBody', { count: issueCount })}</p>}
-            </div>
-          </div>
-          {hasIssueCounts && (
-            <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge tone="neutral" className="px-3 py-1 type-caption normal-case tracking-normal">{t('clusterOverview.issueCount', { count: issueCount })}</StatusBadge>
-              <StatusBadge tone="danger" className="px-3 py-1 type-caption normal-case tracking-normal">
-                {t('clusterOverview.criticalIssues', { count: criticalIssues })}
-              </StatusBadge>
-              <StatusBadge tone="warning" className="px-3 py-1 type-caption normal-case tracking-normal">
-                {t('clusterOverview.warningIssues', { count: warningIssues })}
-              </StatusBadge>
-            </div>
-          )}
-        </div>
-
-        {isInitialIssueLoad ? (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="status" aria-live="polite">
-            <div className="rounded-md border border-ui-border bg-ui-bg p-3 text-accent-strong">
-              <Activity className="h-5 w-5 animate-pulse" aria-hidden="true" />
-            </div>
-            <h3 className="type-row-title mt-4">{t('clusterOverview.loadingIssuesTitle')}</h3>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.loadingIssuesBody')}</p>
-          </div>
-        ) : reportedIssues.length > 0 ? (
-          <>
-            <div className="hidden overflow-x-auto 2xl:block">
-              <DataTable caption={t('clusterOverview.activeIssues')} className="w-full">
-                <DataTableHeader>
-                  <DataTableRow>
-                    <DataTableHeaderCell density="compact">{t('clusterOverview.issue')}</DataTableHeaderCell>
-                    <DataTableHeaderCell density="compact">{t('clusterOverview.severity')}</DataTableHeaderCell>
-                    <DataTableHeaderCell density="compact">{t('clusterOverview.namespace')}</DataTableHeaderCell>
-                    <DataTableHeaderCell density="compact">{t('overview.lastSeenLabel')}</DataTableHeaderCell>
-                    {onOpenCopilot && <DataTableHeaderCell density="compact" numeric>{t('clusterOverview.action')}</DataTableHeaderCell>}
-                  </DataTableRow>
-                </DataTableHeader>
-                <DataTableBody>
-                  {reportedIssues.map((issue) => (
-                    <DataTableRow key={issue.id} className="border-b border-ui-border transition-colors last:border-b-0 hover:bg-ui-bg/70">
-                      <DataTableCell density="compact" className="max-w-[34rem]">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {shouldShowIssueStatus(issue.status) && (
-                            <StatusBadge tone={issueStatusTone(issue.status)}>{t(`issues.status.${issue.status}`)}</StatusBadge>
-                          )}
-                          <span className="type-caption text-ui-text-muted">
-                            {t('overview.firstSeenLabel')}: {formatRelativeTime(issueFirstSeenTimestamp(issue))}
-                          </span>
-                        </div>
-                        <h3 className="type-row-title mt-2 break-words">{issue.title}</h3>
-                        {issueSupportingText(issue) && <p className="type-body mt-1 break-words">{issueSupportingText(issue)}</p>}
-                        <AutomaticInvestigationActivity
-                          workspaceId={cluster.workspaceId}
-                          targetId={cluster.id}
-                          targetType="kubernetes"
-                          issueId={issue.id}
-                          activity={issue.automaticInvestigation}
-                        />
-                      </DataTableCell>
-                      <DataTableCell density="compact">
-                        <StatusBadge tone={issueSeverityTone(issue.severity)}>{t(`issues.severity.${issue.severity}`)}</StatusBadge>
-                      </DataTableCell>
-                      <DataTableCell density="compact" className="type-caption break-words">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</DataTableCell>
-                      <DataTableCell density="compact" className="type-caption">{formatRelativeTime(issueTimestamp(issue))}</DataTableCell>
-                      {onOpenCopilot && (
-                        <DataTableCell density="compact" className="text-right">
-                          {shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
-                            <Button
-                              onClick={() => openIssueTriage(issue)}
-                              variant="primary"
-                              size="md"
-                              className="whitespace-nowrap"
-                            >
-                              <Bot className="h-4 w-4" aria-hidden="true" />
-                              {t('clusterOverview.openAssistant')}
-                            </Button>
-                          )}
-                        </DataTableCell>
-                      )}
-                    </DataTableRow>
-                  ))}
-                </DataTableBody>
-              </DataTable>
-            </div>
-
-            <div className="divide-y divide-ui-border 2xl:hidden">
-              {reportedIssues.map((issue) => (
-                <article key={issue.id} className="p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge tone={issueSeverityTone(issue.severity)}>{t(`issues.severity.${issue.severity}`)}</StatusBadge>
-                    {shouldShowIssueStatus(issue.status) && (
-                      <StatusBadge tone={issueStatusTone(issue.status)}>{t(`issues.status.${issue.status}`)}</StatusBadge>
-                    )}
-                  </div>
-                  <h3 className="type-row-title mt-4 break-words">{issue.title}</h3>
-                  {issueSupportingText(issue) && <p className="type-body mt-2 break-words">{issueSupportingText(issue)}</p>}
-                  <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div>
-                      <dt className="type-micro-label text-ui-text-muted">{t('clusterOverview.namespace')}</dt>
-                      <dd className="type-caption mt-1 break-words">{kubernetesIssueNamespace(issue, t('clusterOverview.clusterWide'))}</dd>
-                    </div>
-                    <div>
-                      <dt className="type-micro-label text-ui-text-muted">{t('overview.firstSeenLabel')}</dt>
-                      <dd className="type-caption mt-1">{formatRelativeTime(issueFirstSeenTimestamp(issue))}</dd>
-                    </div>
-                    <div>
-                      <dt className="type-micro-label text-ui-text-muted">{t('overview.lastSeenLabel')}</dt>
-                      <dd className="type-caption mt-1">{formatRelativeTime(issueTimestamp(issue))}</dd>
-                    </div>
-                  </dl>
-                  <AutomaticInvestigationActivity
-                    workspaceId={cluster.workspaceId}
-                    targetId={cluster.id}
-                    targetType="kubernetes"
-                    issueId={issue.id}
-                    activity={issue.automaticInvestigation}
-                  />
-                  {onOpenCopilot && shouldShowManualAssistantFallback(issue.automaticInvestigation) && (
-                    <Button
-                      onClick={() => openIssueTriage(issue)}
-                      variant="primary"
-                      size="md"
-                      className="mt-4"
-                    >
-                      <Bot className="h-4 w-4" aria-hidden="true" />
-                      {t('clusterOverview.openAssistant')}
-                    </Button>
-                  )}
-                </article>
-              ))}
-            </div>
-          </>
-        ) : shouldShowIssueLoadFailure ? (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="alert">
-            <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
-              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <h3 className="type-row-title mt-4">{t('clusterOverview.issueLoadFailedTitle')}</h3>
-            <p className="type-body mt-2 max-w-xl">{t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody')}</p>
-            <Button onClick={retryIssues} variant="secondary" size="sm" className="mt-4">
-              {t('common.retry')}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
-            <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
-              <CircleCheck className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <h3 className="type-row-title mt-4">{t('clusterOverview.noIssuesTitle')}</h3>
-            <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noIssuesBody')}</p>
-          </div>
-        )}
-      </section>
+            </>
+          ),
+          issueCount: (count) => t('clusterOverview.issueCount', { count }),
+          criticalCount: (count) => t('clusterOverview.criticalIssues', { count }),
+          warningCount: (count) => t('clusterOverview.warningIssues', { count }),
+          issueColumn: t('clusterOverview.issue'),
+          severityColumn: t('clusterOverview.severity'),
+          sourceColumn: t('clusterOverview.namespace'),
+          firstSeen: t('overview.firstSeenLabel'),
+          lastSeen: t('overview.lastSeenLabel'),
+          actionColumn: t('clusterOverview.action'),
+          openAssistant: t('clusterOverview.openAssistant'),
+          loadingTitle: t('clusterOverview.loadingIssuesTitle'),
+          loadingBody: t('clusterOverview.loadingIssuesBody'),
+          failureTitle: t('clusterOverview.issueLoadFailedTitle'),
+          failureBody: t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody'),
+          emptyTitle: t('clusterOverview.noIssuesTitle'),
+          emptyBody: t('clusterOverview.noIssuesBody'),
+          retry: t('common.retry'),
+          severityLabel: (severity) => t(`issues.severity.${severity}`),
+          statusLabel: (status) => t(`issues.status.${status}`)
+        }}
+      />
 
       {metricHistoryStatus === 'error' && (
         <InlineAlert

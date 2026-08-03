@@ -90,7 +90,7 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(list).toContain('<DataSurface');
     expect(list).toContain('<EmptyState');
     expect(list).toContain('<StatusBadge');
-    expect(list).toContain('<OverflowActionMenu');
+    expect(list).toContain('<ActionMenu');
     expect(list).toContain("t('workspaceWebhooks.columns.destination')");
     expect(list).toContain("t('workspaceWebhooks.columns.modified')");
     expect(page).toContain('<DestructiveConfirmationDialog');

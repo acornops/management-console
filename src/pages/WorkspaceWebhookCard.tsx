@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, buttonClassName } from '@acornops/ui';
 import { MenuItem } from '@acornops/ui';
 import { InlineConfirmation } from '@acornops/ui';
-import { OverflowActionMenu } from '@acornops/ui';
+import { ActionMenu } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
@@ -50,7 +50,7 @@ export const WorkspaceWebhookActionMenu: React.FC<WorkspaceWebhookCardProps> = (
   };
 
   return (
-    <OverflowActionMenu
+    <ActionMenu
       ref={(node) => {
         if (node) actionButtonRefs.current.set(trigger.id, node);
         else actionButtonRefs.current.delete(trigger.id);
@@ -77,7 +77,7 @@ export const WorkspaceWebhookActionMenu: React.FC<WorkspaceWebhookCardProps> = (
           {t('eventTriggers.actions.delete')}
         </MenuItem>
       </>}
-    </OverflowActionMenu>
+    </ActionMenu>
   );
 };
 

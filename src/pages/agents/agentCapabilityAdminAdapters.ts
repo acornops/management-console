@@ -44,6 +44,7 @@ const textBytes = (value: string) => new TextEncoder().encode(value).byteLength;
 
 export function toAgentCapabilitySubject(agent: AgentDefinition): CapabilitySubject {
   return {
+    kind: 'agent',
     id: agent.id,
     workspaceId: agent.workspaceId,
     name: agent.name

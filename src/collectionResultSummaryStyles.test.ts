@@ -3,9 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const sources = [
-  'features/targets/admin/McpServersInventory.tsx',
-  'features/targets/admin/TargetSkillsInventory.tsx',
-  'features/targets/admin/TargetToolsView.tsx',
+  'features/targets/admin/TargetCapabilityInventoryShell.tsx',
   'pages/WorkspaceMembersPage.tsx',
   'pages/workflows/WorkflowTriggerToolbar.tsx',
   'pages/workspace-members/WorkspaceInvitationsPanel.tsx'
@@ -16,6 +14,16 @@ describe('collection result summary styles', () => {
     for (const source of sources) {
       expect(source).toContain('CollectionResultSummary');
       expect(source).not.toMatch(/type-label[^\n]*rounded-full[^\n]*border/);
+    }
+  });
+
+  it('routes capability inventory feedback through the shared shell', () => {
+    for (const path of [
+      'features/targets/admin/McpServersInventory.tsx',
+      'features/targets/admin/TargetSkillsInventory.tsx',
+      'features/targets/admin/TargetToolsView.tsx'
+    ]) {
+      expect(readFileSync(resolve(__dirname, path), 'utf8')).toContain('<TargetCapabilityInventoryToolbar');
     }
   });
 });

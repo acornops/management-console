@@ -5,7 +5,7 @@ import { Button, CollectionResultSummary } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
-import { DataTableFrame, DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
+import { DataTableHeader, DataTableHeaderCell } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import type { SelectOption } from '@acornops/ui';
@@ -39,6 +39,11 @@ import {
   type TargetToolsViewProps,
   type ToolDraft
 } from '@/features/targets/admin/TargetToolsView.helpers';
+import {
+  TargetCapabilityInventorySummary,
+  TargetCapabilityInventoryTable,
+  TargetCapabilityInventoryToolbar
+} from '@/features/targets/admin/TargetCapabilityInventoryShell';
 
 export type { TargetToolsDataSource } from '@/features/targets/admin/TargetToolsView.helpers';
 
@@ -322,34 +327,26 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
       {catalog ? (
         <>
-          {catalog.items.length > 0 && <section data-target-tools-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-            <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
-              <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
-                <h2 className="type-row-title">{t('tools.inventoryTitle')}</h2>
-                <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('tools.inventoryBody')}</p>
-              </div>
-              <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
-                <p className="type-caption text-ui-text-muted">{t('tools.enabledToolsMetric')}</p>
-                <p className="type-data mt-0.5">{toolSummary.enabled}<span className="type-caption text-ui-text-muted"> / {toolSummary.total}</span></p>
-              </div>
-              <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
-                <p className="type-caption text-ui-text-muted">{t('tools.writeCapableTools')}</p>
-                <p className="type-data mt-0.5 inline-flex items-center gap-2">
-                  {toolSummary.write}
-                  <span className="h-2 w-2 rounded-full bg-status-warning" />
-                </p>
-              </div>
-              <div className="px-5 py-3.5">
-                <p className="type-caption text-ui-text-muted">{t('tools.assistantVisibleTools')}</p>
-                <p className="type-data mt-0.5">{toolSummary.assistantVisible}</p>
-              </div>
-            </div>
-          </section>}
+          {catalog.items.length > 0 && (
+            <TargetCapabilityInventorySummary
+              data-target-tools-access-summary="true"
+              title={t('tools.inventoryTitle')}
+              description={t('tools.inventoryBody')}
+              metrics={[
+                {
+                  label: t('tools.enabledToolsMetric'),
+                  value: <>{toolSummary.enabled}<span className="type-caption text-ui-text-muted"> / {toolSummary.total}</span></>
+                },
+                { label: t('tools.writeCapableTools'), value: toolSummary.write, indicator: 'warning' },
+                { label: t('tools.assistantVisibleTools'), value: toolSummary.assistantVisible }
+              ]}
+            />
+          )}
 
           <section data-target-tools-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
             {(catalog.items.length > 0 || hasActiveFilters) && (
-              <div className="grid gap-4 border-b border-ui-border px-6 py-6 sm:px-8 xl:grid-cols-[minmax(0,1fr)_12rem_9.5rem] xl:items-center">
-                <div className="relative min-w-0">
+              <TargetCapabilityInventoryToolbar
+                search={<div className="relative min-w-0">
                   <label htmlFor="target-tool-search" className="sr-only">{t('tools.searchTools')}</label>
                   <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
                   <TextInput
@@ -360,18 +357,16 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                     placeholder={t('tools.searchTools')}
                     className={toolSearchInputClassName}
                   />
-                </div>
-                <Select<typeof toolFilter>
+                </div>}
+                filter={<Select<typeof toolFilter>
                   value={toolFilter}
                   options={toolFilterOptions}
                   onChange={setToolFilter}
                   className="w-full"
                   ariaLabel={t('tools.filterTools')}
-                />
-                <CollectionResultSummary className="xl:justify-end">
-                  {t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
-                </CollectionResultSummary>
-              </div>
+                />}
+                resultSummary={t('tools.showingTools', { count: filteredTools.length, total: catalog.items.length })}
+              />
             )}
             <div className="min-w-0">
               <CollectionState
@@ -383,7 +378,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 filteredEmpty={<EmptyState embedded headingLevel={2} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
                 error={null}
               >
-                <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">
+                <TargetCapabilityInventoryTable>
                   <DataTable caption={t('tools.title')} className="w-full table-fixed text-left" aria-label={t('tools.title')}>
                     <colgroup>
                       <col className="w-[34%]" />
@@ -418,7 +413,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                       ))}
                     </DataTableBody>
                   </DataTable>
-                </DataTableFrame>
+                </TargetCapabilityInventoryTable>
               </CollectionState>
             </div>
           </section>
@@ -447,7 +442,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         />
       )}
 
-      {editingTool?.id === 'target_insights' && targetInsightsAction === 'activity' && (
+      {subject.kind === 'target' && editingTool?.id === 'target_insights' && targetInsightsAction === 'activity' && (
         <TargetInsightsActivityDialog
           workspaceId={subject.workspaceId}
           targetId={subject.id}

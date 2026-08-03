@@ -42,7 +42,6 @@ import {
   ModalStepIndicator,
   NavigationItem,
   NavigationSection,
-  OverflowActionMenu,
   SegmentedTabs,
   Sidebar,
   TextInput,
@@ -368,14 +367,14 @@ const Catalog = () => {
               <Tooltip content="Explains an unfamiliar action">
                 <Button variant="secondary">Hover for help</Button>
               </Tooltip>
-              <OverflowActionMenu label="Catalog overflow actions">
+              <ActionMenu label="Catalog overflow actions">
                 {(close) => (
                   <>
                     <MenuItem onClick={() => close()}>Duplicate</MenuItem>
                     <MenuItem destructive onClick={() => close()}><Trash2 className="h-4 w-4" />Delete</MenuItem>
                   </>
                 )}
-              </OverflowActionMenu>
+              </ActionMenu>
               <Button variant="secondary" onClick={() => setToastVisible(true)}>Show toast</Button>
               <Button variant="secondary" onClick={() => setInlineConfirmationOpen(true)}>Show inline confirmation</Button>
             </div>

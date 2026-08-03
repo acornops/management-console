@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { ChevronLeft } from 'lucide-react';
 import {
   NavigationItem,
   NavigationLink,
@@ -12,6 +13,8 @@ import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import { NavCountBadge } from '@/app/NavCountBadge';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import { ExperimentalBadge } from '@/components/common/ExperimentalBadge';
+import type { ManagedSubjectNavigationModel } from '@/app/managedSubjectNavigation';
+import { appHref } from '@/app/workspaceNavigation';
 
 const MotionNavigationItem = motion.create(NavigationItem);
 
@@ -152,6 +155,88 @@ export const SidebarNavButton: React.FC<{
   );
   return collapsed ? <Tooltip content={label} side="right" className="w-full">{control}</Tooltip> : control;
 };
+
+export const ManagedSubjectSidebar: React.FC<{
+  collapsed: boolean;
+  model: ManagedSubjectNavigationModel;
+  navigate: (path: string) => void;
+}> = ({ collapsed, model, navigate }) => (
+  <>
+    <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'mb-8 px-4 pt-2'}>
+      <NavigationItem
+        onClick={() => navigate(model.backPath)}
+        leading={collapsed ? (
+          <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          </IconTile>
+        ) : <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />}
+        className={collapsed
+          ? 'mb-1 justify-center px-0 [&>span:first-child]:justify-center [&>span:first-child]:gap-0 [&>span:first-child>span:last-child]:sr-only'
+          : 'mb-4'}
+        aria-label={model.backLabel}
+      >
+        <span className={collapsed ? 'sr-only' : undefined}>{model.backLabel}</span>
+      </NavigationItem>
+      <SidebarTargetIdentity collapsed={collapsed} {...model.identity} />
+    </div>
+
+    <SidebarSection title={model.operationsLabel} compactAfter collapsed={collapsed}>
+      {model.operations.map((item) => {
+        const Icon = item.icon;
+        return (
+          <SidebarNavButton
+            key={item.id}
+            active={item.active}
+            disabled={false}
+            icon={<Icon className={navIconClass(item.active)} />}
+            label={item.label}
+            onClick={() => navigate(item.path)}
+            href={appHref(item.path)}
+            badge={item.badge}
+            assistantStatus={item.assistantStatus}
+            assistantStatusLabel={item.assistantStatusLabel}
+            collapsed={collapsed}
+          />
+        );
+      })}
+    </SidebarSection>
+
+    <SidebarSection title={model.capabilitiesLabel} compactAfter collapsed={collapsed}>
+      {model.capabilities.map((item) => {
+        const Icon = item.icon;
+        return (
+          <SidebarNavButton
+            key={item.id}
+            active={item.active}
+            disabled={false}
+            icon={<Icon className={navIconClass(item.active)} />}
+            label={item.label}
+            onClick={() => navigate(item.path)}
+            href={appHref(item.path)}
+            collapsed={collapsed}
+          />
+        );
+      })}
+    </SidebarSection>
+
+    <TargetSettingsDivider>
+      {(() => {
+        const Icon = model.settings.icon;
+        return (
+          <SidebarNavButton
+            active={model.settings.active}
+            disabled={false}
+            icon={<Icon className={navIconClass(model.settings.active)} />}
+            label={model.settings.label}
+            onClick={() => navigate(model.settings.path)}
+            href={appHref(model.settings.path)}
+            collapsed={collapsed}
+          />
+        );
+      })()}
+    </TargetSettingsDivider>
+  </>
+);
 
 export const WorkspaceSidebarNavLink: React.FC<{
   active: boolean;

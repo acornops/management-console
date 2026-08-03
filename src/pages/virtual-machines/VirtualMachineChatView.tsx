@@ -1,5 +1,5 @@
 import React from 'react';
-import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
+import { ControlledTargetChatView } from '@/features/targets/chat/components/ControlledTargetChatView';
 import { useTargetChat } from '@/features/targets/chat/hooks/useTargetChat';
 import { createMarkdownComponents } from '@/features/targets/chat/lib/markdown';
 import { toVirtualMachineTargetDescriptor } from '@/features/targets/targetDescriptor';
@@ -77,7 +77,8 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
   }, [controller.handleCreateSessionWithInput, initialInputValue, onInitialInputConsumed]);
 
   return (
-    <TargetChatView
+    <ControlledTargetChatView
+      controller={controller}
       currentUserId={currentUserId}
       subject={target}
       isDark={isDark}
@@ -91,49 +92,14 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       footerKey="virtualMachines.chat.footer"
       footerNoAccessKey="chat.footerNoAccess"
       canChat={canChat}
-      isConversationOwner={controller.isActiveSessionOwner}
-      conversationNotice={controller.conversationNotice}
-      sessionDeepLinkError={controller.sessionDeepLinkError}
-      recentActivityWarning={controller.recentActivityWarning}
       canRequestWriteRuns={false}
       canApproveWriteActions={false}
       canCancelRuns={canCancelRuns}
       canDeleteSessions={canDeleteSessions}
       canManageAiSettings={canManageAiSettings}
-      isRunActive={controller.isRunActive}
-      isSessionsLoading={controller.isSessionsLoading}
-      isLoadingEarlierMessages={controller.isLoadingEarlierMessages}
-      hasEarlierMessages={controller.hasEarlierMessages}
-      activeRunId={controller.activeRunId}
-      isCancellingRun={controller.isCancellingRun}
-      inputValue={controller.inputValue}
-      sessions={controller.sessions}
-      activeSessionId={controller.activeSessionId}
-      composerRuntimeSelection={controller.composerRuntimeSelection}
-      workspaceAiSettings={controller.workspaceAiSettings}
-      isWorkspaceAiSettingsLoading={controller.isWorkspaceAiSettingsLoading}
-      workspaceAiSettingsError={controller.workspaceAiSettingsError}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
-      visibleMessages={controller.visibleMessages}
-      runTracesByRunId={controller.runTracesByRunId}
-      transcriptRef={controller.transcriptRef}
-      onChatScroll={controller.handleChatScroll}
-      onLoadEarlierMessages={controller.handleLoadEarlierMessages}
       onOpenAiSettings={onOpenAiSettings}
-      onInputChange={controller.setInputValue}
-      onComposerRuntimeSelectionChange={controller.setComposerRuntimeSelection}
-      onSend={controller.handleSend}
-      onEditLastUserMessage={controller.handleEditLastUserMessage}
-      onApprove={controller.handleApprove}
-      onReject={controller.handleReject}
-      onSelectSession={controller.setActiveSessionId}
-      onCreateSession={controller.handleCreateSession}
-      onDismissRecentActivityWarning={controller.handleDismissRecentActivityWarning}
-      onOpenRecentActivitySession={controller.handleOpenRecentActivitySession}
-      onDeleteSession={controller.handleDeleteSession}
-      onCancelRun={controller.handleCancelRun}
-      isInFlightAssistantPlaceholder={controller.isInFlightAssistantPlaceholder}
       displayMode={displayMode}
       onClose={onClose}
       onMaximize={onMaximize}

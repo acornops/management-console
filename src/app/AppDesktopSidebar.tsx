@@ -7,9 +7,8 @@ import { ICONS } from '@/constants';
 import { workspaceLandingPath } from '@/app/appNavigationGuards';
 import { AppDesktopSidebarHeader } from '@/app/AppDesktopSidebarHeader';
 import { AppDesktopAccountMenu } from '@/app/AppDesktopAccountMenu';
-import { AgentSubview, AppPaths, ClusterSubview, VmSubview } from '@/utils/routes';
-import type { ActiveResourceNav } from '@/app/appRouteState';
-import { navIconClass, SidebarNavButton, SidebarSection, SidebarTargetIdentity, TargetSettingsDivider, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
+import { AppPaths } from '@/utils/routes';
+import { ManagedSubjectSidebar, navIconClass, SidebarSection, TargetSettingsDivider, WorkspaceSidebarNavLink } from '@/app/AppDesktopSidebarParts';
 import type { AppDesktopSidebarProps } from '@/app/AppNavigation.types';
 import {
   appHref,
@@ -25,17 +24,9 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   selectedWorkspace,
   selectedWorkspaceId,
   selectedWorkspaceInitials,
-  selectedSidebarAgent,
-  selectedSidebarCluster,
-  selectedSidebarVm,
-  isAgentSidebar,
-  isClusterSidebar,
-  isVirtualMachineSidebar,
+  managedSubjectNavigation,
   activeResourceNav,
   pendingApprovalCount,
-  selectedClusterIssueCount,
-  clusterAssistantNavStatus,
-  selectedVmIssueCount,
   themePreference,
   resolvedTheme,
   isAccountMenuOpen,
@@ -43,10 +34,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   sidebarAccountMenuRef,
   sidebarWorkspaceMenuRef,
   navigate,
-  onBackToWorkspaceSidebar,
-  onNavigateAgentSubview,
-  onNavigateClusterSubview,
-  onNavigateVmSubview,
   onOpenCreateWorkspace,
   onSelectWorkspaceContext,
   onSetAccountMenuOpen,
@@ -68,9 +55,6 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
   });
   const hasWorkspaces = workspaces.length > 0;
   const selectedWorkspaceName = selectedWorkspace?.name || t('app.noWorkspace');
-  const selectedAgentName = selectedSidebarAgent?.name || t('app.unknownAgent');
-  const selectedClusterName = selectedSidebarCluster?.name || t('app.unknownCluster');
-  const selectedVmName = selectedSidebarVm?.name || t('app.unknownVirtualMachine');
   const isAccountSettingsActive = activeResourceNav === 'accountSettings';
   const workspaceHomePath = selectedWorkspace ? workspaceLandingPath(selectedWorkspace) : AppPaths.workspaces();
   const workspaceNavigationGroups = getWorkspaceNavigationGroups({
@@ -165,7 +149,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
 
       <nav id="desktop-sidebar-navigation" data-sidebar-density-nav="true" aria-label={t('app.workspaceNavigation')} className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-0.5">
-          {!isAgentSidebar && !isClusterSidebar && !isVirtualMachineSidebar && (
+          {!managedSubjectNavigation && (
             <>
               <div data-sidebar-workspace-context="true" className={`relative mt-1 min-w-0 px-3 ${collapsed ? 'mb-3' : 'mb-5'}`} ref={sidebarWorkspaceMenuRef}>
                 {hasWorkspaces ? (
@@ -342,261 +326,12 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
             </>
           )}
 
-          {isAgentSidebar && (
-            <>
-              <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'mb-8 px-4 pt-2'}>
-                <MotionButton
-                  type="button"
-                  variant="tertiary"
-                  size="sm"
-                  onClick={onBackToWorkspaceSidebar}
-                  className={`control-target group flex h-10 items-center justify-center gap-2 text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${
-                    collapsed
-                      ? 'mb-1 w-full rounded-md border border-transparent bg-transparent p-0 hover:bg-transparent'
-                      : 'mb-4 w-full justify-start gap-3 rounded-md px-3 py-2 hover:bg-ui-bg hover:text-accent-strong'
-                  }`}
-                  aria-label={t('agentChat.backToAgents')}
-                >
-                  {collapsed ? (
-                    <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
-                      <ICONS.ChevronLeft className="h-3.5 w-3.5" />
-                    </IconTile>
-                  ) : <ICONS.ChevronLeft className="h-3.5 w-3.5" />}
-                  <span className={collapsed ? 'sr-only' : undefined}>{t('agentChat.backToAgents')}</span>
-                </MotionButton>
-                <SidebarTargetIdentity
-                  collapsed={collapsed}
-                  emoji={selectedSidebarAgent?.avatarEmoji}
-                  label={t('app.activeAgent')}
-                  name={selectedAgentName}
-                  testId="agent"
-                />
-              </div>
-
-              <SidebarSection title={t('app.operations')} compactAfter collapsed={collapsed}>
-                {([
-                  ['chat', 'agentChat', t('app.agentAssistant'), ICONS.BotMessageSquare]
-                ] as Array<[AgentSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
-                  <SidebarNavButton
-                    key={tab}
-                    active={activeResourceNav === nav}
-                    disabled={!selectedSidebarAgent}
-                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
-                    label={label}
-                    onClick={() => onNavigateAgentSubview(tab)}
-                    href={selectedSidebarAgent ? appHref(AppPaths.workspaceAgentDetail(selectedSidebarAgent.workspaceId, selectedSidebarAgent.id, tab)) : undefined}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </SidebarSection>
-
-              <SidebarSection title={t('app.capabilities')} compactAfter collapsed={collapsed}>
-                {([
-                  ['mcpServers', 'agentMcpServers', t('app.mcpServers'), ICONS.Server],
-                  ['skills', 'agentSkills', t('app.skills'), ICONS.BookOpen],
-                  ['tools', 'agentTools', t('app.tools'), ICONS.Wrench]
-                ] as Array<[AgentSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>).map(([tab, nav, label, Icon]) => (
-                  <SidebarNavButton
-                    key={tab}
-                    active={activeResourceNav === nav}
-                    disabled={!selectedSidebarAgent}
-                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
-                    label={label}
-                    onClick={() => onNavigateAgentSubview(tab)}
-                    href={selectedSidebarAgent ? appHref(AppPaths.workspaceAgentDetail(selectedSidebarAgent.workspaceId, selectedSidebarAgent.id, tab)) : undefined}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </SidebarSection>
-
-              <TargetSettingsDivider>
-                <SidebarNavButton
-                  active={activeResourceNav === 'agentSettings'}
-                  disabled={!selectedSidebarAgent}
-                  icon={<ICONS.Settings className={navIconClass(activeResourceNav === 'agentSettings')} />}
-                  label={t('app.agentSettings')}
-                  onClick={() => onNavigateAgentSubview('settings')}
-                  href={selectedSidebarAgent ? appHref(AppPaths.workspaceAgentDetail(selectedSidebarAgent.workspaceId, selectedSidebarAgent.id, 'settings')) : undefined}
-                  collapsed={collapsed}
-                />
-              </TargetSettingsDivider>
-            </>
-          )}
-
-          {isClusterSidebar && (
-            <>
-              <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
-                <MotionButton
-                  type="button"
-                  variant="tertiary"
-                  size="sm"
-                  onClick={onBackToWorkspaceSidebar}
-                  className={`control-target group flex h-10 items-center justify-center gap-2 text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${
-                    collapsed
-                      ? 'mb-1 w-full rounded-md border border-transparent bg-transparent p-0 hover:bg-transparent'
-                      : 'mb-4 w-full justify-start gap-3 rounded-md px-3 py-2 hover:bg-ui-bg hover:text-accent-strong'
-                  }`}
-                  aria-label={t('app.backToWorkspace')}
-                >
-                  {collapsed ? (
-                    <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
-                      <ICONS.ChevronLeft className="w-3.5 h-3.5" />
-                    </IconTile>
-                  ) : <ICONS.ChevronLeft className="w-3.5 h-3.5" />}
-                  <span className={collapsed ? 'sr-only' : undefined}>{t('app.backToWorkspace')}</span>
-                </MotionButton>
-                <SidebarTargetIdentity
-                  collapsed={collapsed}
-                  label={t('app.activeCluster')}
-                  name={selectedClusterName}
-                  testId="cluster"
-                />
-              </div>
-
-              <SidebarSection title={t('app.operations')} compactAfter collapsed={collapsed}>
-                {(
-                  [
-                    ['overview', 'clusterOverview', t('app.overview'), ICONS.LayoutGrid],
-                    ['chat', 'clusterChat', t('app.clusterAssistant'), ICONS.BotMessageSquare],
-                    ['resources', 'clusterResources', t('app.resources'), ICONS.Activity]
-                  ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>
-                ).map(([tab, nav, label, Icon]) => (
-                  <SidebarNavButton
-                    key={tab}
-                    active={activeResourceNav === nav}
-                    disabled={!selectedSidebarCluster}
-                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
-                    label={label}
-                    onClick={() => onNavigateClusterSubview(tab)}
-                    badge={tab === 'overview' && selectedClusterIssueCount > 0 ? selectedClusterIssueCount : undefined}
-                    assistantStatus={tab === 'chat' ? clusterAssistantNavStatus : 'idle'}
-                    assistantStatusLabel={tab === 'chat' && clusterAssistantNavStatus !== 'idle' ? t(`app.aiAssistantStatus.${clusterAssistantNavStatus}`) : undefined}
-                    href={selectedSidebarCluster ? appHref(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab)) : undefined}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </SidebarSection>
-
-              <SidebarSection title={t('app.capabilities')} compactAfter collapsed={collapsed}>
-                {(
-                  [
-                    ['mcpServers', 'clusterMcpServers', t('app.mcpServers'), ICONS.Server],
-                    ['skills', 'clusterSkills', t('app.skills'), ICONS.BookOpen],
-                    ['tools', 'clusterTools', t('app.tools'), ICONS.Wrench]
-                  ] as Array<[ClusterSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>
-                ).map(([tab, nav, label, Icon]) => (
-                  <SidebarNavButton
-                    key={tab}
-                    active={activeResourceNav === nav}
-                    disabled={!selectedSidebarCluster}
-                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
-                    label={label}
-                    onClick={() => onNavigateClusterSubview(tab)}
-                    href={selectedSidebarCluster ? appHref(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab)) : undefined}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </SidebarSection>
-
-              <TargetSettingsDivider>
-                <SidebarNavButton
-                  active={activeResourceNav === 'clusterSettings'}
-                  disabled={!selectedSidebarCluster}
-                  icon={<ICONS.Settings className={navIconClass(activeResourceNav === 'clusterSettings')} />}
-                  label={t('app.clusterSettings')}
-                  onClick={() => onNavigateClusterSubview('settings')}
-                  href={selectedSidebarCluster ? appHref(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, 'settings')) : undefined}
-                  collapsed={collapsed}
-                />
-              </TargetSettingsDivider>
-            </>
-          )}
-
-          {isVirtualMachineSidebar && (
-            <>
-              <div data-sidebar-target-context="true" className={collapsed ? 'mb-2 px-3 pt-1' : 'px-4 mb-8 pt-2'}>
-                <MotionButton
-                  type="button"
-                  variant="tertiary"
-                  size="sm"
-                  onClick={onBackToWorkspaceSidebar}
-                  className={`control-target group flex h-10 items-center justify-center gap-2 text-ui-text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 ${
-                    collapsed
-                      ? 'mb-1 w-full rounded-md border border-transparent bg-transparent p-0 hover:bg-transparent'
-                      : 'mb-4 w-full justify-start gap-3 rounded-md px-3 py-2 hover:bg-ui-bg hover:text-accent-strong'
-                  }`}
-                  aria-label={t('app.backToWorkspace')}
-                >
-                  {collapsed ? (
-                    <IconTile size="xs" data-rail-context-control="back" className="transition-colors group-hover:text-accent-strong">
-                      <ICONS.ChevronLeft className="w-3.5 h-3.5" />
-                    </IconTile>
-                  ) : <ICONS.ChevronLeft className="w-3.5 h-3.5" />}
-                  <span className={collapsed ? 'sr-only' : undefined}>{t('app.backToWorkspace')}</span>
-                </MotionButton>
-                <SidebarTargetIdentity
-                  collapsed={collapsed}
-                  label={t('app.activeVirtualMachine')}
-                  name={selectedVmName}
-                  testId="virtual-machine"
-                />
-              </div>
-
-              <SidebarSection title={t('app.operations')} compactAfter collapsed={collapsed}>
-                {(
-                  [
-                    ['overview', 'vmOverview', t('app.overview'), ICONS.LayoutGrid],
-                    ['chat', 'vmChat', t('app.vmAssistant'), ICONS.BotMessageSquare],
-                    ['resources', 'vmResources', t('app.resources'), ICONS.Activity]
-                  ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>
-                ).map(([tab, nav, label, Icon]) => (
-                  <SidebarNavButton
-                    key={tab}
-                    active={activeResourceNav === nav}
-                    disabled={!selectedSidebarVm}
-                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
-                    label={label}
-                    onClick={() => onNavigateVmSubview(tab)}
-                    badge={tab === 'overview' && selectedVmIssueCount > 0 ? selectedVmIssueCount : undefined}
-                    href={selectedSidebarVm ? appHref(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab)) : undefined}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </SidebarSection>
-
-              <SidebarSection title={t('app.capabilities')} compactAfter collapsed={collapsed}>
-                {(
-                  [
-                    ['mcpServers', 'vmMcpServers', t('app.mcpServers'), ICONS.Server],
-                    ['skills', 'vmSkills', t('app.skills'), ICONS.BookOpen],
-                    ['tools', 'vmTools', t('app.tools'), ICONS.Wrench]
-                  ] as Array<[VmSubview, ActiveResourceNav, string, typeof ICONS.LayoutGrid]>
-                ).map(([tab, nav, label, Icon]) => (
-                  <SidebarNavButton
-                    key={tab}
-                    active={activeResourceNav === nav}
-                    disabled={!selectedSidebarVm}
-                    icon={<Icon className={navIconClass(activeResourceNav === nav)} />}
-                    label={label}
-                    onClick={() => onNavigateVmSubview(tab)}
-                    href={selectedSidebarVm ? appHref(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab)) : undefined}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </SidebarSection>
-
-              <TargetSettingsDivider>
-                <SidebarNavButton
-                  active={activeResourceNav === 'vmSettings'}
-                  disabled={!selectedSidebarVm}
-                  icon={<ICONS.Settings className={navIconClass(activeResourceNav === 'vmSettings')} />}
-                  label={t('app.vmSettings')}
-                  onClick={() => onNavigateVmSubview('settings')}
-                  href={selectedSidebarVm ? appHref(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, 'settings')) : undefined}
-                  collapsed={collapsed}
-                />
-              </TargetSettingsDivider>
-            </>
+          {managedSubjectNavigation && (
+            <ManagedSubjectSidebar
+              collapsed={collapsed}
+              model={managedSubjectNavigation}
+              navigate={navigate}
+            />
           )}
         </div>
       </nav>

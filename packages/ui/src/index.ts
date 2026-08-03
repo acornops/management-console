@@ -25,7 +25,6 @@ export * from './Loading';
 export * from './MasterDetailLayout';
 export * from './ModalStepIndicator';
 export * from './Navigation';
-export * from './OverflowActionMenu';
 export * from './OverlayFrames';
 export * from './PageComposition';
 export * from './PageSearchInput';

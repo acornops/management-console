@@ -20,8 +20,8 @@ import {
   resourceExplorerLayout,
   resourcesView,
   targetSkillsInventory,
+  targetIssuesPanel,
   targetToolsView,
-  virtualMachineIssuesPanel,
   virtualMachineResourcesView,
   virtualMachinesListView,
   webhookList,
@@ -62,7 +62,7 @@ describe('surface behavior contracts', () => {
 
   it('keeps table rows visibly highlighted on hover', () => {
     expect(membersPage).toContain('transition-colors hover:bg-accent-soft/45');
-    expect(clusterOverviewView).toContain('transition-colors last:border-b-0 hover:bg-ui-bg/70');
+    expect(targetIssuesPanel).toContain('transition-colors last:border-b-0 hover:bg-ui-bg/70');
     expect(markdownComponents).toContain("import remarkGfm from 'remark-gfm';");
     expect(markdownComponents).toContain('export const markdownRemarkPlugins = [remarkGfm];');
     expect(markdownComponents).toContain("const tableRowHoverClass = isUserTone ? 'hover:bg-ui-bg/10' : 'hover:bg-ui-bg/70'");
@@ -116,8 +116,7 @@ describe('surface behavior contracts', () => {
       workspaceApprovalsPage,
       auditLogPage,
       membersPage,
-      clusterOverviewView,
-      virtualMachineIssuesPanel,
+      targetIssuesPanel,
       virtualMachineResourcesView
     ].forEach((surface) => expect(surface).toContain('<DataTableHeader'));
     [
@@ -140,8 +139,7 @@ describe('surface behavior contracts', () => {
     ].forEach((surface) => expect(surface).toContain('collectionState={{'));
     expect(workspaceSchedulesPage).toContain('density="dense"');
     expect(workspaceApprovalsPage).toContain('density="dense"');
-    expect(clusterOverviewView).toContain('density="compact"');
-    expect(virtualMachineIssuesPanel).toContain('density="compact"');
+    expect(targetIssuesPanel).toContain('density="compact"');
     expect(virtualMachineResourcesView).not.toContain('<th');
   });
 

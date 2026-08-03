@@ -25,13 +25,13 @@ test('default and custom Agents use the same compact resource treatment and sett
   await page.getByRole('button', { name: 'Open details for Workflow Analyst' }).click();
   const defaultHeader = page.getByRole('heading', { level: 1, name: 'Agent chat' }).locator('..');
   await expect(defaultHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await page.getByRole('link', { name: 'Agent Settings' }).click();
-  await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
+  await page.goto(`/workspaces/${workspaceId}/agents/fixture-workflow-analyst/settings`);
+  await expect(page.getByRole('button', { name: 'Collapse Agent definition' })).toBeVisible();
 
   await page.goto(`/workspaces/${workspaceId}/agents/fixture-specialist/settings`);
   const customHeader = page.getByRole('heading', { name: 'Agent Settings' }).locator('..');
   await expect(customHeader.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Collapse Agent definition' })).toBeVisible();
 });
 
 test('installed and custom workflows use the same workspace-owned treatment', async ({ page }) => {

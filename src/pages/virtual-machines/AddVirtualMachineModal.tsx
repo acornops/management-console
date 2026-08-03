@@ -1,12 +1,11 @@
 import React from 'react';
-import { Check, Copy, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile } from '@acornops/ui';
-import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
+import { Button } from '@acornops/ui';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
-import { ICONS } from '@/constants';
+import { AgentInstallInstructionsStep } from '@/components/common/AgentInstallInstructionsStep';
 
 interface AddVirtualMachineModalProps {
   isOpen: boolean;
@@ -37,24 +36,12 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const vmNameInputRef = React.useRef<HTMLInputElement>(null);
-  const [hasCopiedInstructions, setHasCopiedInstructions] = React.useState(false);
   const connectSteps = [
     { id: 'details', label: t('virtualMachines.list.stepConfigure') },
     { id: 'instructions', label: t('virtualMachines.list.installAgent') }
   ];
 
   if (!isOpen) return null;
-
-  const copyInstallInstructions = async () => {
-    try {
-      if (!installInstructions) return;
-      await navigator.clipboard.writeText(installInstructions);
-      setHasCopiedInstructions(true);
-      window.setTimeout(() => setHasCopiedInstructions(false), 2200);
-    } catch {
-      setHasCopiedInstructions(false);
-    }
-  };
 
   return (
     <DialogFrame unframed
@@ -107,61 +94,28 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
           </div>
         </>
       ) : (
-        <>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 custom-scrollbar">
-            <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-4 type-ui leading-6 text-ui-text-muted">
-              <div className="flex items-start gap-3">
-                <IconTile size="xs" tone="accent" className="mt-0.5">
-                  <ICONS.Terminal className="h-4 w-4" />
-                </IconTile>
-                <p>{t('virtualMachines.list.installBody')}</p>
-              </div>
-            </div>
-
-            {installInstructions ? (
-              <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
-                <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                  <span className="type-micro-label">{t('virtualMachines.list.installInstructions')}</span>
-                  <Button
-                    type="button"
-                    variant="icon"
-                    size="icon"
-                    onClick={() => void copyInstallInstructions()}
-                    aria-label={hasCopiedInstructions ? t('virtualMachines.list.copied') : t('virtualMachines.list.copy')}
-                  >
-                    {hasCopiedInstructions ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono type-caption leading-6 text-ui-text custom-scrollbar">
-                  <pre className="whitespace-pre">{installInstructions}</pre>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis text-status-warning-text">
-                {t('virtualMachines.list.missingInstallInstructions')}
-              </div>
-            )}
+        <AgentInstallInstructionsStep
+          introduction={t('virtualMachines.list.installBody')}
+          command={installInstructions}
+          commandLabel={t('virtualMachines.list.installInstructions')}
+          copyLabel={t('virtualMachines.list.copy')}
+          copiedLabel={t('virtualMachines.list.copied')}
+          missingCommandMessage={t('virtualMachines.list.missingInstallInstructions')}
+          isConnected={isAgentConnected}
+          waitingLabel={t('virtualMachines.list.waitingForAgent')}
+          connectedLabel={t('virtualMachines.list.agentConnected')}
+          isSubmitting={isRegistering}
+          submittingLabel={t('virtualMachines.list.checkingConnection')}
+          connectedActionLabel={t('virtualMachines.list.done')}
+          pendingActionLabel={t('virtualMachines.list.installedAgent')}
+          onConfirmInstalled={onConfirmInstalled}
+          summary={(
             <div className="rounded-lg border border-ui-border bg-ui-surface p-4">
-              <div>
-                <p className="type-label text-ui-text-muted">{t('virtualMachines.list.vmName')}</p>
-                <p className="type-row-title mt-1 truncate" title={vmName}>
-                  {vmName}
-                </p>
-              </div>
+              <p className="type-label text-ui-text-muted">{t('virtualMachines.list.vmName')}</p>
+              <p className="type-row-title mt-1 truncate" title={vmName}>{vmName}</p>
             </div>
-            <AgentConnectionStatus
-              isConnected={isAgentConnected}
-              waitingLabel={t('virtualMachines.list.waitingForAgent')}
-              connectedLabel={t('virtualMachines.list.agentConnected')}
-            />
-          </div>
-          <div className="flex shrink-0 items-center justify-end border-t border-ui-border bg-ui-bg px-6 py-4">
-            <Button onClick={() => void onConfirmInstalled()} disabled={isRegistering} variant="primary" size="sm" className="rounded-lg">
-              <Zap className="h-4 w-4" />
-              {isRegistering ? t('virtualMachines.list.checkingConnection') : isAgentConnected ? t('virtualMachines.list.done') : t('virtualMachines.list.installedAgent')}
-            </Button>
-          </div>
-        </>
+          )}
+        />
       )}
     </DialogFrame>
   );

@@ -22,6 +22,7 @@ import { WorkspaceWebhookActionMenu, WorkspaceWebhookCard } from '@/pages/Worksp
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
+import { ResponsiveLedger } from '@/components/common/ResponsiveLedger';
 
 interface WorkspaceWebhookDrawerTableProps {
   actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
@@ -63,7 +64,8 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
   return (
     <>
       <DataSurface aria-label={t('eventTriggers.listTitle')}>
-        <div className="divide-y divide-ui-border lg:hidden">
+        <ResponsiveLedger
+          compact={<>
           {triggers.length > 0 ? triggers.map((trigger) => (
             <WorkspaceWebhookCard
               key={trigger.id}
@@ -92,9 +94,8 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
               {null}
             </CollectionState>
           )}
-        </div>
-        <div className="hidden overflow-x-auto lg:block">
-          <DataTable caption={t('eventTriggers.listTitle')} className="min-w-[42rem] w-full border-collapse text-left">
+          </>}
+          wide={<DataTable caption={t('eventTriggers.listTitle')} className="min-w-[42rem] w-full border-collapse text-left">
             <DataTableHeader collectionState={{ phase, itemCount: triggers.length, showDuringInitialLoading: true }}>
               <DataTableRow>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.columns.trigger')}</DataTableHeaderCell>
@@ -157,8 +158,8 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
                 </DataTableRow>
               )}
             </DataTableBody>
-          </DataTable>
-        </div>
+          </DataTable>}
+        />
       </DataSurface>
       {pendingRotateTrigger && (
         <InlineConfirmation

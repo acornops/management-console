@@ -6,6 +6,7 @@ import {
   mcpServersViewHeader,
   targetSkillsInventory,
   targetSkillsView,
+  targetCapabilityInventoryShell,
   targetToolsView
 } from '@/stylesTestSupport';
 
@@ -30,9 +31,10 @@ describe('MCP server route presentation', () => {
       expect(source).toContain('<PageHeader');
     });
     [mcpServersInventory, targetSkillsInventory, targetToolsView].forEach((source) => {
-      expect(source).toContain('<DataTableFrame');
-      expect(source).toContain('data-target-capability-table-frame="true"');
+      expect(source).toContain('<TargetCapabilityInventoryTable');
     });
+    expect(targetCapabilityInventoryShell).toContain('<DataTableFrame');
+    expect(targetCapabilityInventoryShell).toContain('data-target-capability-table-frame="true"');
     expect(targetSkillsInventory).toContain("t('targetSkills.filterAll')");
     expect(targetSkillsInventory).not.toContain("label: 'All skills'");
   });

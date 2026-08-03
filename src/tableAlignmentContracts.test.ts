@@ -13,13 +13,9 @@ const root = resolve(process.cwd());
 const srcRoot = join(root, 'src');
 
 const densityContracts: Record<string, DensityContract> = {
-  'src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx': {
+  'src/features/targets/issues/TargetIssuesPanel.tsx': {
     density: 'compact',
-    rowFiles: ['src/features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx']
-  },
-  'src/pages/virtual-machines/VirtualMachineIssuesPanel.tsx': {
-    density: 'compact',
-    rowFiles: ['src/pages/virtual-machines/VirtualMachineIssuesPanel.tsx']
+    rowFiles: ['src/features/targets/issues/TargetIssuesPanel.tsx']
   },
   'src/pages/WorkspaceApprovalsPage.tsx': {
     density: 'dense',

@@ -96,6 +96,7 @@ describe('target descriptor mappers', () => {
     ]);
 
     expect(descriptor).toEqual({
+      kind: 'target',
       id: 'vm-1',
       workspaceId: 'workspace-1',
       targetType: 'virtual_machine',

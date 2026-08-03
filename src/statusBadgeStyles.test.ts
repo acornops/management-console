@@ -8,6 +8,7 @@ const resourceStatus = readFileSync(resolve(__dirname, 'features/kubernetes-clus
 const workloadDetails = readFileSync(resolve(__dirname, 'features/kubernetes-cluster-detail/components/workloads/WorkloadDetailsDrawer.tsx'), 'utf8');
 const clusterOverview = readFileSync(resolve(__dirname, 'features/kubernetes-cluster-detail/components/detail/views/OverviewView.tsx'), 'utf8');
 const vmIssues = readFileSync(resolve(__dirname, 'pages/virtual-machines/VirtualMachineIssuesPanel.tsx'), 'utf8');
+const targetIssues = readFileSync(resolve(__dirname, 'features/targets/issues/TargetIssuesPanel.tsx'), 'utf8');
 const memberIdentity = readFileSync(resolve(__dirname, 'pages/workspace-members/WorkspaceMemberIdentityField.tsx'), 'utf8');
 const workspaceMembers = readFileSync(resolve(__dirname, 'pages/WorkspaceMembersPage.tsx'), 'utf8');
 const mcpServerCard = readFileSync(resolve(__dirname, 'features/targets/admin/McpServerCard.tsx'), 'utf8');
@@ -26,8 +27,9 @@ describe('shared status badge styles', () => {
     expect(resourceStatus).toContain('<StatusBadge');
     expect(resourceStatus).toContain("tone={healthy ? 'success' : 'warning'}");
     expect(workloadDetails).toContain("<StatusBadge tone={container.ready ? 'success' : 'warning'}");
-    expect(clusterOverview).toContain('<StatusBadge tone="warning"');
-    expect(vmIssues).toContain('<StatusBadge tone="warning"');
+    expect(clusterOverview).toContain('<TargetIssuesPanel');
+    expect(vmIssues).toContain('<TargetIssuesPanel');
+    expect(targetIssues).toContain('<StatusBadge tone="warning"');
     expect(memberIdentity).toContain('<StatusBadge tone="neutral"');
     expect(workspaceMembers).toContain('<StatusBadge tone="success">{t(\'members.active\')}</StatusBadge>');
     expect(mcpServerCard).toContain("<StatusBadge tone={status.tone === 'muted' ? 'neutral' : status.tone}>");

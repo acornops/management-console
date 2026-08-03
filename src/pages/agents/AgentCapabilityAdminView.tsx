@@ -1,7 +1,5 @@
 import React from 'react';
-import { McpServersView } from '@/features/targets/admin/McpServersView';
-import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
-import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import { CapabilityAdminView } from '@/features/capabilities/CapabilityAdminView';
 import type { CapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
 import type { TargetToolCatalog } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
@@ -55,49 +53,38 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
     [agent, canManageAgents]
   );
 
-  if (section === 'skills') {
-    return (
-      <TargetSkillsView
-        key={agent.id}
-        subject={subject}
-        canManageSkills={canManageSkills}
-        dataSource={skillsDataSource}
-        initialCatalog={cachedCatalogs?.skills}
-        onCatalogChange={onSkillsCatalogChange}
-      />
-    );
-  }
-
-  if (section === 'tools') {
-    return (
-      <TargetToolsView
-        key={agent.id}
-        subject={subject}
-        canManageTools={canManageAgents}
-        dataSource={toolsDataSource}
-        initialCatalog={cachedCatalogs?.tools}
-        onCatalogChange={onToolsCatalogChange}
-      />
-    );
-  }
-
   return (
-    <McpServersView
-      key={agent.id}
+    <CapabilityAdminView
+      cacheKey={agent.id}
+      section={section === 'mcp' ? 'mcpServers' : section}
       subject={subject}
-      canManageMcp={canManageMcp}
-      canManageTools={canManageMcp}
-      dataSource={mcpDataSource}
-      connectionDestination={{ kind: 'agent', id: agent.id }}
-      catalogDestination={`agent:${agent.id}`}
-      scheduleCount={countAgentCredentialModeScheduleImpact}
-      targetAccessSettings={{
-        canEdit: canManageAgents && canManageMcp,
-        load: getAgentTargetAccessSettings,
-        save: updateAgentTargetAccessSettings
+      mcp={{
+        canManageMcp,
+        canManageTools: canManageMcp,
+        dataSource: mcpDataSource,
+        connectionDestination: { kind: 'agent', id: agent.id },
+        catalogDestination: `agent:${agent.id}`,
+        scheduleCount: countAgentCredentialModeScheduleImpact,
+        targetAccessSettings: {
+          canEdit: canManageAgents && canManageMcp,
+          load: getAgentTargetAccessSettings,
+          save: updateAgentTargetAccessSettings
+        },
+        initialCatalog: cachedCatalogs?.mcpServers,
+        onCatalogChange: onMcpServersCatalogChange
       }}
-      initialCatalog={cachedCatalogs?.mcpServers}
-      onCatalogChange={onMcpServersCatalogChange}
+      skills={{
+        canManageSkills,
+        dataSource: skillsDataSource,
+        initialCatalog: cachedCatalogs?.skills,
+        onCatalogChange: onSkillsCatalogChange
+      }}
+      tools={{
+        canManageTools: canManageAgents,
+        dataSource: toolsDataSource,
+        initialCatalog: cachedCatalogs?.tools,
+        onCatalogChange: onToolsCatalogChange
+      }}
     />
   );
 };

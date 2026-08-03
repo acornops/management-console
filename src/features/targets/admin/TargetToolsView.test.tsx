@@ -12,6 +12,7 @@ beforeAll(async () => {
 describe('TargetToolsView', () => {
   it('hides discovery controls for a true empty inventory', () => {
     const target: TargetDescriptor = {
+      kind: 'target',
       id: 'target-1',
       workspaceId: 'workspace-1',
       targetType: 'kubernetes',
@@ -41,6 +42,7 @@ describe('TargetToolsView', () => {
 
   it('uses one subtle separator treatment for populated tool rows', () => {
     const target: TargetDescriptor = {
+      kind: 'target',
       id: 'target-1',
       workspaceId: 'workspace-1',
       targetType: 'kubernetes',

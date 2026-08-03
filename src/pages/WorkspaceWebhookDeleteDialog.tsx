@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DestructiveConfirmationDialog } from '@acornops/ui';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
+import { WorkflowAutomationDeleteDialog } from '@/pages/WorkflowAutomationDeleteDialog';
 
 interface WorkspaceWebhookDeleteDialogProps {
   error: string;
@@ -22,16 +22,13 @@ export const WorkspaceWebhookDeleteDialog: React.FC<WorkspaceWebhookDeleteDialog
   const { t } = useTranslation();
 
   return (
-    <DestructiveConfirmationDialog
-      open={Boolean(webhook)}
+    <WorkflowAutomationDeleteDialog
+      name={webhook?.name}
       titleId="delete-workflow-webhook-title"
       title={webhook ? t('eventTriggers.delete.title', { name: webhook.name }) : ''}
-      subtitle={t('common.irreversibleAction')}
       description={t('eventTriggers.delete.description')}
-      error={webhook ? error : null}
+      error={error}
       confirmLabel={t('eventTriggers.actions.delete')}
-      loadingLabel={t('app.deleting')}
-      cancelLabel={t('common.cancel')}
       pending={pending}
       onCancel={onCancel}
       onConfirm={onConfirm}

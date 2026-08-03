@@ -172,7 +172,7 @@ describe('theme color contract', () => {
     expect(themeInit).toContain("window.matchMedia('(prefers-color-scheme: dark)')");
     expect(themeInit).toContain("resolvedTheme === 'dark' ? '#121110' : '#fcfaf6'");
     expect(clusterOverviewView).not.toContain('#FF5800');
-    expect(clusterOverviewView).toContain('text-accent-strong');
+    expect(desktopSidebar).toContain('text-accent-strong');
   });
 
   it('exposes semantic typography roles on Outfit and Ubuntu Mono', () => {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppDesktopSidebar } from '@/app/AppDesktopSidebar';
 import { AppMobileNavigation } from '@/app/AppMobileNavigation';
 import { AppPageContent } from '@/app/AppPageContent';
@@ -31,6 +32,7 @@ import { KubernetesCluster } from '@/types';
 import { AppPaths, assistantSessionFromLocation, type AppRoute } from '@/utils/routes';
 import { useTargetPromptLauncher } from '@/app/useTargetPromptLauncher';
 import { getTargetReturnContext, type TargetReturnContext } from '@/app/targetReturnContext';
+import { createManagedSubjectNavigation } from '@/app/managedSubjectNavigation';
 
 const AppClusterChatRuntime = React.lazy(() =>
   import('@/app/AppClusterChatRuntime').then((module) => ({ default: module.AppClusterChatRuntime }))
@@ -44,7 +46,6 @@ const AppDialogs = React.lazy(() =>
 
 export const AppShell: React.FC<AppShellProps> = ({
   acceptWorkspaceInvitation,
-  activeAgentSubview,
   activeClusterSubview,
   activeVmSubview,
   activePrimaryNav,
@@ -151,6 +152,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   workspaceContextId,
   workspaces
 }) => {
+  const { t } = useTranslation();
   const { loadWorkspaceRoles, addOrInviteWorkspaceMember } = useCreateWorkspaceInviteSetup({
     invitationTokenMissingMessage,
     setWorkspaces,
@@ -295,6 +297,21 @@ export const AppShell: React.FC<AppShellProps> = ({
     targetReturnContext,
     vmBackToWorkspaceId
   ]);
+  const managedSubjectNavigation = createManagedSubjectNavigation({
+    activeResourceNav,
+    backPath: getBackToWorkspacePath(),
+    clusterAssistantNavStatus,
+    isAgentSidebar,
+    isClusterSidebar,
+    isVirtualMachineSidebar,
+    route,
+    selectedAgent: selectedSidebarAgent,
+    selectedCluster: selectedSidebarCluster,
+    selectedClusterIssueCount,
+    selectedVm: selectedSidebarVm,
+    selectedVmIssueCount,
+    t
+  });
 
   React.useEffect(() => {
     isClusterChatVisibleRef.current = isClusterChatVisible;
@@ -446,48 +463,20 @@ export const AppShell: React.FC<AppShellProps> = ({
     <DesktopSidebarWidthProvider value={desktopSidebarWidth}>
     <div data-app-shell="true" className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-ui-bg text-ui-text font-sans transition-colors duration-300 min-[1200px]:flex-row">
       <AppMobileNavigation
-        activeAgentSubview={activeAgentSubview}
-        activeClusterSubview={activeClusterSubview}
-        activeVmSubview={activeVmSubview}
         activePrimaryNav={activePrimaryNav}
         activeResourceNav={activeResourceNav}
         pendingApprovalCount={approvalSummary.pendingCount}
-        isAgentSidebar={isAgentSidebar}
-        isClusterSidebar={isClusterSidebar}
-        isVirtualMachineSidebar={isVirtualMachineSidebar}
+        managedSubjectNavigation={managedSubjectNavigation}
         themePreference={themePreference}
         resolvedTheme={resolvedTheme}
         isMobileNavOpen={isMobileNavOpen}
-        selectedClusterIssueCount={selectedClusterIssueCount}
-        clusterAssistantNavStatus={clusterAssistantNavStatus}
-        selectedVmIssueCount={selectedVmIssueCount}
-        selectedSidebarAgent={selectedSidebarAgent}
-        selectedSidebarCluster={selectedSidebarCluster}
-        selectedSidebarVm={selectedSidebarVm}
         selectedWorkspace={selectedWorkspace}
         selectedWorkspaceId={selectedWorkspaceId}
         user={user}
         workspaceClusterCounts={workspaceClusterCounts}
         workspaces={workspaces}
         navigate={navigate}
-        onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
         onLogout={() => void handleLogout()}
-        onNavigateClusterSubview={(tab) => {
-          if (!selectedSidebarCluster) return;
-          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined));
-        }}
-        onNavigateAgentSubview={(tab) => {
-          if (!selectedSidebarAgent) return;
-          navigate(AppPaths.workspaceAgentDetail(
-            selectedSidebarAgent.workspaceId,
-            selectedSidebarAgent.id,
-            tab
-          ));
-        }}
-        onNavigateVmSubview={(tab) => {
-          if (!selectedSidebarVm) return;
-          navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab, route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined));
-        }}
         onSelectWorkspaceContext={handleSelectWorkspaceContext}
         onSetAccountMenuOpen={setIsAccountMenuOpen}
         onSetMobileNavOpen={setIsMobileNavOpen}
@@ -500,17 +489,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         selectedWorkspace={selectedWorkspace}
         selectedWorkspaceId={selectedWorkspaceId}
         selectedWorkspaceInitials={selectedWorkspaceInitials}
-        selectedSidebarAgent={selectedSidebarAgent}
-        selectedSidebarCluster={selectedSidebarCluster}
-        selectedSidebarVm={selectedSidebarVm}
-        isAgentSidebar={isAgentSidebar}
-        isClusterSidebar={isClusterSidebar}
-        isVirtualMachineSidebar={isVirtualMachineSidebar}
+        managedSubjectNavigation={managedSubjectNavigation}
         activeResourceNav={activeResourceNav}
         pendingApprovalCount={approvalSummary.pendingCount}
-        selectedClusterIssueCount={selectedClusterIssueCount}
-        clusterAssistantNavStatus={clusterAssistantNavStatus}
-        selectedVmIssueCount={selectedVmIssueCount}
         themePreference={themePreference}
         resolvedTheme={resolvedTheme}
         isAccountMenuOpen={isAccountMenuOpen}
@@ -518,23 +499,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         sidebarAccountMenuRef={sidebarAccountMenuRef}
         sidebarWorkspaceMenuRef={sidebarWorkspaceMenuRef}
         navigate={navigate}
-        onBackToWorkspaceSidebar={() => navigate(getBackToWorkspacePath())}
-        onNavigateClusterSubview={(tab) => {
-          if (!selectedSidebarCluster) return;
-          navigate(AppPaths.workspaceKubernetesClusterDiagnostics(selectedSidebarCluster.workspaceId, selectedSidebarCluster.id, tab, route.kind === 'workspaceKubernetesClusterDiagnostics' ? route.catalogState : undefined));
-        }}
-        onNavigateAgentSubview={(tab) => {
-          if (!selectedSidebarAgent) return;
-          navigate(AppPaths.workspaceAgentDetail(
-            selectedSidebarAgent.workspaceId,
-            selectedSidebarAgent.id,
-            tab
-          ));
-        }}
-        onNavigateVmSubview={(tab) => {
-          if (!selectedSidebarVm) return;
-          navigate(AppPaths.workspaceVirtualMachineDetail(selectedSidebarVm.workspaceId, selectedSidebarVm.id, tab, route.kind === 'workspaceVirtualMachineDetail' ? route.catalogState : undefined));
-        }}
         onOpenCreateWorkspace={() => setIsCreatingWorkspace(true)}
         onSelectWorkspaceContext={handleSelectWorkspaceContext}
         onSetAccountMenuOpen={setIsAccountMenuOpen}

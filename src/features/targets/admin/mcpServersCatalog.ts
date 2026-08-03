@@ -252,7 +252,7 @@ export function buildLocalCatalog(
 
   return {
     workspaceId: subject.workspaceId,
-    ...(subject.targetType ? {
+    ...(subject.kind === 'target' ? {
       clusterId: subject.targetType === 'kubernetes' ? subject.id : '',
       targetId: subject.id,
       targetType: subject.targetType

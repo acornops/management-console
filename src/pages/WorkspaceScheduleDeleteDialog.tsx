@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DestructiveConfirmationDialog } from '@acornops/ui';
 import type { WorkflowSchedule } from '@/services/control-plane/workflowApi';
+import { WorkflowAutomationDeleteDialog } from '@/pages/WorkflowAutomationDeleteDialog';
 
 interface WorkspaceScheduleDeleteDialogProps {
   error: string;
@@ -22,16 +22,13 @@ export const WorkspaceScheduleDeleteDialog: React.FC<WorkspaceScheduleDeleteDial
   const { t } = useTranslation();
 
   return (
-    <DestructiveConfirmationDialog
-      open={Boolean(schedule)}
+    <WorkflowAutomationDeleteDialog
+      name={schedule?.name}
       titleId="delete-schedule-title"
       title={schedule ? t('schedules.delete.title', { name: schedule.name }) : ''}
-      subtitle={t('common.irreversibleAction')}
       description={t('schedules.delete.description')}
-      error={schedule ? error : null}
+      error={error}
       confirmLabel={t('schedules.actions.delete')}
-      loadingLabel={t('app.deleting')}
-      cancelLabel={t('common.cancel')}
       pending={pending}
       onCancel={onCancel}
       onConfirm={onConfirm}
