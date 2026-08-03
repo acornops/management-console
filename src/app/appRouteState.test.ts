@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getActiveAgentSubview,
+  getActiveClusterSubview,
   getActiveResourceNav,
   getClusterBackToWorkspacePath,
   getWorkspaceRouteId
@@ -33,5 +34,13 @@ describe('app route state', () => {
     expect(getActiveResourceNav(chatRoute)).toBe('agentChat');
     expect(getActiveAgentSubview(toolsRoute)).toBe('tools');
     expect(getActiveResourceNav(toolsRoute)).toBe('agentTools');
+  });
+
+  it('preserves the health alias so the route can expose its own evidence state', () => {
+    expect(getActiveClusterSubview({
+      kind: 'kubernetesClusterDiagnostics',
+      clusterId: 'cluster-a',
+      tab: 'health'
+    })).toBe('health');
   });
 });

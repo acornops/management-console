@@ -124,7 +124,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   };
 
   return (
-    <PageShell>
+    <PageShell data-settings-tab={activeTab} data-assistant-return={returnTo ? 'true' : undefined}>
       {returnTo && (
         <PageBackLink
           href={returnTo}

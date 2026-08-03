@@ -47,7 +47,7 @@ export function TargetChatHistoryRail({
   return (
     <nav
       aria-label={t('chat.assistantNavigation')}
-      className="relative z-20 flex h-full w-12 shrink-0 flex-col items-center gap-1 border-r border-ui-border bg-ui-surface py-2"
+      className="relative z-20 flex min-h-12 w-full shrink-0 flex-row flex-wrap items-center gap-1 border-b border-ui-border bg-ui-surface px-2 md:h-full md:min-h-0 md:w-12 md:flex-col md:flex-nowrap md:border-b-0 md:border-r md:px-0 md:py-2"
     >
       <Tooltip content={newChatUnavailableReason || t('chat.newChat')} side="right">
         <span className="inline-flex">

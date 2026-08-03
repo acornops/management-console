@@ -14,6 +14,7 @@ interface WorkspaceInvitePageProps {
   onLoadInvitation: (token: string) => Promise<ControlPlaneWorkspaceInvitation>;
   onAcceptInvitation: (token: string) => Promise<void>;
   onGoToWorkspaces: () => void;
+  onSwitchAccount: () => void;
 }
 
 function formatDate(value: string): string {
@@ -24,7 +25,7 @@ function formatInviteError(error: unknown, fallback: string): string {
   return formatControlPlaneError(error, fallback, { area: 'members' });
 }
 
-export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token, currentUserEmail, onLoadInvitation, onAcceptInvitation, onGoToWorkspaces }) => {
+export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token, currentUserEmail, onLoadInvitation, onAcceptInvitation, onGoToWorkspaces, onSwitchAccount }) => {
   const { t } = useTranslation();
   const [invitation, setInvitation] = useState<ControlPlaneWorkspaceInvitation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -125,10 +126,16 @@ export const WorkspaceInvitePage: React.FC<WorkspaceInvitePageProps> = ({ token,
               )}
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button onClick={() => void accept()} disabled={!canAccept || isAccepting} variant="primary" size="lg" className="flex-1 type-ui">
-                  {isAccepting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  {t('invite.accept')}
-                </Button>
+                {invitation.status === 'pending' && isCurrentUserExpected ? (
+                  <Button onClick={() => void accept()} disabled={!canAccept || isAccepting} variant="primary" size="lg" className="flex-1 type-ui">
+                    {isAccepting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {t('invite.accept')}
+                  </Button>
+                ) : invitation.status === 'pending' ? (
+                  <Button onClick={onSwitchAccount} variant="primary" size="lg" className="flex-1 type-ui">
+                    {t('invite.signOutAndSwitch')}
+                  </Button>
+                ) : null}
                 <Button onClick={onGoToWorkspaces} variant="secondary" size="lg" className="type-ui">
                   {t('invite.viewWorkspaces')}
                 </Button>

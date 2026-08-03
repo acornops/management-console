@@ -408,6 +408,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onOpenDeleteWorkspace={setDeleteWorkspaceId}
         onLeaveWorkspaceSuccess={handleLeaveWorkspaceSuccess}
         onLogout={() => void handleLogout()}
+        onSwitchInvitationAccount={(token) => void handleLogout(AppPaths.workspaceInvitation(token))}
         onSetLanguage={setLanguage}
         showToast={showToast}
         toWorkspaceInvitation={toWorkspaceInvitation}

@@ -185,28 +185,17 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
 
   return (
     <>
-      <section data-target-skill-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
-          <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
+      {skills.length > 0 && <section data-target-skill-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+        <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('targetSkills.inventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('targetSkills.inventoryBody')}</p>
           </div>
-          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
-            <p className="type-caption text-ui-text-muted">{t('targetSkills.skillsMetric')}</p>
-            <p className="type-data mt-0.5">{summary.total}</p>
-          </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
-            <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
-            <p className="type-data mt-0.5 inline-flex items-center gap-2">
-              {summary.assistantVisible}
-              <span className="h-2 w-2 rounded-full bg-status-success" />
-            </p>
-          </div>
-          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.enabledSkillsMetric')}</p>
-            <p className="type-data mt-0.5">{summary.enabled}</p>
+            <p className="type-data mt-0.5">{summary.enabled}<span className="type-caption text-ui-text-muted"> / {summary.total}</span></p>
           </div>
-          <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
             <p className="type-caption text-ui-text-muted">{t('targetSkills.needsFixes')}</p>
             <p className="type-data mt-0.5 inline-flex items-center gap-2">
               {summary.needsFixes}
@@ -214,11 +203,14 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
             </p>
           </div>
           <div className="px-5 py-3.5">
-            <p className="type-caption text-ui-text-muted">{t('targetSkills.filesMetric')}</p>
-            <p className="type-data mt-0.5">{summary.files}</p>
+            <p className="type-caption text-ui-text-muted">{t('targetSkills.assistantVisibleSkills')}</p>
+            <p className="type-data mt-0.5 inline-flex items-center gap-2">
+              {summary.assistantVisible}
+              <span className="h-2 w-2 rounded-full bg-status-success" />
+            </p>
           </div>
         </div>
-      </section>
+      </section>}
 
       <section data-target-skill-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         {(skills.length > 0 || hasActiveFilters) && (

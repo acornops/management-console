@@ -33,6 +33,14 @@ describe('ExternalIntegrationLinkRouteScreen', () => {
     expect(externalIntegrationLinkStatusMessage('cancelled')).toBe(
       'Account linking cancelled.\nGo back to the external client.'
     );
+    expect(routeScreen).toContain('externalIntegrationLink.statusTitle.${status}');
+    expect(routeScreen).toContain('externalIntegrationLink.statusBody.${status}');
+    expect(routeScreen).toContain("externalIntegrationLink.retryInExternalClient");
+    expect(routeScreen).toContain("externalIntegrationLink.closeWindow");
+    expect(routeScreen).toContain("externalIntegrationLink.returnToConsole");
+    expect(routeScreen).toContain("externalIntegrationLink.retryApproval");
+    expect(routeScreen).toContain('onClick={onCloseWindow}');
+    expect(routeScreen).toContain('onClick={onReturnToConsole}');
   });
 
   it('collects workspace grants before completing the link', () => {

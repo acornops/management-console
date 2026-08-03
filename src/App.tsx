@@ -16,12 +16,13 @@ import { useWorkspaceClusterActions } from '@/app/useWorkspaceClusterActions';
 import { useWorkspaceVirtualMachineCache } from '@/app/useWorkspaceVirtualMachineCache';
 import { useRecentInvestigationSync } from '@/app/useRecentInvestigationSync';
 import { useAuthenticatedSessionLifecycle } from '@/app/useAuthenticatedSessionLifecycle';
-import { logoutAppSession } from '@/app/logoutAppSession';
+import { useAppLogout } from '@/app/useAppLogout';
+import { usePostLogoutInvitationRestore } from '@/app/usePostLogoutInvitationRestore';
+import { useAppWorkspacePermissions } from '@/app/useAppWorkspacePermissions';
 import { setSessionDataCacheOwner } from '@/hooks/sessionDataCache';
 import { useThemeTransition } from '@/hooks/useThemeTransition';
 import { buildKubernetesClustersByWorkspaceId, getWorkspaceClusterCounts } from '@/app/appWorkspaceSummaries';
 import { isWorkspaceDataRoute, workspaceLandingPath } from '@/app/appNavigationGuards';
-import { getCurrentUserRoleForWorkspaceValue, getWorkspacePermissionValue } from '@/app/appWorkspacePermissions';
 import { LoginPage } from '@/pages/LoginPage';
 import { readInitialThemePreference, readLanguagePreference, type DesktopSidebarMode } from '@/app/preferences';
 import { getSystemTheme, resolveThemePreference, type ResolvedTheme, type ThemePreference } from '@/app/theme';
@@ -214,7 +215,7 @@ const App: React.FC = () => {
     virtualMachinesInWorkspaceContext: virtualMachineCache.virtualMachinesInWorkspaceContext
   });
   useEffect(() => {
-    if (!user || (route.kind !== 'home' && route.kind !== 'workspaces')) {
+    if (!user || route.kind !== 'home') {
       return;
     }
     const targetWorkspaceId =
@@ -313,7 +314,6 @@ const App: React.FC = () => {
     setKubernetesClusters,
     setWorkspaces
   ]);
-
   useEffect(() => {
     if (route.kind !== 'kubernetesClusters') return;
 
@@ -444,16 +444,9 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openClusterCopilot, selectedSidebarCluster]);
-  const getCurrentUserRoleForWorkspace = useCallback((workspaceId: string): Workspace['members'][number]['role'] => getCurrentUserRoleForWorkspaceValue(workspaceById, user?.email, workspaceId), [user?.email, workspaceById]);
-  const getWorkspacePermission = useCallback((workspaceId: string, permission: keyof NonNullable<Workspace['permissions']>): boolean => {
-    return getWorkspacePermissionValue(workspaceById, user?.email, workspaceId, permission);
-  }, [user?.email, workspaceById]);
-  const handleLogout = () => logoutAppSession({
-    userId: user?.id,
-    clearSessionForLogout,
-    closeAccountMenu: () => setIsAccountMenuOpen(false),
-    navigate
-  });
+  const { getCurrentUserRoleForWorkspace, getWorkspacePermission } = useAppWorkspacePermissions(workspaceById, user?.email);
+  const handleLogout = useAppLogout(user?.id, clearSessionForLogout, navigate, setIsAccountMenuOpen);
+  usePostLogoutInvitationRestore(!user && sessionBootstrapState !== 'restoring' && route.kind === 'home', navigate);
   if (!user && sessionBootstrapState === 'restoring') {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
   }
@@ -461,7 +454,13 @@ const App: React.FC = () => {
     return <AppUnavailableScreen logoSrc={logoSrc} title="Console temporarily unavailable" description="The control plane could not restore your session. Check your connection and try again." onRetry={() => void bootstrapSession()} />;
   }
   if (route.kind === 'externalIntegrationLink' && (user || route.status || !route.token)) {
-    return <ExternalIntegrationLinkRouteScreen logoSrc={logoSrc} onLinkStatus={(status) => navigate(AppPaths.externalIntegrationLinkStatus(status), { replace: true })} route={route} />;
+    return <ExternalIntegrationLinkRouteScreen
+      logoSrc={logoSrc}
+      onCloseWindow={() => window.close()}
+      onLinkStatus={(status) => navigate(AppPaths.externalIntegrationLinkStatus(status), { replace: true })}
+      onReturnToConsole={() => navigate(AppPaths.workspaces())}
+      route={route}
+    />;
   }
   if (!user) {
     if (authConfigState.status === 'loading') {
@@ -477,6 +476,7 @@ const App: React.FC = () => {
         oidcEnabled={authConfig.oidcEnabled} passwordAuthEnabled={authConfig.passwordAuthEnabled}
         passwordSignupEnabled={authConfig.passwordSignupEnabled} passwordResetEnabled={authConfig.passwordResetEnabled}
         onLogin={handleLogin} onPasswordLogin={handlePasswordLogin} onPasswordSignup={handlePasswordSignup}
+        onRetryAuthConfig={authConfigState.retry}
         onVerifyEmail={handleVerifyEmail} onResendVerification={handleResendVerification}
         onRequestPasswordReset={handleRequestPasswordReset} onResetPassword={handleResetPassword}
         onSelectTheme={handleSelectTheme}

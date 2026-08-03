@@ -43,7 +43,7 @@ export interface AppShellProps {
   handleDeleteCluster: (cluster: KubernetesCluster) => Promise<void>;
   handleDeleteWorkspace: (workspaceId: string) => Promise<void>;
   handleInitiateAddCluster: (workspaceId: string) => void;
-  handleLogout: () => Promise<void>;
+  handleLogout: (postLogoutPath?: string) => Promise<void>;
   handleProceedToInstructions: (agentAccessMode?: AgentAccessMode) => Promise<void>;
   handleSelectWorkspaceContext: (workspaceId: string) => void;
   includeNamespaces: string;

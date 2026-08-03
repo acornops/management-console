@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StatusBadge } from '@acornops/ui';
+import { OperationalFailureDetails, operationalFailureCause } from '@/components/common/OperationalFailureDetails';
 import { WorkflowExecutionLink } from '@/features/workflow-activity/WorkflowActivityUi';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -72,7 +73,17 @@ export function WorkspaceWebhookExecutionFacts({
         </div>
       </dl>
       {trigger.lastError && (
-        <p className="mt-2 max-w-3xl type-caption text-status-danger-text">{trigger.lastError}</p>
+        <OperationalFailureDetails
+          tone={trigger.lastStatus === 'auto_paused' ? 'warning' : 'danger'}
+          cause={operationalFailureCause(trigger.lastError, t('eventTriggers.failure.cause'))}
+          impact={t(trigger.lastStatus === 'rejected'
+            ? 'eventTriggers.failure.rejectedImpact'
+            : trigger.lastStatus === 'auto_paused'
+              ? 'eventTriggers.failure.autoPausedImpact'
+              : 'eventTriggers.failure.failedImpact')}
+          nextStep={t('eventTriggers.failure.nextStep')}
+          technicalDetail={trigger.lastError}
+        />
       )}
     </>
   );

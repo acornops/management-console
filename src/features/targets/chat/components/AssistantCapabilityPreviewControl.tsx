@@ -128,7 +128,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
         data-assistant-capability-preview-trigger="true"
         onClick={() => setIsOpen((current) => !current)}
         disabled={!canChat}
-        className="control-target inline-flex h-8 max-w-[9.5rem] items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+        className="control-target inline-flex h-11 min-w-0 max-w-[9.5rem] items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8"
         aria-label={unavailableMcpLabel
           ? `${t('chat.capabilityPreviewAria')}. ${unavailableMcpLabel}`
           : t('chat.capabilityPreviewAria')}

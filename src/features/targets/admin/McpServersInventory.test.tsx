@@ -30,7 +30,7 @@ describe('McpServersInventory', () => {
     tools: []
   };
 
-  it('keeps the inventory summary and list shell around the embedded empty state', () => {
+  it('omits zero-value summary metrics while keeping the list shell around the embedded empty state', () => {
     const markup = renderToStaticMarkup(
       <McpServersInventory
         servers={[]}
@@ -55,7 +55,7 @@ describe('McpServersInventory', () => {
       />
     );
 
-    expect(markup).toContain('data-mcp-server-access-summary="true"');
+    expect(markup).not.toContain('data-mcp-server-access-summary="true"');
     expect(markup).toContain('data-mcp-server-list="true"');
     expect(markup).toContain('data-empty-state="true"');
     expect(markup).toContain('data-empty-state-surface="embedded"');
@@ -211,8 +211,9 @@ describe('McpServersInventory', () => {
       />
     );
 
-    expect(markup).toMatch(/data-mcp-read-only-count="true"[^>]*>0</);
     expect(markup).toMatch(/data-mcp-write-capable-count="true"[^>]*>12</);
+    expect(markup).not.toContain('data-mcp-read-only-count="true"');
+    expect(markup).toContain('0<span class="type-caption text-ui-text-muted"> / 12</span>');
     expect(markup).toContain('0 Read · 12 Write');
   });
 });

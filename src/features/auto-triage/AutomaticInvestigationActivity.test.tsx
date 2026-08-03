@@ -82,7 +82,23 @@ describe('automatic investigation issue activity', () => {
       />
     );
     expect(eligible).toContain('automaticInvestigation.actions.retry');
+    expect(eligible).toContain('automaticInvestigation.failure.retryable');
     expect(ineligible).not.toContain('automaticInvestigation.actions.retry');
+    expect(ineligible).toContain('automaticInvestigation.failure.manualFallback');
+  });
+
+  it('names the repair for a known failed readiness dependency', () => {
+    const markup = renderToStaticMarkup(
+      <AutomaticInvestigationActivity
+        workspaceId="workspace-1"
+        targetId="target-1"
+        targetType="kubernetes"
+        issueId="issue-1"
+        activity={activity({ state: 'failed', canRetry: true, errorCode: 'TARGET_DISCONNECTED' })}
+      />
+    );
+    expect(markup).toContain('automaticInvestigation.failure.targetDisconnected');
+    expect(markup).toContain('automaticInvestigation.actions.retry');
   });
 
   it('uses the existing assistant only when automatic activity has no usable action', () => {

@@ -19,6 +19,7 @@ interface LoginPageProps {
   passwordResetEnabled: boolean;
   sessionExpired?: boolean;
   onLogin: () => void;
+  onRetryAuthConfig: () => void;
   onPasswordLogin: (identifier: string, password: string) => Promise<PasswordAuthResult>;
   onPasswordSignup: (input: {
     email: string;
@@ -48,6 +49,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   passwordResetEnabled,
   sessionExpired,
   onLogin,
+  onRetryAuthConfig,
   onPasswordLogin,
   onPasswordSignup,
   onVerifyEmail,
@@ -93,6 +95,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               ? t('controlPlaneErrors.sessionExpired')
               : authResultNotice ? t(authResultNotice) : undefined}
             onLogin={onLogin}
+            onRetryAuthConfig={onRetryAuthConfig}
             onPasswordLogin={onPasswordLogin}
             onPasswordSignup={onPasswordSignup}
             onVerifyEmail={onVerifyEmail}

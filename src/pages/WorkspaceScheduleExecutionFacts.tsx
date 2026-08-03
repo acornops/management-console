@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { StatusBadge } from '@acornops/ui';
+import { Button, StatusBadge } from '@acornops/ui';
+import { OperationalFailureDetails, operationalFailureCause } from '@/components/common/OperationalFailureDetails';
 import { WorkflowExecutionLink } from '@/features/workflow-activity/WorkflowActivityUi';
 import type { WorkflowSchedule } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime } from '@/utils/dateTime';
@@ -18,11 +19,15 @@ function dispatchTone(
 export function WorkspaceScheduleExecutionFacts({
   schedule,
   mcpAutoPaused,
-  recoveryPath
+  recoveryPath,
+  canReview = false,
+  onReview
 }: {
   schedule: WorkflowSchedule;
   mcpAutoPaused: boolean;
   recoveryPath: string;
+  canReview?: boolean;
+  onReview?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -57,21 +62,32 @@ export function WorkspaceScheduleExecutionFacts({
         </div>
       </dl>
       {mcpAutoPaused && (
-        <div className="mt-3 max-w-sm text-status-warning-text">
-          <p className="type-caption">
-            {schedule.lastError?.trim().slice(0, 240) || t('workflowActivity.scheduleMcpUnavailable')}
-          </p>
-          <p className="type-caption mt-1 type-emphasis">{t('workflowActivity.scheduleRepairHint')}</p>
-          <a
-            className="type-caption mt-1 inline-flex type-emphasis underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary"
+        <OperationalFailureDetails
+          tone="warning"
+          cause={t('workflowActivity.scheduleMcpUnavailable')}
+          impact={t('workflowActivity.scheduleMcpImpact')}
+          nextStep={t('workflowActivity.scheduleRepairHint')}
+          technicalDetail={schedule.lastError}
+          action={<a
+            className="inline-flex type-emphasis underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-control-boundary"
             href={recoveryPath}
           >
             {t('workflowCoordination.reviewWorkflowAccess')}
-          </a>
-        </div>
+          </a>}
+        />
       )}
       {!mcpAutoPaused && schedule.lastError && (
-        <p className="mt-2 max-w-sm type-caption text-status-danger-text">{schedule.lastError}</p>
+        <OperationalFailureDetails
+          cause={operationalFailureCause(schedule.lastError, t('workflowActivity.scheduleFailureCause'))}
+          impact={t('workflowActivity.scheduleFailureImpact')}
+          nextStep={t('workflowActivity.scheduleFailureNextStep')}
+          technicalDetail={schedule.lastError}
+          action={canReview && onReview ? (
+            <Button size="sm" variant="primary" onClick={onReview}>
+              {t('workflowActivity.actions.reviewFailure')}
+            </Button>
+          ) : undefined}
+        />
       )}
     </>
   );

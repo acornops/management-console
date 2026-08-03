@@ -12,6 +12,7 @@ export const FIXTURE_IDS = {
   virtualMachineAgent: 'fixture-virtual-machine-agent',
   workflow: 'fixture-workflow',
   session: 'fixture-session',
+  virtualMachineSession: 'fixture-vm-session',
   agentSession: 'fixture-agent-session',
   run: 'fixture-run'
 } as const;
@@ -323,6 +324,12 @@ export function createFixtureState(): FixtureState {
       expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
     },
     {
+      id: FIXTURE_IDS.virtualMachineSession, workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.virtualMachine, targetType: 'virtual_machine',
+      createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' },
+      title: 'Payment gateway host review', status: 'open', createdAt: EARLIER, updatedAt: NOW, lastMessageAt: NOW,
+      expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
+    },
+    {
       id: FIXTURE_IDS.agentSession, workspaceId: FIXTURE_IDS.workspace, agentId: FIXTURE_IDS.specialistAgent,
       createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' },
       title: 'Specialist incident review', accessMode: 'read_write', permissionMode: 'ask_before_changes', status: 'open',
@@ -333,6 +340,10 @@ export function createFixtureState(): FixtureState {
     [FIXTURE_IDS.session]: [
       { id: 'fixture-message-user', sessionId: FIXTURE_IDS.session, runId: FIXTURE_IDS.run, role: 'user', kind: 'user', content: 'Why is the payments worker restarting?', createdAt: EARLIER },
       { id: 'fixture-message-assistant', sessionId: FIXTURE_IDS.session, runId: FIXTURE_IDS.run, role: 'assistant', kind: 'assistant_final', content: 'The worker is in CrashLoopBackOff after four restarts. Its latest event points to a failed container startup; inspect the application log and secret mount before changing the Deployment.', createdAt: NOW }
+    ],
+    [FIXTURE_IDS.virtualMachineSession]: [
+      { id: 'fixture-vm-message-user', sessionId: FIXTURE_IDS.virtualMachineSession, role: 'user', kind: 'user', content: 'Review the payment gateway host pressure and degraded service.', createdAt: EARLIER },
+      { id: 'fixture-vm-message-assistant', sessionId: FIXTURE_IDS.virtualMachineSession, role: 'assistant', kind: 'assistant_final', content: 'Memory remains stable. The payment gateway service is degraded and should be inspected before any restart.', createdAt: NOW }
     ],
     [FIXTURE_IDS.agentSession]: [
       { id: 'fixture-agent-message-user', sessionId: FIXTURE_IDS.agentSession, role: 'user', kind: 'user', content: 'Summarize the incident evidence and recommend the safest next check.', createdAt: EARLIER },

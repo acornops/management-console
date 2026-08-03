@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { WorkflowApiDefinition } from '@/services/control-plane/workflowApi';
-import { mapApiWorkflowToDefinition } from './workflowPageHelpers';
+import { getSoleAvailableWorkflowAgentId, mapApiWorkflowToDefinition } from './workflowPageHelpers';
 
 function workflow(overrides: Partial<WorkflowApiDefinition> = {}): WorkflowApiDefinition {
   return {
@@ -33,5 +33,21 @@ describe('workflow ownership mapping', () => {
     );
 
     expect(mapped.owner).toBe('Test User');
+  });
+});
+
+describe('workflow creation defaults', () => {
+  it('selects the only available Agent', () => {
+    expect(getSoleAvailableWorkflowAgentId([
+      { value: 'agent-disabled', label: 'Disabled Agent', disabled: true },
+      { value: 'agent-ready', label: 'Ready Agent' }
+    ])).toBe('agent-ready');
+  });
+
+  it('does not guess when more than one Agent is available', () => {
+    expect(getSoleAvailableWorkflowAgentId([
+      { value: 'agent-one', label: 'Agent One' },
+      { value: 'agent-two', label: 'Agent Two' }
+    ])).toBe('');
   });
 });

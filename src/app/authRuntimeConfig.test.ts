@@ -44,6 +44,10 @@ describe('runtime auth configuration', () => {
     expect(loginAuthPanel).toContain("{passwordAuthEnabled && canSignup && mode !== 'forgot'");
     expect(loginAuthPanel).toContain('const hasAuthMethod = oidcEnabled || passwordAuthEnabled');
     expect(loginAuthPanel).toContain("t('login.noAuthMethods')");
+    expect(loginAuthPanel).toContain("t('login.authConfigDiagnostic')");
+    expect(loginAuthPanel).toContain("t('login.retryAuthConfig')");
+    expect(loginAuthPanel).toContain('onClick={onRetryAuthConfig}');
+    expect(app).toContain('onRetryAuthConfig={authConfigState.retry}');
     expect(loginAuthPanel).toContain("t('login.passwordAuthUnavailable')");
     expect(loginAuthPanel).toContain("t('login.signupUnavailable')");
     expect(loginAuthPanel).toContain("t('login.checkEmail')");

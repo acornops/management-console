@@ -17,7 +17,7 @@ import {
   messageActions,
   styles,
   targetChatRunWatcher,
-  traceFooter, useTargetChat,
+  traceFooter, useTargetChat, useTargetChatScrollAnchor,
   userMessageTurn,
   zhLocale
 } from '@/stylesTestSupport';
@@ -128,7 +128,12 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('const isLoadingInitialConversation = !activeSession && isSessionsLoading;');
     expect(chatView).toContain('const shouldShowTranscriptSkeleton = visibleMessages.length === 0 && !hasConversationLoadError && (isHydratingExistingConversation || isLoadingInitialConversation);');
     expect(chatView).toContain('ref={transcriptRef}');
+    expect(chatView).toContain('data-chat-transcript="true"');
     expect(chatView).not.toContain('ref={scrollRef}');
+    expect(useTargetChatScrollAnchor).toContain('new ResizeObserver(keepBottomAnchored)');
+    expect(useTargetChatScrollAnchor).toContain('if (scrollRef.current !== node || !shouldStickToBottomRef.current) return;');
+    expect(useTargetChatScrollAnchor).toContain('observer.observe(node.firstElementChild)');
+    expect(useTargetChatScrollAnchor).toContain('observer.disconnect()');
     expect(chatView).toContain('{shouldShowTranscriptSkeleton ? (');
     expect(chatView).toContain('<ChatTranscriptSkeleton isPanel={isPanel} label={t(\'chat.loadingConversation\')} />');
     expect(chatView).toContain('<ChatTranscriptLoadError');
@@ -185,7 +190,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain('focus-visible:ring-status-danger/20');
     expect(chatView).toContain('rounded-[1.375rem]');
     expect(chatView).toContain('rows={1}');
-    expect(chatView).toContain('min-h-10 type-body');
+    expect(chatView).toContain('min-h-11 type-body');
     expect(chatView).toContain('composerRootRef');
     expect(chatView).toContain('composerTextareaRef');
     expect(chatView).toContain('previousIsRunActiveRef');
@@ -331,10 +336,14 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain('<span>{t(\'chat.roleUser\')}</span>');
     expect(chatView).not.toContain('<span>{formatMessageTime(message.timestamp)}</span>');
     expect(chatView).toContain('data-target-chat-surface="true"');
-    expect(chatView).toContain('relative flex min-h-0 min-w-0 flex-1 overflow-hidden');
+    expect(chatView).toContain('relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-ui-bg md:flex-row');
+    expect(chatView).toContain('data-chat-composer-controls="true"');
+    expect(chatView).toContain('flex min-w-0 flex-wrap items-center gap-2');
     expect(chatView).toContain('items-center overflow-visible rounded-full');
+    expect(chatView).not.toContain('items-center overflow-hidden rounded-full');
     expect(chatView).toContain('disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading}');
     expect(chatView).not.toContain('isWorkspaceAiSettingsLoading || Boolean(workspaceAiSettingsError)');
+    expect(chatView).toContain('md:ml-12 md:w-[min(21rem,calc(100vw-5rem))]');
     expect(chatView).toContain("isPanel");
     expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
     expect(chatView).toContain("? 'bottom-2 right-2 top-2 w-44'");
@@ -534,7 +543,7 @@ describe('target chat polish contracts', () => {
     expect(traceFooter).toContain("const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';");
     expect(traceFooter).toContain('const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;');
     expect(traceFooter).toContain("${compactStatusOnly ? '' : 'mt-3'} w-full ${className || 'max-w-[72ch]'}");
-    expect(traceFooter).toContain('group min-h-10 items-center justify-start gap-2 py-2 pl-0 pr-2.5');
+    expect(traceFooter).toContain('group min-h-11 items-center justify-start gap-2 py-2 pl-0 pr-2.5');
     expect(traceFooter).toContain('className={`-ml-1 shrink-0 text-ui-text-muted group-hover:text-ui-text');
     expect(traceFooter).toContain("'flex w-full rounded-md bg-ui-surface/45 text-ui-text hover:bg-ui-surface/75'");
     expect(traceFooter).toContain("'flex w-full rounded-md bg-ui-surface/45 text-ui-text-muted hover:bg-ui-surface/75 hover:text-ui-text'");

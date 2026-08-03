@@ -39,6 +39,12 @@ export const zh = {
     removeFilter: '移除{{filter}}筛选：{{value}}',
     dismissNotification: '关闭通知'
   },
+  operationalFailure: {
+    cause: '原因',
+    impact: '影响',
+    nextStep: '下一步',
+    technicalDetails: '技术详情'
+  },
   controlPlaneErrors: {
     validation: {
       default: '请检查请求后重试。',
@@ -182,6 +188,19 @@ export const zh = {
     selectWorkspace: '选择工作区',
     noWorkspacesAvailable: '暂无可用工作区。',
     workspaces: '工作区',
+    workspaceHomeTitle: '你的工作区',
+    workspaceHomeDescription: '继续处理某个运营范围，或选择其他工作区。',
+    workspacesDescription: '选择要管理其目标、自动化和治理的工作区。',
+    availableWorkspaces: '可用工作区',
+    availableWorkspacesDescription: '你的账号可以访问 {{count}} 个工作区。',
+    workspaceDescriptionUnavailable: '尚未提供工作区描述。',
+    workspaceMemberCount: '{{count}} 位成员',
+    workspaceMemberCount_one: '{{count}} 位成员',
+    workspaceMemberCount_other: '{{count}} 位成员',
+    workspaceClusterCount: '{{count}} 个集群',
+    workspaceClusterCount_one: '{{count}} 个集群',
+    workspaceClusterCount_other: '{{count}} 个集群',
+    openWorkspace: '打开工作区',
     accounts: '账号',
     more: '更多',
     language: '语言',
@@ -288,7 +307,11 @@ export const zh = {
     neverDispatched: '从未分派',
     noExecution: '未创建执行',
     scheduleMcpUnavailable: 'MCP 前置条件尚未就绪。',
-    scheduleRepairHint: '恢复前请先修复 MCP。恢复仍需手动操作。',
+    scheduleMcpImpact: '该计划已在创建工作流运行前暂停。',
+    scheduleRepairHint: '修复所需的 MCP 访问权限，然后手动恢复该计划。',
+    scheduleFailureCause: '上次计划分派失败。',
+    scheduleFailureImpact: '工作流未启动，之后的运行也可能仍被阻塞。',
+    scheduleFailureNextStep: '检查计划和工作流访问权限，修正原因后重试。',
     dispatch: {
       dispatched: '已分派',
       failed: '失败',
@@ -568,6 +591,13 @@ export const zh = {
       auto_paused: '已自动暂停',
       rejected: '已拒绝'
     },
+    failure: {
+      cause: '上次 Webhook 分派失败。',
+      failedImpact: '已收到请求，但未创建工作流运行。',
+      rejectedImpact: '该请求在创建工作流运行前被拒绝。',
+      autoPausedImpact: '此 Webhook 已暂停，以避免重复分派失败。',
+      nextStep: '检查 Webhook 配置和工作流访问权限，修正原因后重试。'
+    },
     actions: {
       create: '创建 Webhook',
       openWorkflows: '打开工作流',
@@ -695,6 +725,10 @@ export const zh = {
     cancel: '取消连接',
     completing: '正在完成外部集成账号连接',
     retry: '重试',
+    retryApproval: '重试连接',
+    closeWindow: '关闭此标签页',
+    retryInExternalClient: '在外部客户端重试',
+    returnToConsole: '返回 AcornOps',
     loadFailed: '无法检查外部集成连接，请重试。',
     completeFailed: '无法完成外部集成账号连接，请重试。',
     status: {
@@ -702,6 +736,18 @@ export const zh = {
       expired: '账号连接失败，token 已过期。\n请在外部客户端重新发起连接。',
       cancelled: '已取消账号连接。\n请返回外部客户端。',
       unavailable: '外部集成连接不可用。'
+    },
+    statusTitle: {
+      linked: '账号已连接',
+      expired: '连接请求已过期',
+      cancelled: '连接已取消',
+      unavailable: '连接不可用'
+    },
+    statusBody: {
+      linked: '外部账号已连接。关闭此标签页以在外部客户端中继续。',
+      expired: '此请求已无法使用。请关闭此标签页，并从外部客户端重新发起连接。',
+      cancelled: '未授予任何账号访问权限。关闭此标签页以返回外部客户端。',
+      unavailable: '此页面不包含有效的连接请求。请返回 AcornOps，或从外部客户端重新开始。'
     },
     capabilities: {
       read_workspace_data: '读取工作区数据',
@@ -845,7 +891,10 @@ export const zh = {
       triageIssuePrompt: '分诊此虚拟机上的“{{title}}”。严重度：{{severity}}。范围：{{source}}。问题摘要：{{message}}',
       loadAverage: '平均负载',
       memory: '内存',
+      telemetryTitle: '主机遥测',
+      telemetryDescription: 'AgentV 上报的当前使用情况和近期趋势。',
       loadingMetricHistory: '正在加载虚拟机遥测',
+      loadingMetricHistoryBody: '正在从控制平面获取最新主机样本。',
       loadDescription: '来自紧凑虚拟机指标样本的 Linux 1 分钟平均负载。',
       memoryDescription: '来自紧凑虚拟机指标样本的内存使用百分比。',
       noVmMetricSamples: '暂无虚拟机遥测样本',
@@ -1036,6 +1085,8 @@ export const zh = {
     signingIn: '登录中…',
     ssoOnly: '当前环境未启用密码登录。请使用组织 SSO。',
     noAuthMethods: '当前环境未启用任何登录方式。请联系 AcornOps 管理员。',
+    authConfigDiagnostic: '运行时身份验证配置显示组织 SSO 和密码登录均已禁用。',
+    retryAuthConfig: '重新检查登录选项',
     switchLight: '切换到浅色模式',
     switchDark: '切换到深色模式'
   },
@@ -1277,7 +1328,7 @@ export const zh = {
     lastSeenLabel: '最后出现',
     firstSeenLabel: '首次出现',
     openAssistantIssue: '打开助手',
-    viewMoreIssue: '查看更多',
+    viewMoreIssue: '查看目标',
     loadingBoard: '正在加载目标问题…',
     loadingVirtualMachines: '正在加载已连接虚拟机…',
     noAttentionTargetsTitle: '当前没有紧急事项',
@@ -1396,8 +1447,8 @@ export const zh = {
     subtitle: '检查 {{workspace}} 的入站工作流触发器并管理出站事件投递。',
     directions: {
       label: 'Webhook 方向',
-      inbound: '入站',
-      outbound: '出站'
+      inbound: '入站 Webhook',
+      outbound: '出站 Webhook'
     },
     createTitle: '创建 Webhook',
     editTitle: '编辑 {{name}}',
@@ -1634,6 +1685,9 @@ export const zh = {
   },
   catalogBrowser: {
     title: '浏览 MCP 服务器',
+    destinationTitle: '选择安装位置',
+    destinationDescription: '请先选择 Agent、集群或虚拟机，再比较服务器选项。',
+    destinationRequired: '请先在上方选择目标，然后再安装此服务器。',
     workflowDescription: '将固定版本的 MCP 服务器安装到工作区范围，之后 Agent 才能将它授予工作流。',
     targetDescription: '将固定版本的 MCP 服务器仅导入此目标。它不会出现在工作流或其他目标中。',
     search: '搜索目录',
@@ -1978,6 +2032,13 @@ export const zh = {
       reviewApproval: '查看审批',
       viewFindings: '查看结果',
       retry: '重试自动调查'
+    },
+    failure: {
+      aiProviderNeedsSetup: '工作区 AI 提供商尚未就绪。请管理员完成提供商设置后重试。',
+      targetDisconnected: '目标 Agent 在诊断完成前断开连接。请重新连接目标后重试。',
+      noDiagnosticTools: '没有可用的诊断工具。请启用目标诊断工具后重试。',
+      retryable: '服务在生成调查结果前停止。请重试自动调查。',
+      manualFallback: '无法重试此自动调查。请打开 Assistant 手动调查该问题。'
     },
     retrying: '正在重试…',
     retryFailed: '无法重试自动调查。'
@@ -2756,6 +2817,7 @@ export const zh = {
     inviteEmail: '邀请邮箱',
     signedInAs: '当前登录为',
     emailMismatch: '此邀请属于 {{email}}。请退出并使用该账号登录后接受。',
+    signOutAndSwitch: '退出并切换账号',
     notPending: '此邀请状态为 {{status}}，已无法接受。',
     accept: '接受邀请',
     viewWorkspaces: '查看工作区',
@@ -3372,7 +3434,7 @@ export const zh = {
   workflowCoordination: {
     agentsTitle: 'Agents',
     assignmentTitle: '执行设置',
-    agentsDescription: '选择一个 Agent 直接运行，或选择多个 Agent 由 AcornOps 协调。',
+    agentsDescription: '请至少选择一个 Agent。选择一个可直接运行，选择多个则由 AcornOps 协调。',
     directAssignmentDescription: '此工作流由 {{name}} 直接运行。',
     coordinatedAssignmentDescription: '此工作流由 {{count}} 个对等的已分配 Agent 协同运行。',
     selectedAgents: '已选 Agents',
@@ -3380,9 +3442,42 @@ export const zh = {
     coordinatedFeedback: 'AcornOps 将协调 {{count}} 个已选 Agent 的工作。',
     coordinatedLabel: '由 AcornOps 协调',
     executionLabel: '执行方式',
-    selectionRequired: '请至少选择一个工作流 Agent 后再审核。',
+    selectionRequired: '请至少选择一个工作流 Agent。',
     completeAccessStep: '第 2 步尚未完成。请至少选择一个 Agent 和一个语义能力后再审核。',
-    createDescription: '描述工作流，并选择负责运行该工作流的 Agents。',
+    createDescription: '分两步设置一个可重复使用的运行。',
+    creation: {
+      stepName: '名称',
+      stepAgents: 'Agents',
+      nameRequired: '请先输入工作流名称，再选择 Agents。',
+      title: '创建工作流',
+      close: '关闭创建工作流抽屉',
+      setup: '创建工作流设置',
+      discardTitle: '放弃工作流草稿？',
+      discardDescription: '工作流名称、提示和 Agent 选择将会丢失。',
+      discardConfirm: '放弃草稿',
+      continueEditing: '继续编辑',
+      permissionRequired: '需要 manage_workflows 权限才能创建工作流。',
+      optionsRequired: '必须先加载工作流选项，然后才能创建工作流。',
+      nameTitle: '命名工作流',
+      nameDescription: '先输入一个容易识别的名称。你可以现在添加指令，也可以稍后完善。',
+      nameLabel: '工作流名称',
+      namePlaceholder: '例如：生产环境健康检查',
+      optionalDetails: '添加可选详情',
+      optionalDetailsDescription: '描述和默认指令',
+      optional: '（可选）',
+      descriptionLabel: '描述',
+      descriptionPlaceholder: '例如：交接前汇总生产环境健康状况',
+      descriptionHelp: '显示在工作流库和启动审核中。',
+      instructionsLabel: '默认指令',
+      instructionsHelp: '复制到每次启动中。留空将使用“启动 {{name}}。”',
+      fallbackWorkflowName: '此工作流',
+      chooseAgentsTitle: '选择 Agents',
+      noAvailableAgents: '暂无可用的工作流 Agents。',
+      chooseAgents: '选择 Agents',
+      backToName: '返回名称',
+      creating: '正在创建…',
+      create: '创建工作流'
+    },
     noAgents: '尚未选择工作流 Agent。',
     agentUnavailable: 'Agent 暂不可用',
     traceTitle: 'AcornOps 协调',

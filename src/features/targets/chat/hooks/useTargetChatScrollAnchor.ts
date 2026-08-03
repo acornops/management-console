@@ -57,6 +57,32 @@ export function useTargetChatScrollAnchor({
     return () => window.cancelAnimationFrame(frame);
   }, [activeSessionId, chatAutoScrollSignature, isChatActive, isLoadingEarlierMessages]);
 
+  useLayoutEffect(() => {
+    const node = scrollRef.current;
+    if (!node || !isChatActive || typeof ResizeObserver === 'undefined') return;
+
+    let frame = 0;
+    const keepBottomAnchored = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        if (scrollRef.current !== node || !shouldStickToBottomRef.current) return;
+        node.scrollTop = node.scrollHeight;
+        lastChatScrollTopRef.current = node.scrollTop;
+      });
+    };
+    const observer = new ResizeObserver(keepBottomAnchored);
+    observer.observe(node);
+    if (node.firstElementChild instanceof HTMLElement) {
+      observer.observe(node.firstElementChild);
+    }
+    keepBottomAnchored();
+
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+  }, [activeSessionId, chatAutoScrollSignature, isChatActive]);
+
   return {
     lastChatScrollTopRef,
     scrollRef,

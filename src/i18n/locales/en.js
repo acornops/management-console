@@ -39,6 +39,12 @@ export const en = {
     removeFilter: 'Remove {{filter}} filter: {{value}}',
     dismissNotification: 'Dismiss notification'
   },
+  operationalFailure: {
+    cause: 'Cause',
+    impact: 'Impact',
+    nextStep: 'Next step',
+    technicalDetails: 'Technical details'
+  },
   controlPlaneErrors: {
     validation: {
       default: 'Check the request and try again.',
@@ -182,6 +188,19 @@ export const en = {
     selectWorkspace: 'Select Workspace',
     noWorkspacesAvailable: 'No workspaces available.',
     workspaces: 'Workspaces',
+    workspaceHomeTitle: 'Your workspaces',
+    workspaceHomeDescription: 'Resume work in an operating area or choose another workspace.',
+    workspacesDescription: 'Choose the workspace whose targets, automation, and governance you want to manage.',
+    availableWorkspaces: 'Available workspaces',
+    availableWorkspacesDescription: '{{count}} workspaces available to your account.',
+    workspaceDescriptionUnavailable: 'No workspace description has been provided.',
+    workspaceMemberCount: '{{count}} members',
+    workspaceMemberCount_one: '{{count}} member',
+    workspaceMemberCount_other: '{{count}} members',
+    workspaceClusterCount: '{{count}} clusters',
+    workspaceClusterCount_one: '{{count}} cluster',
+    workspaceClusterCount_other: '{{count}} clusters',
+    openWorkspace: 'Open workspace',
     accounts: 'Accounts',
     more: 'More',
     language: 'Language',
@@ -288,7 +307,11 @@ export const en = {
     neverDispatched: 'Never dispatched',
     noExecution: 'No execution was created',
     scheduleMcpUnavailable: 'MCP prerequisites were not ready.',
-    scheduleRepairHint: 'Repair MCP before resuming. Resume remains a manual action.',
+    scheduleMcpImpact: 'The schedule paused before a workflow run was created.',
+    scheduleRepairHint: 'Repair the required MCP access, then resume the schedule manually.',
+    scheduleFailureCause: 'The last scheduled dispatch failed.',
+    scheduleFailureImpact: 'The workflow did not start, and future runs may remain blocked.',
+    scheduleFailureNextStep: 'Review the schedule and workflow access, correct the cause, then retry.',
     dispatch: {
       dispatched: 'Dispatched',
       failed: 'Failed',
@@ -568,6 +591,13 @@ export const en = {
       auto_paused: 'Auto-paused',
       rejected: 'Rejected'
     },
+    failure: {
+      cause: 'The last webhook dispatch failed.',
+      failedImpact: 'The request was received, but no workflow run was created.',
+      rejectedImpact: 'The request was rejected before a workflow run was created.',
+      autoPausedImpact: 'This webhook paused to prevent repeated failed dispatches.',
+      nextStep: 'Review the webhook configuration and workflow access, correct the cause, then retry.'
+    },
     actions: {
       create: 'Create webhook',
       openWorkflows: 'Open workflows',
@@ -695,6 +725,10 @@ export const en = {
     cancel: 'Cancel linking',
     completing: 'Completing external integration account link',
     retry: 'Retry',
+    retryApproval: 'Try linking again',
+    closeWindow: 'Close this tab',
+    retryInExternalClient: 'Retry in external client',
+    returnToConsole: 'Return to AcornOps',
     loadFailed: 'Unable to check the external integration link. Try again.',
     completeFailed: 'Unable to complete the external integration account link. Try again.',
     status: {
@@ -702,6 +736,18 @@ export const en = {
       expired: 'Account linking unsuccessful due to expired token.\nRetry linking on external client.',
       cancelled: 'Account linking cancelled.\nGo back to the external client.',
       unavailable: 'External integration link unavailable.'
+    },
+    statusTitle: {
+      linked: 'Account linked',
+      expired: 'Link request expired',
+      cancelled: 'Linking cancelled',
+      unavailable: 'Link unavailable'
+    },
+    statusBody: {
+      linked: 'The external account is connected. Close this tab to continue in the external client.',
+      expired: 'This request can no longer be used. Close this tab and start linking again from the external client.',
+      cancelled: 'No account access was granted. Close this tab to return to the external client.',
+      unavailable: 'This page does not contain a valid link request. Return to AcornOps or start again from the external client.'
     },
     capabilities: {
       read_workspace_data: 'Read workspace data',
@@ -845,7 +891,10 @@ export const en = {
       triageIssuePrompt: 'Triage "{{title}}" on this VM. Severity: {{severity}}. Scope: {{source}}. Issue summary: {{message}}',
       loadAverage: 'Load Average',
       memory: 'Memory',
+      telemetryTitle: 'Host telemetry',
+      telemetryDescription: 'Current usage and recent trends reported by AgentV.',
       loadingMetricHistory: 'Loading VM telemetry',
+      loadingMetricHistoryBody: 'Retrieving the latest host samples from the control plane.',
       loadDescription: 'One-minute Linux load average from compact VM metric samples.',
       memoryDescription: 'Memory used percentage from compact VM metric samples.',
       noVmMetricSamples: 'No VM telemetry samples yet',
@@ -1036,6 +1085,8 @@ export const en = {
     signingIn: 'Signing in…',
     ssoOnly: 'Password login is disabled for this environment. Use your organization SSO provider.',
     noAuthMethods: 'No sign-in method is enabled for this environment. Contact your AcornOps administrator.',
+    authConfigDiagnostic: 'Runtime authentication configuration reported both organization SSO and password sign-in as disabled.',
+    retryAuthConfig: 'Check sign-in options again',
     switchLight: 'Switch to light mode',
     switchDark: 'Switch to dark mode'
   },
@@ -1277,7 +1328,7 @@ export const en = {
     lastSeenLabel: 'Last seen',
     firstSeenLabel: 'First seen',
     openAssistantIssue: 'Open assistant',
-    viewMoreIssue: 'View More',
+    viewMoreIssue: 'View target',
     loadingBoard: 'Loading target issues…',
     loadingVirtualMachines: 'Loading connected virtual machines…',
     noAttentionTargetsTitle: 'Nothing urgent right now',
@@ -1396,8 +1447,8 @@ export const en = {
     subtitle: 'Inspect inbound workflow triggers and manage outbound event deliveries for {{workspace}}.',
     directions: {
       label: 'Webhook direction',
-      inbound: 'Inbound',
-      outbound: 'Outbound'
+      inbound: 'Inbound webhooks',
+      outbound: 'Outbound webhooks'
     },
     createTitle: 'Create webhook',
     editTitle: 'Edit {{name}}',
@@ -1634,6 +1685,9 @@ export const en = {
   },
   catalogBrowser: {
     title: 'Browse MCP servers',
+    destinationTitle: 'Choose where to install',
+    destinationDescription: 'Select an Agent, cluster, or VM before comparing server options.',
+    destinationRequired: 'Choose a destination above before installing this server.',
     workflowDescription: 'Install a pinned MCP server into workspace scope so Agents can grant it to workflows.',
     targetDescription: 'Import a pinned MCP server only into this target. It will not appear in workflows or other targets.',
     search: 'Search catalog',
@@ -1978,6 +2032,13 @@ export const en = {
       reviewApproval: 'Review approval',
       viewFindings: 'View findings',
       retry: 'Retry automatic investigation'
+    },
+    failure: {
+      aiProviderNeedsSetup: 'The workspace AI provider is not ready. Ask an administrator to finish provider setup, then retry.',
+      targetDisconnected: 'The target agent disconnected before diagnostics completed. Reconnect the target, then retry.',
+      noDiagnosticTools: 'No usable diagnostic tools were available. Enable target diagnostic tools, then retry.',
+      retryable: 'The service stopped before findings were created. Retry the automatic investigation.',
+      manualFallback: 'This automatic investigation cannot be retried. Open Assistant to investigate the issue manually.'
     },
     retrying: 'Retrying…',
     retryFailed: 'Automatic investigation could not be retried.'
@@ -2756,6 +2817,7 @@ export const en = {
     inviteEmail: 'Invite email',
     signedInAs: 'Signed in as',
     emailMismatch: 'This invitation is for {{email}}. Sign out and sign in with that account to accept it.',
+    signOutAndSwitch: 'Sign out and switch account',
     notPending: 'This invitation is {{status}} and can no longer be accepted.',
     accept: 'Accept Invitation',
     viewWorkspaces: 'View Workspaces',
@@ -3372,7 +3434,7 @@ export const en = {
   workflowCoordination: {
     agentsTitle: 'Agents',
     assignmentTitle: 'Execution setup',
-    agentsDescription: 'Choose one Agent for a direct run, or multiple Agents to coordinate.',
+    agentsDescription: 'Select at least one Agent. Choose one for a direct run, or multiple Agents to coordinate.',
     directAssignmentDescription: 'This workflow runs directly with {{name}}.',
     coordinatedAssignmentDescription: 'This workflow coordinates {{count}} assigned Agents as peers.',
     selectedAgents: 'Selected Agents',
@@ -3380,9 +3442,42 @@ export const en = {
     coordinatedFeedback: 'AcornOps will coordinate work across {{count}} selected agents.',
     coordinatedLabel: 'AcornOps-coordinated',
     executionLabel: 'Execution',
-    selectionRequired: 'Select at least one workflow Agent before review.',
+    selectionRequired: 'Select at least one workflow Agent.',
     completeAccessStep: 'Step 2 is not done. Select at least one Agent and one semantic capability before review.',
-    createDescription: 'Describe the workflow and choose the Agents that will run it.',
+    createDescription: 'Set up a reusable run in two quick steps.',
+    creation: {
+      stepName: 'Name',
+      stepAgents: 'Agents',
+      nameRequired: 'Enter a workflow name before choosing Agents.',
+      title: 'Create workflow',
+      close: 'Close create workflow drawer',
+      setup: 'Create workflow setup',
+      discardTitle: 'Discard workflow draft?',
+      discardDescription: 'Your workflow name, prompt, and Agent selection will be lost.',
+      discardConfirm: 'Discard draft',
+      continueEditing: 'Continue editing',
+      permissionRequired: 'You need manage_workflows to create workflows.',
+      optionsRequired: 'Workflow options must load before you can create a workflow.',
+      nameTitle: 'Name the workflow',
+      nameDescription: 'Start with a recognizable name. You can add instructions now or refine them later.',
+      nameLabel: 'Workflow name',
+      namePlaceholder: 'e.g. Production health review',
+      optionalDetails: 'Add optional details',
+      optionalDetailsDescription: 'Description and default instructions',
+      optional: '(optional)',
+      descriptionLabel: 'Description',
+      descriptionPlaceholder: 'e.g. Summarizes production health before handoff',
+      descriptionHelp: 'Shown in the workflow library and launch review.',
+      instructionsLabel: 'Default instructions',
+      instructionsHelp: 'Copied into every launch. Leave blank to use “Start {{name}}.”',
+      fallbackWorkflowName: 'this workflow',
+      chooseAgentsTitle: 'Choose Agents',
+      noAvailableAgents: 'No workflow Agents are available.',
+      chooseAgents: 'Choose Agents',
+      backToName: 'Back to name',
+      creating: 'Creating…',
+      create: 'Create workflow'
+    },
     noAgents: 'No workflow Agents selected.',
     agentUnavailable: 'Agent unavailable',
     traceTitle: 'AcornOps coordination',

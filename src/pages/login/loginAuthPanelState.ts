@@ -6,6 +6,7 @@ export interface LoginAuthPanelProps {
   passwordResetEnabled: boolean;
   sessionNotice?: string;
   onLogin: () => void;
+  onRetryAuthConfig: () => void;
   onPasswordLogin: (identifier: string, password: string) => Promise<import('@/types').PasswordAuthResult>;
   onPasswordSignup: (input: {
     email: string;

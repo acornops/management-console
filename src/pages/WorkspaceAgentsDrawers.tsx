@@ -2,15 +2,9 @@ import React from 'react';
 import { Button } from '@acornops/ui';
 import { CloseButton, Textarea, TextInput } from '@acornops/ui';
 import { DrawerFrame } from '@acornops/ui';
-import { Select, SelectOption } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { AgentAvatar, AgentEmojiPicker, suggestAgentEmoji } from '@/pages/agents/AgentAvatar';
-import { type AgentDefinition } from '@/pages/agents/agentModel';
-import {
-  statusOptions,
-  type AgentDraft,
-  type AgentEditDraft
-} from '@/pages/WorkspaceAgentsPage.helpers';
+import { type AgentDraft } from '@/pages/WorkspaceAgentsPage.helpers';
 
 interface CreateAgentDrawerProps {
   createDraft: AgentDraft;
@@ -145,119 +139,5 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
         </Button>
       </div>
     </DrawerFrame>
-  );
-};
-
-interface EditAgentDrawerProps {
-  editingAgent: AgentDefinition;
-  editDraft: AgentEditDraft;
-  setEditDraft: React.Dispatch<React.SetStateAction<AgentEditDraft | null>>;
-  ownerSelectOptions: Array<SelectOption<string>>;
-  editChangeSummary: string[];
-  updatingAgentId: string;
-  nameInputRef?: React.RefObject<HTMLInputElement | null>;
-  onClose: () => void;
-  onSave: () => void;
-}
-
-export const EditAgentDrawer: React.FC<EditAgentDrawerProps> = ({
-  editingAgent,
-  editDraft,
-  setEditDraft,
-  ownerSelectOptions,
-  editChangeSummary,
-  updatingAgentId,
-  nameInputRef,
-  onClose,
-  onSave
-}) => {
-  return (
-  <DrawerFrame unframed
-    isOpen
-    onClose={onClose}
-    titleId="edit-agent-title"
-    descriptionId="edit-agent-description"
-    initialFocusRef={nameInputRef}
-    className="w-full max-w-[min(100vw,64rem)]"
-  >
-      <div className="shrink-0 border-b border-ui-border bg-ui-bg px-5 py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 id="edit-agent-title" className="type-section-title">Edit agent</h2>
-            <p id="edit-agent-description" className="type-caption mt-2 text-ui-text-muted">Changes apply to the shared agent definition. Review workflow impact before saving.</p>
-          </div>
-          <CloseButton onClick={onClose} label="Close edit agent drawer" className="shrink-0" />
-        </div>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 custom-scrollbar">
-        <div className="space-y-5">
-          <AgentEmojiPicker
-            value={editDraft.avatarEmoji}
-            onChange={(avatarEmoji) => setEditDraft((draft) => draft && ({ ...draft, avatarEmoji }))}
-            description="This visual identity appears anywhere the Agent is presented."
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="type-micro-label">Name</span>
-              <TextInput ref={nameInputRef} value={editDraft.name} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, name: event.target.value }))} className="mt-2" />
-            </label>
-            <label className="block">
-              <span className="type-micro-label">Status</span>
-              <Select<AgentEditDraft['status']>
-                value={editDraft.status}
-                options={statusOptions}
-                onChange={(status) => setEditDraft((draft) => draft && ({ ...draft, status }))}
-                className="mt-2"
-                ariaLabel="Status"
-              />
-            </label>
-          </div>
-          <label className="block">
-            <span className="type-micro-label">Purpose</span>
-            <span className="type-caption mt-1 block text-ui-text-muted">Shown in the Agent catalog so people know when to use it.</span>
-            <TextInput value={editDraft.description} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, description: event.target.value }))} className="mt-2" />
-          </label>
-          <section className="rounded-md border border-ui-border bg-ui-bg px-3 py-3">
-            <label className="block">
-              <span className="type-micro-label">Agent owner</span>
-              <Select<string>
-                value={editDraft.ownerUserId}
-                options={ownerSelectOptions}
-                onChange={(ownerUserId) => setEditDraft((draft) => draft && ({ ...draft, ownerUserId }))}
-                className="mt-2"
-                ariaLabel="Agent owner"
-              />
-            </label>
-            <p className="type-caption mt-2 text-ui-text-muted">
-              {ownerSelectOptions.length > 1 ? 'Only loaded workspace members are available for owner transfer.' : `Current owner: ${editingAgent.owner}`}
-            </p>
-          </section>
-          <label className="block">
-            <span className="type-micro-label">Agent instructions</span>
-            <span className="type-caption mt-1 block text-ui-text-muted">Sent to the Agent at the start of each run. Changes apply to future runs.</span>
-            <Textarea value={editDraft.instructions} onChange={(event) => setEditDraft((draft) => draft && ({ ...draft, instructions: event.target.value }))} className="mt-2" />
-          </label>
-
-          <p className="type-body rounded-md border border-ui-border bg-ui-bg px-3 py-3 text-ui-text-muted">This form edits the Agent definition only. Its workspace-owned capability ceiling is configured independently and remains visible in the Capabilities tab.</p>
-
-          {editChangeSummary.length > 0 && <section className="border-y border-ui-border py-4">
-            <h3 className="type-row-title ">Changes before save</h3>
-            <ul className="type-body type-emphasis mt-3 grid gap-2">
-              {editChangeSummary.map((change) => <li key={change}>{change}</li>)}
-            </ul>
-          </section>}
-
-        </div>
-      </div>
-
-      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button type="button" variant="tertiary" size="sm" onClick={onClose}>Cancel</Button>
-        <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={updatingAgentId === editingAgent.id || !editDraft.name.trim() || !editDraft.description.trim() || editChangeSummary.length === 0}>
-          <ICONS.CheckCircle2 className="h-4 w-4" />
-          {updatingAgentId === editingAgent.id ? 'Saving...' : 'Save changes'}
-        </Button>
-      </div>
-  </DrawerFrame>
   );
 };

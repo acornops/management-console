@@ -76,12 +76,10 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   const toolAccessSummary = useMemo(() => {
     const totalTools = servers.reduce((total, server) => total + server.toolCounts.total, 0);
     const enabledTools = servers.reduce((total, server) => total + server.toolCounts.enabledEffective, 0);
-    const readOnlyTools = servers.reduce((total, server) => total + server.toolCounts.readOnly, 0);
     const writeCapableTools = servers.reduce((total, server) => total + server.toolCounts.writeCapable, 0);
     return {
       totalTools,
       enabledTools,
-      readOnlyTools,
       writeCapableTools,
       serverCount: servers.length
     };
@@ -110,32 +108,21 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
 
   return (
     <>
-      <section data-mcp-server-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid grid-cols-2 sm:grid-cols-6 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
-          <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-6 xl:col-span-1 xl:border-b-0 xl:border-r">
+      {servers.length > 0 && <section data-mcp-server-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+        <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('mcpServers.serverInventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
           </div>
-          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:col-span-2 xl:col-span-1 xl:border-b-0">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
             <p className="type-data mt-0.5">{toolAccessSummary.serverCount}</p>
           </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-2 sm:border-r xl:col-span-1 xl:border-b-0">
-            <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-            <p className="type-data mt-0.5">{toolAccessSummary.totalTools}</p>
-          </div>
-          <div className="border-b border-r border-ui-border px-5 py-3.5 sm:col-span-2 sm:border-r-0 xl:col-span-1 xl:border-b-0 xl:border-r">
+          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
-            <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}</p>
+            <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}<span className="type-caption text-ui-text-muted"> / {toolAccessSummary.totalTools}</span></p>
           </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 sm:border-b-0 sm:border-r xl:col-span-1">
-            <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-            <p data-mcp-read-only-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
-              {toolAccessSummary.readOnlyTools}
-              <span className="h-2 w-2 rounded-full bg-status-success" />
-            </p>
-          </div>
-          <div className="col-span-2 px-5 py-3.5 sm:col-span-3 xl:col-span-1">
+          <div className="px-5 py-3.5 xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
             <p data-mcp-write-capable-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.writeCapableTools}
@@ -143,7 +130,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
             </p>
           </div>
         </div>
-      </section>
+      </section>}
 
       <section data-mcp-server-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
         {(servers.length > 0 || hasActiveFilters) && (

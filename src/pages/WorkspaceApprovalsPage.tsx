@@ -295,7 +295,64 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
               : approvalFilter === 'pending' ? 'approvals.emptyBody' : 'approvals.emptyRecentBody')}
           />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <ul data-approval-layout="mobile" className="divide-y divide-ui-border md:hidden">
+            {approvals.map((approval) => {
+              const decision = decisionState[approval.approvalId];
+              const pending = approval.status === 'pending';
+              const isFocusedApproval = Boolean(
+                (approvalId && approval.approvalId === approvalId) ||
+                (!approvalId && runId && approval.runId === runId)
+              );
+              return (
+                <li
+                  key={approval.approvalId}
+                  data-focused-approval={isFocusedApproval || undefined}
+                  className={`min-w-0 px-4 py-5 ${isFocusedApproval ? 'bg-accent-soft/40 ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}
+                >
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="type-micro-label text-ui-text-muted">{t('approvals.table.approval')}</p>
+                      <h3 className="mt-1 break-words type-row-title text-ui-text">{approval.summary}</h3>
+                    </div>
+                    <StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge>
+                  </div>
+                  <dl className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
+                    <div className="min-w-0">
+                      <dt className="type-micro-label text-ui-text-muted">{t('approvals.table.activity')}</dt>
+                      <dd className="mt-1 break-words type-ui text-ui-text">
+                        {approval.sessionTitle || approval.workflowId || sourceLabel(approval, t)}
+                        <span className="mt-1 block break-all font-mono type-caption text-ui-text-muted">{approval.runId}</span>
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="type-micro-label text-ui-text-muted">{t('approvals.table.requestedBy')}</dt>
+                      <dd className="mt-1 break-words type-body text-ui-text">
+                        {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : approval.requestedBy || t('approvals.system')}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="type-micro-label text-ui-text-muted">{t('approvals.table.source')}</dt>
+                      <dd className="mt-1 break-words type-body type-emphasis text-ui-text">{sourceLabel(approval, t)}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="type-micro-label text-ui-text-muted">{t('approvals.table.expires')}</dt>
+                      <dd className="mt-1 break-words type-body text-ui-text">{formatDateTime(approval.expiresAt, t('approvals.none'))}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 grid grid-cols-2 gap-2" aria-label={t('approvals.table.decision')}>
+                    <Button size="md" variant="secondary" className="w-full" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
+                      {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}
+                    </Button>
+                    <Button size="md" variant="danger" className="w-full" onClick={() => void decideApproval(approval, 'rejected')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
+                      {t('approvals.actions.reject')}
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <div data-approval-layout="desktop" className="hidden overflow-x-auto md:block">
             <DataTable caption={t('approvals.queueTitle')} className="min-w-[72rem] w-full border-collapse text-left">
               <DataTableHeader>
                 <DataTableRow>
@@ -317,7 +374,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                     (!approvalId && runId && approval.runId === runId)
                   );
                   return (
-                    <DataTableRow key={approval.approvalId} className={`type-body ${isFocusedApproval ? 'bg-accent-soft ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
+                    <DataTableRow key={approval.approvalId} data-focused-approval={isFocusedApproval || undefined} className={`type-body ${isFocusedApproval ? 'bg-accent-soft/40 ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
                       <DataTableCell as="th" scope="row" density="dense" className="type-emphasis text-ui-text">{approval.summary}</DataTableCell>
                       <DataTableCell density="dense" className="type-ui text-ui-text">
                         <span className="block">{approval.sessionTitle || approval.workflowId || sourceLabel(approval, t)}</span>
@@ -345,6 +402,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
               </DataTableBody>
             </DataTable>
           </div>
+          </>
         )}
         </section>
       </CollectionState>

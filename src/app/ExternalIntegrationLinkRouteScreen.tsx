@@ -24,7 +24,9 @@ import { AppRoute } from '@/utils/routes';
 
 interface ExternalIntegrationLinkRouteScreenProps {
   logoSrc: string;
+  onCloseWindow: () => void;
   onLinkStatus: (status: 'linked' | 'expired' | 'cancelled') => void;
+  onReturnToConsole: () => void;
   route: Extract<AppRoute, { kind: 'externalIntegrationLink' }>;
 }
 
@@ -46,7 +48,7 @@ export function externalIntegrationLinkErrorIsExpired(error: unknown): boolean {
     && (error.status === 410 || error.code === 'EXTERNAL_INTEGRATION_LINK_EXPIRED');
 }
 
-export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLinkRouteScreenProps> = ({ logoSrc, onLinkStatus, route }) => {
+export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLinkRouteScreenProps> = ({ logoSrc, onCloseWindow, onLinkStatus, onReturnToConsole, route }) => {
   const { t } = useTranslation();
   const [preview, setPreview] = useState<ControlPlaneExternalIntegrationLinkPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(Boolean(route.token));
@@ -123,15 +125,27 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
   };
 
   if (!route.token) {
+    const status = route.status || 'unavailable';
     return (
-      <div role="status" aria-live="polite" className="flex min-h-screen justify-center bg-ui-bg px-6 pt-28 text-ui-text sm:pt-32">
-        <div className="flex max-w-md flex-col items-center gap-4 text-center">
+      <main className="flex min-h-screen items-center justify-center bg-ui-bg px-6 py-12 text-ui-text">
+        <section className="flex w-full max-w-md flex-col items-center gap-5 text-center">
           <img src={logoSrc} className="h-12 w-12" alt="AcornOps" />
-          <p className="whitespace-pre-line type-section-title leading-7 text-ui-text">
-            {t(`externalIntegrationLink.status.${route.status || 'unavailable'}`)}
-          </p>
-        </div>
-      </div>
+          <div role="status" aria-live="polite">
+            <h1 className="type-route-title text-ui-text">{t(`externalIntegrationLink.statusTitle.${status}`)}</h1>
+            <p className="mt-3 type-body leading-6 text-ui-text-muted">{t(`externalIntegrationLink.statusBody.${status}`)}</p>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center">
+            {status !== 'unavailable' && (
+              <Button onClick={onCloseWindow} variant="primary" size="lg" className="sm:flex-1">
+                {t(status === 'expired' ? 'externalIntegrationLink.retryInExternalClient' : 'externalIntegrationLink.closeWindow')}
+              </Button>
+            )}
+            <Button onClick={onReturnToConsole} variant={status === 'unavailable' ? 'primary' : 'secondary'} size="lg" className="sm:flex-1">
+              {t('externalIntegrationLink.returnToConsole')}
+            </Button>
+          </div>
+        </section>
+      </main>
     );
   }
 
@@ -223,7 +237,11 @@ export const ExternalIntegrationLinkRouteScreen: React.FC<ExternalIntegrationLin
           </>
         )}
         <Button onClick={handleApprove} disabled={isApproving || isLoadingPreview || !preview} variant="primary" size="lg" className="w-full">
-          {isApproving ? t('externalIntegrationLink.approving') : t('externalIntegrationLink.approve')}
+          {isApproving
+            ? t('externalIntegrationLink.approving')
+            : approvalError
+              ? t('externalIntegrationLink.retryApproval')
+              : t('externalIntegrationLink.approve')}
         </Button>
         <Button onClick={handleCancel} disabled={isApproving} variant="secondary" size="md" className="w-full">
           {t('externalIntegrationLink.cancel')}

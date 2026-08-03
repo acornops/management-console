@@ -206,7 +206,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
   return (
     <div
       data-target-chat-surface="true"
-      className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-ui-bg"
+      className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-ui-bg md:flex-row"
       onDragEnter={handleChatWindowDragEnter}
       onDragOver={handleChatWindowDragOver}
       onDragLeave={handleChatWindowDragLeave}
@@ -357,6 +357,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
 
               <div
                 ref={transcriptRef}
+                data-chat-transcript="true"
                 onScroll={onChatScroll}
                 className={`flex-1 scroll-pb-10 overflow-y-auto bg-ui-bg custom-scrollbar ${
                   isPanel ? 'px-5 py-5 sm:px-6 sm:py-6' : 'stable-scrollbar-gutter px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)]'
@@ -579,7 +580,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           side="left"
           containerClassName="absolute z-[110] lg:hidden"
           overlayClassName="bg-ui-text/20 dark:bg-ui-bg/65"
-          className="ml-12 h-full w-[min(21rem,calc(100vw-5rem))] max-w-none border-l-0 bg-ui-surface shadow-xl outline-none"
+          className="h-full w-[min(21rem,calc(100vw-2rem))] max-w-none border-l-0 bg-ui-surface shadow-xl outline-none md:ml-12 md:w-[min(21rem,calc(100vw-5rem))]"
         >
           <ConversationHistory
             appName={subject.name}

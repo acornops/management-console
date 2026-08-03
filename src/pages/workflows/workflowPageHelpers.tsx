@@ -121,6 +121,11 @@ export function createWorkflowDraft(): CreateWorkflowDraft {
   };
 }
 
+export function getSoleAvailableWorkflowAgentId(agents: WorkflowOptionsCatalog['agents']): string {
+  const availableAgents = agents.filter((agent) => !agent.disabled);
+  return availableAgents.length === 1 ? availableAgents[0].value : '';
+}
+
 function uniqueInOrder(values: string[]): string[] {
   const seen = new Set<string>();
   return values.filter((value) => {

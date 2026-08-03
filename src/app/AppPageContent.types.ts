@@ -51,6 +51,7 @@ export interface AppPageContentProps {
   onOpenDeleteWorkspace: (workspaceId: string) => void;
   onLeaveWorkspaceSuccess: (workspaceId: string) => void;
   onLogout: () => void;
+  onSwitchInvitationAccount: (token: string) => void;
   onSetLanguage: (language: AppLanguageCode) => void;
   showToast: (message: string) => void;
   toWorkspaceInvitation: (invitation: Awaited<ReturnType<typeof controlPlaneApi.createWorkspaceInvitation>>) => WorkspaceInvitation;

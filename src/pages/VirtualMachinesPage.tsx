@@ -1,9 +1,7 @@
 import React from 'react';
-import { Activity, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button, StatusBadge } from '@acornops/ui';
-import { MetricChart } from '@/components/common/MetricChart';
 import { PageHeader, PageShell } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import {
@@ -22,13 +20,9 @@ import {
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
 import {
-  formatMetricTime,
-  getLatestVmTelemetryPoint,
-  getVmMetricTimeline,
-  VmMetricTimelinePoint,
   type VmMetricLoadState
 } from '@/pages/virtual-machines/VirtualMachineMetrics';
-import { VirtualMachineTelemetrySummary } from '@/pages/virtual-machines/VirtualMachineTelemetrySummary';
+import { VirtualMachineTelemetryPanel } from '@/pages/virtual-machines/VirtualMachineTelemetryPanel';
 import { AddVirtualMachineModal } from '@/pages/virtual-machines/AddVirtualMachineModal';
 import { VirtualMachineAdminView } from '@/pages/virtual-machines/VirtualMachineAdminView';
 import { VirtualMachineChatView } from '@/pages/virtual-machines/VirtualMachineChatView';
@@ -412,37 +406,18 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     setPendingChatPrompt(prompt);
     navigate(vmDetailPath(selected.id, 'chat'));
   }, [navigate, selected, t, vmDetailPath]);
-  const metricTimeline = React.useMemo(() => getVmMetricTimeline(metricHistory), [metricHistory]);
-  const loadSeries = React.useMemo(
-    () =>
-      metricTimeline
-        .filter((point): point is VmMetricTimelinePoint & { loadAverage1m: number } => point.loadAverage1m !== null)
-        .map((point) => ({ label: formatMetricTime(point.timestamp), value: point.loadAverage1m })),
-    [metricTimeline]
-  );
-  const memorySeries = React.useMemo(
-    () =>
-      metricTimeline
-        .filter((point): point is VmMetricTimelinePoint & { memoryUsedPercent: number } => point.memoryUsedPercent !== null)
-        .map((point) => ({ label: formatMetricTime(point.timestamp), value: point.memoryUsedPercent })),
-    [metricTimeline]
-  );
-  const latestTelemetryPoint = React.useMemo(
-    () => getLatestVmTelemetryPoint(metricTimeline),
-    [metricTimeline]
-  );
-  const getVmMetricEmptyTitle = React.useCallback((seriesLength: number): string => {
-    if (metricHistoryStatus === 'error') return t('virtualMachines.overview.telemetryLoadFailedTitle');
-    if (metricTimeline.length === 0) return t('virtualMachines.overview.noVmMetricSamples');
-    if (seriesLength === 0) return t('virtualMachines.overview.noUsableVmMetricSamples');
-    return t('virtualMachines.overview.waitingForAnotherVmSample');
-  }, [metricHistoryStatus, metricTimeline.length, t]);
-  const getVmMetricEmptyDescription = React.useCallback((seriesLength: number): string => {
-    if (metricHistoryStatus === 'error') return t('virtualMachines.overview.telemetryLoadFailedBody');
-    if (metricTimeline.length === 0) return t('virtualMachines.overview.noVmMetricSamplesBody');
-    if (seriesLength === 0) return t('virtualMachines.overview.noUsableVmMetricSamplesBody');
-    return t('virtualMachines.overview.waitingForAnotherVmSampleBody');
-  }, [metricHistoryStatus, metricTimeline.length, t]);
+  const retryVmMetricHistory = React.useCallback(async () => {
+    if (!selectedTargetId) return;
+    setMetricHistoryStatus('loading');
+    try {
+      const payload = await controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, selectedTargetId);
+      setMetricHistory(payload.points || []);
+      setMetricHistoryStatus('ready');
+    } catch (error) {
+      console.error('Failed reloading virtual machine metric history', error);
+      setMetricHistoryStatus(metricHistory.length > 0 ? 'ready' : 'error');
+    }
+  }, [metricHistory.length, selectedTargetId, workspace.id]);
   if (route.kind === 'workspaceVirtualMachines') {
     return (
       <>
@@ -532,34 +507,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           onOpenIssueTriage={openVmIssueTriage}
         />
 
-        <div className="mb-12 grid w-full grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-          <MetricChart
-            title={t('virtualMachines.overview.loadAverage')}
-            description={t('virtualMachines.overview.loadDescription')}
-            icon={Activity}
-            points={loadSeries}
-            unit=""
-            type="area"
-            isLoading={metricHistoryStatus === 'loading'}
-            emptyTitle={getVmMetricEmptyTitle(loadSeries.length)}
-            loadingTitle={t('virtualMachines.overview.loadingMetricHistory')}
-            emptyDescription={getVmMetricEmptyDescription(loadSeries.length)}
-          />
-          <MetricChart
-            title={t('virtualMachines.overview.memory')}
-            description={t('virtualMachines.overview.memoryDescription')}
-            icon={Gauge}
-            points={memorySeries}
-            unit="%"
-            type="line"
-            isLoading={metricHistoryStatus === 'loading'}
-            emptyTitle={getVmMetricEmptyTitle(memorySeries.length)}
-            loadingTitle={t('virtualMachines.overview.loadingMetricHistory')}
-            emptyDescription={getVmMetricEmptyDescription(memorySeries.length)}
-          />
-        </div>
-
-        <VirtualMachineTelemetrySummary latestTelemetryPoint={latestTelemetryPoint} />
+        <VirtualMachineTelemetryPanel metricHistory={metricHistory} status={metricHistoryStatus} onRetry={retryVmMetricHistory} />
 
         <div className="mb-12 grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
           {[

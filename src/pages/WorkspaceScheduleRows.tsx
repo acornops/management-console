@@ -155,6 +155,8 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
           schedule={schedule}
           mcpAutoPaused={mcpAutoPaused}
           recoveryPath={scheduleMcpRecoveryPath(workspaceId, workflows, schedule.workflowId, schedule.lastError)}
+          canReview={props.canManage && !props.updating}
+          onReview={props.onEdit}
         />
       </div>
       <div className="mt-4 border-t border-ui-border pt-4">
@@ -194,6 +196,8 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
             schedule={schedule}
             mcpAutoPaused={mcpAutoPaused}
             recoveryPath={scheduleMcpRecoveryPath(workspaceId, workflows, schedule.workflowId, schedule.lastError)}
+            canReview={props.canManage && !props.updating}
+            onReview={props.onEdit}
           />
         </div>
       </DataTableCell>

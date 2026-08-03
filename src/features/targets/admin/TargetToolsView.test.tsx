@@ -31,7 +31,7 @@ describe('TargetToolsView', () => {
       <TargetToolsView subject={target} canManageTools initialCatalog={catalog} />
     );
 
-    expect(markup).toContain('data-target-tools-access-summary="true"');
+    expect(markup).not.toContain('data-target-tools-access-summary="true"');
     expect(markup).toContain('data-target-tools-list="true"');
     expect(markup).toContain('No built-in tools are available.');
     expect(markup).not.toContain('<table');

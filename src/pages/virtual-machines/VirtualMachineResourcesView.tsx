@@ -186,7 +186,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
     [inventory, logs]
   );
   return (
-    <PageShell>
+    <PageShell data-vm-resource-category={activeCategory}>
       <PageHeader title={t('app.resources')} description={t('virtualMachines.resources.pageDescription', { name: vmName })} />
 
       <div className="mb-6 flex min-w-0 w-full max-w-full flex-col gap-4">

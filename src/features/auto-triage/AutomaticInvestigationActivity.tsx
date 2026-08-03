@@ -48,6 +48,15 @@ function delayedCopyKey(errorCode?: string): string {
   return 'automaticInvestigation.delay.retrying';
 }
 
+function failedCopyKey(errorCode: string | undefined, canRetry: boolean): string {
+  if (errorCode === 'AI_PROVIDER_NEEDS_SETUP') return 'automaticInvestigation.failure.aiProviderNeedsSetup';
+  if (errorCode === 'TARGET_DISCONNECTED') return 'automaticInvestigation.failure.targetDisconnected';
+  if (errorCode === 'NO_DIAGNOSTIC_TOOLS') return 'automaticInvestigation.failure.noDiagnosticTools';
+  return canRetry
+    ? 'automaticInvestigation.failure.retryable'
+    : 'automaticInvestigation.failure.manualFallback';
+}
+
 export function shouldShowManualAssistantFallback(
   activity?: AutomaticInvestigationSummary
 ): boolean {
@@ -109,9 +118,11 @@ export const AutomaticInvestigationActivity: React.FC<{
             </StatusBadge>
           </div>
           <p className="type-caption mt-1 text-ui-text-muted">
-            {t(isDelayed
-              ? delayedCopyKey(localActivity.errorCode)
-              : `automaticInvestigation.copy.${localActivity.state}`)}
+            {t(localActivity.state === 'failed'
+              ? failedCopyKey(localActivity.errorCode, localActivity.canRetry)
+              : isDelayed
+                ? delayedCopyKey(localActivity.errorCode)
+                : `automaticInvestigation.copy.${localActivity.state}`)}
           </p>
           {retryError && <p className="type-caption type-emphasis mt-1 text-status-danger-text" role="alert">{retryError}</p>}
         </div>

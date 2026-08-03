@@ -136,7 +136,7 @@ export function getActiveClusterSubview(route: AppRoute): ClusterSubview {
   if (route.kind !== 'workspaceKubernetesClusterDiagnostics' && route.kind !== 'kubernetesClusterDiagnostics') {
     return 'overview';
   }
-  return route.tab === 'health' ? 'overview' : route.tab || 'overview';
+  return route.tab || 'overview';
 }
 
 export function getActiveVmSubview(route: AppRoute): VmSubview {

@@ -29,7 +29,7 @@ export const HelpPage: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <PageShell>
+    <PageShell data-route-state="help">
       <PageHeader title={t('help.title')} description={t('help.subtitle')} />
 
       <div className="max-w-3xl divide-y divide-ui-border overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">

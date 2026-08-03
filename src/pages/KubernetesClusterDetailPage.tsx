@@ -68,7 +68,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   const requestedClusterView = activeSubview === 'health' ? 'overview' : activeSubview;
 
   return (
-    <div className="h-full min-h-0 flex flex-col overflow-hidden">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden" data-cluster-route-view={activeSubview || 'overview'}>
       <div className="flex-1 min-h-0 flex overflow-hidden">
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {selectedCluster && clusterChatController && (!requiresClusterAgentInstall || requestedClusterView === 'settings') ? (

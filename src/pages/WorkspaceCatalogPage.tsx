@@ -369,6 +369,13 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
   const selectedDestinationHref = selectedDestination
     ? destinationHref(workspace.id, selectedDestination)
     : undefined;
+  const destinationOptions = [
+    { value: '', label: 'Choose a destination' },
+    { value: '__workspace_agents', label: 'Workspace Agents', disabled: true },
+    ...destinations.filter((item) => item.scopeType === 'agent').map((item) => ({ value: item.key, label: `${item.name} · ${item.status}` })),
+    { value: '__target_agents', label: 'Cluster and VM default Agents', disabled: true },
+    ...destinations.filter((item) => item.scopeType === 'target').map((item) => ({ value: item.key, label: `${item.name} · ${item.kind} · ${item.status}` }))
+  ];
 
   return (
     <PageShell>
@@ -390,46 +397,42 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
         </>}
       />
 
+      {!selectedDestination && (
+        <section className="mb-5 rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm" aria-labelledby="catalog-destination-heading">
+          <div className="max-w-xl">
+            <h2 id="catalog-destination-heading" className="type-section-title">{t('catalogBrowser.destinationTitle')}</h2>
+            <p className="mt-1 type-body text-ui-text-muted">{t('catalogBrowser.destinationDescription')}</p>
+            <Select
+              ariaLabel="Install destination"
+              className="mt-3"
+              value=""
+              options={destinationOptions}
+              onChange={(destination) => setRouteState({ destination: destination || undefined })}
+            />
+          </div>
+        </section>
+      )}
+
       {error && <InlineAlert tone="danger" className="mb-4 type-body">{error}</InlineAlert>}
 
       {noEnabledRegistries && (
-        <div className="space-y-4">
-          {!selectedDestination && (
-            <div className="mx-auto max-w-md type-body type-emphasis text-ui-text">
-              <span>Install destination</span>
-              <Select
-                ariaLabel="Install destination"
-                className="mt-2"
-                value=""
-                options={[
-                  { value: '', label: 'Choose a destination' },
-                  { value: '__workspace_agents', label: 'Workspace Agents', disabled: true },
-                  ...destinations.filter((item) => item.scopeType === 'agent').map((item) => ({ value: item.key, label: `${item.name} · ${item.status}` })),
-                  { value: '__target_agents', label: 'Cluster and VM default Agents', disabled: true },
-                  ...destinations.filter((item) => item.scopeType === 'target').map((item) => ({ value: item.key, label: `${item.name} · ${item.kind} · ${item.status}` }))
-                ]}
-                onChange={(destination) => setRouteState({ destination: destination || undefined })}
-              />
-            </div>
-          )}
-          <section className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
-            <EmptyState
-              icon={<Library />}
-              title="No MCP registries are enabled"
-              description={canSynchronize
-                ? sourceCapabilities.workspaceManagedSourcesEnabled
-                  ? 'Connect this destination directly, or add an internal MCP registry for workspace discovery.'
-                  : 'Connect this destination directly. Deployment policy does not allow workspace-managed registries.'
-                : 'Connect this destination directly, or contact a workspace administrator to configure an MCP registry.'}
-              actions={<>
-                {selectedDestination && canManageMcp
-                  ? <a href={destinationHref(workspace.id, selectedDestination, 'connect_by_url')} className={buttonClassName({ variant: 'primary' })}>Connect by URL</a>
-                  : <Button variant="primary" disabled>Connect by URL</Button>}
-                {canSynchronize && sourceCapabilities.workspaceManagedSourcesEnabled && <a href={AppPaths.workspaceMcpRegistries(workspace.id)} className={buttonClassName({ variant: 'secondary' })}>Add a registry</a>}
-              </>}
-            />
-          </section>
-        </div>
+        <section className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+          <EmptyState
+            icon={<Library />}
+            title="No MCP registries are enabled"
+            description={canSynchronize
+              ? sourceCapabilities.workspaceManagedSourcesEnabled
+                ? 'Connect this destination directly, or add an internal MCP registry for workspace discovery.'
+                : 'Connect this destination directly. Deployment policy does not allow workspace-managed registries.'
+              : 'Connect this destination directly, or contact a workspace administrator to configure an MCP registry.'}
+            actions={<>
+              {selectedDestination && canManageMcp
+                ? <a href={destinationHref(workspace.id, selectedDestination, 'connect_by_url')} className={buttonClassName({ variant: 'primary' })}>Connect by URL</a>
+                : <Button variant="primary" disabled>Connect by URL</Button>}
+              {canSynchronize && sourceCapabilities.workspaceManagedSourcesEnabled && <a href={AppPaths.workspaceMcpRegistries(workspace.id)} className={buttonClassName({ variant: 'secondary' })}>Add a registry</a>}
+            </>}
+          />
+        </section>
       )}
 
       {!noEnabledRegistries && (loading || artifacts.length > 0 || hasActiveDiscoveryFilters) && (
@@ -506,7 +509,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
           </CollectionState>
           {nextCursor && <div ref={catalogCollection.sentinelRef} className="border-t border-ui-border p-3"><Button className="w-full justify-center" variant="tertiary" disabled={loadingMore} onClick={() => void loadMoreArtifacts()}>{loadingMore ? 'Loading…' : 'Load more'}</Button></div>}
         </section>}
-        detail={<section aria-label="Selected catalog artifact" className="min-w-0">
+        detail={<section aria-label="Selected catalog artifact" data-catalog-artifact={selectedArtifact?.id} className="min-w-0">
           {selectedArtifact ? <>
             <MasterDetailPaneHeader
               badges={<><StatusBadge tone={selectedArtifact.compatible ? 'success' : 'warning'}>{selectedArtifact.compatible ? 'Compatible' : 'Incompatible'}</StatusBadge><StatusBadge tone="neutral">v{selectedArtifact.version}</StatusBadge></>}
@@ -555,19 +558,7 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
                     <span><span className="block type-body type-emphasis">{selectedDestination.name}</span><span className="type-caption text-ui-text-muted">{selectedDestination.kind} · {selectedDestination.status}</span></span>
                   </div>
                 ) : (
-                  <Select
-                    ariaLabel="Install destination"
-                    className="mt-2"
-                    value=""
-                    options={[
-                      { value: '', label: 'Choose a destination' },
-                      { value: '__workspace_agents', label: 'Workspace Agents', disabled: true },
-                      ...destinations.filter((item) => item.scopeType === 'agent').map((item) => ({ value: item.key, label: `${item.name} · ${item.status}` })),
-                      { value: '__target_agents', label: 'Cluster and VM default Agents', disabled: true },
-                      ...destinations.filter((item) => item.scopeType === 'target').map((item) => ({ value: item.key, label: `${item.name} · ${item.kind} · ${item.status}` }))
-                    ]}
-                    onChange={(destination) => setRouteState({ destination: destination || undefined })}
-                  />
+                  <p className="mt-2 type-body text-ui-text-muted">{t('catalogBrowser.destinationRequired')}</p>
                 )}
               </div>
               {selectedDestination?.inactive && <InlineAlert tone="warning" className="mt-3 px-3 py-2 type-body">{selectedDestination.name} is {selectedDestination.status}. You can configure it now, but the capability will not be usable until the destination becomes active.</InlineAlert>}

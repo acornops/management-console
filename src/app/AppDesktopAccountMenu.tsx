@@ -80,7 +80,7 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
             aria-current={isActive ? 'page' : undefined}
             aria-label={t('app.accountSettings')}
           >
-            <span className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className={`flex min-w-0 flex-1 items-center ${collapsed ? 'justify-center gap-0' : 'gap-2.5'}`}>
               <span data-rail-align={collapsed ? 'true' : undefined} className={`flex h-8 w-8 shrink-0 items-center justify-center border border-ui-border font-mono type-micro-label type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${collapsed ? 'rounded-md' : 'rounded-full'} ${
                 isActive ? 'bg-ui-surface text-accent-readable' : 'bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
               }`}>{userInitials}</span>

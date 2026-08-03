@@ -307,7 +307,7 @@ describe('theme color contract', () => {
     expect(desktopSidebar).toContain("collapsed ? 'w-16' : 'w-64'");
     expect(desktopSidebar).toContain('transition-[width] duration-[180ms]');
     expect(chatView).toContain("aria-label={t('chat.assistantNavigation')}");
-    expect(chatView).toContain('h-full w-12 shrink-0 flex-col');
+    expect(chatView).toMatch(/min-h-12 w-full shrink-0 flex-row flex-wrap[^"]*md:h-full md:min-h-0 md:w-12 md:flex-col/);
     expect(chatView).toContain("'--chat-history-panel-width': `${historyPanelWidth}px`");
     expect(chatView).toContain("width: 'var(--chat-history-panel-width)'");
     expect(chatView).toContain('data-chat-history-resize-handle="true"');

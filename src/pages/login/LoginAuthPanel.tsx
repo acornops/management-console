@@ -8,7 +8,7 @@ import { isPlausibleAuthEmailToken, isValidEmailAddress, routeToken } from '@/pa
 import type { AuthMode, LoginAuthPanelProps, PasswordResetRequestState, PendingVerificationState, ResetLinkState, VerifyLinkState } from '@/pages/login/loginAuthPanelState';
 import { Button, InlineAlert } from '@acornops/ui';
 
-export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled, passwordSignupEnabled, passwordResetEnabled, sessionNotice, onLogin, onPasswordLogin, onPasswordSignup, onVerifyEmail, onResendVerification, onRequestPasswordReset, onResetPassword }: LoginAuthPanelProps) {
+export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled, passwordSignupEnabled, passwordResetEnabled, sessionNotice, onLogin, onRetryAuthConfig, onPasswordLogin, onPasswordSignup, onVerifyEmail, onResendVerification, onRequestPasswordReset, onResetPassword }: LoginAuthPanelProps) {
   const { t } = useTranslation();
   const [mode, setMode] = React.useState<AuthMode>('login');
   const [identifier, setIdentifier] = React.useState('');
@@ -571,6 +571,16 @@ export function LoginAuthPanel({ isAuthLoading, oidcEnabled, passwordAuthEnabled
         )}
 
         {oidcEnabled && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && <OidcLoginButton isAuthLoading={isAuthLoading} passwordAuthEnabled={passwordAuthEnabled} onLogin={onLogin} label={t('login.continueWithOidc')} />}
+
+        {!hasAuthMethod && (
+          <div className="rounded-lg border border-ui-border bg-ui-bg p-4 text-center">
+            <p className="type-caption leading-5 text-ui-text-muted">{t('login.authConfigDiagnostic')}</p>
+            <Button type="button" variant="primary" size="md" onClick={onRetryAuthConfig} className="mt-4 w-full">
+              <ICONS.RefreshCw className="h-4 w-4" aria-hidden="true" />
+              {t('login.retryAuthConfig')}
+            </Button>
+          </div>
+        )}
       </div>
 
       {passwordAuthEnabled && canSignup && mode !== 'forgot' && mode !== 'reset' && !pendingVerification && !verifyLinkContent && <SignupSwitchFooter isAuthLoading={isAuthLoading} onSwitch={() => changeMode(mode === 'login' ? 'signup' : 'login')} prompt={mode === 'login' ? t('login.dontHaveAccount') : t('login.alreadyHaveAccount')} actionLabel={mode === 'login' ? t('login.signUp') : t('login.signInTab')} />}

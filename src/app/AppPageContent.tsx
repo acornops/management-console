@@ -29,6 +29,7 @@ const loadSettingsPage = () => import('@/pages/SettingsPage').then((module) => (
 const loadUserSettingsPage = () => import('@/pages/UserSettingsPage').then((module) => ({ default: module.UserSettingsPage }));
 
 const loadHelpPage = () => import('@/pages/HelpPage').then((module) => ({ default: module.HelpPage }));
+const loadWorkspacesPage = () => import('@/pages/WorkspacesPage').then((module) => ({ default: module.WorkspacesPage }));
 const loadVirtualMachinesPage = () => import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 const loadWorkspaceAgentsPage = () => import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
 const loadWorkspaceCatalogPage = () =>
@@ -63,6 +64,7 @@ const NotFoundPage = React.lazy(loadNotFoundPage);
 const SettingsPage = React.lazy(loadSettingsPage);
 const UserSettingsPage = React.lazy(loadUserSettingsPage);
 const HelpPage = React.lazy(loadHelpPage);
+const WorkspacesPage = React.lazy(loadWorkspacesPage);
 const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
 const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
 const WorkspaceCatalogPage = React.lazy(loadWorkspaceCatalogPage);
@@ -140,6 +142,7 @@ export function preloadAppRoutePage(route: AppRoute): void {
       break;
     case 'home':
     case 'workspaces':
+      void loadWorkspacesPage();
       break;
   }
 }
@@ -188,6 +191,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   onOpenDeleteWorkspace,
   onLeaveWorkspaceSuccess,
   onLogout,
+  onSwitchInvitationAccount,
   onSetLanguage,
   showToast,
   toWorkspaceInvitation
@@ -388,6 +392,15 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
         )}
 
         <Suspense fallback={<PageLoadingFallback label={t('common.loading')} />}>
+          {(route.kind === 'home' || route.kind === 'workspaces') && workspaces.length > 0 && (
+            <WorkspacesPage
+              mode={route.kind}
+              workspaces={workspaces}
+              onCreateWorkspace={onCreateWorkspaceClick}
+              onOpenWorkspace={(workspace) => navigate(workspaceLandingPath(workspace))}
+            />
+          )}
+
           {route.kind === 'workspaceOverview' && workspaceContext && (
             <WorkspaceOverviewPage
               currentUserId={user.id}
@@ -526,6 +539,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onLoadInvitation={loadWorkspaceInvitation}
               onAcceptInvitation={acceptWorkspaceInvitation}
               onGoToWorkspaces={() => navigate(AppPaths.workspaces())}
+              onSwitchAccount={() => onSwitchInvitationAccount(route.token)}
             />
           )}
           {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (

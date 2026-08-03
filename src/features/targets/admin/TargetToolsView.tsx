@@ -322,28 +322,17 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
 
       {catalog ? (
         <>
-          <section data-target-tools-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-[minmax(15rem,1.35fr)_repeat(5,minmax(7rem,1fr))]">
-              <div className="col-span-2 border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
+          {catalog.items.length > 0 && <section data-target-tools-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
+            <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
+              <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
                 <h2 className="type-row-title">{t('tools.inventoryTitle')}</h2>
                 <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('tools.inventoryBody')}</p>
               </div>
-              <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
-                <p className="type-caption text-ui-text-muted">{t('tools.toolsMetric')}</p>
-                <p className="type-data mt-0.5">{toolSummary.total}</p>
-              </div>
-              <div className="border-b border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
+              <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
                 <p className="type-caption text-ui-text-muted">{t('tools.enabledToolsMetric')}</p>
-                <p className="type-data mt-0.5">{toolSummary.enabled}</p>
+                <p className="type-data mt-0.5">{toolSummary.enabled}<span className="type-caption text-ui-text-muted"> / {toolSummary.total}</span></p>
               </div>
-              <div className="border-b border-r border-ui-border px-5 py-3.5 sm:border-r xl:border-b-0">
-                <p className="type-caption text-ui-text-muted">{t('tools.readOnlyTools')}</p>
-                <p className="type-data mt-0.5 inline-flex items-center gap-2">
-                  {toolSummary.read}
-                  <span className="h-2 w-2 rounded-full bg-status-success" />
-                </p>
-              </div>
-              <div className="border-r border-ui-border px-5 py-3.5 sm:border-r">
+              <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r">
                 <p className="type-caption text-ui-text-muted">{t('tools.writeCapableTools')}</p>
                 <p className="type-data mt-0.5 inline-flex items-center gap-2">
                   {toolSummary.write}
@@ -355,7 +344,7 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 <p className="type-data mt-0.5">{toolSummary.assistantVisible}</p>
               </div>
             </div>
-          </section>
+          </section>}
 
           <section data-target-tools-list="true" className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
             {(catalog.items.length > 0 || hasActiveFilters) && (
@@ -390,8 +379,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
                 itemCount={filteredTools.length}
                 filtered={catalog.items.length > 0}
                 loading={null}
-                empty={<EmptyState embedded headingLevel={3} icon={<Wrench />} title={t('tools.empty')} description={t('tools.emptyHelp')} />}
-                filteredEmpty={<EmptyState embedded headingLevel={3} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
+                empty={<EmptyState embedded headingLevel={2} icon={<Wrench />} title={t('tools.empty')} description={t('tools.emptyHelp')} />}
+                filteredEmpty={<EmptyState embedded headingLevel={2} icon={<Search />} title={t('tools.noToolMatches')} description={t('tools.noToolMatchesHelp')} />}
                 error={null}
               >
                 <DataTableFrame data-target-capability-table-frame="true" className="rounded-none border-0 shadow-none custom-scrollbar">

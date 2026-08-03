@@ -10,9 +10,9 @@ interface NotFoundPageProps {
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onGoHome }) => {
   const { t } = useTranslation();
   return (
-    <PageShell>
+    <PageShell data-route-state="not-found">
       <div className="flex min-h-full flex-col items-center justify-center text-center">
-        <h2 className="mb-2 type-route-title">{t('notFound.title')}</h2>
+        <h1 className="mb-2 type-route-title">{t('notFound.title')}</h1>
         <p className="mb-6 type-body text-ui-text-muted">
           {t('notFound.body')}
         </p>

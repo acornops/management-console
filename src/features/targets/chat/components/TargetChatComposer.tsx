@@ -256,7 +256,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               onBlur={targetMentions.dismiss}
               rows={1}
               className={`${
-                isPanel ? 'min-h-9 type-body' : 'min-h-10 type-body'
+                isPanel ? 'min-h-9 type-body' : 'min-h-11 type-body'
               } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text shadow-none outline-none placeholder:text-ui-text-muted/60 hover:bg-transparent focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60`}
               role="combobox"
               aria-label={t('chat.composerInputLabel', { name: subject.name })}
@@ -278,22 +278,21 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               disabled={!canPost || isRunActive}
             />
           </div>
-          <div className="flex items-center gap-2 px-2 pb-0.5">
-            <Tooltip content={t('chat.attachFiles')}>
+          <div data-chat-composer-controls="true" className="flex min-w-0 flex-wrap items-center gap-2 px-2 pb-0.5">
+            <Tooltip content={t('chat.attachFiles')} className="order-2 sm:order-1">
               <Button
                 type="button"
                 variant="tertiary"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!canPost || isRunActive}
-                className="control-target inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+                className="control-target inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9"
                 aria-label={t('chat.attachFiles')}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </Tooltip>
             <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
-            <span className="min-w-0 flex-1" aria-hidden="true" />
-            <div className="inline-flex h-8 items-center overflow-visible rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
+            <div className="order-1 inline-flex h-11 min-w-0 w-full max-w-full items-center overflow-visible rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60 sm:order-2 sm:ml-auto sm:h-8 sm:w-auto">
               <AssistantCapabilityPreviewControl
                 canChat={canChat}
                 isPanel={isPanel}
@@ -303,7 +302,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 requestedToolAccessMode={requestedToolAccessMode}
               />
               <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
-              <div ref={modelMenuRef} className={isPanel ? 'static' : 'relative'}>
+              <div ref={modelMenuRef} className={`${isPanel ? 'static' : 'relative'} min-w-0 flex-1`}>
                 <Button
                   type="button"
                   variant="tertiary"
@@ -314,7 +313,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                     setIsModelSubmenuOpen(false);
                   }}
                   disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading}
-                  className="control-target inline-flex h-8 max-w-[15rem] items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="control-target inline-flex h-11 min-w-0 w-full max-w-full items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8"
                   aria-label={t('chat.modelAndEffortSelector')}
                   aria-controls={modelMenuPanelId}
                   aria-expanded={isModelMenuOpen}
@@ -420,7 +419,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 </AnimatePresence>
               </div>
             </div>
-            <Tooltip content={composerActionLabel}>
+            <Tooltip content={composerActionLabel} className="order-2 ml-auto sm:order-3 sm:ml-0">
               <Button
                 type={isRunActive ? 'button' : 'submit'}
                 onClick={
@@ -433,7 +432,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 disabled={isRunActive ? !canCancelActiveRun || isCancellingRun : !canPost || !hasComposerSubmitPayload || isComposerRuntimeUnavailable}
                 variant={isRunActive ? 'secondary' : 'primary'}
                 size="icon"
-                className={`h-9 w-9 shrink-0 rounded-full ${
+                className={`h-11 w-11 shrink-0 rounded-full sm:h-9 sm:w-9 ${
                   isRunActive
                     ? 'border-status-danger/25 bg-status-danger-soft text-status-danger-text hover:border-status-danger/40 hover:bg-status-danger-soft/80 focus-visible:ring-status-danger/20'
                     : ''
