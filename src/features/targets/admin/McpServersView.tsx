@@ -376,9 +376,9 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       const result = await dataSource.testServer(subject.workspaceId, subject.id, server.id);
       setTestResultsByServerId((current) => ({ ...current, [server.id]: result }));
       await loadCatalog({ syncParent: true });
-      actionFeedback.reportHealthResult(result);
+      actionFeedback.reportRefreshResult(result);
     } catch (error) {
-      actionFeedback.setError(formatMcpMutationError(error, t('mcpServers.healthCheckFailedMessage')));
+      actionFeedback.setError(formatMcpMutationError(error, t('mcpServers.refreshToolsFailedMessage')));
     } finally {
       setPendingTestServerId(null);
     }

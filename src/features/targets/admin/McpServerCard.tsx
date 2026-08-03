@@ -60,6 +60,17 @@ export function canOpenMcpServerSettings(
     && Boolean(onOpenSettings);
 }
 
+export function canRefreshAuthenticatedMcpTools(
+  server: Pick<TargetToolCatalogServer, 'credentialMode'>,
+  connection?: Pick<McpConnection, 'canManage' | 'status'>,
+  connectionLoadError?: string
+): boolean {
+  return server.credentialMode !== 'none'
+    && !connectionLoadError
+    && connection?.canManage === true
+    && connection.status === 'connected';
+}
+
 export function getMcpServerStatusDisplay(
   server: Pick<TargetToolCatalogServer, 'enabled' | 'type' | 'connectionStatus' | 'lastDiscoveryError'>,
   connection?: Pick<McpConnection, 'status' | 'errorCode'>,
@@ -122,14 +133,15 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   onRetry
 }) => {
   const { t } = useTranslation();
-  const healthCheckHelpId = React.useId();
+  const refreshToolsHelpId = React.useId();
   const recoveryActionRef = React.useRef<HTMLButtonElement>(null);
   const managedConnectionRef = React.useRef<HTMLParagraphElement>(null);
   const rowRef = React.useRef<HTMLTableRowElement>(null);
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
   const canDeleteServer = canEditServers && server.canDelete && !server.isSystem;
   const canEditServer = canEditServers && server.canEditConnection && !server.isSystem;
-  const canTestServer = canEditServers && !server.isSystem && server.canToggle && server.authType === 'none';
+  const canRefreshUnauthenticatedServer = canEditServers && !server.isSystem && server.canToggle && server.authType === 'none';
+  const canRefreshAuthenticatedServer = canRefreshAuthenticatedMcpTools(server, connection, connectionLoadError);
   const isTogglingServer = pendingToggleServerId === server.id;
   const isBlockedByOtherServerToggle = Boolean(pendingToggleServerId && !isTogglingServer);
   const canToggleServer = canEditServers && server.canToggle && !isBlockedByOtherServerToggle && !isTogglingServer;
@@ -223,20 +235,20 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
                 <span>{t('mcpServers.settings')}</span>
               </MenuItem>
             )}
-            {canTestServer && (
+            {canRefreshUnauthenticatedServer && (
               <MenuItem
                 disabled={Boolean(pendingTestServerId)}
                 onClick={() => {
                   onTestConnection(server);
                 }}
-                aria-describedby={healthCheckHelpId}
+                aria-describedby={refreshToolsHelpId}
               >
                 {pendingTestServerId === server.id ? (
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin text-ui-text-muted" aria-hidden="true" />
                 ) : (
                   <RefreshCcw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
                 )}
-                <span>{t('mcpServers.healthCheck')}</span>
+                <span>{t('mcpServers.refreshTools')}</span>
               </MenuItem>
             )}
             {canEditServer && (
@@ -274,6 +286,22 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
                 {retryAfterSeconds > 0
                   ? t('mcpServers.tryAgainIn', { seconds: retryAfterSeconds })
                   : t(isOAuth ? 'mcpServers.verifyConnection' : 'mcpServers.verifyCredential')}
+              </span>
+            </MenuItem>
+          )}
+          {canRefreshAuthenticatedServer && (
+            <MenuItem
+              disabled={connectionDisabled}
+              onClick={() => {
+                onVerify(server);
+              }}
+              aria-describedby={refreshToolsHelpId}
+            >
+              {pendingConnection ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-ui-text-muted" aria-hidden="true" /> : <RefreshCcw className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
+              <span>
+                {retryAfterSeconds > 0
+                  ? t('mcpServers.tryAgainIn', { seconds: retryAfterSeconds })
+                  : t('mcpServers.refreshTools')}
               </span>
             </MenuItem>
           )}
@@ -434,9 +462,9 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
       </DataTableCell>
 
       <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
-        {canTestServer && (
-          <span id={healthCheckHelpId} className="sr-only">
-            {t('mcpServers.healthCheckHelp')}
+        {(canRefreshUnauthenticatedServer || canRefreshAuthenticatedServer) && (
+          <span id={refreshToolsHelpId} className="sr-only">
+            {t('mcpServers.refreshToolsHelp')}
           </span>
         )}
         {actionMenu}

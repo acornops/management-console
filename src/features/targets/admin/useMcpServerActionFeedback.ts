@@ -18,12 +18,12 @@ export function useMcpServerActionFeedback(t: TFunction) {
     setNotice(null);
   };
 
-  const reportHealthResult = (result: TargetMcpServerTestConnectionResult) => {
+  const reportRefreshResult = (result: TargetMcpServerTestConnectionResult) => {
     if (result.connectionStatus === 'ok') {
-      setNotice(t('mcpServers.healthCheckPassed'));
+      setNotice(t('mcpServers.refreshToolsPassed'));
       return;
     }
-    setError(result.error || t('mcpServers.healthCheckFailedMessage'));
+    setError(result.error || t('mcpServers.refreshToolsFailedMessage'));
   };
 
   const verifyConnection = async (
@@ -70,7 +70,7 @@ export function useMcpServerActionFeedback(t: TFunction) {
     setError,
     setNotice,
     clear,
-    reportHealthResult,
+    reportRefreshResult,
     verifyConnection,
     disconnectCredential,
     connectCredential

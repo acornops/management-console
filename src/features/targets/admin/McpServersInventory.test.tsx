@@ -2,7 +2,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { initializeI18n } from '@/i18n';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
-import { canOpenMcpServerSettings, getMcpServerStatusDisplay } from '@/features/targets/admin/McpServerCard';
+import {
+  canOpenMcpServerSettings,
+  canRefreshAuthenticatedMcpTools,
+  getMcpServerStatusDisplay
+} from '@/features/targets/admin/McpServerCard';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import type { McpConnection } from '@/services/control-plane/catalogApi';
 
@@ -121,6 +125,31 @@ describe('McpServersInventory', () => {
       labelKey: 'mcpServers.statusDiscoveryFailed',
       tone: 'danger'
     });
+  });
+
+  it('offers tool refresh only for a manageable connected credential', () => {
+    const server = { ...systemServer, credentialMode: 'workspace' as const };
+
+    expect(canRefreshAuthenticatedMcpTools(server, {
+      canManage: true,
+      status: 'connected'
+    })).toBe(true);
+    expect(canRefreshAuthenticatedMcpTools(server, {
+      canManage: false,
+      status: 'connected'
+    })).toBe(false);
+    expect(canRefreshAuthenticatedMcpTools(server, {
+      canManage: true,
+      status: 'error'
+    })).toBe(false);
+    expect(canRefreshAuthenticatedMcpTools(server, {
+      canManage: true,
+      status: 'connected'
+    }, 'Connection status unavailable')).toBe(false);
+    expect(canRefreshAuthenticatedMcpTools({ credentialMode: 'none' }, {
+      canManage: true,
+      status: 'connected'
+    })).toBe(false);
   });
 
   it('renders a credential-backed connection in the status column', () => {

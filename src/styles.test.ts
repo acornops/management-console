@@ -562,15 +562,15 @@ describe('theme color contract', () => {
   });
 
   it('keeps contextual help concise at jargon-heavy controls', () => {
-    expect(mcpServerCard).toContain("t('mcpServers.healthCheckHelp')");
+    expect(mcpServerCard).toContain("t('mcpServers.refreshToolsHelp')");
     expect(mcpServerToolsDialog).toContain("t('mcpServers.toolAccessSummaryBody')");
     expect(resourceExplorerControls).toContain("t('resources.filters.search')");
     expect(resourceExplorerControls).toContain("ariaLabel={t('resources.filters.category')}");
-    expect(enLocale).toContain("healthCheckHelp: 'Checks connectivity and refreshes discovered tools.'");
+    expect(enLocale).toContain("refreshToolsHelp: 'Rechecks connectivity and discovers tools. New tools stay disabled until reviewed.'");
     expect(enLocale).toContain("toolAccessSummaryBody: 'Tools available from this MCP server.'");
     expect(enLocale).toContain("search: 'Search resources'");
     expect(enLocale).toContain("category: 'Category'");
-    expect(zhLocale).toContain("healthCheckHelp: '检查连接并刷新已发现的工具。'");
+    expect(zhLocale).toContain("refreshToolsHelp: '重新检查连接并发现工具。新工具在审核前保持禁用。'");
     expect(zhLocale).toContain("toolAccessSummaryBody: '此 MCP 服务器提供的工具。'");
     expect(zhLocale).toContain("search: '搜索资源'");
     expect(zhLocale).toContain("category: '类别'");
