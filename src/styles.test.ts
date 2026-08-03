@@ -308,8 +308,11 @@ describe('theme color contract', () => {
     expect(desktopSidebar).toContain('transition-[width] duration-[180ms]');
     expect(chatView).toContain("aria-label={t('chat.assistantNavigation')}");
     expect(chatView).toContain('h-full w-12 shrink-0 flex-col');
-    expect(chatView).toContain('style={{ width: historyPanelWidth }}');
+    expect(chatView).toContain("'--chat-history-panel-width': `${historyPanelWidth}px`");
+    expect(chatView).toContain("width: 'var(--chat-history-panel-width)'");
     expect(chatView).toContain('data-chat-history-resize-handle="true"');
+    expect(chatView).toContain("resize.panel.style.setProperty('--chat-history-panel-width', `${width}px`)");
+    expect(chatView).toContain('data-[resizing=true]:bg-accent/15');
     expect(chatView).toContain('setIsHistoryOpen(false)');
     expect(chatView).toContain('!isPanel && isHistoryOpen && !usesOverlayHistory');
     expect(chatView).toContain('isOpen={!isPanel && isHistoryOpen && usesOverlayHistory}');

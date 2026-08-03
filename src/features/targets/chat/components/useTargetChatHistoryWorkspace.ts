@@ -20,6 +20,18 @@ interface UseTargetChatHistoryWorkspaceArgs {
 
 export type ChatHistoryView = 'chats' | 'investigations';
 
+interface HistoryResizePointer {
+  pointerId: number;
+  panelLeft: number;
+  panel: HTMLElement;
+  handle: HTMLDivElement;
+}
+
+function previewHistoryPanelWidth(resize: HistoryResizePointer, width: number): void {
+  resize.panel.style.setProperty('--chat-history-panel-width', `${width}px`);
+  resize.handle.setAttribute('aria-valuenow', String(Math.round(width)));
+}
+
 export function useTargetChatHistoryWorkspace({
   desktopHistoryPanelId,
   historyButtonRef,
@@ -38,7 +50,7 @@ export function useTargetChatHistoryWorkspace({
   const lastOpenHistoryPanelWidthRef = React.useRef(CHAT_HISTORY_DEFAULT_WIDTH);
   const pendingHistoryPanelWidthRef = React.useRef(CHAT_HISTORY_DEFAULT_WIDTH);
   const historyResizeFrameRef = React.useRef<number | null>(null);
-  const historyResizePointerRef = React.useRef<{ pointerId: number; panelLeft: number } | null>(null);
+  const historyResizePointerRef = React.useRef<HistoryResizePointer | null>(null);
   const historySearchPageId = `${desktopHistoryPanelId}-search`;
 
   const focusHistorySearch = React.useCallback(() => {
@@ -123,18 +135,19 @@ export function useTargetChatHistoryWorkspace({
     document.body.style.userSelect = '';
   }, []);
 
-  const commitPendingHistoryPanelWidth = React.useCallback(() => {
+  const previewPendingHistoryPanelWidth = React.useCallback(() => {
     historyResizeFrameRef.current = null;
+    const resize = historyResizePointerRef.current;
+    if (!resize) return;
     const nextWidth = pendingHistoryPanelWidthRef.current;
-    historyPanelWidthRef.current = nextWidth;
-    setHistoryPanelWidth(nextWidth);
+    previewHistoryPanelWidth(resize, nextWidth);
   }, []);
 
   const scheduleHistoryPanelWidth = React.useCallback((nextWidth: number) => {
     pendingHistoryPanelWidthRef.current = nextWidth;
     if (historyResizeFrameRef.current !== null) return;
-    historyResizeFrameRef.current = window.requestAnimationFrame(commitPendingHistoryPanelWidth);
-  }, [commitPendingHistoryPanelWidth]);
+    historyResizeFrameRef.current = window.requestAnimationFrame(previewPendingHistoryPanelWidth);
+  }, [previewPendingHistoryPanelWidth]);
 
   const collapseHistoryPanel = React.useCallback(() => {
     setIsHistoryOpen(false);
@@ -152,6 +165,7 @@ export function useTargetChatHistoryWorkspace({
       window.cancelAnimationFrame(historyResizeFrameRef.current);
       historyResizeFrameRef.current = null;
     }
+    delete target.dataset.resizing;
   }, []);
 
   const startHistoryResize = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -162,8 +176,11 @@ export function useTargetChatHistoryWorkspace({
     event.currentTarget.setPointerCapture(event.pointerId);
     historyResizePointerRef.current = {
       pointerId: event.pointerId,
-      panelLeft: panel.getBoundingClientRect().left
+      panelLeft: panel.getBoundingClientRect().left,
+      panel,
+      handle: event.currentTarget
     };
+    event.currentTarget.dataset.resizing = 'true';
     pendingHistoryPanelWidthRef.current = historyPanelWidthRef.current;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -192,6 +209,7 @@ export function useTargetChatHistoryWorkspace({
 
     if (cancelled) {
       const restoredWidth = lastOpenHistoryPanelWidthRef.current;
+      previewHistoryPanelWidth(resize, restoredWidth);
       historyPanelWidthRef.current = restoredWidth;
       pendingHistoryPanelWidthRef.current = restoredWidth;
       setHistoryPanelWidth(restoredWidth);

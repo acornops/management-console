@@ -239,7 +239,10 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
           <aside
             id={desktopHistoryPanelId}
             aria-label={t(automaticInvestigationsEnabled && historyView === 'investigations' ? 'chat.investigations' : 'chat.chats')}
-            style={{ width: historyPanelWidth }}
+            style={{
+              '--chat-history-panel-width': `${historyPanelWidth}px`,
+              width: 'var(--chat-history-panel-width)'
+            } as React.CSSProperties}
             className="relative hidden h-full shrink-0 overflow-hidden border-r border-ui-border bg-ui-surface shadow-sm lg:flex"
           >
             <div className="flex h-full w-full shrink-0 flex-col overflow-hidden">
@@ -270,7 +273,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
               aria-valuenow={Math.round(historyPanelWidth)}
               tabIndex={0}
               title={t('chat.resizeHistoryHint')}
-              className="absolute right-0 top-0 z-20 h-full w-2 touch-none cursor-col-resize bg-transparent transition-colors hover:bg-accent/10 focus:outline-none focus-visible:bg-accent/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/35"
+              className="absolute right-0 top-0 z-20 h-full w-2 touch-none cursor-col-resize bg-transparent transition-colors hover:bg-accent/10 focus:outline-none focus-visible:bg-accent/10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/35 data-[resizing=true]:bg-accent/15"
               onPointerDown={startHistoryResize}
               onPointerMove={moveHistoryResize}
               onPointerUp={(event) => finishHistoryResize(event)}

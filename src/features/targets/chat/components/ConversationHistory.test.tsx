@@ -135,6 +135,8 @@ describe('ConversationHistory', () => {
     expect(markup).toContain('Target context: demo-target');
     expect(markup).not.toContain('data-chat-history-search="true"');
     expect(markup).toContain('px-4 py-3 pr-16');
+    expect(markup).not.toContain('chat.recent');
+    expect(markup).not.toContain('GMT');
   });
 
   it('keeps manual chats and automatic investigations in separate panel views', () => {

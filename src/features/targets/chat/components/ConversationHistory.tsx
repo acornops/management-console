@@ -34,11 +34,7 @@ interface ConversationHistoryProps {
 }
 
 function formatSessionTime(timestamp: number): string {
-  return formatUserDateTime(timestamp, { fallback: '-' });
-}
-
-function isRecentSession(timestamp: number): boolean {
-  return Date.now() - timestamp <= 5 * 60 * 1000;
+  return formatUserDateTime(timestamp, { fallback: '-', includeTimeZone: false });
 }
 
 export const CONVERSATION_HISTORY_LOADING_DELAY_MS = 350;
@@ -243,11 +239,6 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                             </span>
                             <span>{session.createdByUser.displayName}</span>
                           </>
-                        )}
-                        {isRecentSession(session.timestamp) && (
-                          <span className="rounded border border-ui-border bg-ui-surface px-1.5 py-0.5 text-ui-text-muted">
-                            {t('chat.recent')}
-                          </span>
                         )}
                       </div>
                     </div>
