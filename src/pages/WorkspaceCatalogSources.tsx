@@ -11,6 +11,7 @@ import { catalogApi, type CatalogSource, type CatalogSourceMutationInput } from 
 import { resourcePhaseForRequest, type CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import { TextInput } from '@acornops/ui';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { suggestCatalogSourceName } from '@/pages/WorkspaceCatalogSources.helpers';
 
 interface WorkspaceCatalogSourcesProps {
   workspaceId: string;
@@ -40,6 +41,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
   const [authType, setAuthType] = React.useState<'none' | 'bearer_token' | 'custom_header'>('none');
   const [credential, setCredential] = React.useState('');
   const [headerName, setHeaderName] = React.useState('');
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setPhase(hasSessionDataCacheValue(sourcesCacheKey) ? 'refreshing' : resourcePhaseForRequest(sourcesRef.current.length > 0));
@@ -66,6 +68,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
     setAuthType('none');
     setCredential('');
     setHeaderName('');
+    setShowAdvanced(false);
   };
 
   const openCreate = () => {
@@ -80,11 +83,13 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
     setAuthType(source.authType);
     setCredential('');
     setHeaderName(source.authHeaderName || '');
+    setShowAdvanced(source.authType !== 'none');
     setShowForm(true);
   };
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
+    const resolvedDisplayName = displayName.trim() || suggestCatalogSourceName(baseUrl) || t('catalogSources.defaultName');
     const existing = sources.find((source) => source.id === editingSourceId);
     const authIsUnchanged = Boolean(
       existing && existing.authType === authType && (authType !== 'custom_header' || (existing.authHeaderName || '') === headerName.trim()) && !credential
@@ -103,14 +108,14 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
     try {
       if (editingSourceId) {
         await catalogApi.updateCatalogSource(workspaceId, editingSourceId, {
-          displayName: displayName.trim(),
+          displayName: resolvedDisplayName,
           baseUrl: baseUrl.trim(),
           networkRoute: 'direct',
           auth
         });
       } else {
         await catalogApi.createCatalogSource(workspaceId, {
-          displayName: displayName.trim(),
+          displayName: resolvedDisplayName,
           baseUrl: baseUrl.trim(),
           networkRoute: 'direct',
           auth
@@ -119,6 +124,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
       resetForm();
       await load();
     } catch (cause) {
+      setShowAdvanced(true);
       setError(cause instanceof Error ? cause.message : t('catalogSources.saveFailed'));
     } finally {
       setBusy('');
@@ -146,6 +152,12 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
   const credentialRequired =
     authType !== 'none' &&
     Boolean(!editingSource || editingSource.authType !== authType || (authType === 'custom_header' && (editingSource.authHeaderName || '') !== headerName.trim()));
+  const suggestedDisplayName = suggestCatalogSourceName(baseUrl);
+  const authSummary = t(authType === 'none'
+    ? 'catalogSources.authNone'
+    : authType === 'bearer_token'
+      ? 'catalogSources.authBearer'
+      : 'catalogSources.authHeader');
 
   return (
     <section id="mcp-registries" aria-labelledby="mcp-registries-title" className="mb-10 scroll-mt-6">
@@ -179,16 +191,7 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
               <h3 className="type-panel-title">{editingSourceId ? t('catalogSources.editTitle') : t('catalogSources.addTitle')}</h3>
               <p className="type-caption mt-1 text-ui-text-muted">{t('catalogSources.probeHelp')}</p>
             </div>
-            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
-              {t('catalogSources.name')}
-              <TextInput
-                required
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
-              />
-            </label>
-            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
+            <label className="grid gap-1.5 type-body type-emphasis text-ui-text sm:col-span-2">
               {t('catalogSources.baseUrl')}
               <TextInput
                 required
@@ -201,60 +204,75 @@ export const WorkspaceCatalogSources: React.FC<WorkspaceCatalogSourcesProps> = (
               />
               <span className="type-caption text-ui-text-muted">{t('catalogSources.baseUrlHelp')}</span>
             </label>
-            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
-              {t('catalogSources.route')}
-              <Select<'direct'>
-                value="direct"
-                disabled
-                onChange={() => undefined}
-                options={[{ value: 'direct', label: t('catalogSources.direct') }]}
-                ariaLabel={t('catalogSources.route')}
-              />
-            </label>
-            <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
-              {t('catalogSources.auth')}
-              <Select<'none' | 'bearer_token' | 'custom_header'>
-                value={authType}
-                onChange={setAuthType}
-                options={[
-                  { value: 'none', label: t('catalogSources.authNone') },
-                  {
-                    value: 'bearer_token',
-                    label: t('catalogSources.authBearer')
-                  },
-                  {
-                    value: 'custom_header',
-                    label: t('catalogSources.authHeader')
-                  }
-                ]}
-                ariaLabel={t('catalogSources.auth')}
-              />
-            </label>
-            {authType !== 'none' && (
-              <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
-                {t('catalogSources.credential')}
-                <TextInput
-                  required={credentialRequired}
-                  type="password"
-                  autoComplete="new-password"
-                  value={credential}
-                  onChange={(event) => setCredential(event.target.value)}
-                  className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
-                />
-                <span className="type-caption text-ui-text-muted">{editingSourceId ? t('catalogSources.credentialEditHelp') : t('catalogSources.credentialHelp')}</span>
-              </label>
-            )}
-            {authType === 'custom_header' && (
-              <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
-                {t('catalogSources.headerName')}
-                <TextInput
-                  required
-                  value={headerName}
-                  onChange={(event) => setHeaderName(event.target.value)}
-                  className="min-h-11 rounded-md border border-ui-border bg-ui-surface px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
-                />
-              </label>
-            )}
+            <p className="type-caption text-ui-text-muted sm:col-span-2">
+              {t('catalogSources.connectionSummary', {
+                name: displayName.trim() || suggestedDisplayName || t('catalogSources.defaultName'),
+                route: t('catalogSources.direct')
+              })}
+            </p>
+            <details
+              open={showAdvanced}
+              onToggle={(event) => setShowAdvanced(event.currentTarget.open)}
+              className="rounded-lg border border-ui-border bg-ui-surface sm:col-span-2"
+            >
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 [&::-webkit-details-marker]:hidden">
+                <span>
+                  <span className="type-label block text-ui-text">{t('catalogSources.advancedConfiguration')}</span>
+                  <span className="type-caption mt-1 block text-ui-text-muted">{authSummary}</span>
+                </span>
+                <span className="type-caption type-emphasis text-ui-text-muted">{t('catalogSources.customize')}</span>
+              </summary>
+              <div className="grid gap-4 border-t border-ui-border p-4 sm:grid-cols-2">
+                <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
+                  {t('catalogSources.nameOptional')}
+                  <TextInput
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    placeholder={suggestedDisplayName || t('catalogSources.defaultName')}
+                    className="min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
+                  />
+                  <span className="type-caption text-ui-text-muted">{t('catalogSources.nameHelp')}</span>
+                </label>
+                <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
+                  {t('catalogSources.auth')}
+                  <Select<'none' | 'bearer_token' | 'custom_header'>
+                    value={authType}
+                    onChange={setAuthType}
+                    options={[
+                      { value: 'none', label: t('catalogSources.authNone') },
+                      { value: 'bearer_token', label: t('catalogSources.authBearer') },
+                      { value: 'custom_header', label: t('catalogSources.authHeader') }
+                    ]}
+                    ariaLabel={t('catalogSources.auth')}
+                  />
+                </label>
+                {authType !== 'none' && (
+                  <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
+                    {t('catalogSources.credential')}
+                    <TextInput
+                      required={credentialRequired}
+                      type="password"
+                      autoComplete="new-password"
+                      value={credential}
+                      onChange={(event) => setCredential(event.target.value)}
+                      className="min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
+                    />
+                    <span className="type-caption text-ui-text-muted">{editingSourceId ? t('catalogSources.credentialEditHelp') : t('catalogSources.credentialHelp')}</span>
+                  </label>
+                )}
+                {authType === 'custom_header' && (
+                  <label className="grid gap-1.5 type-body type-emphasis text-ui-text">
+                    {t('catalogSources.headerName')}
+                    <TextInput
+                      required
+                      value={headerName}
+                      onChange={(event) => setHeaderName(event.target.value)}
+                      className="min-h-11 rounded-md border border-ui-border bg-ui-bg px-3 text-ui-text focus-visible:ring-2 focus-visible:ring-accent"
+                    />
+                  </label>
+                )}
+              </div>
+            </details>
             <div className="sm:col-span-2">
               <Button type="submit" variant="primary" disabled={Boolean(busy) || (credentialRequired && !credential)}>
                 {busy ? t('catalogSources.saving') : editingSourceId ? t('catalogSources.saveAndProbe') : t('catalogSources.addAndProbe')}

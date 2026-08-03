@@ -19,6 +19,17 @@ export const emptyWebhookDraft = (): WebhookDraft => ({
   enabled: true
 });
 
+export function suggestWebhookName(value: string): string {
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+    const hostname = url.hostname.replace(/^www\./, '');
+    return hostname ? `${hostname} webhook` : '';
+  } catch {
+    return '';
+  }
+}
+
 export const webhookEventGroups: Array<{
   id:
     | 'workspaceChanges'

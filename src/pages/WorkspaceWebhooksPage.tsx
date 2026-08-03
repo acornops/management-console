@@ -500,7 +500,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
           </>
         }
       >
-        <WebhookEditor draft={visibleDraft} formId={editorFormId} isSaving={workspaceStateCurrent && isSaving} onChange={setDraft} onSave={() => void saveWebhook()} />
+        <WebhookEditor key={editingWebhook?.id || 'create'} draft={visibleDraft} formId={editorFormId} isSaving={workspaceStateCurrent && isSaving} onChange={setDraft} onSave={() => void saveWebhook()} />
       </DrawerFrame>
       </>}
       </div>

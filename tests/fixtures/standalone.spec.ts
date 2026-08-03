@@ -94,6 +94,7 @@ test('outbound webhooks expose history, confirmation, and one-time secret flows'
 
   await createWebhook.click();
   drawer = page.getByRole('dialog', { name: 'Create webhook' });
+  await expect(drawer.getByText('3 events selected', { exact: true })).toBeVisible();
   const issueAlerts = drawer.getByRole('button', { name: 'Issue alerts' });
   const eventList = drawer.locator('[data-event-scroll-region]');
   const eventScrollbar = drawer.locator('[data-event-scrollbar]');
@@ -103,6 +104,8 @@ test('outbound webhooks expose history, confirmation, and one-time secret flows'
     drawer.getByRole('checkbox', { name: 'issue / reopened' }),
     drawer.getByRole('checkbox', { name: 'issue / resolved' })
   ];
+  await expect(issueAlerts).toBeHidden();
+  await drawer.getByText('Customize events', { exact: true }).click();
   await expect(issueAlerts).toHaveAttribute('aria-pressed', 'true');
   await expect(eventList).toHaveCSS('overflow-y', 'scroll');
   await expect(eventScrollbar).toBeVisible();
@@ -115,11 +118,37 @@ test('outbound webhooks expose history, confirmation, and one-time secret flows'
   await expect.poll(() => eventList.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
   await expect(eventScrollThumb).not.toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
 
-  await drawer.getByLabel('Name').fill('Mattermost incident channel');
   await drawer.getByLabel('Delivery URL').fill('https://mattermost-bot.fixture.acornops.dev/webhooks/incidents');
+  await expect(drawer.getByLabel('Name')).toHaveValue('mattermost-bot.fixture.acornops.dev webhook');
+  await drawer.getByLabel('Name').fill('Mattermost incident channel');
   await drawer.getByRole('button', { name: 'Create webhook' }).click();
   await expect(page.getByText('One-time signing secret for Mattermost incident channel')).toBeVisible();
   await expect(page.getByText('whsec_fixture_local_only')).toBeVisible();
+});
+
+test('configuration forms disclose expert controls only when needed on compact screens', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/workspaces/fixture-workspace/audit-log', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Audit Log' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filter audit events by category' })).toBeHidden();
+  await page.getByRole('button', { name: 'Filters' }).click();
+  await expect(page.getByRole('button', { name: 'Filter audit events by category' })).toBeVisible();
+
+  await page.goto('/workspaces/fixture-workspace/settings?section=mcp-registries', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'Add registry' }).click();
+  await expect(page.getByLabel('Registry base URL')).toBeVisible();
+  await expect(page.getByLabel('Display name (optional)')).toBeHidden();
+  await page.getByText('Name and authentication', { exact: true }).click();
+  await expect(page.getByLabel('Display name (optional)')).toBeVisible();
+
+  await page.goto('/kubernetes-clusters/fixture-cluster/tools', { waitUntil: 'domcontentloaded' });
+  const insightsRow = page.getByRole('row').filter({ hasText: 'Insights' });
+  await insightsRow.getByRole('button', { name: 'Actions for Insights' }).click();
+  await page.getByRole('menuitem', { name: 'Settings' }).click();
+  const insightsDialog = page.getByRole('dialog', { name: 'Insights settings' });
+  await expect(insightsDialog.getByLabel('Idle checkpoint delay')).toBeHidden();
+  await insightsDialog.getByText('Advanced tuning', { exact: true }).click();
+  await expect(insightsDialog.getByLabel('Idle checkpoint delay')).toBeVisible();
 });
 
 test('outbound webhooks remain usable from compact navigation', async ({ browser }) => {

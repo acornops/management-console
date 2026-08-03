@@ -201,8 +201,8 @@ describe('surface behavior contracts', () => {
 
   it('keeps audit log time presets available for log-style filtering', () => {
     expect(auditLogPage).toContain("const timePresetOptions: AuditTimePreset[] = ['today', 'last24h', 'past7d', 'past30d'];");
-    expect(auditLogPage).toContain('<FilterToggleGroup');
-    expect(auditLogPage).toContain('activeValue={activeTimePreset');
+    expect(auditLogPage).toContain('<Select<AuditTimeSelection>');
+    expect(auditLogPage).toContain('value={selectedTimeRange}');
     expect(auditLogPage).toContain('<DateTimePicker');
     expect(auditLogPage).not.toContain('type="datetime-local"');
     expect(auditLogPage).toContain('applyNormalizedFilters(nextFilters);');
@@ -210,9 +210,15 @@ describe('surface behavior contracts', () => {
 
   it('auto-applies audit log filter selections without relying on an apply button', () => {
     expect(auditLogPage).toContain('data-audit-filter-toolbar="true"');
-    expect(auditLogPage).toContain('aria-controls="audit-custom-range-controls"');
+    expect(auditLogPage).toContain('aria-controls="audit-advanced-filter-controls"');
     expect(auditLogPage).toContain('const timer = window.setTimeout(() => {');
     expect(auditLogPage).toContain('applyNormalizedFilters(draftFilters);');
     expect(auditLogPage).not.toContain("t('auditLog.applyFilters')");
+  });
+
+  it('keeps audit log expert filters behind disclosure and exposes removable active filters', () => {
+    expect(auditLogPage).toContain('isAdvancedFiltersOpen');
+    expect(auditLogPage).toContain('activeAdvancedFilters.map');
+    expect(auditLogPage).toContain("t('common.removeFilter'");
   });
 });

@@ -7,7 +7,7 @@ import { FieldLabel, HelpText } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { CONTROL_PLANE_WEBHOOK_EVENT_TYPES, type ControlPlaneWebhookEventType } from '@/services/controlPlaneApi';
-import { isWebhookEventGroupSelected, sortedWebhookEvents, toggleWebhookEventGroup, webhookEventGroups, webhookEventLabel, type WebhookDraft } from './webhookModel';
+import { isWebhookEventGroupSelected, sortedWebhookEvents, suggestWebhookName, toggleWebhookEventGroup, webhookEventGroups, webhookEventLabel, type WebhookDraft } from './webhookModel';
 import { TextInput } from '@acornops/ui';
 
 interface WebhookEditorProps {
@@ -21,6 +21,7 @@ interface WebhookEditorProps {
 export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isSaving, onChange, onSave }) => {
   const { t } = useTranslation();
   const idPrefix = React.useId();
+  const autoNameActiveRef = React.useRef(!draft.name.trim());
   const eventListRef = React.useRef<HTMLDivElement>(null);
   const eventRefs = React.useRef(new Map<ControlPlaneWebhookEventType, HTMLLabelElement>());
   const [eventScrollIndicator, setEventScrollIndicator] = React.useState({
@@ -33,6 +34,7 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
     const eventList = eventListRef.current;
     if (!eventList) return;
     const { clientHeight, scrollHeight, scrollTop } = eventList;
+    if (!clientHeight || !scrollHeight) return;
     const height = Math.max(40, clientHeight * (clientHeight / scrollHeight));
     const availableTrack = clientHeight - height;
     const availableScroll = scrollHeight - clientHeight;
@@ -80,25 +82,13 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
   return (
     <form
       id={formId}
-      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]"
+      className="space-y-6"
       onSubmit={(event) => {
         event.preventDefault();
         if (canSave && !isSaving) onSave();
       }}
     >
-      <div className="space-y-5">
-        <div>
-          <FieldLabel htmlFor={`${idPrefix}-name`}>{t('workspaceWebhooks.name')}</FieldLabel>
-          <TextInput
-            id={`${idPrefix}-name`}
-            value={draft.name}
-            onChange={(event) => onChange({ ...draft, name: event.target.value })}
-            className={formInputClassName()}
-            placeholder={t('workspaceWebhooks.namePlaceholder')}
-            autoComplete="off"
-            required
-          />
-        </div>
+      <div className="grid gap-5 lg:grid-cols-2">
         <div>
           <FieldLabel htmlFor={`${idPrefix}-url`}>{t('workspaceWebhooks.deliveryUrl')}</FieldLabel>
           <TextInput
@@ -106,7 +96,11 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
             type="url"
             inputMode="url"
             value={draft.url}
-            onChange={(event) => onChange({ ...draft, url: event.target.value })}
+            onChange={(event) => {
+              const url = event.target.value;
+              const suggestedName = autoNameActiveRef.current ? suggestWebhookName(url) : '';
+              onChange({ ...draft, url, name: suggestedName || draft.name });
+            }}
             className={formInputClassName()}
             placeholder="https://bot.example.com/acornops/webhook"
             autoCapitalize="none"
@@ -116,71 +110,107 @@ export const WebhookEditor: React.FC<WebhookEditorProps> = ({ draft, formId, isS
           />
           <HelpText>{t('workspaceWebhooks.deliveryUrlHelp')}</HelpText>
         </div>
-        <label className="flex min-h-11 items-center gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
-          <Checkbox checked={draft.enabled} onChange={(event) => onChange({ ...draft, enabled: event.target.checked })} />
-          <span className="type-body type-emphasis text-ui-text">{t('workspaceWebhooks.enabled')}</span>
-        </label>
+        <div>
+          <FieldLabel htmlFor={`${idPrefix}-name`}>{t('workspaceWebhooks.name')}</FieldLabel>
+          <TextInput
+            id={`${idPrefix}-name`}
+            value={draft.name}
+            onChange={(event) => {
+              autoNameActiveRef.current = !event.target.value.trim();
+              onChange({ ...draft, name: event.target.value });
+            }}
+            className={formInputClassName()}
+            placeholder={t('workspaceWebhooks.namePlaceholder')}
+            autoComplete="off"
+            required
+          />
+          <HelpText>{t('workspaceWebhooks.nameHelp')}</HelpText>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <p className="type-label text-ui-text">{t('workspaceWebhooks.eventGroups')}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {webhookEventGroups.map((group) => {
-              const groupSelected = isWebhookEventGroupSelected(draft.eventTypes, group.eventTypes);
-              return (
-                <Button
-                  key={group.id}
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  aria-pressed={groupSelected}
-                  className={groupSelected ? 'border-accent/50 bg-accent-soft text-accent-strong shadow-none hover:bg-accent-soft' : undefined}
-                  onClick={() => toggleEventGroup(group.eventTypes)}
-                >
-                  {groupSelected ? <ICONS.CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <ICONS.Plus className="h-3.5 w-3.5" aria-hidden="true" />}
-                  {t(`workspaceWebhooks.groups.${group.id}`)}
-                  <span className="tabular-nums opacity-70">({group.eventTypes.length})</span>
-                </Button>
-              );
-            })}
-          </div>
-          <HelpText>{t('workspaceWebhooks.eventGroupsHelp')}</HelpText>
-        </div>
-        <fieldset className="rounded-lg border border-ui-border bg-ui-bg p-3">
-          <legend className="px-1 type-label text-ui-text">{t('workspaceWebhooks.events')}</legend>
-          <div className="relative">
-            <div ref={eventListRef} data-event-scroll-region className="max-h-64 overflow-y-scroll pr-4 custom-scrollbar" onScroll={updateEventScrollIndicator}>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {CONTROL_PLANE_WEBHOOK_EVENT_TYPES.map((eventType) => (
-                  <label
-                    key={eventType}
-                    ref={(node) => {
-                      if (node) eventRefs.current.set(eventType, node);
-                      else eventRefs.current.delete(eventType);
-                    }}
-                    className="flex min-h-11 items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-3 py-2"
+      <details
+        className="rounded-lg border border-ui-border bg-ui-bg"
+        onToggle={(event) => {
+          if (event.currentTarget.open) window.requestAnimationFrame(updateEventScrollIndicator);
+        }}
+      >
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0">
+            <span className="type-label block text-ui-text">{t('workspaceWebhooks.eventSelection')}</span>
+            <span className={`type-caption mt-1 block ${draft.eventTypes.length ? 'text-ui-text-muted' : 'text-status-danger-text'}`}>
+              {draft.eventTypes.length
+                ? t('workspaceWebhooks.selectedEventCount', { count: draft.eventTypes.length })
+                : t('workspaceWebhooks.selectEvent')}
+            </span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-2 type-ui type-emphasis text-ui-text">
+            {t('workspaceWebhooks.customizeEvents')}
+            <ICONS.ChevronDown className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </summary>
+        <div className="space-y-5 border-t border-ui-border p-4">
+          <div>
+            <p className="type-label text-ui-text">{t('workspaceWebhooks.eventGroups')}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {webhookEventGroups.map((group) => {
+                const groupSelected = isWebhookEventGroupSelected(draft.eventTypes, group.eventTypes);
+                return (
+                  <Button
+                    key={group.id}
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    aria-pressed={groupSelected}
+                    className={groupSelected ? 'border-accent/50 bg-accent-soft text-accent-strong shadow-none hover:bg-accent-soft' : undefined}
+                    onClick={() => toggleEventGroup(group.eventTypes)}
                   >
-                    <Checkbox checked={selectedEvents.has(eventType)} onChange={() => toggleEvent(eventType)} />
-                    <span className="type-caption type-emphasis capitalize text-ui-text">{webhookEventLabel(eventType)}</span>
-                  </label>
-                ))}
+                    {groupSelected ? <ICONS.CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <ICONS.Plus className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {t(`workspaceWebhooks.groups.${group.id}`)}
+                    <span className="tabular-nums opacity-70">({group.eventTypes.length})</span>
+                  </Button>
+                );
+              })}
+            </div>
+            <HelpText>{t('workspaceWebhooks.eventGroupsHelp')}</HelpText>
+          </div>
+          <fieldset className="rounded-lg border border-ui-border bg-ui-surface p-3">
+            <legend className="px-1 type-label text-ui-text">{t('workspaceWebhooks.events')}</legend>
+            <div className="relative">
+              <div ref={eventListRef} data-event-scroll-region className="max-h-64 overflow-y-scroll pr-4 custom-scrollbar" onScroll={updateEventScrollIndicator}>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {CONTROL_PLANE_WEBHOOK_EVENT_TYPES.map((eventType) => (
+                    <label
+                      key={eventType}
+                      ref={(node) => {
+                        if (node) eventRefs.current.set(eventType, node);
+                        else eventRefs.current.delete(eventType);
+                      }}
+                      className="flex min-h-11 items-center gap-2 rounded-md border border-ui-border bg-ui-bg px-3 py-2"
+                    >
+                      <Checkbox checked={selectedEvents.has(eventType)} onChange={() => toggleEvent(eventType)} />
+                      <span className="type-caption type-emphasis capitalize text-ui-text">{webhookEventLabel(eventType)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div aria-hidden="true" data-event-scrollbar className="pointer-events-none absolute inset-y-0 right-0 w-2 rounded-full bg-ui-surface-strong">
+                <div
+                  data-event-scroll-thumb
+                  className="absolute inset-x-0 rounded-full bg-ui-text-muted/50"
+                  style={{
+                    height: `${eventScrollIndicator.height}px`,
+                    transform: `translateY(${eventScrollIndicator.top}px)`
+                  }}
+                />
               </div>
             </div>
-            <div aria-hidden="true" data-event-scrollbar className="pointer-events-none absolute inset-y-0 right-0 w-2 rounded-full bg-ui-surface-strong">
-              <div
-                data-event-scroll-thumb
-                className="absolute inset-x-0 rounded-full bg-ui-text-muted/50"
-                style={{
-                  height: `${eventScrollIndicator.height}px`,
-                  transform: `translateY(${eventScrollIndicator.top}px)`
-                }}
-              />
-            </div>
-          </div>
-        </fieldset>
-        {draft.eventTypes.length === 0 && <p className="type-caption text-ui-text-muted">{t('workspaceWebhooks.selectEvent')}</p>}
-      </div>
+          </fieldset>
+          <label className="flex min-h-11 items-center gap-3 rounded-md border border-ui-border bg-ui-surface px-3 py-2">
+            <Checkbox checked={draft.enabled} onChange={(event) => onChange({ ...draft, enabled: event.target.checked })} />
+            <span className="type-body type-emphasis text-ui-text">{t('workspaceWebhooks.enabled')}</span>
+          </label>
+        </div>
+      </details>
     </form>
   );
 };

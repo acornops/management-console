@@ -106,6 +106,9 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   });
 
   it('toggles complete event groups, exposes selected state, and scrolls selected events into view', () => {
+    expect(editor).toContain('<details');
+    expect(editor).toContain("t('workspaceWebhooks.customizeEvents')");
+    expect(editor).toContain("t('workspaceWebhooks.selectedEventCount'");
     expect(editor).toContain('toggleEventGroup(group.eventTypes)');
     expect(editor).toContain('aria-pressed={groupSelected}');
     expect(editor).toContain('eventList.scrollTo({');
@@ -116,6 +119,12 @@ describe('WorkspaceWebhooksPage contract surface', () => {
     expect(model).toContain("id: 'issueAlerts'");
     expect(model).toContain("eventTypes: ['issue.created.v1', 'issue.reopened.v1', 'issue.resolved.v1']");
     expect(model).toContain("id: 'runAlerts'");
+  });
+
+  it('suggests a webhook name from the delivery endpoint until the operator customizes it', () => {
+    expect(editor).toContain('autoNameActiveRef');
+    expect(editor).toContain('suggestWebhookName(url)');
+    expect(page).toContain("key={editingWebhook?.id || 'create'}");
   });
 
   it('keeps created signing secrets in one-time component state only', () => {

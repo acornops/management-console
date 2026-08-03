@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isWebhookEventGroupSelected,
+  suggestWebhookName,
   sortedWebhookEvents,
   toggleWebhookEventGroup,
   webhookEventGroups
@@ -11,6 +12,11 @@ import { CONTROL_PLANE_WEBHOOK_EVENT_TYPES } from '@/services/controlPlaneApi';
 const issueAlerts = webhookEventGroups.find((group) => group.id === 'issueAlerts')!;
 
 describe('webhook event groups', () => {
+  it('suggests a stable name from a valid delivery endpoint', () => {
+    expect(suggestWebhookName('https://hooks.example.com/acornops')).toBe('hooks.example.com webhook');
+    expect(suggestWebhookName('not a URL')).toBe('');
+  });
+
   it('selects every event in a group without duplicating existing selections', () => {
     const selected = toggleWebhookEventGroup(
       ['workspace.deleted.v1', 'issue.created.v1'],

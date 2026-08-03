@@ -32,6 +32,13 @@ export interface SettingsDraft {
   model: string;
 }
 
+export const TARGET_INSIGHTS_RECOMMENDED_TUNING = {
+  idleCheckpointDelayMinutes: 30,
+  minimumObservationsBeforeGeneralization: 3,
+  maxSnippetsPerRetrieval: 4,
+  maxSnippetSizeBytes: 1536
+} as const;
+
 export const statusOrder: InsightFileStatus[] = ['active', 'pending', 'archived'];
 
 export function slugifyTitle(value: string): string {
@@ -125,10 +132,10 @@ export function settingsDraftFromTool(tool: ControlPlaneTargetToolItem): Setting
   const checkpointModel = tool.config.learning?.checkpointModel;
   return {
     enabled: tool.enabled,
-    idleCheckpointDelayMinutes: tool.config.learning?.idleCheckpointDelayMinutes || 30,
-    minimumObservationsBeforeGeneralization: tool.config.learning?.minimumObservationsBeforeGeneralization || 3,
-    maxSnippetsPerRetrieval: tool.config.retrieval?.maxSnippetsPerRetrieval || 4,
-    maxSnippetSizeBytes: tool.config.retrieval?.maxSnippetSizeBytes || 1536,
+    idleCheckpointDelayMinutes: tool.config.learning?.idleCheckpointDelayMinutes || TARGET_INSIGHTS_RECOMMENDED_TUNING.idleCheckpointDelayMinutes,
+    minimumObservationsBeforeGeneralization: tool.config.learning?.minimumObservationsBeforeGeneralization || TARGET_INSIGHTS_RECOMMENDED_TUNING.minimumObservationsBeforeGeneralization,
+    maxSnippetsPerRetrieval: tool.config.retrieval?.maxSnippetsPerRetrieval || TARGET_INSIGHTS_RECOMMENDED_TUNING.maxSnippetsPerRetrieval,
+    maxSnippetSizeBytes: tool.config.retrieval?.maxSnippetSizeBytes || TARGET_INSIGHTS_RECOMMENDED_TUNING.maxSnippetSizeBytes,
     checkpointModelMode: checkpointModel?.mode === 'custom' ? 'custom' : 'workspace_default',
     provider: checkpointModel?.provider || 'openai',
     model: checkpointModel?.model || ''

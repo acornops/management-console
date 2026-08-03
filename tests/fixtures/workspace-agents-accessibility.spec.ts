@@ -217,13 +217,14 @@ test('Agent creation persists the selected emoji identity', async ({ page }) => 
   await page.getByRole('button', { name: 'New agent' }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Create agent' });
+  await expect(drawer.getByText('🤖 is the default. Certain name keywords select another emoji.')).toBeVisible();
+  await drawer.getByText('Customize appearance').click();
   await drawer.getByRole('button', { name: 'Use 🛡️ for this Agent' }).click();
   await drawer.getByLabel('Name').fill('Security Guide');
-  await drawer.getByLabel('Assignment purpose').fill('Reviews workspace security posture and recommends bounded follow-up.');
-  await drawer.getByRole('button', { name: 'Next' }).click();
-  await drawer.getByRole('button', { name: 'Next' }).click();
-  await expect(drawer.getByText('🛡️', { exact: true })).toBeVisible();
-  await drawer.getByRole('button', { name: 'Save agent' }).click();
+  await drawer.getByLabel('Purpose').fill('Reviews workspace security posture and recommends bounded follow-up.');
+  await expect(drawer.locator('[data-agent-avatar="true"]').first()).toHaveText('🛡️');
+  await expect(drawer.getByText('🛡️ chosen by you')).toBeVisible();
+  await drawer.getByRole('button', { name: 'Create agent', exact: true }).click();
 
   const card = page.locator('[data-agent-card="true"]').filter({ hasText: 'Security Guide' });
   await expect(card).toBeVisible();
@@ -236,7 +237,11 @@ test('Agent identity choices stay dense and dirty drawer closes use the product 
   await page.getByRole('button', { name: 'New agent' }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Create agent' });
+  await expect(drawer.getByRole('button', { name: 'Next' })).toHaveCount(0);
+  await expect(drawer.getByLabel('Agent instructions')).toBeHidden();
   const emojiGrid = drawer.locator('[data-agent-emoji-options="true"]');
+  await expect(emojiGrid).toBeHidden();
+  await drawer.getByText('Customize appearance').click();
   const emojiButtons = emojiGrid.getByRole('button');
   await expect(emojiButtons).toHaveCount(24);
   const emojiLayout = await emojiButtons.evaluateAll((buttons) => {
@@ -273,6 +278,25 @@ test('Agent identity choices stay dense and dirty drawer closes use the product 
   await discardDialog.getByRole('button', { name: 'Discard changes' }).click();
   await expect(drawer).toHaveCount(0);
   await expect(page).not.toHaveURL(/panel=create/);
+});
+
+test('Agent creation keeps the primary path compact on narrow screens', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'New agent' }).click();
+
+  const drawer = page.getByRole('dialog', { name: 'Create agent' });
+  await drawer.getByLabel('Name').fill('Security responder');
+  await drawer.getByLabel('Purpose').fill('Review workspace security incidents and recommend safe next steps.');
+
+  await expect(drawer.getByText('Shown in the Agent catalog so people know when to use it.')).toBeVisible();
+  await expect(drawer.getByText('Optional. If empty, the purpose is used as its instructions.')).toBeVisible();
+  await expect(drawer.locator('[data-agent-avatar="true"]').first()).toHaveText('🛡️');
+  await expect(drawer.getByText('🛡️ selected from a matching keyword in the name')).toBeVisible();
+  await expect(drawer.locator('[data-agent-emoji-options="true"]')).toBeHidden();
+  await expect(drawer.getByLabel('Agent instructions')).toBeHidden();
+  await expect(drawer.getByRole('button', { name: 'Next' })).toHaveCount(0);
+  await expect(drawer.getByRole('button', { name: 'Create agent', exact: true })).toBeVisible();
 });
 
 test('browser Back uses the Agent discard dialog and keeps the draft when cancelled', async ({ page }) => {

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
-import { CloseButton, FilterToggleGroup, type CompactControlItem } from '@acornops/ui';
+import { CloseButton } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { DataTableHeader, DataTableHeaderCell, DataTableStateRow, TableLoadingRows } from '@acornops/ui';
 import { DateTimePicker, PageSearchInput } from '@acornops/ui';
@@ -52,6 +52,8 @@ const defaultFilters: AuditFilters = {
 };
 
 type AuditTimePreset = 'today' | 'last24h' | 'past7d' | 'past30d';
+type AuditTimeSelection = 'anytime' | AuditTimePreset | 'custom';
+type AdvancedAuditFilterKey = 'category' | 'eventType' | 'actorUserId' | 'objectType';
 
 const timePresetOptions: AuditTimePreset[] = ['today', 'last24h', 'past7d', 'past30d'];
 
@@ -191,6 +193,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
   const [appliedFilters, setAppliedFilters] = useState<AuditFilters>(defaultFilters);
   const [activeTimePreset, setActiveTimePreset] = useState<AuditTimePreset | undefined>();
   const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<WorkspaceAuditEvent | null>(null);
   const dateTimePickerLabels = useMemo(() => ({
     calendar: t('common.dateTimePicker.calendar'),
@@ -250,19 +253,47 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
 
   const visibleCount = useMemo(() => events.length, [events.length]);
   const selectedMetadata = selectedEvent ? formatMetadata(selectedEvent.metadata) : '';
-  const timePresetItems = useMemo<Array<CompactControlItem<AuditTimePreset>>>(
-    () =>
-      timePresetOptions.map((value) => ({
+  const timeRangeOptions = useMemo<Array<SelectOption<AuditTimeSelection>>>(
+    () => [
+      { value: 'anytime', label: t('auditLog.anyTime') },
+      ...timePresetOptions.map((value) => ({
         value,
         label: t(`auditLog.timePresets.${value}`)
       })),
+      { value: 'custom', label: t('auditLog.customRange') }
+    ],
     [t]
   );
+  const advancedFilterCount = [
+    draftFilters.category !== 'all',
+    Boolean(draftFilters.eventType),
+    Boolean(draftFilters.actorUserId),
+    Boolean(draftFilters.objectType)
+  ].filter(Boolean).length;
+  const hasAnyFilters = !filtersEqual(normalizeFilters(draftFilters), defaultFilters);
+  const selectedTimeRange: AuditTimeSelection = isCustomRangeOpen || (!activeTimePreset && Boolean(draftFilters.from || draftFilters.to))
+    ? 'custom'
+    : activeTimePreset || 'anytime';
+  const activeAdvancedFilters: Array<{ key: AdvancedAuditFilterKey; label: string; value: string }> = [
+    ...(draftFilters.category !== 'all'
+      ? [{ key: 'category' as const, label: t('auditLog.category'), value: t(`auditLog.categories.${draftFilters.category}`) }]
+      : []),
+    ...(draftFilters.eventType
+      ? [{ key: 'eventType' as const, label: t('auditLog.eventType'), value: draftFilters.eventType }]
+      : []),
+    ...(draftFilters.actorUserId
+      ? [{ key: 'actorUserId' as const, label: t('auditLog.actor'), value: draftFilters.actorUserId }]
+      : []),
+    ...(draftFilters.objectType
+      ? [{ key: 'objectType' as const, label: t('auditLog.object'), value: draftFilters.objectType }]
+      : [])
+  ];
   const clearFilters = () => {
     setDraftFilters(defaultFilters);
     applyNormalizedFilters(defaultFilters);
     setActiveTimePreset(undefined);
     setIsCustomRangeOpen(false);
+    setIsAdvancedFiltersOpen(false);
   };
   const applyTimePreset = (preset: AuditTimePreset) => {
     const nextFilters = buildTimePresetFilters(preset, draftFilters);
@@ -270,6 +301,28 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
     applyNormalizedFilters(nextFilters);
     setActiveTimePreset(preset);
     setIsCustomRangeOpen(false);
+  };
+  const changeTimeRange = (selection: AuditTimeSelection) => {
+    if (selection === 'custom') {
+      setActiveTimePreset(undefined);
+      setIsCustomRangeOpen(true);
+      return;
+    }
+    if (selection === 'anytime') {
+      const nextFilters = { ...draftFilters, from: '', to: '' };
+      setDraftFilters(nextFilters);
+      applyNormalizedFilters(nextFilters);
+      setActiveTimePreset(undefined);
+      setIsCustomRangeOpen(false);
+      return;
+    }
+    applyTimePreset(selection);
+  };
+  const clearAdvancedFilter = (key: AdvancedAuditFilterKey) => {
+    setDraftFilters((current) => {
+      if (key === 'category') return { ...current, category: 'all' };
+      return { ...current, [key]: '' };
+    });
   };
 
   return (
@@ -297,11 +350,38 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
             applyNormalizedFilters(draftFilters);
           }}
         >
-          <div data-audit-filter-toolbar="true" className="grid gap-3 xl:grid-cols-[minmax(11rem,13rem)_minmax(14rem,1.15fr)_repeat(2,minmax(10rem,0.8fr))]">
-            <div className="min-w-0">
-              <label className="sr-only" htmlFor="audit-filter-category">
-                {t('auditLog.category')}
-              </label>
+          <div data-audit-filter-toolbar="true" className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="w-full lg:w-56">
+              <label className="sr-only" htmlFor="audit-filter-time-range">{t('auditLog.timeRange')}</label>
+              <Select<AuditTimeSelection>
+                id="audit-filter-time-range"
+                value={selectedTimeRange}
+                options={timeRangeOptions}
+                onChange={changeTimeRange}
+                ariaLabel={t('auditLog.timeRange')}
+                className="w-full"
+              />
+            </div>
+            <Button
+              variant="secondary"
+              size="md"
+              type="button"
+              onClick={() => setIsAdvancedFiltersOpen((current) => !current)}
+              aria-expanded={isAdvancedFiltersOpen}
+              aria-controls="audit-advanced-filter-controls"
+              className="w-full justify-between lg:w-auto"
+            >
+              <span>{advancedFilterCount ? t('auditLog.filterCount', { count: advancedFilterCount }) : t('auditLog.filters')}</span>
+              <ICONS.ChevronDown className={`h-4 w-4 transition-transform ${isAdvancedFiltersOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </Button>
+            {hasAnyFilters && (
+              <Button variant="tertiary" size="md" onClick={clearFilters} type="button" className="w-full lg:ml-auto lg:w-auto">
+                {t('auditLog.clearFilters')}
+              </Button>
+            )}
+          </div>
+          {isAdvancedFiltersOpen && (
+            <div id="audit-advanced-filter-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 md:grid-cols-2 xl:grid-cols-4">
               <Select<WorkspaceAuditCategory | 'all'>
                 id="audit-filter-category"
                 value={draftFilters.category}
@@ -309,95 +389,37 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   ...option,
                   label: option.value === 'all' ? t('auditLog.allCategories') : t(`auditLog.categories.${option.value}`)
                 }))}
-                onChange={(value) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    category: value
-                  }))
-                }
+                onChange={(category) => setDraftFilters((current) => ({ ...current, category }))}
                 ariaLabel={t('auditLog.filterCategory')}
                 className="w-full"
               />
-            </div>
-            <div className="min-w-0">
-              <label className="sr-only" htmlFor="audit-filter-event-type">
-                {t('auditLog.eventType')}
-              </label>
               <Select<string>
                 id="audit-filter-event-type"
                 value={draftFilters.eventType}
-                onChange={(value) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    eventType: value
-                  }))
-                }
+                onChange={(eventType) => setDraftFilters((current) => ({ ...current, eventType }))}
                 options={[{ value: '', label: t('auditLog.allEventTypes') }, ...eventTypeOptions.map((value) => ({ value, label: value }))]}
                 ariaLabel={t('auditLog.filterEventType')}
                 className="w-full"
               />
-            </div>
-            <label className="min-w-0" htmlFor="audit-filter-actor">
-              <span className="sr-only">{t('auditLog.actor')}</span>
               <PageSearchInput
                 id="audit-filter-actor"
                 type="text"
                 value={draftFilters.actorUserId}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    actorUserId: event.target.value
-                  }))
-                }
+                onChange={(event) => setDraftFilters((current) => ({ ...current, actorUserId: event.target.value }))}
                 placeholder={t('auditLog.filterActor')}
                 aria-label={t('auditLog.filterActor')}
-                className="lg:w-full"
+                className="w-full"
               />
-            </label>
-            <div className="min-w-0">
-              <label className="sr-only" htmlFor="audit-filter-object-type">
-                {t('auditLog.object')}
-              </label>
               <Select<string>
                 id="audit-filter-object-type"
                 value={draftFilters.objectType}
-                onChange={(value) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    objectType: value
-                  }))
-                }
+                onChange={(objectType) => setDraftFilters((current) => ({ ...current, objectType }))}
                 options={[{ value: '', label: t('auditLog.allObjectTypes') }, ...objectTypeOptions]}
                 ariaLabel={t('auditLog.filterObjectType')}
                 className="w-full"
               />
             </div>
-          </div>
-          <div className="mt-3 flex flex-col gap-3 border-t border-ui-border/70 pt-3 lg:flex-row lg:items-start lg:justify-between">
-            <fieldset className="min-w-0">
-              <legend className="sr-only">{t('auditLog.timeRange')}</legend>
-              <div className="flex flex-wrap gap-2">
-                <FilterToggleGroup activeValue={activeTimePreset || 'none'} ariaLabel={t('auditLog.timeRange')} items={timePresetItems} onValueChange={applyTimePreset} />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsCustomRangeOpen((current) => !current)}
-                  aria-pressed={Boolean(isCustomRangeOpen || (!activeTimePreset && (draftFilters.from || draftFilters.to)))}
-                  aria-expanded={isCustomRangeOpen}
-                  aria-controls="audit-custom-range-controls"
-                >
-                  <ICONS.Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t('auditLog.customRange')}
-                  <ICONS.ChevronDown className={`h-3.5 w-3.5 transition-transform ${isCustomRangeOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
-                </Button>
-              </div>
-            </fieldset>
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="secondary" size="md" onClick={clearFilters} type="button">
-                {t('auditLog.clearFilters')}
-              </Button>
-            </div>
-          </div>
+          )}
           {isCustomRangeOpen && (
             <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
               <div className="grid gap-2">
@@ -438,6 +460,23 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
                   className="lg:w-full"
                 />
               </div>
+            </div>
+          )}
+          {activeAdvancedFilters.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2" aria-label={t('auditLog.activeFilters')}>
+              {activeAdvancedFilters.map((filter) => (
+                <Button
+                  key={filter.key}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => clearAdvancedFilter(filter.key)}
+                  aria-label={t('common.removeFilter', { filter: filter.label, value: filter.value })}
+                >
+                  <span className="max-w-64 truncate">{filter.value}</span>
+                  <ICONS.X className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
+              ))}
             </div>
           )}
         </form>
