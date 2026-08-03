@@ -19,6 +19,7 @@ import { useTargetMcpCredentialModeImpact } from '@/features/targets/admin/useTa
 import { McpServersNotices } from '@/features/targets/admin/McpServersNotices';
 import { parseMcpRecoveryAction } from '@/features/catalog/mcpConnectionActions';
 import { useAgentTargetsMcpSettingsDialog } from '@/features/targets/admin/useAgentTargetsMcpSettingsDialog';
+import { useMcpServerActionFeedback } from '@/features/targets/admin/useMcpServerActionFeedback';
 import {
   buildLocalCatalog,
   publicHeaderRowsFromRecord,
@@ -45,6 +46,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   scheduleCount, targetAccessSettings
 }) => {
   const { t } = useTranslation();
+  const actionFeedback = useMcpServerActionFeedback(t);
   const urlSearch = useUrlSearchState();
   const recoveryServerId = urlSearch.get('mcpServer');
   const requestedMcpAction = urlSearch.get('mcpAction');
@@ -60,7 +62,6 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
   const [serverForm, setServerForm] = useState<ServerFormState>(DEFAULT_SERVER_FORM);
   const [editingServer, setEditingServer] = useState<TargetToolCatalogServer | null>(null);
   const [serverMutationError, setServerMutationError] = useState<string | null>(null);
-  const [serverMutationNotice, setServerMutationNotice] = useState<string | null>(null);
   const credentialModeImpact = useTargetMcpCredentialModeImpact(subject.workspaceId, subject.id, scheduleCount);
   const [toolRefreshError, setToolRefreshError] = useState<string | null>(null);
   const [toolRefreshServer, setToolRefreshServer] = useState<TargetToolCatalogServer | null>(null);
@@ -179,7 +180,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     installations: servers,
     workspaceId: subject.workspaceId,
     destination: connectionDestination,
-    onError: setServerMutationError,
+    onError: actionFeedback.setError,
     onConnectionReady: refreshConnectedServer,
     onRefreshError: (_server, message) => setToolRefreshError(message)
   });
@@ -200,8 +201,8 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       protocolError: t('mcpServers.oauthProtocolError'),
       toolDiscoveryFailed: t('mcpServers.oauthVerificationFailed')
     },
-    setNotice: setServerMutationNotice,
-    setError: setServerMutationError,
+    setNotice: actionFeedback.setNotice,
+    setError: actionFeedback.setError,
     onConnected: () => loadCatalog({ syncParent: true }).then(() => undefined),
     onVerificationFailed: reloadConnections
   });
@@ -227,7 +228,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
     setCreateReviewServerId(null);
     setServerForm({ ...DEFAULT_SERVER_FORM, publicHeaders: [] });
     setServerMutationError(null);
-    setServerMutationNotice(null);
+    actionFeedback.setNotice(null);
     credentialModeImpact.clear();
     setServerModalOpen(true);
   };
@@ -308,7 +309,7 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         const loadedCatalog = await loadCatalog({ syncParent: true });
         if (modeChanged && updatedServer.credentialMode !== 'none') {
           const affectedScheduleCount = credentialModeImpact.impact?.affectedScheduleCount || 0;
-          setServerMutationNotice(affectedScheduleCount > 0
+          actionFeedback.setNotice(affectedScheduleCount > 0
             ? t('mcpServers.credentialModeChangedSchedulesPaused', { count: affectedScheduleCount })
             : t('mcpServers.credentialModeChanged'));
           const loadedServer = loadedCatalog?.servers.find((server) => server.id === updatedServer.id);
@@ -367,22 +368,21 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       setPendingServerMutation(false);
     }
   };
-
   const handleTestConnection = async (server: TargetToolCatalogServer) => {
     if (!canEditServers || pendingTestServerId) return;
     setPendingTestServerId(server.id);
-    setServerMutationError(null);
+    actionFeedback.clear();
     try {
       const result = await dataSource.testServer(subject.workspaceId, subject.id, server.id);
       setTestResultsByServerId((current) => ({ ...current, [server.id]: result }));
       await loadCatalog({ syncParent: true });
+      actionFeedback.reportHealthResult(result);
     } catch (error) {
-      setServerMutationError(formatMcpMutationError(error, t('mcpServers.healthCheckFailedMessage')));
+      actionFeedback.setError(formatMcpMutationError(error, t('mcpServers.healthCheckFailedMessage')));
     } finally {
       setPendingTestServerId(null);
     }
   };
-
   const applyServerEnabledState = (serverId: string, enabled: boolean) => {
     updateCatalogLocal((current) => ({
       ...current,
@@ -412,13 +412,12 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       })
     }));
   };
-
   const handleToggleServer = async (server: TargetToolCatalogServer, enabled: boolean) => {
     if (!canEditServers || pendingToggleServerId || pendingServerMutation) return;
     if (!server.canToggle) return;
     if (server.enabled === enabled) return;
     setPendingToggleServerId(server.id);
-    setServerMutationError(null);
+    actionFeedback.setError(null);
     applyServerEnabledState(server.id, enabled);
     try {
       await dataSource.updateServer(subject.workspaceId, subject.id, server.id, {
@@ -427,12 +426,11 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
       await loadCatalog({ syncParent: true });
     } catch (error) {
       applyServerEnabledState(server.id, server.enabled);
-      setServerMutationError(formatMcpMutationError(error, 'Failed updating MCP server.'));
+      actionFeedback.setError(formatMcpMutationError(error, 'Failed updating MCP server.'));
     } finally {
       setPendingToggleServerId(null);
     }
   };
-
   const handleToggleTool = async (
     server: TargetToolCatalogServer,
     tool: TargetToolCatalogItem,
@@ -508,10 +506,8 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         setDeleteTargetServer(targetServer);
       }}
       onConnect={setCredentialDialogServer}
-      onVerify={(targetServer) => void verify(targetServer).then((connection) => {
-        if (connection?.status === 'connected') clearSuccessfulRecovery(targetServer.id);
-      })}
-      onDisconnect={(targetServer) => void disconnect(targetServer)}
+      onVerify={(targetServer) => void actionFeedback.verifyConnection(targetServer, verify, () => clearSuccessfulRecovery(targetServer.id))}
+      onDisconnect={(targetServer) => void actionFeedback.disconnectCredential(targetServer, disconnect)}
       onRetry={(targetServer) => void retry(targetServer)}
     />
   );
@@ -528,7 +524,8 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         hasAgentWriteBlockedTools={hasAgentWriteBlockedTools}
         hasConfiguredWriteTools={hasConfiguredWriteTools}
         canRequestWriteRuns={canRequestWriteRuns}
-        mutationNotice={serverMutationNotice}
+        mutationNotice={actionFeedback.notice}
+        mutationError={credentialDialogServer ? null : actionFeedback.error}
         onRetryToolRefresh={() => toolRefreshServer
           ? void refreshConnectedServer(toolRefreshServer).catch(() => setToolRefreshError('The credential is connected, but tools may be stale. Refresh the MCP catalog to retry discovery.'))
           : void loadCatalog({ syncParent: true })}
@@ -560,8 +557,8 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
         connection={credentialDialogServer ? connections[credentialDialogServer.id] : undefined}
         returnPath={oauthReturnPath}
         retryAfterSeconds={credentialDialogServer ? retryAfterSecondsFor(credentialDialogServer.id) : 0}
-        onClose={() => setCredentialDialogServer(null)}
-        onCredentialSubmit={async (credential) => { if (!credentialDialogServer) return; const connection = await connect(credentialDialogServer, credential); if (connection?.status === 'connected') clearSuccessfulRecovery(credentialDialogServer.id); setCredentialDialogServer(null); }}
+        onClose={() => { setCredentialDialogServer(null); actionFeedback.setError(null); }}
+        onCredentialSubmit={async (credential) => { if (!credentialDialogServer) return; const server = credentialDialogServer; await actionFeedback.connectCredential(server, credential, connect, () => { clearSuccessfulRecovery(server.id); setCredentialDialogServer(null); }); }}
         onPrepareOAuth={async (returnPath) => credentialDialogServer ? prepareOAuth(credentialDialogServer, returnPath) : undefined}
         onStartOAuth={async (preparationHandle, issuer) => credentialDialogServer ? startOAuth(credentialDialogServer, preparationHandle, issuer) : undefined}
       />

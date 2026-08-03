@@ -88,15 +88,15 @@ function mapAgentMcpServer(server: AgentMcpServerApi): McpToolCatalogServer {
     canDelete: server.canDelete,
     canEditConnection: server.canEditConnection,
     canToggle: server.canToggle,
-    authType: server.authType === 'bearer_token' || server.authType === 'custom_header' ? server.authType : 'none',
+    authType: server.authType ?? 'none',
     credentialMode: server.credentialMode,
     authHeaderName: server.authHeaderName,
     authHeaderPrefix: server.authHeaderPrefix,
     revision: server.revision,
     provenance: server.provenance,
-    publicHeaders: {},
+    publicHeaders: server.publicHeaders ?? {},
     connectionStatus: mapConnectionStatus(server.connectionStatus),
-    lastDiscoveryAt: null,
+    lastDiscoveryAt: server.lastDiscoveryAt ?? null,
     lastDiscoveryError: server.lastDiscoveryError || null,
     toolCounts: {
       total: tools.length,
@@ -118,12 +118,13 @@ function mapAgentMcpInstallation(server: AgentMcpServerApi, agent: AgentDefiniti
     serverName: server.name,
     serverUrl: server.url,
     enabled: server.enabled,
-    authType: server.authType === 'bearer_token' || server.authType === 'custom_header' ? server.authType : 'none',
+    authType: server.authType ?? 'none',
     credentialMode: server.credentialMode,
     authHeaderName: server.authHeaderName,
     authHeaderPrefix: server.authHeaderPrefix,
+    publicHeaders: server.publicHeaders ?? {},
     connectionStatus: mapConnectionStatus(server.connectionStatus),
-    lastDiscoveryAt: null,
+    lastDiscoveryAt: server.lastDiscoveryAt ?? null,
     lastDiscoveryError: server.lastDiscoveryError || null,
     revision: server.revision,
     provenance: server.provenance,
@@ -159,9 +160,12 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
       const server = await createAgentMcpServer(workspaceId, subjectId, {
         name: input.name,
         url: input.url,
+        enabled: input.enabled,
         credentialMode: input.credentialMode,
         authType: input.auth?.type,
-        authHeaderName: input.auth?.headerName
+        authHeaderName: input.auth?.headerName,
+        authHeaderPrefix: input.auth?.headerPrefix,
+        publicHeaders: input.publicHeaders
       });
       return mapAgentMcpInstallation(server, agent);
     },
@@ -172,24 +176,24 @@ export function createAgentMcpDataSource(agent: AgentDefinition, canManageMcp: b
         credentialMode: input.credentialMode,
         authType: input.auth?.type,
         authHeaderName: input.auth?.headerName,
+        authHeaderPrefix: input.auth?.headerPrefix,
+        publicHeaders: input.publicHeaders,
         expectedRevision: input.expectedRevision
       });
       return mapAgentMcpInstallation(server, agent);
     },
     deleteServer: (workspaceId, subjectId, serverId) => deleteAgentMcpServer(workspaceId, subjectId, serverId),
     async testServer(workspaceId, subjectId, serverId) {
-      await testAgentMcpServer(workspaceId, subjectId, serverId);
-      const server = (await listAgentMcpServers(workspaceId, subjectId)).find((item) => item.id === serverId);
-      if (!server) throw new Error('The MCP server could not be reloaded after testing.');
+      const response = await testAgentMcpServer(workspaceId, subjectId, serverId);
       const result: McpServerTestConnectionResult = {
-        serverId,
-        serverName: server.name,
-        serverUrl: server.url,
-        connectionStatus: mapConnectionStatus(server.connectionStatus) === 'error' ? 'error' : 'ok',
-        lastDiscoveryAt: new Date().toISOString(),
-        discoveredToolCount: server.tools.length,
-        discoveredTools: server.tools.map((tool) => tool.name),
-        error: server.lastDiscoveryError || null
+        serverId: response.server_id,
+        serverName: response.server_name,
+        serverUrl: response.server_url,
+        connectionStatus: response.connection_status,
+        lastDiscoveryAt: response.last_discovery_at,
+        discoveredToolCount: response.discovered_tool_count,
+        discoveredTools: response.discovered_tools,
+        error: response.error || null
       };
       return result;
     },

@@ -67,8 +67,10 @@ test('Agent credential refresh, disconnect/reconnect, and rate limit countdown a
   await expect(page.getByText('fixture_discovered_tool')).toBeVisible();
   await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('fixture_discovered_tool')).toHaveCount(0);
+  await expect(page.getByText('Credential connected and MCP tools verified for Agent credential server.')).toBeVisible();
 
   await selectServerAction(page, 'Agent credential server', 'Disconnect credential');
+  await expect(page.getByText('Credential disconnected from Agent credential server.')).toBeVisible();
   await page.getByRole('button', { name: 'Actions for Agent credential server' }).click();
   const connectButton = page.getByRole('menuitem', { name: 'Connect your credential' });
   await expect(connectButton).toBeEnabled();
@@ -80,6 +82,7 @@ test('Agent credential refresh, disconnect/reconnect, and rate limit countdown a
   await expect(failedCredentialDialog).toContainText('verification failed');
   await failedCredentialDialog.getByRole('button', { name: 'Cancel' }).click();
   await selectServerAction(page, 'Agent credential server', 'Verify credential');
+  await expect(page.getByText('Agent credential server was verified and its MCP tools were refreshed.')).toBeVisible();
   await page.getByRole('button', { name: 'Actions for Agent credential server' }).click();
   await expect(page.getByRole('menuitem', { name: 'Replace credential' })).toBeEnabled();
   await page.getByRole('button', { name: 'Actions for Agent credential server' }).click();
@@ -91,6 +94,22 @@ test('Agent credential refresh, disconnect/reconnect, and rate limit countdown a
   const credentialDialog = page.getByRole('dialog', { name: 'Connect your credential' });
   await expect(credentialDialog.getByRole('button', { name: /Try again in [12]s/ })).toBeDisabled();
   await expect(credentialDialog.getByRole('button', { name: 'Save and verify' })).toBeEnabled({ timeout: 4_000 });
+});
+
+test('Agent OAuth creation stays OAuth and never exposes unauthenticated health checks', async ({ page }) => {
+  await page.goto(`/workspaces/${workspaceId}/agents/${agentId}/mcp-servers`);
+  await page.getByRole('button', { name: 'Add MCP server' }).click();
+  await page.getByRole('menuitem', { name: /Connect by URL/ }).click();
+  await page.getByLabel('Server Name').fill('Agent OAuth server');
+  await page.getByLabel('Server URL').fill('https://mcp.fixture.acornops.dev/oauth');
+  await selectOption(page, 'Auth Type', 'OAuth');
+  await page.getByRole('button', { name: 'Continue to authorization' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Authorize Agent OAuth server' })).toBeVisible();
+  await page.getByRole('button', { name: 'Close OAuth authorization dialog' }).click();
+  await page.getByRole('button', { name: 'Actions for Agent OAuth server' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Authorize account' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Check Health' })).toHaveCount(0);
 });
 
 test('schedule auto-pause exposes the bounded reason and a manual workflow recovery path', async ({ page }) => {

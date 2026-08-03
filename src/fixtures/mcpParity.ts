@@ -17,8 +17,10 @@ function connectionKey(scopeType: ScopeType, scopeId: string, serverId: string):
   return `${scopeType}:${scopeId}:${serverId}`;
 }
 
-function serverAuthType(server: Record<string, any>): 'bearer_token' | 'custom_header' {
-  return (server.authType || server.auth_type) === 'custom_header' ? 'custom_header' : 'bearer_token';
+function serverAuthType(server: Record<string, any>): 'bearer_token' | 'custom_header' | 'oauth' {
+  const authType = server.authType || server.auth_type;
+  if (authType === 'oauth') return 'oauth';
+  return authType === 'custom_header' ? 'custom_header' : 'bearer_token';
 }
 
 export function mcpConnection(
@@ -28,14 +30,15 @@ export function mcpConnection(
   server: Record<string, any>
 ): Record<string, any> {
   const credentialMode = server.credentialMode || server.credential_mode || 'individual';
+  const authType = serverAuthType(server);
   return state.mcpConnections[connectionKey(scopeType, scopeId, server.id)] || {
     serverId: server.id,
     credentialMode,
     managementScope: credentialMode,
     canManage: true,
     status: 'missing',
-    authType: serverAuthType(server),
-    action: 'connect_mcp_server'
+    authType,
+    action: authType === 'oauth' ? 'authorize_mcp_server' : 'connect_mcp_server'
   };
 }
 
@@ -89,7 +92,7 @@ export async function routeMcpParityConnection(input: {
     input.state.mcpConnections[key] = {
       ...mcpConnection(input.state, scopeType, scopeId, server),
       status: 'missing',
-      action: 'connect_mcp_server'
+      action: serverAuthType(server) === 'oauth' ? 'authorize_mcp_server' : 'connect_mcp_server'
     };
     return { status: 204 };
   }

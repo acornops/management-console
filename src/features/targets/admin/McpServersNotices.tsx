@@ -11,6 +11,7 @@ interface McpServersNoticesProps {
   hasConfiguredWriteTools: boolean;
   canRequestWriteRuns: boolean;
   mutationNotice: string | null;
+  mutationError: string | null;
   onRetryToolRefresh: () => void;
 }
 
@@ -20,6 +21,7 @@ export const McpServersNotices: React.FC<McpServersNoticesProps> = ({
   hasConfiguredWriteTools,
   canRequestWriteRuns,
   mutationNotice,
+  mutationError,
   onRetryToolRefresh
 }) => {
   const { t } = useTranslation();
@@ -50,6 +52,7 @@ export const McpServersNotices: React.FC<McpServersNoticesProps> = ({
         </div>
       )}
       <McpServerMutationNotice message={mutationNotice} />
+      <McpServerMutationNotice message={mutationError} tone="danger" />
     </>
   );
 };

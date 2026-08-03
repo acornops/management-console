@@ -8,7 +8,11 @@ export type { RunPermissionMode } from './runPermissionTypes';
 export type AgentStatus = 'draft' | 'active' | 'disabled';
 export type AgentProviderType = 'internal' | 'external';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
-export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; isSystem: boolean; canDelete: boolean; canEditConnection: boolean; canToggle: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: string; authHeaderName?: string; authHeaderPrefix?: string; revision: number; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; connectionStatus?: string; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
+export type McpAuthType = 'none' | 'bearer_token' | 'custom_header' | 'oauth';
+export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; isSystem: boolean; canDelete: boolean; canEditConnection: boolean; canToggle: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: McpAuthType; authHeaderName?: string; authHeaderPrefix?: string; revision: number; provenance?: { sourceId: string; artifactName: string; version: string; digest: string; importedAt: string }; integrationProfileId?: string; integrationProfileVersion?: number; publicHeaders?: Record<string, string>; connectionStatus?: string; lastDiscoveryAt?: string | null; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
+export interface AgentMcpServerCreateInput { name: string; url: string; enabled?: boolean; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: McpAuthType; authHeaderName?: string; authHeaderPrefix?: string; publicHeaders?: Record<string, string> }
+export interface AgentMcpServerUpdateInput { name?: string; enabled?: boolean; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: McpAuthType; authHeaderName?: string; authHeaderPrefix?: string; publicHeaders?: Record<string, string>; expectedRevision?: number }
+export interface AgentMcpServerTestConnectionApi { server_id: string; server_name: string; server_url: string; connection_status: 'ok' | 'error'; last_discovery_at: string; discovered_tool_count: number; discovered_tools: string[]; error?: string | null }
 export interface AgentTargetAccessPolicyApi { mode: 'all' | 'allowlist' | 'denylist'; targetIds: string[] }
 export interface AgentTargetAccessSettingsApi {
   policy: AgentTargetAccessPolicyApi;
@@ -315,17 +319,17 @@ export function updateAgentTargetAccessSettings(workspaceId: string, agentId: st
     body: JSON.stringify(policy)
   });
 }
-export function createAgentMcpServer(workspaceId: string, agentId: string, input: { name: string; url: string; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: 'none' | 'bearer_token' | 'custom_header' | 'oauth'; authHeaderName?: string }): Promise<AgentMcpServerApi> {
+export function createAgentMcpServer(workspaceId: string, agentId: string, input: AgentMcpServerCreateInput): Promise<AgentMcpServerApi> {
   return requestJson<{ server: AgentMcpServerApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers`, { method: 'POST', body: JSON.stringify(input) }).then((response) => response.server);
 }
-export function updateAgentMcpServer(workspaceId: string, agentId: string, serverId: string, input: Record<string, unknown>): Promise<AgentMcpServerApi> {
+export function updateAgentMcpServer(workspaceId: string, agentId: string, serverId: string, input: AgentMcpServerUpdateInput): Promise<AgentMcpServerApi> {
   return requestJson<{ server: AgentMcpServerApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}`, { method: 'PATCH', body: JSON.stringify(input) }).then((response) => response.server);
 }
 export function deleteAgentMcpServer(workspaceId: string, agentId: string, serverId: string): Promise<void> {
   return requestJson(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}`, { method: 'DELETE' });
 }
-export function testAgentMcpServer(workspaceId: string, agentId: string, serverId: string): Promise<unknown> {
-  return requestJson(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}/test-connection`, { method: 'POST' });
+export function testAgentMcpServer(workspaceId: string, agentId: string, serverId: string): Promise<AgentMcpServerTestConnectionApi> {
+  return requestJson<{ result: AgentMcpServerTestConnectionApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}/test-connection`, { method: 'POST' }).then((response) => response.result);
 }
 export function reviewAgentMcpTool(workspaceId: string, agentId: string, serverId: string, toolName: string, input: Partial<Pick<AgentMcpToolApi, 'enabled' | 'capability' | 'reviewState' | 'riskLevel' | 'autoAllowed'>>): Promise<AgentMcpToolApi> {
   return requestJson<{ tool: AgentMcpToolApi }>(`${agentCapabilityBase(workspaceId, agentId)}/mcp/servers/${encodeURIComponent(serverId)}/tools/${encodeURIComponent(toolName)}`, { method: 'PATCH', body: JSON.stringify(input) }).then((response) => response.tool);
