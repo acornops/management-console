@@ -203,6 +203,21 @@ test('collapsed rail controls and identities share one centerline', async ({ pag
   await expect(page.getByRole('tooltip')).toBeVisible();
 });
 
+test('expanded agent identity shows its emoji beside its name', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.addInitScript(([key, value]) => window.localStorage.setItem(key, value), [
+    sidebarPreferenceKey,
+    'expanded'
+  ]);
+  await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/chat', {
+    waitUntil: 'domcontentloaded'
+  });
+
+  const identity = page.locator('.management-console-desktop-sidebar [data-desktop-sidebar-active-identity="agent"]');
+  await expect(identity).toContainText('Kubernetes Specialist');
+  await expect(identity.locator('[aria-hidden="true"]')).toHaveText('☸️');
+});
+
 test('collapsed rail count badges stay small, circular, and inside the rail', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
   await page.addInitScript(([key, value]) => window.localStorage.setItem(key, value), [

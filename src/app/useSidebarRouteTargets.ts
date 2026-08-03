@@ -31,7 +31,7 @@ interface SidebarRouteTargets {
   isClusterSidebar: boolean;
   isVirtualMachineSidebar: boolean;
   selectedSidebarCluster: KubernetesCluster | null;
-  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> & Partial<Pick<AgentDefinitionApi, 'avatarEmoji'>> | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
 }
 

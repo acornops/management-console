@@ -61,10 +61,11 @@ const identityInitials = (name: string) => {
 
 export const SidebarTargetIdentity: React.FC<{
   collapsed: boolean;
+  emoji?: string;
   label: string;
   name: string;
   testId: string;
-}> = ({ collapsed, label, name, testId }) => {
+}> = ({ collapsed, emoji, label, name, testId }) => {
   const identity = (
     <div
       className={collapsed
@@ -83,8 +84,9 @@ export const SidebarTargetIdentity: React.FC<{
           {identityInitials(name)}
         </IconTile>
       ) : (
-        <div data-desktop-sidebar-active-identity={testId} className="type-row-title line-clamp-2 break-words">
-          {name}
+        <div data-desktop-sidebar-active-identity={testId} className="flex min-w-0 items-start gap-2 type-row-title">
+          {emoji ? <span aria-hidden="true" className="shrink-0 leading-5">{emoji}</span> : null}
+          <span className="min-w-0 line-clamp-2 break-words">{name}</span>
         </div>
       )}
     </div>

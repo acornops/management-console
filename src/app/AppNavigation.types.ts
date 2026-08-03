@@ -15,7 +15,7 @@ export interface AppDesktopSidebarProps {
   selectedWorkspace: Workspace | undefined;
   selectedWorkspaceId: string | null;
   selectedWorkspaceInitials: string;
-  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> & Partial<Pick<AgentDefinitionApi, 'avatarEmoji'>> | null;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   isAgentSidebar: boolean;
@@ -63,7 +63,7 @@ export interface AppMobileNavigationProps {
   selectedClusterIssueCount: number;
   clusterAssistantNavStatus: AssistantNavStatus;
   selectedVmIssueCount: number;
-  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> & Partial<Pick<AgentDefinitionApi, 'avatarEmoji'>> | null;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;

@@ -76,7 +76,7 @@ export interface AppShellProps {
   refreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
   refreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
   route: AppRoute;
-  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> | null;
+  selectedSidebarAgent: Pick<AgentDefinitionApi, 'id' | 'workspaceId' | 'name'> & Partial<Pick<AgentDefinitionApi, 'avatarEmoji'>> | null;
   selectedSidebarCluster: KubernetesCluster | null;
   selectedSidebarVm: Pick<ControlPlaneVirtualMachine, 'id' | 'workspaceId' | 'name'> | null;
   selectedWorkspace: Workspace | undefined;

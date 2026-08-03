@@ -366,6 +366,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                 </MotionButton>
                 <SidebarTargetIdentity
                   collapsed={collapsed}
+                  emoji={selectedSidebarAgent?.avatarEmoji}
                   label={t('app.activeAgent')}
                   name={selectedAgentName}
                   testId="agent"
