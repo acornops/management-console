@@ -24,7 +24,8 @@ import {
   isSelfInviteEmail,
   isValidWorkspaceInviteEmail,
   MAX_CREATE_WORKSPACE_INVITE_ROWS,
-  normalizeInviteEmail
+  normalizeInviteEmail,
+  shouldShowAiProviderStep
 } from '@/components/workspaces/CreateWorkspaceModal.helpers';
 
 export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
@@ -42,7 +43,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   const [step, setStep] = React.useState<CreateWorkspaceStep>('details');
   const [workspaceName, setWorkspaceName] = React.useState('');
   const [createdWorkspace, setCreatedWorkspace] = React.useState<Workspace | null>(null);
-  const [hasInheritedLlmCredential, setHasInheritedLlmCredential] = React.useState(false);
+  const [hasInheritedLlmCredential, setHasInheritedLlmCredential] = React.useState<boolean | null>(null);
   const [isLoadingAiDefaults, setIsLoadingAiDefaults] = React.useState(false);
   const [isCreatingWorkspace, setIsCreatingWorkspace] = React.useState(false);
   const [createError, setCreateError] = React.useState<string | null>(null);
@@ -58,7 +59,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
   const createSteps = React.useMemo(() => [
       { id: 'details', label: t('workspaceCreate.stepWorkspace') },
       { id: 'members', label: t('workspaceCreate.stepInviteMembers') },
-      ...(!hasInheritedLlmCredential ? [{ id: 'ai', label: t('workspaceCreate.stepAiProvider') }] : [])
+      ...(shouldShowAiProviderStep(hasInheritedLlmCredential) ? [{ id: 'ai', label: t('workspaceCreate.stepAiProvider') }] : [])
     ],
     [hasInheritedLlmCredential, t]
   );
@@ -92,7 +93,7 @@ export const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = ({
     setStep('details');
     setWorkspaceName('');
     setCreatedWorkspace(null);
-    setHasInheritedLlmCredential(false);
+    setHasInheritedLlmCredential(null);
     setIsLoadingAiDefaults(false);
     setIsCreatingWorkspace(false);
     setCreateError(null);

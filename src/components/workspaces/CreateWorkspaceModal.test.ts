@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { hasInheritedPlatformLlmCredential } from '@/components/workspaces/CreateWorkspaceModal.helpers';
+import {
+  hasInheritedPlatformLlmCredential,
+  shouldShowAiProviderStep
+} from '@/components/workspaces/CreateWorkspaceModal.helpers';
 import type { WorkspaceAiSettings } from '@/types';
 
 function settings(
@@ -26,6 +29,12 @@ function settings(
 }
 
 describe('workspace creation AI setup', () => {
+  it('only advertises the AI setup step after confirming it is needed', () => {
+    expect(shouldShowAiProviderStep(null)).toBe(false);
+    expect(shouldShowAiProviderStep(true)).toBe(false);
+    expect(shouldShowAiProviderStep(false)).toBe(true);
+  });
+
   it('skips the AI setup step when any platform default is inherited', () => {
     expect(hasInheritedPlatformLlmCredential(settings([
       { provider: 'openai', configured: false, enabled: true, source: 'none' },

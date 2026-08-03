@@ -63,6 +63,10 @@ export function hasInheritedPlatformLlmCredential(settings: WorkspaceAiSettings)
   );
 }
 
+export function shouldShowAiProviderStep(hasInheritedLlmCredential: boolean | null): boolean {
+  return hasInheritedLlmCredential === false;
+}
+
 export function normalizeInviteEmail(value: string): string {
   return value.trim().toLowerCase();
 }
