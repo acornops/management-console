@@ -28,4 +28,11 @@ describe('interface copy consistency', () => {
     expect(zh.app.workspaceSettings).toBe(zh.settingsPage.title);
     expect(en.app.backToWorkspace).toBe('Back to workspace');
   });
+
+  it('identifies the resumable workspace activity as a chat', () => {
+    expect(en.overview.quickActionsResumeBody).toBe('Continue your chat with {{targetName}}. Last opened {{updated}}.');
+    expect(en.overview.resumeRecentInvestigation).toBe('Resume chat');
+    expect(zh.overview.quickActionsResumeBody).toBe('继续与 {{targetName}} 的聊天。上次打开于 {{updated}}。');
+    expect(zh.overview.resumeRecentInvestigation).toBe('继续聊天');
+  });
 });
