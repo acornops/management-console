@@ -332,6 +332,9 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain('<span>{formatMessageTime(message.timestamp)}</span>');
     expect(chatView).toContain('data-target-chat-surface="true"');
     expect(chatView).toContain('relative flex min-h-0 min-w-0 flex-1 overflow-hidden');
+    expect(chatView).toContain('items-center overflow-visible rounded-full');
+    expect(chatView).toContain('disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading}');
+    expect(chatView).not.toContain('isWorkspaceAiSettingsLoading || Boolean(workspaceAiSettingsError)');
     expect(chatView).toContain("isPanel");
     expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
     expect(chatView).toContain("? 'bottom-2 right-2 top-2 w-44'");

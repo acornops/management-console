@@ -39,6 +39,24 @@ test('the base Agent URL opens Chat and browser history restores it', async ({ p
   await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
 });
 
+test('full-page Agent chat opens model and capability menus outside the composer capsule', async ({ page }) => {
+  await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
+
+  const fullChat = page.getByRole('main');
+  const modelSelector = fullChat.getByRole('button', { name: 'Model and reasoning effort' });
+  await modelSelector.click();
+  const modelMenuId = await modelSelector.getAttribute('aria-controls');
+  if (!modelMenuId) throw new Error('The full-page model selector must identify its menu');
+  await expect(page.locator(`#${modelMenuId}`)).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  const capabilityPreviewButton = fullChat.locator('[data-assistant-capability-preview-trigger="true"]');
+  await capabilityPreviewButton.click();
+  const capabilityPreviewId = await capabilityPreviewButton.getAttribute('aria-controls');
+  if (!capabilityPreviewId) throw new Error('The full-page capability preview trigger must identify its popover');
+  await expect(page.locator(`#${capabilityPreviewId}`)).toBeVisible();
+});
+
 test('ready Agent cards omit routine positive status', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
 

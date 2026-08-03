@@ -293,7 +293,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             </Tooltip>
             <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
             <span className="min-w-0 flex-1" aria-hidden="true" />
-            <div className="inline-flex h-8 items-center rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
+            <div className="inline-flex h-8 items-center overflow-visible rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
               <AssistantCapabilityPreviewControl
                 canChat={canChat}
                 isPanel={isPanel}
@@ -313,7 +313,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                     setIsModelMenuOpen((current) => !current);
                     setIsModelSubmenuOpen(false);
                   }}
-                  disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading || Boolean(workspaceAiSettingsError)}
+                  disabled={!canPost || isRunActive || isWorkspaceAiSettingsLoading}
                   className="control-target inline-flex h-8 max-w-[15rem] items-center gap-1.5 rounded-full px-2.5 leading-5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={t('chat.modelAndEffortSelector')}
                   aria-controls={modelMenuPanelId}
