@@ -109,8 +109,12 @@ describe('target chat polish contracts', () => {
     expect(conversationAssistantStatuses).toContain("rawStatus === 'done'");
     expect(chatView).toContain('Plus');
     expect(chatView).toContain('type-route-title');
+    expect(chatView).toContain("const resolvedDescriptionKey = descriptionKey || (!activeSession || (!activeSession.backendSessionId && activeSession.messages.length === 0) ? 'chat.description' : undefined);");
+    expect(chatView).toContain('{resolvedDescriptionKey ? (');
     expect(chatView).toContain('type-body mt-2 max-w-2xl');
     expect(chatView).toContain('t(resolvedDescriptionKey, { name: subject.name })');
+    expect(enLocale).toContain('Ask about this cluster, inspect state, run read checks');
+    expect(zhLocale).toContain('询问此集群、检查状态、运行只读检查');
     expect(chatView).toContain("const resolvedTitleKey = titleKey || 'chat.triageConsole';");
     expect(chatView).toContain('title: titleOverride');
     expect(chatView).toContain('const title = titleOverride ?? (activeSession && (activeSession.backendSessionId || activeSession.messages.length > 0) ? activeSession.name : t(resolvedTitleKey));');

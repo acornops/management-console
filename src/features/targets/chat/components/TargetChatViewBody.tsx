@@ -327,7 +327,9 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                       {headerLeading}
                       <div className="min-w-0">
                         <h1 className="type-route-title">{title}</h1>
-                        <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: subject.name })}</p>
+                        {resolvedDescriptionKey ? (
+                          <p className="type-body mt-2 max-w-2xl">{t(resolvedDescriptionKey, { name: subject.name })}</p>
+                        ) : null}
                       </div>
                     </div>
                     <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">

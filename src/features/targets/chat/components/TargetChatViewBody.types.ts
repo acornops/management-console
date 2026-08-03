@@ -104,7 +104,7 @@ export interface TargetChatViewBodyProps {
   removeComposerAttachment: (attachmentId: string) => void;
   removeComposerReference: (reference: ChatAssistantReference) => void;
   requestedToolAccessMode: 'read_only' | 'read_write';
-  resolvedDescriptionKey: string;
+  resolvedDescriptionKey?: string;
   resolvedFooterKey: string;
   resolvedFooterNoAccessKey: string;
   resolvedInputPlaceholderKey: string;

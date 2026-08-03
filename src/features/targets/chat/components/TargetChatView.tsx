@@ -176,7 +176,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const isLoadingInitialConversation = !activeSession && isSessionsLoading;
   const shouldShowTranscriptSkeleton = visibleMessages.length === 0 && !hasConversationLoadError && (isHydratingExistingConversation || isLoadingInitialConversation);
   const resolvedSuggestionKeys = suggestionKeys || SUGGESTION_KEYS;
-  const resolvedDescriptionKey = descriptionKey || 'chat.description';
+  const resolvedDescriptionKey = descriptionKey || (!activeSession || (!activeSession.backendSessionId && activeSession.messages.length === 0) ? 'chat.description' : undefined);
   const resolvedPromptTitleKey = promptTitleKey || 'chat.promptTitle';
   const resolvedPromptBodyKey = promptBodyKey || 'chat.promptBody';
   const resolvedInputPlaceholderKey = inputPlaceholderKey || 'chat.inputPlaceholder';
