@@ -14,6 +14,7 @@ import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentCapabilityAdminView } from '@/pages/agents/AgentCapabilityAdminView';
 import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
+import { RunPermissionSettingsSection } from '@/features/run-permissions/RunPermissionSettingsSection';
 
 export type AgentProfileTab = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'settings';
 export const agentProfileTabs: AgentProfileTab[] = ['chat', 'mcpServers', 'skills', 'tools', 'settings'];
@@ -33,6 +34,7 @@ interface WorkspaceAgentDetailPanelProps {
   deleteError?: string | null;
   setDeleteConfirmAgentId: React.Dispatch<React.SetStateAction<string>>;
   onOpenEditAgentDrawer: (agent: AgentDefinition) => void;
+  onUpdatePermissionMode: (permissionMode: AgentDefinition['permissionMode']) => void | Promise<void>;
   onReactivateSelectedAgent: () => void;
   onDisableSelectedAgent: () => void;
   onDeleteSelectedAgent: () => void;
@@ -48,6 +50,7 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
     cacheSkillsCatalog,
     cacheToolsCatalog
   } = useCapabilityCatalogCache(`${selectedAgent.workspaceId}:${selectedAgent.id}`);
+  const permissionModeSaving = props.updatingAgentId === selectedAgent.id;
   const routeTitle = t(`agentChat.sections.${props.activeTab}.title`, { name: selectedAgent.name });
   const routeDescription = t(`agentChat.sections.${props.activeTab}.description`, { name: selectedAgent.name });
   const capabilityCatalogProps = {
@@ -98,6 +101,16 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
         )}
         {props.activeTab === 'settings' && (
           <div className="max-w-4xl space-y-5" data-agent-settings-content="true">
+            <RunPermissionSettingsSection
+              titleId="agent-permission-settings-title"
+              title={t('agentChat.permissionSettings.title')}
+              description={t('agentChat.permissionSettings.description')}
+              permissionMode={selectedAgent.permissionMode}
+              disabled={!props.canManageAgents}
+              disabledReason={!props.canManageAgents ? t('agentChat.permissionSettings.manageRequired') : undefined}
+              busy={permissionModeSaving}
+              onChange={props.onUpdatePermissionMode}
+            />
             <DangerZone>
               {selectedAgent.status !== 'disabled' && (
                 <DangerZoneRow

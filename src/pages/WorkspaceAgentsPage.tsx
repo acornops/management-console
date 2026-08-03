@@ -378,6 +378,21 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setUpdatingAgentId('');
     }
   };
+  const updateSelectedAgentPermissionMode = async (permissionMode: AgentDefinition['permissionMode']) => {
+    if (!selectedAgent || !canManageAgents || permissionMode === selectedAgent.permissionMode) return;
+    setUpdatingAgentId(selectedAgent.id);
+    setLocalNotice(null);
+    try {
+      const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { permissionMode });
+      const mapped = mapApiAgent(updated, workspace.name, ownerLabelsByUserId);
+      setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
+      setLocalNotice({ tone: 'success', message: 'Agent permission mode updated.' });
+    } catch (error) {
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update the Agent permission mode.' });
+    } finally {
+      setUpdatingAgentId('');
+    }
+  };
   const feedback = (
     <>
       {(agentLoadError || ownerUserLoadError) && (
@@ -461,6 +476,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       deleteError={deleteConfirmAgentId && localNotice?.tone === 'danger' ? localNotice.message : null}
       setDeleteConfirmAgentId={setDeleteConfirmAgentId}
       onOpenEditAgentDrawer={openEditAgentDrawerFromDetails}
+      onUpdatePermissionMode={updateSelectedAgentPermissionMode}
       onReactivateSelectedAgent={() => void reactivateSelectedAgent()}
       onDisableSelectedAgent={() => void disableSelectedAgent()}
       onDeleteSelectedAgent={() => void deleteSelectedAgent()}

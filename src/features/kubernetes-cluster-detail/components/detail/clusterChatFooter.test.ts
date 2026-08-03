@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveClusterChatFooterKey } from '@/features/kubernetes-cluster-detail/components/detail/clusterChatFooter';
 import { HealthStatus, type KubernetesCluster } from '@/types';
 
-function clusterWithPolicy(effectiveRequired?: boolean): KubernetesCluster {
+function clusterWithPolicy(permissionMode?: KubernetesCluster['permissionMode']): KubernetesCluster {
   return {
     id: 'cluster-1',
     name: 'Development Cluster',
@@ -24,12 +24,15 @@ function clusterWithPolicy(effectiveRequired?: boolean): KubernetesCluster {
     pvcs: [],
     alerts: [],
     lastUpdate: '2026-06-01T00:00:00.000Z',
-    ...(effectiveRequired === undefined
+    ...(permissionMode === undefined
       ? {}
       : {
+          permissionMode,
+          permissionModeOverride: permissionMode,
+          permissionModeSource: 'cluster_override' as const,
           writeConfirmationPolicy: {
-            effectiveRequired,
-            overrideRequired: effectiveRequired,
+            effectiveRequired: permissionMode !== 'auto_allowed_changes',
+            overrideRequired: permissionMode !== 'auto_allowed_changes',
             source: 'cluster_override' as const
           }
         })
@@ -38,9 +41,10 @@ function clusterWithPolicy(effectiveRequired?: boolean): KubernetesCluster {
 
 describe('cluster chat footer copy', () => {
   it('uses policy-aware composer footer copy for cluster chat', () => {
-    expect(resolveClusterChatFooterKey(clusterWithPolicy(false), false)).toBe('chat.footerReadOnlyRole');
+    expect(resolveClusterChatFooterKey(clusterWithPolicy('auto_allowed_changes'), false)).toBe('chat.footerReadOnlyRole');
     expect(resolveClusterChatFooterKey(clusterWithPolicy(), true)).toBe('chat.footerApprovalRequired');
-    expect(resolveClusterChatFooterKey(clusterWithPolicy(true), true)).toBe('chat.footerApprovalRequired');
-    expect(resolveClusterChatFooterKey(clusterWithPolicy(false), true)).toBe('chat.footerApprovalNotRequired');
+    expect(resolveClusterChatFooterKey(clusterWithPolicy('read_only'), true)).toBe('chat.footerReadOnlyPolicy');
+    expect(resolveClusterChatFooterKey(clusterWithPolicy('ask_before_changes'), true)).toBe('chat.footerApprovalRequired');
+    expect(resolveClusterChatFooterKey(clusterWithPolicy('auto_allowed_changes'), true)).toBe('chat.footerApprovalNotRequired');
   });
 });

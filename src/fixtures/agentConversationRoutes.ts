@@ -150,11 +150,21 @@ export async function routeAgentConversationFixtureRequest({
       }, 409);
     }
     conversation.accessMode = input.accessMode === 'read_write' ? 'read_write' : 'read_only';
+    conversation.permissionMode = agent?.permissionMode || conversation.permissionMode;
     return json({ conversation: clone(conversation) });
   }
   if (action !== 'messages' || method !== 'POST') return null;
 
   const input = await bodyOf(request);
+  const agent = state.agents.find((item) => item.id === conversation.agentId);
+  if (conversation.accessMode === 'read_write' && agent?.permissionMode === 'read_only') {
+    return json({
+      error: {
+        code: 'AGENT_CONVERSATION_POLICY_READ_ONLY',
+        message: 'The Agent policy now permits read-only runs. Change this conversation to read-only to continue.'
+      }
+    }, 409);
+  }
   const runId = id('fixture-agent-run');
   const messageId = id('fixture-agent-message');
   const assistantId = id('fixture-agent-message');

@@ -7,6 +7,7 @@ import type { TargetChatController } from '@/features/targets/chat/hooks/useTarg
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
 import { KubernetesCluster, Workspace } from '@/types';
 import { ClusterSubview } from '@/utils/routes';
+import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
 
 interface KubernetesClusterDetailPageProps {
   kubernetesClusters: KubernetesCluster[];
@@ -21,7 +22,7 @@ interface KubernetesClusterDetailPageProps {
   onSyncClusterTools: (clusterId: string, tools: KubernetesCluster['mcpTools']) => void;
   onUpdateClusterName: (clusterId: string, name: string) => void | Promise<void>;
   onUpdateClusterNamespaceScope: (clusterId: string, scope: { include: string[]; exclude: string[] }) => void | Promise<void>;
-  onUpdateClusterWriteConfirmationPolicy: (clusterId: string, overrideRequired: boolean | null) => void | Promise<void>;
+  onUpdateClusterPermissionMode: (clusterId: string, permissionMode: RunPermissionMode) => void | Promise<void>;
   onDeleteCluster: (cluster: KubernetesCluster) => void | Promise<void>;
   onOpenAiSettings: (workspaceId: string) => void;
   onNavigateBackToClusters: () => void;
@@ -44,7 +45,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   onSyncClusterTools,
   onUpdateClusterName,
   onUpdateClusterNamespaceScope,
-  onUpdateClusterWriteConfirmationPolicy,
+  onUpdateClusterPermissionMode,
   onDeleteCluster,
   onOpenAiSettings,
   onNavigateBackToClusters,
@@ -83,7 +84,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               onSyncTools={(tools) => onSyncClusterTools(selectedCluster.id, tools)}
               onUpdateName={(name) => onUpdateClusterName(selectedCluster.id, name)}
               onUpdateNamespaceScope={(scope) => onUpdateClusterNamespaceScope(selectedCluster.id, scope)}
-              onUpdateWriteConfirmationPolicy={(overrideRequired) => onUpdateClusterWriteConfirmationPolicy(selectedCluster.id, overrideRequired)}
+              onUpdatePermissionMode={(permissionMode) => onUpdateClusterPermissionMode(selectedCluster.id, permissionMode)}
               onReinstallAgent={() => onOpenInstallModal(selectedCluster.id)}
               onDeleteCluster={() => onDeleteCluster(selectedCluster)}
               onOpenAiSettings={() => onOpenAiSettings(selectedCluster.workspaceId)}

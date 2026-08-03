@@ -1,6 +1,7 @@
 import { KubernetesCluster, ProjectMember, Workspace } from '@/types';
 import type { TargetChatController } from '@/features/targets/chat/hooks/useTargetChat';
 import type { ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
+import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
 
 export interface KubernetesClusterDetailProps {
   cluster: KubernetesCluster;
@@ -14,7 +15,7 @@ export interface KubernetesClusterDetailProps {
   onSyncTools?: (tools: KubernetesCluster['mcpTools']) => void;
   onUpdateName?: (name: string) => Promise<void> | void;
   onUpdateNamespaceScope?: (scope: { include: string[]; exclude: string[] }) => Promise<void> | void;
-  onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => Promise<void> | void;
+  onUpdatePermissionMode?: (permissionMode: RunPermissionMode) => Promise<void> | void;
   onReinstallAgent?: () => void;
   onDeleteCluster?: () => Promise<void> | void;
   onOpenAiSettings: () => void;

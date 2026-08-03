@@ -43,6 +43,38 @@ describe('mapControlPlaneClusterToKubernetesCluster', () => {
     expect(mapControlPlaneClusterToKubernetesCluster(baseCluster).agentAccessMode).toBe('unknown');
   });
 
+  it('maps canonical cluster permission modes and safely falls back for legacy responses', () => {
+    const baseCluster = {
+      id: 'cluster-1',
+      workspaceId: 'workspace-1',
+      name: 'demo-cluster',
+      status: 'online' as const
+    };
+
+    expect(mapControlPlaneClusterToKubernetesCluster({
+      ...baseCluster,
+      permissionMode: 'read_only',
+      permissionModeOverride: 'read_only',
+      permissionModeSource: 'cluster_override'
+    })).toMatchObject({
+      permissionMode: 'read_only',
+      permissionModeOverride: 'read_only',
+      permissionModeSource: 'cluster_override'
+    });
+    expect(mapControlPlaneClusterToKubernetesCluster({
+      ...baseCluster,
+      writeConfirmationPolicy: {
+        effectiveRequired: false,
+        overrideRequired: false,
+        source: 'cluster_override'
+      }
+    })).toMatchObject({
+      permissionMode: 'auto_allowed_changes',
+      permissionModeOverride: null,
+      permissionModeSource: 'cluster_override'
+    });
+  });
+
   it('maps pod stats from the normalized cluster summary when raw snapshot data is omitted', () => {
     const mappedCluster = mapControlPlaneClusterToKubernetesCluster({
       id: 'cluster-1',

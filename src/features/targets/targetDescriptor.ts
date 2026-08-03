@@ -1,6 +1,7 @@
 import type { ControlPlaneVirtualMachine } from '@/services/control-plane/virtualMachineTypes';
 import type { TargetType } from '@/services/control-plane/types';
 import type { ChatSession, KubernetesCluster } from '@/types';
+import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
 
 export interface TargetMcpToolSummary {
   toolId: string;
@@ -25,6 +26,9 @@ export interface TargetDescriptor {
   status?: 'online' | 'offline' | 'degraded' | 'unknown';
   agentConnectionState?: 'connected' | 'disconnected' | 'not_installed';
   lastUpdate?: string;
+  permissionMode?: RunPermissionMode;
+  permissionModeOverride?: RunPermissionMode | null;
+  permissionModeSource?: 'cluster_override' | 'deployment_default';
   writeConfirmationPolicy?: {
     effectiveRequired: boolean;
     overrideRequired: boolean | null;
@@ -50,6 +54,9 @@ export function toKubernetesTargetDescriptor(cluster: KubernetesCluster): Target
     name: cluster.name,
     agentConnectionState: cluster.agentConnectionState,
     lastUpdate: cluster.lastUpdate,
+    permissionMode: cluster.permissionMode,
+    permissionModeOverride: cluster.permissionModeOverride,
+    permissionModeSource: cluster.permissionModeSource,
     writeConfirmationPolicy: cluster.writeConfirmationPolicy,
     chatSessions: cluster.chatSessions,
     mcpTools: cluster.mcpTools

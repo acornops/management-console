@@ -1,4 +1,6 @@
 
+import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
+
 export enum HealthStatus {
   GREEN = 'GREEN',
   YELLOW = 'YELLOW',
@@ -14,6 +16,9 @@ export interface KubernetesCluster {
     include: string[];
     exclude: string[];
   };
+  permissionMode?: RunPermissionMode;
+  permissionModeOverride?: RunPermissionMode | null;
+  permissionModeSource?: 'cluster_override' | 'deployment_default';
   writeConfirmationPolicy?: {
     effectiveRequired: boolean;
     overrideRequired: boolean | null;

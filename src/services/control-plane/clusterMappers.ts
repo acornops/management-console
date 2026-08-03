@@ -38,6 +38,7 @@ import {
 } from './formatters';
 import { mapResourceSignals } from './resourceSignals';
 import { formatUserDateTime } from '@/utils/dateTime';
+import { resolveClusterPermissionMode } from './runPermissionPolicy';
 
 const criticalPodContainerReasons = new Set([
   'crashloopbackoff',
@@ -526,6 +527,7 @@ export function mapControlPlaneClusterToKubernetesCluster(cluster: ControlPlaneC
       : mapClusterStatus(cluster.status);
   const namespaceInclude = normalizeNamespaceList(cluster.namespaceInclude);
   const namespaceExclude = normalizeNamespaceList(cluster.namespaceExclude);
+  const permissionMode = resolveClusterPermissionMode(cluster);
 
   return {
     id: cluster.id,
@@ -536,6 +538,11 @@ export function mapControlPlaneClusterToKubernetesCluster(cluster: ControlPlaneC
       include: namespaceInclude,
       exclude: namespaceExclude
     },
+    permissionMode,
+    permissionModeOverride: cluster.permissionModeOverride ?? null,
+    permissionModeSource: cluster.permissionModeSource
+      ?? cluster.writeConfirmationPolicy?.source
+      ?? 'deployment_default',
     writeConfirmationPolicy: cluster.writeConfirmationPolicy,
     agentAccessMode:
       cluster.agentAccessMode === 'read_only' || cluster.agentAccessMode === 'read_write'

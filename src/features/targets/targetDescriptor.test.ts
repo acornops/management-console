@@ -38,6 +38,9 @@ function cluster(overrides: Partial<KubernetesCluster> = {}): KubernetesCluster 
       overrideRequired: null,
       source: 'deployment_default'
     },
+    permissionMode: 'ask_before_changes',
+    permissionModeOverride: null,
+    permissionModeSource: 'deployment_default',
     ...overrides
   };
 }
@@ -74,6 +77,9 @@ describe('target descriptor mappers', () => {
       targetType: 'kubernetes',
       name: 'Production cluster',
       agentConnectionState: 'connected',
+      permissionMode: 'ask_before_changes',
+      permissionModeOverride: null,
+      permissionModeSource: 'deployment_default',
       writeConfirmationPolicy: {
         effectiveRequired: true,
         overrideRequired: null,

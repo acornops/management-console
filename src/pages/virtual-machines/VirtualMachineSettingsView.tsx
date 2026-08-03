@@ -1,34 +1,15 @@
 import React from 'react';
 import { KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile, InlineAlert, SettingsSection } from '@acornops/ui';
+import { Button, InlineAlert, SettingsSection } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
+import { SettingsRow } from '@/components/common/SettingsRow';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { formatSnapshotTime, getVmStatusLabel } from '@/pages/virtual-machines/virtualMachineUi';
-
-const SettingRow: React.FC<{
-  icon: React.ElementType;
-  label: string;
-  description: React.ReactNode;
-  action?: React.ReactNode;
-}> = ({ icon: Icon, label, description, action }) => (
-  <div className="flex flex-col gap-5 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex min-w-0 items-center gap-4">
-      <IconTile>
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </IconTile>
-      <div className="min-w-0">
-        <p className="mb-0.5 type-row-title">{label}</p>
-        <div className="break-words type-caption leading-5 text-ui-text-muted">{description}</div>
-      </div>
-    </div>
-    {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
-  </div>
-);
 
 export const VirtualMachineSettingsView: React.FC<{
   vm: ControlPlaneVirtualMachine;
@@ -63,22 +44,22 @@ export const VirtualMachineSettingsView: React.FC<{
           title={t('virtualMachines.settings.identityTitle')}
           description={t('virtualMachines.settings.identityBody')}
         >
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Server}
             label={t('virtualMachines.settings.vmName')}
             description={vm.name}
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.LayoutGrid}
             label={t('virtualMachines.settings.workspace')}
             description={workspace.name || workspace.id}
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Activity}
             label={t('virtualMachines.settings.agentState')}
             description={getVmStatusLabel(vm.status, t)}
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Clock}
             label={t('virtualMachines.settings.lastSnapshot')}
             description={formatSnapshotTime(vm)}
@@ -89,22 +70,22 @@ export const VirtualMachineSettingsView: React.FC<{
           title={t('virtualMachines.settings.collectionTitle')}
           description={t('virtualMachines.settings.collectionBody')}
         >
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Layers}
             label={t('virtualMachines.settings.osFamily')}
             description={vm.osFamily || t('common.unknown')}
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Terminal}
             label={t('virtualMachines.settings.serviceManager')}
             description={vm.serviceManager || t('common.unknown')}
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.BookOpen}
             label={t('virtualMachines.settings.allowedLogs')}
             description={allowedLogs}
           />
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Clock}
             label={t('virtualMachines.settings.snapshotCadence')}
             description={t('virtualMachines.settings.defaultSnapshotCadence')}
@@ -123,7 +104,7 @@ export const VirtualMachineSettingsView: React.FC<{
           title={t('virtualMachines.settings.agentInstallTitle')}
           description={t('virtualMachines.settings.agentInstallBody')}
         >
-          <SettingRow
+          <SettingsRow
             icon={KeyRound}
             label={t('virtualMachines.settings.agentKey')}
             description={t('virtualMachines.settings.agentKeyBody')}

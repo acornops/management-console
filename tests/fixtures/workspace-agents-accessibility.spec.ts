@@ -328,17 +328,19 @@ test('Agent Chat remains a modal drawer in a narrow viewport', async ({ browser 
   await page.close();
 });
 
-test('Agent conversations follow the Agent policy without a redundant access elevation', async ({ page }) => {
+test('Agent conversations do not repeat the Agent policy in a banner', async ({ page }) => {
   await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
 
-  await page.locator('[data-chat-history-trigger="new-chat"]').click();
-  await expect(page.getByText('Changes follow this Agent’s policy. Approval is required before every write.')).toBeVisible();
+  await expect(page.getByText('Changes follow this Agent’s policy. Approval is required before every write.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Pause changes' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Enable changes' })).toHaveCount(0);
 
   const composer = page.getByRole('combobox', { name: 'Message Kubernetes Specialist assistant' });
   await composer.fill('Summarize the available incident evidence.');
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(page.getByText('Fixture Agent analysis complete. No external changes were made.')).toBeVisible();
+  await expect(page.getByText('Changes follow this Agent’s policy. Approval is required before every write.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Pause changes' })).toHaveCount(0);
 });
 
 test('Agent chat composer follows the conversation measure', async ({ page }) => {
@@ -403,12 +405,54 @@ test('Agent Settings follows the shared settings-page content measure', async ({
 
   const heading = page.getByRole('heading', { level: 1, name: 'Agent Settings' });
   const content = page.locator('[data-agent-settings-content="true"]');
+  const permissionDescription = page.getByText('Set the maximum change access this Agent can request. Workspace roles, target policy, and tool review can only narrow this setting.', { exact: true });
   const [headingBox, contentBox] = await Promise.all([heading.boundingBox(), content.boundingBox()]);
 
   expect(headingBox).not.toBeNull();
   expect(contentBox).not.toBeNull();
   expect(contentBox!.width).toBeLessThanOrEqual(896);
   expect(Math.abs(contentBox!.x - headingBox!.x)).toBeLessThanOrEqual(1);
+  await expect.poll(() => permissionDescription.evaluate((element) => {
+    const lineHeight = Number.parseFloat(window.getComputedStyle(element).lineHeight);
+    return element.getBoundingClientRect().height <= lineHeight + 1;
+  })).toBe(true);
+});
+
+test('Agent Settings updates the Agent permission mode', async ({ page }) => {
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  const permissionMode = page.getByRole('button', { name: 'Permission mode' });
+  await expect(permissionMode).toContainText('Ask before changes');
+  await permissionMode.click();
+  await page.getByRole('option', { name: 'Auto-run allowed changes' }).click();
+  await expect(page.getByText('Reviewed non-destructive writes may run automatically. High-risk and destructive actions still require approval.')).toBeVisible();
+
+  await expect(page.getByText('Agent permission mode updated.')).toBeVisible();
+  await expect(permissionMode).toContainText('Auto-run allowed changes');
+});
+
+test('Agent chat recovers when its policy changes to read-only', async ({ page }) => {
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+
+  const permissionMode = page.getByRole('button', { name: 'Permission mode' });
+  await permissionMode.click();
+  await page.getByRole('option', { name: 'Read only' }).click();
+  await expect(page.getByText('Agent permission mode updated.')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Agent Assistant' }).click();
+  await expect(page.getByText('The evidence points to a degraded payment gateway service. Inspect its recent logs before proposing a restart.')).toBeVisible();
+
+  const accessUpdate = page.waitForRequest((request) =>
+    request.method() === 'PATCH' && request.url().endsWith('/access')
+  );
+  const composer = page.getByRole('combobox', { name: 'Message Kubernetes Specialist assistant' });
+  await composer.fill('Summarize the incident without making changes.');
+  await page.getByRole('button', { name: 'Send' }).click();
+
+  await accessUpdate;
+  await expect(page.getByText('Fixture Agent analysis complete. No external changes were made.')).toBeVisible();
+  await expect(page.getByText(/Control plane request failed/)).toHaveCount(0);
+  await expect(page.getByText('Changes are disabled by this Agent’s policy.')).toBeVisible();
 });
 
 test('Agent Settings uses default-size lifecycle actions on desktop', async ({ page }) => {

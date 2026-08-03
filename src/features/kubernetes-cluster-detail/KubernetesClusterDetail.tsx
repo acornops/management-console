@@ -91,7 +91,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   onSyncTools,
   onUpdateName,
   onUpdateNamespaceScope,
-  onUpdateWriteConfirmationPolicy,
+  onUpdatePermissionMode,
   onReinstallAgent,
   onDeleteCluster,
   onOpenAiSettings,
@@ -334,7 +334,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 canCreateReadWriteRuns={canRequestWriteRuns}
                 onUpdateName={onUpdateName}
                 onEditNamespaceScope={onUpdateNamespaceScope ? () => setIsNamespaceScopeDialogOpen(true) : undefined}
-                onUpdateWriteConfirmationPolicy={onUpdateWriteConfirmationPolicy}
+                onUpdatePermissionMode={onUpdatePermissionMode}
                 onReinstallAgent={onReinstallAgent}
                 onDeleteCluster={onDeleteCluster}
               />

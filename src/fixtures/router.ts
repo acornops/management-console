@@ -11,6 +11,7 @@ import { routeApprovalFixtureRequest } from './approvalRoutes';
 import { routeAgentConversationFixtureRequest } from './agentConversationRoutes';
 import { routeAgentTargetAccessFixtureRequest } from './agentTargetAccessRoutes';
 import { applyFixtureRole } from './roleProfiles';
+import { applyClusterPermissionFixturePatch } from './clusterPermissionRoutes';
 
 export interface FixtureResponse {
   status: number;
@@ -297,7 +298,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'PATCH') {
       const input = await bodyOf(request);
       Object.assign(cluster, input);
-      if ('writeConfirmationRequiredOverride' in input) cluster.writeConfirmationPolicy = { effectiveRequired: input.writeConfirmationRequiredOverride ?? true, overrideRequired: input.writeConfirmationRequiredOverride, source: input.writeConfirmationRequiredOverride === null ? 'deployment_default' : 'cluster_override' };
+      applyClusterPermissionFixturePatch(cluster, input);
       return json(clone(cluster));
     }
     if (method === 'DELETE') {

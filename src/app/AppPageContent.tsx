@@ -603,16 +603,16 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 onUpdateKubernetesCluster(clusterId, updatedScope);
                 showToast(t('clusterSetup.namespaceScopeUpdated'));
               }}
-              onUpdateClusterWriteConfirmationPolicy={async (clusterId, overrideRequired) => {
+              onUpdateClusterPermissionMode={async (clusterId, permissionMode) => {
                 const cluster = kubernetesClusters.find((item) => item.id === clusterId);
                 if (!cluster) return;
-                const writeConfirmationPolicy = await controlPlaneApi.updateClusterWriteConfirmationPolicy(
+                const permissionPolicy = await controlPlaneApi.updateClusterPermissionMode(
                   cluster.workspaceId,
                   cluster.id,
-                  overrideRequired
+                  permissionMode
                 );
-                onUpdateKubernetesCluster(clusterId, { writeConfirmationPolicy });
-                showToast(t('clusterSetup.writeConfirmationsUpdated'));
+                onUpdateKubernetesCluster(clusterId, permissionPolicy);
+                showToast(t('clusterSettings.permissionModeUpdated'));
               }}
               onDeleteCluster={onDeleteCluster}
               onOpenAiSettings={(workspaceId) => navigate(AppPaths.workspaceAiSettings(workspaceId, getCurrentAppPath()))}

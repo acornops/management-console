@@ -2,17 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button, SettingsSection } from '@acornops/ui';
-import { IconTile } from '@acornops/ui';
 import { PageShell } from '@acornops/ui';
-import { Select, SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
+import { SettingsRow } from '@/components/common/SettingsRow';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
+import { RunPermissionSettingsSection } from '@/features/run-permissions/RunPermissionSettingsSection';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { KubernetesCluster } from '@/types';
 import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
 import { TextInput } from '@acornops/ui';
+import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
+import { resolveClusterPermissionMode } from '@/services/control-plane/runPermissionPolicy';
 
 interface ClusterSettingsViewProps {
   cluster: KubernetesCluster;
@@ -22,38 +24,12 @@ interface ClusterSettingsViewProps {
   canCreateReadWriteRuns?: boolean;
   onUpdateName?: (name: string) => void | Promise<void>;
   onEditNamespaceScope?: () => void;
-  onUpdateWriteConfirmationPolicy?: (overrideRequired: boolean | null) => void | Promise<void>;
+  onUpdatePermissionMode?: (permissionMode: RunPermissionMode) => void | Promise<void>;
   onReinstallAgent?: () => void;
   onDeleteCluster?: () => void | Promise<void>;
 }
 
-type WriteConfirmationPolicyValue = 'required' | 'not_required';
-
 const clusterSettingsInputClassName = formInputClassName('min-h-10');
-
-const SettingRow: React.FC<{
-  icon: React.ElementType;
-  label: string;
-  description: React.ReactNode;
-  action?: React.ReactNode;
-}> = ({ icon: Icon, label, description, action }) => (
-  <div className="flex flex-col gap-5 border-b border-ui-border p-6 transition-colors last:border-0 hover:bg-ui-bg/20 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex min-w-0 items-center gap-4">
-      <IconTile>
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </IconTile>
-      <div className="min-w-0">
-        <p className="mb-0.5 type-row-title">{label}</p>
-        <div className="break-words type-caption leading-5 text-ui-text-muted">{description}</div>
-      </div>
-    </div>
-    {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
-  </div>
-);
-
-function getWriteConfirmationPolicyValue(cluster: KubernetesCluster): WriteConfirmationPolicyValue {
-  return cluster.writeConfirmationPolicy?.effectiveRequired ?? true ? 'required' : 'not_required';
-}
 
 function formatNamespaceScope(cluster: KubernetesCluster, t: (key: string, options?: Record<string, unknown>) => string): string {
   const include = cluster.namespaceScope?.include || [];
@@ -85,7 +61,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   canCreateReadWriteRuns = false,
   onUpdateName,
   onEditNamespaceScope,
-  onUpdateWriteConfirmationPolicy,
+  onUpdatePermissionMode,
   onReinstallAgent,
   onDeleteCluster
 }) => {
@@ -97,22 +73,9 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   const clusterNameInputRef = useRef<HTMLInputElement>(null);
   const agentConnectionState = getAgentConnectionState(cluster);
   const namespaceScope = formatNamespaceScope(cluster, t);
-  const writeConfirmationPolicyValue = getWriteConfirmationPolicyValue(cluster);
-  const writeConfirmationPolicyOptions: Array<SelectOption<WriteConfirmationPolicyValue>> = [
-    { value: 'required', label: t('clusterSetup.writeConfirmationsRequired') },
-    {
-      value: 'not_required',
-      label: t('clusterSetup.writeConfirmationsNotRequired')
-    }
-  ];
-  const effectivePolicy =
-    cluster.writeConfirmationPolicy?.effectiveRequired ?? true
-      ? t('clusterSettings.writeConfirmationsEffectiveRequired')
-      : t('clusterSettings.writeConfirmationsEffectiveNotRequired');
-  const policySource =
-    cluster.writeConfirmationPolicy?.source === 'cluster_override' ? t('clusterSettings.writeConfirmationsSourceCluster') : t('clusterSettings.writeConfirmationsSourceDefault');
+  const permissionMode = resolveClusterPermissionMode(cluster);
   const canEditNamespaceScope = canManageCluster && Boolean(onEditNamespaceScope);
-  const canEditWriteConfirmations = canManageCluster && Boolean(onUpdateWriteConfirmationPolicy);
+  const canEditPermissionMode = canManageCluster && Boolean(onUpdatePermissionMode);
   const canEditClusterName = canManageCluster && Boolean(onUpdateName);
   const canReinstallAgent = agentConnectionState === 'disconnected' && canManageAgentKeys && Boolean(onReinstallAgent);
   const trimmedDraftName = draftName.trim();
@@ -160,7 +123,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
 
       <div className="max-w-4xl">
         <SettingsSection title={t('clusterSettings.clusterTitle')} description={t('clusterSettings.clusterBody')}>
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Server}
             label={t('clusterSettings.clusterName')}
             description={
@@ -215,8 +178,8 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
               ) : undefined
             }
           />
-          <SettingRow icon={ICONS.LayoutGrid} label={t('clusterSettings.workspace')} description={workspaceName || cluster.workspaceId} />
-          <SettingRow
+          <SettingsRow icon={ICONS.LayoutGrid} label={t('clusterSettings.workspace')} description={workspaceName || cluster.workspaceId} />
+          <SettingsRow
             icon={ICONS.Activity}
             label={t('clusterSettings.connectionState')}
             description={t(`clusterSettings.connection.${agentConnectionState}`)}
@@ -229,11 +192,11 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
               ) : undefined
             }
           />
-          <SettingRow icon={ICONS.Clock} label={t('clusterSettings.lastTelemetry')} description={formatLastUpdated(cluster.lastUpdate)} />
+          <SettingsRow icon={ICONS.Clock} label={t('clusterSettings.lastTelemetry')} description={formatLastUpdated(cluster.lastUpdate)} />
         </SettingsSection>
 
         <SettingsSection title={t('clusterSettings.collectionTitle')} description={t('clusterSettings.collectionBody')}>
-          <SettingRow
+          <SettingsRow
             icon={ICONS.Layers}
             label={t('clusterSetup.namespaceScope')}
             description={namespaceScope}
@@ -255,6 +218,14 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           />
         </SettingsSection>
 
+        <RunPermissionSettingsSection
+          title={t('clusterSettings.permissionModeTitle')}
+          description={t('clusterSettings.permissionModeBody')}
+          permissionMode={permissionMode}
+          disabled={!canEditPermissionMode}
+          onChange={onUpdatePermissionMode}
+        />
+
         <TargetAutoTriageSettingsSection
           workspaceId={cluster.workspaceId}
           targetId={cluster.id}
@@ -262,35 +233,6 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           canManageTargets={canManageCluster}
           canCreateReadWriteRuns={canCreateReadWriteRuns}
         />
-
-        <SettingsSection
-          title={t('clusterSettings.writeSafetyTitle')}
-          description={t('clusterSettings.writeSafetyBody')}
-        >
-          <SettingRow
-            icon={ICONS.Shield}
-            label={t('clusterSetup.writeConfirmations')}
-            description={
-              <span>
-                {effectivePolicy} · {policySource}
-              </span>
-            }
-            action={
-              canEditWriteConfirmations ? (
-                <Select<WriteConfirmationPolicyValue>
-                  value={writeConfirmationPolicyValue}
-                  options={writeConfirmationPolicyOptions}
-                  onChange={(value) => {
-                    void onUpdateWriteConfirmationPolicy?.(value === 'required');
-                  }}
-                  size="sm"
-                  className="w-full sm:w-56"
-                  ariaLabel={t('clusterSetup.writeConfirmations')}
-                />
-              ) : undefined
-            }
-          />
-        </SettingsSection>
 
         {canManageCluster && onDeleteCluster && (
           <TargetDeleteZone

@@ -12,6 +12,7 @@ export const FIXTURE_IDS = {
   virtualMachineAgent: 'fixture-virtual-machine-agent',
   workflow: 'fixture-workflow',
   session: 'fixture-session',
+  agentSession: 'fixture-agent-session',
   run: 'fixture-run'
 } as const;
 
@@ -157,6 +158,9 @@ export function createFixtureState(): FixtureState {
     status: 'online',
     namespaceInclude: [],
     namespaceExclude: ['kube-system'],
+    permissionMode: 'ask_before_changes' as const,
+    permissionModeOverride: null,
+    permissionModeSource: 'deployment_default' as const,
     writeConfirmationPolicy: { effectiveRequired: true, overrideRequired: null, source: 'deployment_default' },
     agentAccessMode: 'read_write',
     summary: {
@@ -311,16 +315,28 @@ export function createFixtureState(): FixtureState {
       blockerCodes: ['TEMPLATE_NOT_INSTALLED']
     }
   ];
-  const sessions = [{
-    id: FIXTURE_IDS.session, workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster,
-    createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' },
-    title: 'Payments restart investigation', status: 'open', createdAt: EARLIER, updatedAt: NOW, lastMessageAt: NOW,
-    expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
-  }];
+  const sessions = [
+    {
+      id: FIXTURE_IDS.session, workspaceId: FIXTURE_IDS.workspace, targetId: FIXTURE_IDS.cluster, targetType: 'kubernetes', clusterId: FIXTURE_IDS.cluster,
+      createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' },
+      title: 'Payments restart investigation', status: 'open', createdAt: EARLIER, updatedAt: NOW, lastMessageAt: NOW,
+      expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
+    },
+    {
+      id: FIXTURE_IDS.agentSession, workspaceId: FIXTURE_IDS.workspace, agentId: FIXTURE_IDS.specialistAgent,
+      createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' },
+      title: 'Specialist incident review', accessMode: 'read_write', permissionMode: 'ask_before_changes', status: 'open',
+      createdAt: EARLIER, updatedAt: NOW, lastMessageAt: NOW, expiresAt: fixtureTime(30 * 24 * 60 * 60_000)
+    }
+  ];
   const messages = {
     [FIXTURE_IDS.session]: [
       { id: 'fixture-message-user', sessionId: FIXTURE_IDS.session, runId: FIXTURE_IDS.run, role: 'user', kind: 'user', content: 'Why is the payments worker restarting?', createdAt: EARLIER },
       { id: 'fixture-message-assistant', sessionId: FIXTURE_IDS.session, runId: FIXTURE_IDS.run, role: 'assistant', kind: 'assistant_final', content: 'The worker is in CrashLoopBackOff after four restarts. Its latest event points to a failed container startup; inspect the application log and secret mount before changing the Deployment.', createdAt: NOW }
+    ],
+    [FIXTURE_IDS.agentSession]: [
+      { id: 'fixture-agent-message-user', sessionId: FIXTURE_IDS.agentSession, role: 'user', kind: 'user', content: 'Summarize the incident evidence and recommend the safest next check.', createdAt: EARLIER },
+      { id: 'fixture-agent-message-assistant', sessionId: FIXTURE_IDS.agentSession, role: 'assistant', kind: 'assistant_final', content: 'The evidence points to a degraded payment gateway service. Inspect its recent logs before proposing a restart.', createdAt: NOW }
     ]
   };
   const execution = (

@@ -423,7 +423,7 @@ describe('controlPlaneApi', () => {
     );
   });
 
-  it('maps namespace scope updates and write confirmation responses', async () => {
+  it('maps namespace scope updates and cluster permission mode responses', async () => {
     requestJson
       .mockResolvedValueOnce({
         namespaceInclude: [' payments ', '', 'search'],
@@ -433,9 +433,12 @@ describe('controlPlaneApi', () => {
         name: 'production-east'
       })
       .mockResolvedValueOnce({
+        permissionMode: 'read_only',
+        permissionModeOverride: 'read_only',
+        permissionModeSource: 'cluster_override',
         writeConfirmationPolicy: {
           effectiveRequired: true,
-          overrideRequired: false,
+          overrideRequired: true,
           source: 'cluster_override'
         }
       });
@@ -457,11 +460,16 @@ describe('controlPlaneApi', () => {
       controlPlaneApi.updateClusterName('workspace-1', 'cluster-1', 'production-east')
     ).resolves.toEqual({ name: 'production-east' });
     await expect(
-      controlPlaneApi.updateClusterWriteConfirmationPolicy('workspace-1', 'cluster-1', false)
+      controlPlaneApi.updateClusterPermissionMode('workspace-1', 'cluster-1', 'read_only')
     ).resolves.toEqual({
-      effectiveRequired: true,
-      overrideRequired: false,
-      source: 'cluster_override'
+      permissionMode: 'read_only',
+      permissionModeOverride: 'read_only',
+      permissionModeSource: 'cluster_override',
+      writeConfirmationPolicy: {
+        effectiveRequired: true,
+        overrideRequired: true,
+        source: 'cluster_override'
+      }
     });
   });
 

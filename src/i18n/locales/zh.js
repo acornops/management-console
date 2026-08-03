@@ -1743,7 +1743,7 @@ export const zh = {
   },
   clusterSettings: {
     title: '集群设置',
-    subtitle: '管理 {{name}} 的采集范围和写操作安全策略。',
+    subtitle: '管理 {{name}} 的采集范围和运行权限。',
     clusterTitle: '集群',
     clusterBody: '管理此集群的身份信息，并查看连接详情。',
     clusterName: '集群名称',
@@ -1757,8 +1757,9 @@ export const zh = {
     lastTelemetry: '最近遥测',
     collectionTitle: '采集范围',
     collectionBody: '控制此集群向 AcornOps 上报哪些命名空间。',
-    writeSafetyTitle: '写操作安全',
-    writeSafetyBody: '控制具备写能力的 agent 操作是否需要显式批准。',
+    permissionModeTitle: '运行权限',
+    permissionModeBody: '设置运行可在此集群上执行的最宽松操作范围。',
+    permissionModeUpdated: '集群权限模式已更新。',
     allNamespaces: '全部命名空间',
     namespaceScopeIncludeOnly: '包含 {{include}}',
     namespaceScopeExcludeOnly: '排除 {{exclude}}',
@@ -1766,10 +1767,6 @@ export const zh = {
     namespaceScopeIncludeCount: '包含 {{count}} 个',
     namespaceScopeExcludeCount: '排除 {{count}} 个',
     namespaceScopeCounts: '包含 {{include}} 个 · 排除 {{exclude}} 个',
-    writeConfirmationsEffectiveRequired: '写操作确认已启用',
-    writeConfirmationsEffectiveNotRequired: '写操作确认未启用',
-    writeConfirmationsSourceCluster: '集群覆盖',
-    writeConfirmationsSourceDefault: '部署默认值',
     connection: {
       connected: '已连接',
       disconnected: '已断开',
@@ -1789,14 +1786,8 @@ export const zh = {
     footerAutomatic: '常规更改可自动运行；高风险或破坏性操作仍需批准。',
     footerReadOnly: '此 Agent 的策略已禁用更改。',
     footerRoleReadOnly: '你的工作区角色仅允许只读 Agent 对话。',
-    approvalPolicyNotice: '更改遵循此 Agent 的策略。每次写入前都需要批准。',
-    autoPolicyNotice: '常规更改可自动运行。高风险或破坏性写入仍需批准。',
-    agentReadOnlyNotice: '此 Agent 的策略为只读。',
-    roleReadOnlyNotice: '你的工作区角色仅允许只读 Agent 对话。',
-    pausedNotice: '此对话已暂停更改。',
+    readOnlySyncFailed: '无法将此对话切换为只读。请开始新对话后重试。',
     readerNotice: '你可以阅读此对话，但只有创建者可以继续。',
-    pauseChanges: '暂停更改',
-    resumePolicy: '恢复 Agent 策略',
     backToAgents: '返回 Agents',
     quickChatLabel: '与 {{name}} 对话',
     resizeQuickChat: '调整对话面板宽度',
@@ -1822,7 +1813,27 @@ export const zh = {
       },
       settings: {
         title: 'Agent 设置',
-        description: '管理 {{name}} 的生命周期操作。'
+        description: '管理 {{name}} 的运行权限和生命周期操作。'
+      }
+    },
+    permissionSettings: {
+      title: '运行权限',
+      description: '设置此 Agent 可请求的最高更改权限。工作区角色、目标策略和工具审核只能进一步收紧此设置。',
+      modeLabel: '权限模式',
+      manageRequired: '你需要管理 Agent 的权限才能更改此设置。',
+      modes: {
+        read_only: {
+          label: '只读',
+          description: 'Agent 可以检查并提供建议，但无法使用可写工具。'
+        },
+        ask_before_changes: {
+          label: '更改前询问',
+          description: '读取操作自动运行。每个允许的写入操作都会暂停并等待明确批准。'
+        },
+        auto_allowed_changes: {
+          label: '自动运行允许的更改',
+          description: '已审核的非破坏性写入可以自动运行。高风险和破坏性操作仍需批准。'
+        }
       }
     },
     tabs: {
@@ -2247,6 +2258,7 @@ export const zh = {
     footerApprovalRequired: '只读操作可自动执行。写操作必须经过明确批准后才会执行。',
     footerApprovalNotRequired: '根据此目标策略，只读和写操作都可以自动执行。',
     footerReadOnlyRole: '只读模式：你的工作区角色可以运行只读检查，但不能开始具备写能力的助手运行。',
+    footerReadOnlyPolicy: '只读模式：此集群策略不允许更改。',
     footerNoAccess: '请联系工作区管理员提升权限。',
     failedDelete: '删除会话失败。',
     backendRequestFailed: '联系后端服务时出现未知错误。',

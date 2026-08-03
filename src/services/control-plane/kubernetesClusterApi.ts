@@ -46,6 +46,7 @@ import type {
   UpdateTargetMcpServerInput,
   UpdateTargetToolInput
 } from './types';
+import type { RunPermissionMode } from './runPermissionTypes';
 
 async function listWorkspaceKubernetesClusters(
   workspaceId: string,
@@ -256,19 +257,30 @@ export const kubernetesClusterApi = {
     return { name: cluster.name };
   },
 
-  async updateClusterWriteConfirmationPolicy(
+  async updateClusterPermissionMode(
     workspaceId: string,
     clusterId: string,
-    overrideRequired: boolean | null
-  ): Promise<KubernetesCluster['writeConfirmationPolicy']> {
+    permissionModeOverride: RunPermissionMode | null
+  ): Promise<Pick<KubernetesCluster, 'permissionMode' | 'permissionModeOverride' | 'permissionModeSource' | 'writeConfirmationPolicy'>> {
     const cluster = await requestJson<ControlPlaneCluster>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}`,
       {
         method: 'PATCH',
-        body: JSON.stringify({ writeConfirmationRequiredOverride: overrideRequired })
+        body: JSON.stringify({ permissionModeOverride })
       }
     );
-    return cluster.writeConfirmationPolicy;
+    const permissionMode = cluster.permissionMode
+      ?? (cluster.writeConfirmationPolicy?.effectiveRequired === false
+        ? 'auto_allowed_changes'
+        : 'ask_before_changes');
+    return {
+      permissionMode,
+      permissionModeOverride: cluster.permissionModeOverride ?? null,
+      permissionModeSource: cluster.permissionModeSource
+        ?? cluster.writeConfirmationPolicy?.source
+        ?? 'deployment_default',
+      writeConfirmationPolicy: cluster.writeConfirmationPolicy
+    };
   },
 
   async rotateClusterAgentKey(

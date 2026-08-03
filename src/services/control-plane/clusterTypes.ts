@@ -1,3 +1,5 @@
+import type { RunPermissionMode } from './runPermissionTypes';
+
 export interface ControlPlaneClusterSummary {
   resourceCount: number;
   findingCount: number;
@@ -27,6 +29,9 @@ export interface ControlPlaneCluster {
   agentAccessMode?: 'read_only' | 'read_write' | 'unknown';
   namespaceInclude?: string[];
   namespaceExclude?: string[];
+  permissionMode?: RunPermissionMode;
+  permissionModeOverride?: RunPermissionMode | null;
+  permissionModeSource?: 'cluster_override' | 'deployment_default';
   writeConfirmationPolicy?: {
     effectiveRequired: boolean;
     overrideRequired: boolean | null;

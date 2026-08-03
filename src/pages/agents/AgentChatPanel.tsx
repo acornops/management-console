@@ -1,9 +1,8 @@
 import React from 'react';
-import { Button, InlineAlert } from '@acornops/ui';
+import { InlineAlert } from '@acornops/ui';
 import { useTranslation } from 'react-i18next';
 import {
   ConversationView,
-  buildTraceFromRunEvents,
   createMarkdownComponents,
   type LiveRunTrace
 } from '@/features/conversations/presentation';
@@ -24,14 +23,42 @@ import {
   type AgentConversationRunApi,
   type AgentConversationSummaryApi
 } from '@/services/control-plane/agentApi';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import { getAgentChatSuggestionKeys } from '@/pages/agents/agentChatSuggestions';
+import { formatIdentifierLabel } from '@/utils/textFormatting';
+import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 
 const activeRunStatuses = new Set(['queued', 'dispatching', 'running', 'waiting_for_approval', 'cancelling']);
 
+function isReadOnlyPolicyConflict(error: unknown): error is ControlPlaneRequestError {
+  return error instanceof ControlPlaneRequestError
+    && error.status === 409
+    && error.code === 'AGENT_CONVERSATION_POLICY_READ_ONLY';
+}
+
+function traceStatus(status: string): LiveRunTrace['status'] {
+  if (status === 'completed') return 'completed';
+  if (status === 'failed') return 'failed';
+  if (status === 'cancelled') return 'cancelled';
+  if (status === 'queued' || status === 'dispatching') return 'connecting';
+  return 'running';
+}
+
 function runTrace(run: AgentConversationRunApi): LiveRunTrace {
-  return buildTraceFromRunEvents(run, run.events || []);
+  return {
+    runId: run.id,
+    status: traceStatus(run.status),
+    steps: (run.events || []).slice(-40).map((event) => ({
+      id: `${run.id}:${event.seq}`,
+      label: formatIdentifierLabel(event.type),
+      detail: typeof event.payload?.message === 'string' ? event.payload.message : undefined,
+      status: event.type.includes('failed') ? 'error' : event.type.includes('completed') ? 'success' : 'info',
+      timestamp: Date.parse(event.ts) || Date.now()
+    })),
+    toolCalls: []
+  };
 }
 
 function approvalToPending(approval: Awaited<ReturnType<typeof controlPlaneApi.listRunApprovals>>[number]): PendingApproval {
@@ -141,28 +168,19 @@ export const AgentChatPanel: React.FC<{
   const [runTracesByRunId, setRunTracesByRunId] = useSessionCachedState<Record<string, LiveRunTrace>>(`${agentChatCachePrefix}run-traces`, {});
   const [workspaceAiSettings, setWorkspaceAiSettings] = useSessionCachedState<Awaited<ReturnType<typeof controlPlaneApi.getWorkspaceAiSettings>> | null>(`workspace:${agent.workspaceId}:ai-settings`, null);
   const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
-  const [accessBusy, setAccessBusy] = React.useState(false);
   const [operationError, setOperationError] = React.useState('');
   const assistantMarkdownComponents = React.useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
   const activeSummary = summaries.find((summary) => summary.id === activeSessionId);
   const activeSession = sessions.find((session) => session.id === activeSessionId) || null;
-  const effectivePermissionMode = activeSummary?.permissionMode || agent.permissionMode;
+  const [permissionModeOverride, setPermissionModeOverride] = React.useState<AgentDefinition['permissionMode'] | null>(null);
+  React.useEffect(() => {
+    setPermissionModeOverride(null);
+  }, [agent.id, agent.permissionMode]);
+  const effectivePermissionMode = permissionModeOverride || agent.permissionMode;
   const agentAllowsWrites = effectivePermissionMode !== 'read_only';
   const canCreateReadOnlyRuns = Boolean(permissions?.create_read_only_runs);
   const canCreateWriteRuns = Boolean(permissions?.create_read_write_runs);
-  const canChangeAccess = agentAllowsWrites && (
-    activeSummary?.accessMode === 'read_write' ? canCreateReadOnlyRuns : canCreateWriteRuns
-  );
-  const accessNoticeKey = activeSummary?.accessMode === 'read_write'
-    ? effectivePermissionMode === 'auto_allowed_changes'
-      ? 'agentChat.autoPolicyNotice'
-      : 'agentChat.approvalPolicyNotice'
-    : !agentAllowsWrites
-      ? 'agentChat.agentReadOnlyNotice'
-      : !canCreateWriteRuns
-        ? 'agentChat.roleReadOnlyNotice'
-        : 'agentChat.pausedNotice';
   const promptBodyKey = !agentAllowsWrites
     ? 'agentChat.promptBodyReadOnly'
     : !canCreateWriteRuns
@@ -203,7 +221,7 @@ export const AgentChatPanel: React.FC<{
   ) && agent.status === 'active' && agent.readiness.status === 'ready';
   const isOwner = !activeSummary || activeSummary.createdBy === currentUserId;
   const reportError = React.useCallback((error: unknown, fallback: string) => {
-    setOperationError(error instanceof Error ? error.message : fallback);
+    setOperationError(formatControlPlaneError(error, fallback));
   }, []);
   const handleChatScroll = React.useCallback(() => {
     const node = scrollRef.current;
@@ -288,18 +306,42 @@ export const AgentChatPanel: React.FC<{
     return response.conversation.id;
   }, [agent.id, agent.workspaceId]);
 
+  const narrowConversationToReadOnly = React.useCallback(async (conversationId: string) => {
+    try {
+      const updated = await changeAgentConversationAccess(conversationId, 'read_only');
+      setSummaries((current) => current.map((item) => item.id === updated.id ? updated : item));
+      setPermissionModeOverride(updated.permissionMode);
+      return updated;
+    } catch {
+      throw new Error(t('agentChat.readOnlySyncFailed'));
+    }
+  }, [setSummaries, t]);
+
   const send = React.useCallback(async (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => {
     const content = (overrideInput ?? inputValue).trim();
     if (!content || !canChat || isSending) return;
     setIsSending(true);
     try {
       const conversationId = activeSessionId || await createConversation();
-      const accepted = await postAgentConversationMessage(
+      const currentSummary = summaries.find((summary) => summary.id === conversationId);
+      if (agent.permissionMode === 'read_only' && currentSummary?.accessMode === 'read_write') {
+        await narrowConversationToReadOnly(conversationId);
+      }
+      const clientRequestId = globalThis.crypto?.randomUUID?.();
+      const postMessage = () => postAgentConversationMessage(
         conversationId,
         content,
-        globalThis.crypto?.randomUUID?.(),
+        clientRequestId,
         runtimeSelection
       );
+      let accepted: Awaited<ReturnType<typeof postAgentConversationMessage>>;
+      try {
+        accepted = await postMessage();
+      } catch (error) {
+        if (!isReadOnlyPolicyConflict(error)) throw error;
+        await narrowConversationToReadOnly(conversationId);
+        accepted = await postMessage();
+      }
       setComposerRuntimeSelection(accepted.runtimeSelection || runtimeSelection);
       setInputValue('');
       await refreshConversation(conversationId);
@@ -309,39 +351,13 @@ export const AgentChatPanel: React.FC<{
     } finally {
       setIsSending(false);
     }
-  }, [activeSessionId, canChat, createConversation, inputValue, isSending, refreshConversation, refreshSummaries, reportError]);
-
-  const changeAccess = async (accessMode: 'read_only' | 'read_write') => {
-    if (!activeSessionId) return;
-    setAccessBusy(true);
-    try {
-      const updated = await changeAgentConversationAccess(activeSessionId, accessMode);
-      setOperationError('');
-      setSummaries((current) => current.map((item) => item.id === updated.id ? updated : item));
-    } catch (error) {
-      reportError(error, 'Conversation access could not be changed.');
-    } finally {
-      setAccessBusy(false);
-    }
-  };
+  }, [activeSessionId, agent.permissionMode, canChat, createConversation, inputValue, isSending, narrowConversationToReadOnly, refreshConversation, refreshSummaries, reportError, summaries]);
 
   return (
     <div className={`flex flex-1 flex-col overflow-hidden ${
       displayMode === 'panel' ? 'h-full min-h-0 bg-ui-surface' : 'h-full min-h-0'
     }`}>
       {operationError && <InlineAlert tone="danger" className="m-4 mb-0">{operationError}</InlineAlert>}
-      {activeSummary && isOwner && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ui-border bg-ui-bg px-4 py-3">
-          <p className="type-caption text-ui-text-muted">
-            {t(accessNoticeKey)}
-          </p>
-          {canChangeAccess && (
-            <Button type="button" size="sm" variant="secondary" disabled={accessBusy || Boolean(activeRunId)} onClick={() => void changeAccess(activeSummary.accessMode === 'read_write' ? 'read_only' : 'read_write')}>
-              {activeSummary.accessMode === 'read_write' ? t('agentChat.pauseChanges') : t('agentChat.resumePolicy')}
-            </Button>
-          )}
-        </div>
-      )}
       <ConversationView
         subject={{ id: agent.id, workspaceId: agent.workspaceId, name: agent.name }}
         headerLeading={<AgentAvatar emoji={agent.avatarEmoji} size={displayMode === 'panel' ? 'md' : 'lg'} />}
@@ -362,7 +378,7 @@ export const AgentChatPanel: React.FC<{
         isConversationOwner={isOwner}
         conversationNotice={!isOwner ? t('agentChat.readerNotice') : null}
         recentActivityWarning={null}
-        canRequestWriteRuns={activeSummary?.accessMode === 'read_write'}
+        canRequestWriteRuns={agentAllowsWrites && activeSummary?.accessMode === 'read_write'}
         canApproveWriteActions={canCreateWriteRuns}
         canCancelRuns={Boolean(permissions?.cancel_runs)}
         canDeleteSessions={Boolean(permissions?.delete_sessions)}

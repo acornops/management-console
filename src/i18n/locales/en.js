@@ -1743,7 +1743,7 @@ export const en = {
   },
   clusterSettings: {
     title: 'Cluster Settings',
-    subtitle: 'Manage collection scope and write safety for {{name}}.',
+    subtitle: 'Manage collection scope and run permissions for {{name}}.',
     clusterTitle: 'Cluster',
     clusterBody: 'Manage identity and inspect connection details for this cluster.',
     clusterName: 'Cluster Name',
@@ -1757,8 +1757,9 @@ export const en = {
     lastTelemetry: 'Last Telemetry',
     collectionTitle: 'Collection Scope',
     collectionBody: 'Control which namespaces this cluster reports to AcornOps.',
-    writeSafetyTitle: 'Write Safety',
-    writeSafetyBody: 'Control whether write-capable agent actions require explicit approval.',
+    permissionModeTitle: 'Run permissions',
+    permissionModeBody: 'Set the most permissive actions that runs may perform on this cluster.',
+    permissionModeUpdated: 'Cluster permission mode updated.',
     allNamespaces: 'All namespaces',
     namespaceScopeIncludeOnly: 'Include {{include}}',
     namespaceScopeExcludeOnly: 'Exclude {{exclude}}',
@@ -1766,10 +1767,6 @@ export const en = {
     namespaceScopeIncludeCount: '{{count}} included',
     namespaceScopeExcludeCount: '{{count}} excluded',
     namespaceScopeCounts: '{{include}} included · {{exclude}} excluded',
-    writeConfirmationsEffectiveRequired: 'Write confirmations required',
-    writeConfirmationsEffectiveNotRequired: 'Write confirmations not required',
-    writeConfirmationsSourceCluster: 'cluster override',
-    writeConfirmationsSourceDefault: 'deployment default',
     connection: {
       connected: 'Connected',
       disconnected: 'Disconnected',
@@ -1789,14 +1786,8 @@ export const en = {
     footerAutomatic: 'Routine changes may run automatically; high-risk or destructive actions require approval.',
     footerReadOnly: 'Changes are disabled by this Agent’s policy.',
     footerRoleReadOnly: 'Your workspace role permits read-only Agent conversations.',
-    approvalPolicyNotice: 'Changes follow this Agent’s policy. Approval is required before every write.',
-    autoPolicyNotice: 'Routine changes may run automatically. High-risk or destructive writes still require approval.',
-    agentReadOnlyNotice: 'This Agent is read-only by policy.',
-    roleReadOnlyNotice: 'Your workspace role permits read-only Agent conversations.',
-    pausedNotice: 'Changes are paused for this conversation.',
+    readOnlySyncFailed: 'This conversation could not switch to read-only. Start a new chat and try again.',
     readerNotice: 'You can read this conversation, but only its creator can continue it.',
-    pauseChanges: 'Pause changes',
-    resumePolicy: 'Resume Agent policy',
     backToAgents: 'Back to Agents',
     quickChatLabel: 'Chat with {{name}}',
     resizeQuickChat: 'Resize chat panel',
@@ -1822,7 +1813,27 @@ export const en = {
       },
       settings: {
         title: 'Agent Settings',
-        description: 'Manage lifecycle actions for {{name}}.'
+        description: 'Manage run permissions and lifecycle actions for {{name}}.'
+      }
+    },
+    permissionSettings: {
+      title: 'Run permissions',
+      description: 'Set the maximum change access this Agent can request. Workspace roles, target policy, and tool review can only narrow this setting.',
+      modeLabel: 'Permission mode',
+      manageRequired: 'You need permission to manage Agents before you can change this setting.',
+      modes: {
+        read_only: {
+          label: 'Read only',
+          description: 'The Agent can inspect and advise, but write-capable tools are unavailable.'
+        },
+        ask_before_changes: {
+          label: 'Ask before changes',
+          description: 'Reads run automatically. Every permitted write pauses for explicit approval.'
+        },
+        auto_allowed_changes: {
+          label: 'Auto-run allowed changes',
+          description: 'Reviewed non-destructive writes may run automatically. High-risk and destructive actions still require approval.'
+        }
       }
     },
     tabs: {
@@ -2247,6 +2258,7 @@ export const en = {
     footerApprovalRequired: 'Read operations can run automatically. Write actions require explicit approval before execution.',
     footerApprovalNotRequired: 'Read and write operations can run automatically under this target policy.',
     footerReadOnlyRole: 'Read-only mode: your workspace role can run read checks, but cannot start write-capable assistant runs.',
+    footerReadOnlyPolicy: 'Read-only mode: this cluster policy does not allow changes.',
     footerNoAccess: 'Contact your workspace administrator to upgrade your permissions.',
     failedDelete: 'Failed deleting conversation.',
     backendRequestFailed: 'Unknown error while contacting backend services.',
