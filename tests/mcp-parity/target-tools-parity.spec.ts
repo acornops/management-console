@@ -13,12 +13,12 @@ test('target capability inventories label every AcornOps-provided tool and built
     waitUntil: 'domcontentloaded'
   });
 
-  const documentRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Create document' });
+  const documentRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Create Document' });
   await expect(documentRow).toBeVisible();
   await expect(documentRow.getByText('Provided by AcornOps')).toBeVisible();
   await expect(documentRow.getByText('No configuration')).toBeVisible();
-  await expect(documentRow.getByRole('switch', { name: 'Disable Create document' })).toBeChecked();
-  await expect(documentRow.getByRole('button', { name: /Actions for Create document/ })).toHaveCount(0);
+  await expect(documentRow.getByRole('switch', { name: 'Disable Create Document' })).toBeChecked();
+  await expect(documentRow.getByRole('button', { name: /Actions for Create Document/ })).toHaveCount(0);
 
   const webSearchRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Web Search' });
   const insightsRow = page.locator('[data-target-tool-row="true"]').filter({ hasText: 'Insights' });

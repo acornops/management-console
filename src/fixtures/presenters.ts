@@ -72,7 +72,7 @@ export function targetToolCatalog(state: FixtureState, targetId: string) {
       },
       {
         id: 'documents.create',
-        label: 'Create document',
+        label: 'Create Document',
         description: 'Create a PDF or Markdown document.',
         enabled: state.targetToolSettings['documents.create'] ?? true,
         toggleable: true,

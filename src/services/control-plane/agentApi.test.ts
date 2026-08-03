@@ -109,7 +109,7 @@ describe('agent control-plane api', () => {
   it('lists and assigns code-owned native tools through manage_agents routes', async () => {
     const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
       if (url.endsWith('/api/v1/auth/csrf')) return Promise.resolve(new Response(JSON.stringify({ csrfToken: 'csrf-token-1' }), { status: 200 }));
-      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'documents.create', title: 'Create document', description: 'Create a PDF or Markdown document.', invocationScopes: ['workflow', 'agent_chat'] }] }), { status: 200 }));
+      if (url.endsWith('/catalog/native-tools')) return Promise.resolve(new Response(JSON.stringify({ items: [{ id: 'documents.create', title: 'Create Document', description: 'Create a PDF or Markdown document.', invocationScopes: ['workflow', 'agent_chat'] }] }), { status: 200 }));
       return Promise.resolve(new Response(JSON.stringify({ agent: { id: 'agent-1', workspaceId: 'workspace-1', tools: init?.method === 'PUT' ? ['documents.create'] : [] } }), { status: 200 }));
     });
     vi.stubGlobal('fetch', fetchMock);
