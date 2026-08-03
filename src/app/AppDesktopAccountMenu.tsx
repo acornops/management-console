@@ -72,15 +72,16 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
             onKeyDown={handleKeyDown}
             data-account-settings-active={isActive ? 'true' : undefined}
             className={`group flex w-full items-center rounded-lg border text-left outline-none transition-colors duration-[160ms] focus-visible:ring-2 focus-visible:ring-accent/20 motion-reduce:duration-0 ${
-              collapsed ? 'h-10 justify-center p-0' : 'justify-between gap-3 p-2'
-            } ${isActive ? 'border-transparent bg-ui-bg text-ui-text' : 'border-transparent hover:border-ui-border hover:bg-ui-bg'}`}
+              collapsed ? 'h-10 justify-center p-0' : 'min-h-12 justify-between gap-2.5 px-2.5 py-2'
+            } ${(isActive || isOpen) ? 'border-transparent bg-ui-bg text-ui-text hover:bg-ui-bg hover:text-ui-text' : 'border-transparent hover:border-ui-border hover:bg-ui-bg'}`}
             aria-controls={popoverId}
             aria-expanded={isOpen}
+            aria-haspopup="menu"
             aria-current={isActive ? 'page' : undefined}
             aria-label={t('app.accountSettings')}
           >
-            <span className="flex min-w-0 items-center gap-3">
-              <span data-rail-align={collapsed ? 'true' : undefined} className={`flex h-8 w-8 shrink-0 items-center justify-center font-mono type-caption type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${collapsed ? 'rounded-md' : 'rounded-full'} ${
+            <span className="flex min-w-0 flex-1 items-center gap-2.5">
+              <span data-rail-align={collapsed ? 'true' : undefined} className={`flex h-8 w-8 shrink-0 items-center justify-center border border-ui-border font-mono type-micro-label type-emphasis transition-colors duration-[160ms] motion-reduce:duration-0 ${collapsed ? 'rounded-md' : 'rounded-full'} ${
                 isActive ? 'bg-ui-surface text-accent-readable' : 'bg-ui-bg text-ui-text-muted group-hover:text-ui-text'
               }`}>{userInitials}</span>
               <span className={collapsed ? 'sr-only' : 'min-w-0'}>
@@ -89,7 +90,7 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
               </span>
             </span>
             <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.18 }} className={collapsed ? 'sr-only' : 'shrink-0'}>
-              <ICONS.ChevronDown className="h-4 w-4 text-ui-text-muted" />
+              <ICONS.ChevronDown className="h-3.5 w-3.5 text-ui-text-muted transition-colors duration-[160ms] group-hover:text-ui-text motion-reduce:duration-0" aria-hidden="true" />
             </motion.span>
           </MotionButton>
         </Tooltip>
@@ -105,16 +106,11 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
               aria-label={t('app.account')}
               onKeyDown={handleKeyDown}
               data-account-menu-panel="true"
-              className={`absolute z-50 max-h-[calc(100vh-1rem)] w-72 overflow-y-auto rounded-lg border border-ui-border bg-ui-surface shadow-xl ${
+              className={`absolute z-50 max-h-[calc(100vh-1rem)] w-72 overflow-y-auto rounded-lg border border-ui-border bg-ui-surface shadow-sm ${
                 collapsed ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 right-0 mb-2 w-auto'
               }`}
             >
-              <div className="border-b border-ui-border bg-ui-bg p-3">
-                <span className="type-micro-label">{t('app.account')}</span>
-                <p className="mt-1 truncate type-body type-emphasis text-ui-text">{user.name}</p>
-                <p className="truncate type-caption text-ui-text-muted">{user.email}</p>
-              </div>
-              <div className="space-y-1 p-2">
+              <div className="space-y-1 p-1.5">
                 <MotionButton
                   type="button"
                   variant="tertiary"
@@ -133,6 +129,8 @@ export const AppDesktopAccountMenu: React.FC<AppDesktopAccountMenuProps> = ({
                   <span>{t('app.accountSettings')}</span>
                 </MotionButton>
                 <ThemeMenu preference={themePreference} resolvedTheme={resolvedTheme} variant="account" onSelect={onSelectTheme} />
+              </div>
+              <div className="border-t border-ui-border p-1.5">
                 <MotionButton type="button" variant="tertiary" size="md" whileTap={{ scale: 0.98 }} onClick={() => { close(); onLogout(); }} className="control-target type-ui flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-ui-text-muted transition-colors duration-[160ms] hover:bg-ui-bg hover:text-ui-text motion-reduce:duration-0 sm:min-h-10">
                   <ICONS.LogOut className="h-4 w-4 shrink-0" />
                   <span>{t('app.logout')}</span>
