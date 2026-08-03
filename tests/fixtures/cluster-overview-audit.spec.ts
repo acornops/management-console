@@ -67,6 +67,34 @@ test('cluster resources keep transient Pending visible without adding a durable 
   await expect(page.getByText('Pending', { exact: true })).toBeVisible();
 });
 
+test('pod logs remain stable when unrelated resource state changes', async ({ page }) => {
+  let podLogRequests = 0;
+  page.on('request', (request) => {
+    if (request.url().includes('/pods/production/payments-worker-7c5b9f-demo/logs')) {
+      podLogRequests += 1;
+    }
+  });
+
+  await page.goto('/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster/resources', {
+    waitUntil: 'domcontentloaded'
+  });
+  await page.getByRole('button', { name: 'Details: payments-worker-7c5b9f-demo' }).click();
+  await page.getByRole('button', { name: 'Logs', exact: true }).click();
+  await expect(page.getByText('missing PAYMENT_QUEUE_URL')).toBeVisible();
+  await expect.poll(() => podLogRequests, { timeout: 5_000 }).toBe(1);
+
+  await page.evaluate(() => {
+    const input = document.querySelector<HTMLInputElement>('#resource-search');
+    if (!input) throw new Error('Resource search input is unavailable');
+    const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    valueSetter?.call(input, 'payments');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  await expect(page.getByText('missing PAYMENT_QUEUE_URL')).toBeVisible();
+  await expect.poll(() => podLogRequests, { timeout: 5_000 }).toBe(1);
+});
+
 test('cluster overview reports telemetry history failures with retry', async ({ page }) => {
   await page.goto(`${overviewPath}?fixtureFailurePath=fixture-cluster%2Fmetrics%2Fhistory`, { waitUntil: 'domcontentloaded' });
 

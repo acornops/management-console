@@ -2,7 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WorkloadsExplorer } from '@/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer';
 import type {
-  ResourceFamily
+  ResourceFamily,
+  WorkloadExplorerItem
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { mapClusterResourcePageItems } from '@/services/control-plane/clusterMappers';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -67,6 +68,12 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
         : query
     );
   }, []);
+  const loadPodLogs = useCallback(async (workload: WorkloadExplorerItem, options: ControlPlanePodLogsOptions) => {
+    if (!canReadPodLogs || workload.type !== 'Pod') {
+      throw new Error(t('workloads.logsUnavailable'));
+    }
+    return controlPlaneApi.getPodLogs(cluster.workspaceId, cluster.id, workload.namespace, workload.name, options);
+  }, [canReadPodLogs, cluster.id, cluster.workspaceId, t]);
   const workloads = useMemo(
     () =>
       mappedPageResources.workloads.map((workload) => ({
@@ -138,12 +145,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({ cluster, canReadPo
       onResourceQueryChange={updateResourceQuery}
       loadMoreSentinelRef={resourceCollection.sentinelRef}
       onLoadMoreResources={() => void resourceCollection.loadMore()}
-      onLoadPodLogs={async (workload, options: ControlPlanePodLogsOptions) => {
-        if (!canReadPodLogs || workload.type !== 'Pod') {
-          throw new Error(t('workloads.logsUnavailable'));
-        }
-        return controlPlaneApi.getPodLogs(cluster.workspaceId, cluster.id, workload.namespace, workload.name, options);
-      }}
+      onLoadPodLogs={loadPodLogs}
       onAnalyzePod={(workload) => onAnalyzePod?.(workload.name)}
     />
   );
