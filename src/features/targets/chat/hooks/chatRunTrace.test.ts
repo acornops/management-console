@@ -181,6 +181,41 @@ describe('chatRunTrace helpers', () => {
     });
   });
 
+  it('preserves generated document artifacts from an Agent-shaped run source', () => {
+    const trace = buildTraceFromRunEvents({ id: 'agent-run-1', status: 'completed' }, [
+      createEvent('tool_call_completed', 1, {
+        call_id: 'call-document-1',
+        tool: 'documents.create',
+        result: {
+          content: [{ type: 'text', text: '{"documentId":"document-1"}' }],
+          structuredContent: {
+            documentId: 'document-1',
+            title: 'Incident report',
+            mediaType: 'application/pdf',
+            downloadUrl: '/api/v1/generated-documents/document-1/download',
+            retentionExpiresAt: '2026-05-26T00:00:00.000Z'
+          },
+          isError: false
+        }
+      }),
+      createEvent('run_completed', 2)
+    ]);
+
+    expect(trace.toolCalls).toEqual([{
+      callId: 'call-document-1',
+      tool: 'documents.create',
+      status: 'completed',
+      isError: false,
+      documentArtifact: {
+        documentId: 'document-1',
+        title: 'Incident report',
+        mediaType: 'application/pdf',
+        downloadUrl: '/api/v1/generated-documents/document-1/download',
+        retentionExpiresAt: '2026-05-26T00:00:00.000Z'
+      }
+    }]);
+  });
+
   it('shows projection strategy and explicit omissions with compact tool evidence', () => {
     const trace = buildTraceFromRunEvents(createRun({ status: 'completed' }), [
       createEvent('tool_call_completed', 1, {

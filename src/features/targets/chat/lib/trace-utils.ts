@@ -322,6 +322,7 @@ export function upsertToolCall(
     nextToolCalls = [
       ...nextToolCalls,
       {
+        ...patch,
         callId,
         tool: patch.tool || 'tool',
         status: patch.status || 'running',

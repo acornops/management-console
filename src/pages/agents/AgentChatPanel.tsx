@@ -3,6 +3,7 @@ import { Button, InlineAlert } from '@acornops/ui';
 import { useTranslation } from 'react-i18next';
 import {
   ConversationView,
+  buildTraceFromRunEvents,
   createMarkdownComponents,
   type LiveRunTrace
 } from '@/features/conversations/presentation';
@@ -26,31 +27,11 @@ import {
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import { getAgentChatSuggestionKeys } from '@/pages/agents/agentChatSuggestions';
-import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 const activeRunStatuses = new Set(['queued', 'dispatching', 'running', 'waiting_for_approval', 'cancelling']);
 
-function traceStatus(status: string): LiveRunTrace['status'] {
-  if (status === 'completed') return 'completed';
-  if (status === 'failed') return 'failed';
-  if (status === 'cancelled') return 'cancelled';
-  if (status === 'queued' || status === 'dispatching') return 'connecting';
-  return 'running';
-}
-
 function runTrace(run: AgentConversationRunApi): LiveRunTrace {
-  return {
-    runId: run.id,
-    status: traceStatus(run.status),
-    steps: (run.events || []).slice(-40).map((event) => ({
-      id: `${run.id}:${event.seq}`,
-      label: formatIdentifierLabel(event.type),
-      detail: typeof event.payload?.message === 'string' ? event.payload.message : undefined,
-      status: event.type.includes('failed') ? 'error' : event.type.includes('completed') ? 'success' : 'info',
-      timestamp: Date.parse(event.ts) || Date.now()
-    })),
-    toolCalls: []
-  };
+  return buildTraceFromRunEvents(run, run.events || []);
 }
 
 function approvalToPending(approval: Awaited<ReturnType<typeof controlPlaneApi.listRunApprovals>>[number]): PendingApproval {

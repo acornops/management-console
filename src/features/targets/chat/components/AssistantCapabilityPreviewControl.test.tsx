@@ -16,8 +16,6 @@ describe('AssistantCapabilityPreviewControl', () => {
         requestedToolAccessMode="read_only"
         preview={{
           workspaceId: 'workspace-1',
-          targetId: 'target-1',
-          targetType: 'virtual_machine',
           toolAccessMode: 'read_only',
           confirmationRequiredForWrite: false,
           writeUnavailableReason: null,

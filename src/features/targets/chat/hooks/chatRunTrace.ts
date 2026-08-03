@@ -15,11 +15,13 @@ import { LiveRunTrace } from '@/features/targets/chat/types';
 import { PendingApproval } from '@/types';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
 
-export function isRunInProgress(status: ControlPlaneRun['status']): boolean {
+type RunTraceSource = Pick<ControlPlaneRun, 'id' | 'usage'> & { status: string };
+
+export function isRunInProgress(status: string): boolean {
   return status === 'queued' || status === 'dispatching' || status === 'running' || status === 'waiting_for_approval' || status === 'cancelling';
 }
 
-export function isRunTerminal(status: ControlPlaneRun['status']): boolean {
+export function isRunTerminal(status: string): boolean {
   return status === 'completed' || status === 'failed' || status === 'cancelled';
 }
 
@@ -65,7 +67,7 @@ export function preferRicherRunTrace(existing: LiveRunTrace | undefined, restore
   };
 }
 
-export function mapRunStatusToTraceStatus(status: ControlPlaneRun['status']): LiveRunTrace['status'] {
+export function mapRunStatusToTraceStatus(status: string): LiveRunTrace['status'] {
   if (status === 'completed') return 'completed';
   if (status === 'failed') return 'failed';
   if (status === 'cancelled') return 'cancelled';
@@ -227,7 +229,7 @@ function applyTargetInsightsContextEvent(trace: LiveRunTrace, event: ControlPlan
   );
 }
 
-export function buildTraceFromRunEvents(run: ControlPlaneRun, events: ControlPlaneRunEvent[]): LiveRunTrace {
+export function buildTraceFromRunEvents(run: RunTraceSource, events: ControlPlaneRunEvent[]): LiveRunTrace {
   const restoredStep = {
     id: createLocalMessageId(),
     label: 'Run details restored',
