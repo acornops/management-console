@@ -24,6 +24,7 @@ import {
 } from '@/services/control-plane/agentApi';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
+import { getAgentChatSuggestionKeys } from '@/pages/agents/agentChatSuggestions';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 const activeRunStatuses = new Set(['queued', 'dispatching', 'running', 'waiting_for_approval', 'cancelling']);
@@ -357,12 +358,7 @@ export const AgentChatPanel: React.FC<{
         promptBodyKey={promptBodyKey}
         inputPlaceholderKey="agentChat.inputPlaceholder"
         footerKey={footerKey}
-        suggestionKeys={[
-          'agentChat.suggestions.inspect',
-          'agentChat.suggestions.summarize',
-          'agentChat.suggestions.nextSteps',
-          'agentChat.suggestions.readiness'
-        ]}
+        suggestionKeys={getAgentChatSuggestionKeys(agent.name)}
         canChat={canChat}
         isConversationOwner={isOwner}
         conversationNotice={!isOwner ? t('agentChat.readerNotice') : null}

@@ -1824,7 +1824,19 @@ export const zh = {
       inspect: '检查可用证据',
       summarize: '总结当前情况',
       nextSteps: '建议安全的后续步骤',
-      readiness: '检查配置就绪状态'
+      readiness: '检查配置就绪状态',
+      kubernetes: {
+        issues: '列出集群问题',
+        workloads: '检查故障工作负载',
+        events: '检查警告事件',
+        logs: '检查最近的 Pod 日志'
+      },
+      virtualMachine: {
+        issues: '列出虚拟机问题',
+        services: '检查异常服务',
+        resources: '检查资源使用情况',
+        logs: '检查最近的服务日志'
+      }
     }
   },
   autoTriage: {
