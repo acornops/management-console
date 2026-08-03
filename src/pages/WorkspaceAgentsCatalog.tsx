@@ -17,8 +17,7 @@ import { Copy, Settings } from 'lucide-react';
 import { ICONS } from '@/constants';
 import {
   ResourceCatalogActionMenu,
-  ResourceCatalogCard,
-  shouldShowResourceCatalogStatus
+  ResourceCatalogCard
 } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
@@ -49,17 +48,18 @@ export const WorkspaceAgentsRouteHeader: React.FC<{
 };
 
 export function getAgentCapabilitySummary(agent: AgentDefinition, t: TFunction): string {
-  return [
-    t('agentsWorkflows.agents.capabilityCounts.mcpServer', { count: agent.mcpServers.length }),
-    t('agentsWorkflows.agents.capabilityCounts.skill', { count: agent.skills.length }),
-    t('agentsWorkflows.agents.capabilityCounts.tool', { count: agent.tools.length })
-  ].join(' · ');
+  const counts = [
+    agent.mcpServers.length > 0 ? t('agentsWorkflows.agents.capabilityCounts.mcpServer', { count: agent.mcpServers.length }) : '',
+    agent.skills.length > 0 ? t('agentsWorkflows.agents.capabilityCounts.skill', { count: agent.skills.length }) : '',
+    agent.tools.length > 0 ? t('agentsWorkflows.agents.capabilityCounts.tool', { count: agent.tools.length }) : ''
+  ].filter(Boolean);
+  return counts.length > 0 ? counts.join(' · ') : t('agentsWorkflows.agents.noCapabilities');
 }
 
-function agentReadinessWarning(agent: AgentDefinition): string {
-  if (agent.status === 'disabled') return 'Reactivate this Agent before starting a conversation.';
-  if (agent.status === 'draft') return 'Activate this Agent before starting a conversation.';
-  return agent.readiness.reasons[0] || 'Finish configuration before starting a conversation.';
+function agentReadinessWarning(agent: AgentDefinition, t: TFunction): string {
+  if (agent.status === 'disabled') return t('agentsWorkflows.agents.readiness.reactivate');
+  if (agent.status === 'draft') return t('agentsWorkflows.agents.readiness.activate');
+  return agent.readiness.reasons[0] || t('agentsWorkflows.agents.readiness.finishConfiguration');
 }
 
 interface WorkspaceAgentsCatalogProps {
@@ -157,13 +157,12 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
           {visibleAgents.map((agent) => {
             const readinessBlocked = agent.status !== 'active' || agent.readiness.status !== 'ready';
             const readinessLabel = readinessBlocked
-              ? agent.readiness.status === 'blocked' ? 'Blocked' : 'Needs setup'
-              : 'Ready';
+              ? agent.readiness.status === 'blocked' ? t('agentsWorkflows.agents.readiness.blocked') : t('agentsWorkflows.agents.readiness.needsSetup')
+              : t('agentsWorkflows.agents.readiness.ready');
             const readinessTone = readinessBlocked ? 'warning' : statusTone(agent.status);
-            const showReadinessStatus = shouldShowResourceCatalogStatus(readinessTone);
-            const purpose = agent.description || agent.instructions || 'No purpose provided.';
+            const purpose = agent.description || agent.instructions || t('agentsWorkflows.agents.noPurpose');
             const capabilitySummary = getAgentCapabilitySummary(agent, t);
-            const readinessWarning = agentReadinessWarning(agent);
+            const readinessWarning = agentReadinessWarning(agent, t);
             return (
               <ResourceCatalogCard
                 key={agent.id}
@@ -177,7 +176,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <h3 className="type-panel-title min-w-0 truncate text-ui-text" title={agent.name}>{agent.name}</h3>
-                      {showReadinessStatus && <StatusBadge tone={readinessTone}>{readinessLabel}</StatusBadge>}
+                      <StatusBadge tone={readinessTone}>{readinessLabel}</StatusBadge>
                     </div>
                     <span aria-hidden="true" className="type-caption type-emphasis mt-1 inline-flex items-center gap-1 text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
                       {t('agentsWorkflows.agents.viewDetails')} <ICONS.ChevronRight className="h-3.5 w-3.5" />
@@ -221,13 +220,18 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   </div>
                 </div>
                 <div className="border-t border-ui-border px-4 py-4">
-                  <p className="type-body line-clamp-1 text-ui-text-muted" title={purpose}>{purpose}</p>
+                  <p className="type-body line-clamp-2 text-ui-text-muted" title={purpose}>{purpose}</p>
                   <p
-                    className={`type-caption type-emphasis mt-3 ${readinessBlocked ? 'line-clamp-2 text-status-warning-text' : 'truncate text-ui-text'}`}
-                    title={readinessBlocked ? readinessWarning : capabilitySummary}
+                    className="type-caption type-emphasis mt-3 line-clamp-2 text-ui-text"
+                    title={`${agent.owner} · ${capabilitySummary}`}
                   >
-                    {readinessBlocked ? readinessWarning : capabilitySummary}
+                    {agent.owner} · {capabilitySummary}
                   </p>
+                  {readinessBlocked && (
+                    <p className="type-caption type-emphasis mt-2 line-clamp-2 text-status-warning-text" title={readinessWarning}>
+                      {readinessWarning}
+                    </p>
+                  )}
                 </div>
               </ResourceCatalogCard>
             );

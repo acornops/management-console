@@ -3417,6 +3417,16 @@ export const en = {
       viewDetails: 'View details',
       openDetailsLabel: 'Open details for {{name}}',
       actionsLabel: 'Actions for {{name}}',
+      noPurpose: 'No purpose provided.',
+      noCapabilities: 'No capabilities configured',
+      readiness: {
+        ready: 'Ready',
+        needsSetup: 'Needs setup',
+        blocked: 'Blocked',
+        reactivate: 'Reactivate this Agent before starting a conversation.',
+        activate: 'Activate this Agent before starting a conversation.',
+        finishConfiguration: 'Finish configuration before starting a conversation.'
+      },
       capabilityCounts: {
         mcpServer: '{{count}} MCP servers', tool: '{{count}} tools', skill: '{{count}} skills',
         mcpServer_one: '{{count}} MCP server', mcpServer_other: '{{count}} MCP servers',

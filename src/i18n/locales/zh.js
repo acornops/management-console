@@ -3417,6 +3417,16 @@ export const zh = {
       viewDetails: '查看详情',
       openDetailsLabel: '打开 {{name}} 的详情',
       actionsLabel: '{{name}} 的操作',
+      noPurpose: '未提供用途。',
+      noCapabilities: '尚未配置能力',
+      readiness: {
+        ready: '已就绪',
+        needsSetup: '需要设置',
+        blocked: '已阻塞',
+        reactivate: '开始对话前请重新启用此 Agent。',
+        activate: '开始对话前请启用此 Agent。',
+        finishConfiguration: '开始对话前请完成配置。'
+      },
       capabilityCounts: {
         mcpServer: '{{count}} 个 MCP 服务器', tool: '{{count}} 个工具', skill: '{{count}} 个技能',
         mcpServer_one: '{{count}} 个 MCP 服务器', mcpServer_other: '{{count}} 个 MCP 服务器',
