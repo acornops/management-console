@@ -18,6 +18,7 @@ Place active multi-step plans in this directory.
 - [Non-interactive Icon Tile Standardization](non-interactive-icon-tile-standardization.md)
 - [Management console production-readiness hardening](production-readiness-hardening.md)
 - [Production Tool Results](production-tool-results.md)
+- [Relative-Time Capitalization Standardization](relative-time-capitalization-standardization.md)
 - [Resource Catalog Exception-Only Status](resource-catalog-exception-status.md)
 - [Semantic Status Consistency](semantic-status-consistency.md)
 - [Short-Viewport Sidebar Breathing Room](short-viewport-sidebar-breathing-room.md)

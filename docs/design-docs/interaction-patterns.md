@@ -255,6 +255,13 @@ Permission meaning must not depend on color or iconography alone. Permission gat
 
 Use shared `Intl`-backed helpers for user-timezone date and time, relative time, duration, counts, percentages, and identifiers. Feature code does not introduce local formatting conventions.
 
+Relative-time values use sentence case when they stand alone (`Just now`,
+`Now`, `1 minute ago`, `5m ago`). A relative-time fragment stays lowercase only
+when it continues an existing sentence (`Updated just now`). Callers must pass
+the formatter's sentence-fragment context instead of lowercasing rendered text.
+Compact labels and metadata headings become uppercase through their semantic
+typography role; dynamic values never receive a blanket uppercase transform.
+
 Missing and invalid values use stable shared placeholders. If the visible value is truncated, preserve the complete value through an accessible label or tooltip. Comparable numeric values use tabular numerals where scan alignment matters.
 
 ## Internationalization

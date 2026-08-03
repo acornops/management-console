@@ -8,8 +8,17 @@ interface DateTimeFormatOptions {
 }
 
 interface RelativeTimeOptions {
+  context?: 'standalone' | 'sentence-fragment';
   fallback?: string;
   now?: number;
+}
+
+function immediateRelativeTimeLabel(
+  context: RelativeTimeOptions['context'],
+  compact = false
+): string {
+  if (context === 'sentence-fragment') return compact ? 'now' : 'just now';
+  return compact ? 'Now' : 'Just now';
 }
 
 export function getUserTimeZone(): string {
@@ -71,7 +80,7 @@ export function formatRelativeTime(value: DateTimeInput, options: RelativeTimeOp
 
   const elapsedMs = Math.max((options.now ?? Date.now()) - date.getTime(), 0);
   const seconds = Math.floor(elapsedMs / 1000);
-  if (seconds < 10) return 'just now';
+  if (seconds < 10) return immediateRelativeTimeLabel(options.context);
   if (seconds < 60) return `${seconds} seconds ago`;
 
   const minutes = Math.floor(seconds / 60);
@@ -95,7 +104,7 @@ export function formatCompactRelativeTime(value: DateTimeInput, options: Relativ
 
   const elapsedMs = Math.max((options.now ?? Date.now()) - date.getTime(), 0);
   const seconds = Math.floor(elapsedMs / 1000);
-  if (seconds < 2) return 'now';
+  if (seconds < 2) return immediateRelativeTimeLabel(options.context, true);
   if (seconds < 60) return `${seconds}s ago`;
 
   const minutes = Math.floor(seconds / 60);

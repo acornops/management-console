@@ -87,7 +87,7 @@ export function formatResourceAge(value: string | undefined): string {
   if (Number.isNaN(timestamp)) return '-';
   const deltaMs = Math.max(Date.now() - timestamp, 0);
   const minutes = Math.floor(deltaMs / 60000);
-  if (minutes < 1) return 'just now';
+  if (minutes < 1) return 'Just now';
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   if (hours < 48) return `${hours}h`;

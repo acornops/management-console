@@ -510,7 +510,7 @@ export function QueueSummary({
           {summary.oldestWaitingAt && summary.waitingCount > 0 && (
             <p className="type-caption mt-1 leading-5 text-ui-text-muted">
               {t('autoTriage.activityOldest', {
-                time: formatRelativeTime(summary.oldestWaitingAt)
+                time: formatRelativeTime(summary.oldestWaitingAt, { context: 'sentence-fragment' })
               })}
             </p>
           )}

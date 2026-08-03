@@ -231,7 +231,7 @@ export const VmCardResourceChart: React.FC<{
         ? t('virtualMachines.list.loadingTelemetry')
         : latestSignalTimestamp !== null
           ? t(telemetryIsStale ? 'dashboard.lastUpdatedTime' : 'dashboard.updatedTime', {
-              time: formatCompactRelativeTime(latestSignalTimestamp, { now })
+              time: formatCompactRelativeTime(latestSignalTimestamp, { context: 'sentence-fragment', now })
             })
           : null;
   const metricItems = [

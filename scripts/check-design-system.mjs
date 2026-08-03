@@ -28,6 +28,19 @@ function productionFiles(directory) {
   }).filter((path) => ['.ts', '.tsx', '.css'].includes(extname(path)) && !path.includes('.test.'));
 }
 
+function productionCopyFiles(directory) {
+  return readdirSync(directory).flatMap((entry) => {
+    const path = join(directory, entry);
+    return statSync(path).isDirectory() ? productionCopyFiles(path) : [path];
+  }).filter((path) => {
+    const repoPath = relative(root, path).replaceAll('\\', '/');
+    return ['.ts', '.tsx', '.js'].includes(extname(path))
+      && !path.includes('.test.')
+      && !path.includes('.spec.')
+      && !repoPath.startsWith('src/fixtures/');
+  });
+}
+
 function jsxOpenings(source, startPattern) {
   const openings = [];
   let match;
@@ -150,6 +163,7 @@ function report(path, rule, detail) {
 
 const files = [srcRoot, uiSourceRoot].flatMap(sourceFiles);
 const productionSources = [srcRoot, uiSourceRoot].flatMap(productionFiles);
+const productionCopySources = [srcRoot, uiSourceRoot].flatMap(productionCopyFiles);
 const namedTailwindPalette = /(?:^|[\s'"`])(?:[a-z-]+:)*(?:bg|text|border|divide|ring|outline|shadow|fill|stroke|from|via|to|decoration|caret|accent)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950)(?:\/[^\s'"`}]+)?/g;
 const prohibitedTypographyUtility = /(?:^|[\s'"`])(?:font-(?:bold|extrabold)|uppercase|tracking-(?:wider|widest)|tracking-\[[^\]]+\]|text-\[(?:9|10|11)px\]|text-\[(?:0\.5625|0\.625|0\.68|0\.6875)rem\])(?=$|[\s'"`}])/g;
 const canonicalHeadingRole = /(?:^|[\s'"`])type-(?:route-title|section-title|panel-title|row-title|data)(?=$|[\s'"`}])/;
@@ -213,6 +227,12 @@ const resourceCardCatalogPaths = [
   'src/pages/virtual-machines/VirtualMachinesListView.tsx',
   'src/pages/WorkspaceAgentsCatalog.tsx'
 ];
+const lowercaseRelativeTimeAllowlist = new Map([
+  ['src/design-system.tsx', ['Updated just now']],
+  ['src/features/targets/chat/hooks/targetChatState.ts', ["'chat.recentActivityTime.justNow', 'just now'"]],
+  ['src/i18n/locales/en.js', ["justNow: 'just now'"]],
+  ['src/utils/dateTime.ts', ["compact ? 'now' : 'just now'"]]
+]);
 
 for (const path of productionSources) {
   const source = readFileSync(path, 'utf8');
@@ -378,6 +398,24 @@ for (const path of files) {
       report(path, 'shared-table-header', `line ${line}: visible column headers must compose through DataTableHeaderCell`);
     }
   }
+}
+
+for (const path of productionCopySources) {
+  const source = readFileSync(path, 'utf8');
+  const repoPath = relative(root, path).replaceAll('\\', '/');
+  const allowedLowercaseLines = lowercaseRelativeTimeAllowlist.get(repoPath) || [];
+
+  source.split('\n').forEach((lineSource, index) => {
+    if (/\bJust Now\b/.test(lineSource)) {
+      report(path, 'relative-time-capitalization', `line ${index + 1}: use sentence-case Just now`);
+    }
+    if (/\bjust now\b/.test(lineSource) && !allowedLowercaseLines.some((allowed) => lineSource.includes(allowed))) {
+      report(path, 'relative-time-capitalization', `line ${index + 1}: lowercase just now is limited to documented sentence-fragment contexts`);
+    }
+    if (/\breturn\s+['"]now['"]/.test(lineSource)) {
+      report(path, 'relative-time-capitalization', `line ${index + 1}: standalone relative-time values use sentence-case Now`);
+    }
+  });
 }
 
 for (const repoPath of resourceCardCatalogPaths) {

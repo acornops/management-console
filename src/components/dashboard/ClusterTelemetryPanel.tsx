@@ -131,7 +131,7 @@ export const ClusterTelemetryPanel: React.FC<{
         : loadState === 'loading'
         ? t('dashboard.loadingTelemetry')
         : t(telemetryIsStale ? 'dashboard.lastUpdatedTime' : 'dashboard.updatedTime', {
-            time: formatCompactRelativeTime(cluster.lastUpdate, { now })
+            time: formatCompactRelativeTime(cluster.lastUpdate, { context: 'sentence-fragment', now })
           });
 
     return (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getTelemetryTimestampFreshness } from '@/utils/telemetry';
+import { formatLastUpdated, getTelemetryTimestampFreshness } from '@/utils/telemetry';
 
 describe('telemetry timestamp freshness', () => {
   const now = Date.parse('2026-08-02T00:00:00.000Z');
@@ -13,5 +13,10 @@ describe('telemetry timestamp freshness', () => {
 
   it('treats invalid timestamps as unavailable', () => {
     expect(getTelemetryTimestampFreshness('not-a-timestamp', now)).toBe('unavailable');
+  });
+
+  it('uses sentence case for standalone freshness values and fallbacks', () => {
+    expect(formatLastUpdated(new Date(now - 1_000).toISOString(), now)).toBe('Just now');
+    expect(formatLastUpdated('not-a-timestamp', now)).toBe('Unknown');
   });
 });

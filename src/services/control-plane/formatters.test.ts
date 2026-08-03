@@ -64,7 +64,7 @@ describe('control-plane formatters', () => {
   it('formats resource age across recent and long-lived timestamps', () => {
     expect(formatResourceAge(undefined)).toBe('-');
     expect(formatResourceAge('not-a-date')).toBe('-');
-    expect(formatResourceAge('2026-05-24T23:59:45.000Z')).toBe('just now');
+    expect(formatResourceAge('2026-05-24T23:59:45.000Z')).toBe('Just now');
     expect(formatResourceAge('2026-05-24T23:15:00.000Z')).toBe('45m');
     expect(formatResourceAge('2026-05-24T00:00:00.000Z')).toBe('24h');
     expect(formatResourceAge('2026-05-20T00:00:00.000Z')).toBe('5d');

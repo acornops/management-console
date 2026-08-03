@@ -31,7 +31,8 @@ describe('dateTime utilities', () => {
   it('formats relative time with readable units', () => {
     const now = Date.parse('2026-06-29T13:35:00.000Z');
 
-    expect(formatRelativeTime('2026-06-29T13:34:57.000Z', { now })).toBe('just now');
+    expect(formatRelativeTime('2026-06-29T13:34:57.000Z', { now })).toBe('Just now');
+    expect(formatRelativeTime('2026-06-29T13:34:57.000Z', { context: 'sentence-fragment', now })).toBe('just now');
     expect(formatRelativeTime('2026-06-29T13:34:00.000Z', { now })).toBe('1 minute ago');
     expect(formatRelativeTime('2026-06-29T12:35:00.000Z', { now })).toBe('1 hour ago');
     expect(formatRelativeTime('2026-06-28T13:35:00.000Z', { now })).toBe('1 day ago');
@@ -40,7 +41,8 @@ describe('dateTime utilities', () => {
   it('formats compact relative time for dense chart axes', () => {
     const now = Date.parse('2026-06-29T13:35:00.000Z');
 
-    expect(formatCompactRelativeTime('2026-06-29T13:34:59.000Z', { now })).toBe('now');
+    expect(formatCompactRelativeTime('2026-06-29T13:34:59.000Z', { now })).toBe('Now');
+    expect(formatCompactRelativeTime('2026-06-29T13:34:59.000Z', { context: 'sentence-fragment', now })).toBe('now');
     expect(formatCompactRelativeTime('2026-06-29T13:34:39.000Z', { now })).toBe('21s ago');
     expect(formatCompactRelativeTime('2026-06-29T12:50:00.000Z', { now })).toBe('45m ago');
     expect(formatCompactRelativeTime('2026-06-29T12:35:00.000Z', { now })).toBe('1h ago');

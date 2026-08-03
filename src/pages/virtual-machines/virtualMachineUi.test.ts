@@ -113,7 +113,7 @@ describe('virtual machine connection filters', () => {
 
   it('formats snapshot recency instead of exposing a raw ISO timestamp', () => {
     const now = Date.parse('2026-01-01T00:00:05Z');
-    expect(formatSnapshotTime(vmWithStatus('online'), now)).toBe('just now');
+    expect(formatSnapshotTime(vmWithStatus('online'), now)).toBe('Just now');
     expect(formatSnapshotTime({ ...vmWithStatus('online'), latestSnapshot: undefined, updatedAt: '' }, now)).toBe('Waiting for agent');
   });
 });
