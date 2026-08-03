@@ -1,6 +1,6 @@
 import React from 'react';
 import { hasWorkspacePermission } from '@/app/workspacePermissions';
-import { RefreshCw } from 'lucide-react';
+import { Library, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineAlert, buttonClassName } from '@acornops/ui';
 import { CollectionState } from '@acornops/ui';
@@ -10,7 +10,6 @@ import { MasterDetailEmptyState, MasterDetailLayout, MasterDetailListHeader, Mas
 import { PageHeader, PageShell } from '@acornops/ui';
 import { Select } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
-import { AgentCatalogReturnLink, resolveAgentCatalogReturnNavigation } from '@/features/catalog/AgentCatalogReturnNavigation';
 import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
 import { McpCredentialOwnershipSelector, type McpCredentialMode } from '@/features/catalog/McpCredentialOwnershipSelector';
 import { useMcpConnections } from '@/features/catalog/useMcpConnections';
@@ -367,17 +366,12 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
   );
   const connectionRetryAfterSeconds = matchingInstallation ? retryAfterSecondsFor(matchingInstallation.id) : 0;
   const noEnabledRegistries = sourcesLoaded && sources.length === 0;
-  const agentReturnNavigation = resolveAgentCatalogReturnNavigation(workspace.id, routeState.destination);
-  const returnAgentName = agentReturnNavigation
-    ? destinations.find((destination) => destination.scopeType === 'agent' && destination.id === agentReturnNavigation.agentId)?.name
-    : undefined;
-  const selectedDestinationHref = selectedDestination?.scopeType === 'target'
+  const selectedDestinationHref = selectedDestination
     ? destinationHref(workspace.id, selectedDestination)
     : undefined;
 
   return (
     <PageShell>
-      <AgentCatalogReturnLink navigation={agentReturnNavigation} agentName={returnAgentName} />
       <PageHeader
         title="Browse MCP servers"
         context={selectedDestination ? `Destination: ${selectedDestination.name}` : undefined}
@@ -418,21 +412,23 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
               />
             </div>
           )}
-          <EmptyState
-            icon={<RefreshCw />}
-            title="No MCP registries are enabled"
-            description={canSynchronize
-              ? sourceCapabilities.workspaceManagedSourcesEnabled
-                ? 'Connect this destination directly, or add an internal MCP registry for workspace discovery.'
-                : 'Connect this destination directly. Deployment policy does not allow workspace-managed registries.'
-              : 'Connect this destination directly, or contact a workspace administrator to configure an MCP registry.'}
-            actions={<>
-              {selectedDestination && canManageMcp
-                ? <a href={destinationHref(workspace.id, selectedDestination, 'connect_by_url')} className={buttonClassName({ variant: 'primary' })}>Connect by URL</a>
-                : <Button variant="primary" disabled>Connect by URL</Button>}
-              {canSynchronize && sourceCapabilities.workspaceManagedSourcesEnabled && <a href={AppPaths.workspaceMcpRegistries(workspace.id)} className={buttonClassName({ variant: 'secondary' })}>Add a registry</a>}
-            </>}
-          />
+          <section className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
+            <EmptyState
+              icon={<Library />}
+              title="No MCP registries are enabled"
+              description={canSynchronize
+                ? sourceCapabilities.workspaceManagedSourcesEnabled
+                  ? 'Connect this destination directly, or add an internal MCP registry for workspace discovery.'
+                  : 'Connect this destination directly. Deployment policy does not allow workspace-managed registries.'
+                : 'Connect this destination directly, or contact a workspace administrator to configure an MCP registry.'}
+              actions={<>
+                {selectedDestination && canManageMcp
+                  ? <a href={destinationHref(workspace.id, selectedDestination, 'connect_by_url')} className={buttonClassName({ variant: 'primary' })}>Connect by URL</a>
+                  : <Button variant="primary" disabled>Connect by URL</Button>}
+                {canSynchronize && sourceCapabilities.workspaceManagedSourcesEnabled && <a href={AppPaths.workspaceMcpRegistries(workspace.id)} className={buttonClassName({ variant: 'secondary' })}>Add a registry</a>}
+              </>}
+            />
+          </section>
         </div>
       )}
 
@@ -555,9 +551,8 @@ export const WorkspaceCatalogPage: React.FC<WorkspaceCatalogPageProps> = ({ work
               <div className="type-body type-emphasis text-ui-text">
                 <span>Install destination</span>
                 {selectedDestination ? (
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
+                  <div className="mt-2 rounded-md border border-ui-border bg-ui-bg px-3 py-2">
                     <span><span className="block type-body type-emphasis">{selectedDestination.name}</span><span className="type-caption text-ui-text-muted">{selectedDestination.kind} · {selectedDestination.status}</span></span>
-                    <a href={destinationHref(workspace.id, selectedDestination)} className="type-body type-emphasis text-accent-strong underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-control-boundary">Back to destination</a>
                   </div>
                 ) : (
                   <Select
