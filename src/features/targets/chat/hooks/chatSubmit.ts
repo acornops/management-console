@@ -16,10 +16,7 @@ import {
 } from '@/features/targets/chat/lib/session-utils';
 import { createBaseRunTrace, createRunEventHandler } from '@/features/targets/chat/hooks/chatRunTrace';
 import { createConversationId } from '@/features/targets/chat/hooks/chatSessionSync';
-import {
-  replaceCancelledRunAssistantMessages,
-  replacePendingCancelledRunMessages
-} from '@/features/targets/chat/hooks/chatRunCancellation';
+import { replaceCancelledRunAssistantMessages } from '@/features/targets/chat/hooks/chatRunCancellation';
 import { LiveRunTrace } from '@/features/targets/chat/types';
 import {
   buildChatSubmitFailureMessage,
@@ -57,6 +54,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     createSession = controlPlaneApi.createTargetSession,
     isRunCancelled = () => false,
     markRunCancelled,
+    onPendingCancellationAccepted,
     registerRunStream,
     unregisterRunStream,
     suppressedRunIdsRef,
@@ -137,8 +135,9 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
   let pollEventsStop = false;
   let pollEventsPromise: Promise<void> | null = null;
   let runIdForMessage: string | undefined;
+  const isPendingRunCancelled = () => isRunCancelled(pendingTraceRunId);
   const isAcceptedRunCancelled = () => Boolean(runIdForMessage && isRunCancelled(runIdForMessage));
-  const canPublishSessions = () => !isAcceptedRunCancelled();
+  const canPublishSessions = () => !isPendingRunCancelled() && !isAcceptedRunCancelled();
   let pendingSessionPublish: ReturnType<typeof setTimeout> | null = null;
   const filterSuppressedMessages = (nextMessages: ChatMessage[]) => filterMessagesByRunIds(nextMessages, suppressedRunIdsRef?.current);
   const publishSessions = (immediate = false) => {
@@ -224,21 +223,16 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     if (isRunCancelled(pendingTraceRunId)) {
       const timestamp = Date.now();
       markRunCancelled?.(accepted.runId);
-      session = {
-        ...session,
-        messages: replacePendingCancelledRunMessages(session.messages, {
-          pendingRunId: pendingTraceRunId,
-          acceptedRunId: accepted.runId,
-          userMessageId: userMsg.id,
-          pendingAssistantMessageId,
-          streamingMessageId,
-          cancelledMessage: runCancelledMessage,
-          timestamp
-        }),
+      onPendingCancellationAccepted({
+        localSessionId,
+        pendingRunId: pendingTraceRunId,
+        acceptedRunId: accepted.runId,
+        userMessageId: userMsg.id,
+        pendingAssistantMessageId,
+        streamingMessageId,
+        cancelledMessage: runCancelledMessage,
         timestamp
-      };
-      sessions = upsertSession(sessions, session);
-      publishSessions(true);
+      });
       await controlPlaneApi.cancelRun(accepted.runId).catch(() => undefined);
       return;
     }
@@ -593,7 +587,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     sessions = upsertSession(sessions, session);
     publishSessions(true);
   } catch (error) {
-    if (isAcceptedRunCancelled()) {
+    if (isPendingRunCancelled() || isAcceptedRunCancelled()) {
       return;
     }
     if (isRuntimeSelectionPolicyRejection(error)) {
@@ -630,14 +624,16 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     if (streamPromise) await streamPromise.catch(() => undefined);
     pollEventsStop = true;
     if (pollEventsPromise) await pollEventsPromise.catch(() => undefined);
-    setRunTracesByRunId((current) => {
-      const { [pendingTraceRunId]: _removed, ...rest } = current;
-      return rest;
-    });
-    setTraceExpandedByRunId((current) => {
-      const { [pendingTraceRunId]: _removed, ...rest } = current;
-      return rest;
-    });
+    if (!isPendingRunCancelled()) {
+      setRunTracesByRunId((current) => {
+        const { [pendingTraceRunId]: _removed, ...rest } = current;
+        return rest;
+      });
+      setTraceExpandedByRunId((current) => {
+        const { [pendingTraceRunId]: _removed, ...rest } = current;
+        return rest;
+      });
+    }
     if (pendingSessionPublish) {
       clearTimeout(pendingSessionPublish);
       pendingSessionPublish = null;

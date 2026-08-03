@@ -5,6 +5,17 @@ import type { ActiveRunStreamControls } from '@/features/targets/chat/hooks/chat
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 
+export interface PendingCancellationAcceptedArgs {
+  localSessionId: string;
+  pendingRunId: string;
+  acceptedRunId: string;
+  userMessageId: string;
+  pendingAssistantMessageId: string;
+  streamingMessageId: string;
+  cancelledMessage: string;
+  timestamp: number;
+}
+
 export interface ChatSubmitArgs {
   target: TargetDescriptor;
   activeSession: ChatSession;
@@ -30,6 +41,7 @@ export interface ChatSubmitArgs {
   createSession?: (workspaceId: string, targetId: string, title: string) => Promise<ControlPlaneSession>;
   isRunCancelled?: (runId: string) => boolean;
   markRunCancelled?: (runId: string) => void;
+  onPendingCancellationAccepted: (args: PendingCancellationAcceptedArgs) => void;
   registerRunStream?: (runId: string, controls: ActiveRunStreamControls) => void;
   unregisterRunStream?: (runId: string) => void;
   suppressedRunIdsRef?: MutableRefObject<ReadonlySet<string>>;

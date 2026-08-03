@@ -1,12 +1,28 @@
-import { describe, expect, it } from 'vitest';
-import { ChatMessage } from '@/types';
-import { isRuntimeSelectionPolicyRejection, RUN_TERMINAL_WAIT_TIMEOUT_MS } from '@/features/targets/chat/hooks/chatSubmit';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ChatMessage, ChatSession } from '@/types';
+import { isRuntimeSelectionPolicyRejection, RUN_TERMINAL_WAIT_TIMEOUT_MS, submitChatMessage } from '@/features/targets/chat/hooks/chatSubmit';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { preserveStreamingAssistantMessageId } from '@/features/targets/chat/lib/session-utils';
 import {
   replaceCancelledRunAssistantMessages,
   replacePendingCancelledRunMessages
 } from '@/features/targets/chat/hooks/chatRunCancellation';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+} {
+  let resolve = (_value: T) => undefined;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
 
 describe('preserveStreamingAssistantMessageId', () => {
   it('keeps the streamed assistant message mounted when backend messages reconcile', () => {
@@ -83,6 +99,143 @@ describe('preserveStreamingAssistantMessageId', () => {
         timestamp: 3
       }
     ]);
+  });
+
+  it('preserves a newer follow-up while remapping the cancelled turn', () => {
+    const messages: ChatMessage[] = [
+      { id: 'cancelled-user', role: 'user', content: 'First request', runId: 'pending-trace-1', timestamp: 1 },
+      { id: 'cancelled-assistant', role: 'assistant', content: 'Run cancelled.', runId: 'pending-trace-1', timestamp: 2 },
+      { id: 'follow-up-user', role: 'user', content: 'Follow-up request', runId: 'pending-trace-2', timestamp: 3 },
+      { id: 'follow-up-assistant', role: 'assistant', content: '', runId: 'pending-trace-2', timestamp: 4 }
+    ];
+
+    expect(replacePendingCancelledRunMessages(messages, {
+      pendingRunId: 'pending-trace-1',
+      acceptedRunId: 'run-1',
+      userMessageId: 'cancelled-user',
+      pendingAssistantMessageId: 'cancelled-assistant',
+      streamingMessageId: 'stream-run-1',
+      cancelledMessage: 'Run cancelled.',
+      timestamp: 5
+    })).toEqual([
+      { ...messages[0], runId: 'run-1' },
+      { id: 'stream-run-1', role: 'assistant', content: 'Run cancelled.', runId: 'run-1', timestamp: 5 },
+      messages[2],
+      messages[3]
+    ]);
+  });
+});
+
+describe('submitChatMessage pending cancellation', () => {
+  it('does not publish a stale snapshot over an immediate follow-up', async () => {
+    const accepted = deferred<Awaited<ReturnType<typeof controlPlaneApi.postSessionMessage>>>();
+    vi.spyOn(controlPlaneApi, 'postSessionMessage').mockReturnValueOnce(accepted.promise);
+    const cancelRun = vi.spyOn(controlPlaneApi, 'cancelRun').mockResolvedValueOnce(undefined);
+    const runtimeSelection = { provider: 'openai' as const, model: 'gpt-5', reasoningEffort: 'low' as const };
+    const initialSession: ChatSession = {
+      id: 'session-local',
+      backendSessionId: 'session-backend',
+      name: 'Chat',
+      messages: [],
+      timestamp: 1
+    };
+    let latestSessions = [initialSession];
+    let runTraces: Record<string, { runId: string; status: 'connecting' | 'cancelled'; steps: never[]; toolCalls: never[] }> = {};
+    let traceExpanded: Record<string, boolean> = {};
+    const cancelledRunIds = new Set<string>();
+    let followUpInserted = false;
+    let stalePublishAfterFollowUp = false;
+    const commitSessions = (nextSessions: ChatSession[]) => {
+      if (followUpInserted && !nextSessions[0].messages.some((message) => message.id === 'follow-up-user')) {
+        stalePublishAfterFollowUp = true;
+      }
+      latestSessions = nextSessions;
+    };
+
+    const submit = submitChatMessage({
+      target: {
+        id: 'target-1',
+        workspaceId: 'workspace-1',
+        targetType: 'kubernetes',
+        name: 'Target',
+        chatSessions: latestSessions,
+        mcpTools: []
+      },
+      activeSession: initialSession,
+      activeSessionId: initialSession.id,
+      canChat: true,
+      canRequestWriteRuns: false,
+      inputValue: 'First request',
+      isLoading: false,
+      runtimeSelection,
+      shouldStickToBottomRef: { current: false },
+      onUpdateSessions: commitSessions,
+      setActiveSessionId: () => undefined,
+      setInputValue: () => undefined,
+      setIsLoading: () => undefined,
+      setActiveRunId: () => undefined,
+      setRunTracesByRunId: (update) => {
+        runTraces = typeof update === 'function' ? update(runTraces) as typeof runTraces : update as typeof runTraces;
+      },
+      setTraceExpandedByRunId: (update) => {
+        traceExpanded = typeof update === 'function' ? update(traceExpanded) : update;
+      },
+      draftConversationName: 'New conversation',
+      fallbackBackendErrorMessage: 'Request failed.',
+      runCancelledMessage: 'Run cancelled. You can send another message when ready.',
+      isRunCancelled: (runId) => cancelledRunIds.has(runId),
+      markRunCancelled: (runId) => cancelledRunIds.add(runId),
+      onPendingCancellationAccepted: (args) => {
+        const { [args.pendingRunId]: pendingTrace, ...remainingTraces } = runTraces;
+        runTraces = {
+          ...remainingTraces,
+          [args.acceptedRunId]: {
+            ...(pendingTrace || { steps: [], toolCalls: [] }),
+            runId: args.acceptedRunId,
+            status: 'cancelled'
+          }
+        };
+        const currentSession = latestSessions[0];
+        commitSessions([{
+          ...currentSession,
+          messages: replacePendingCancelledRunMessages(currentSession.messages, args)
+        }]);
+      }
+    });
+
+    const pendingRunId = latestSessions[0].messages.find((message) => message.role === 'assistant')?.runId;
+    expect(pendingRunId).toMatch(/^pending-trace-/);
+    cancelledRunIds.add(pendingRunId!);
+    runTraces[pendingRunId!] = { ...runTraces[pendingRunId!], status: 'cancelled' };
+    latestSessions = [{
+      ...latestSessions[0],
+      messages: [
+        ...replaceCancelledRunAssistantMessages(
+          latestSessions[0].messages,
+          pendingRunId!,
+          'Run cancelled. You can send another message when ready.',
+          2
+        ),
+        { id: 'follow-up-user', role: 'user', content: 'Follow-up request', timestamp: 3 },
+        { id: 'follow-up-assistant', role: 'assistant', content: '', runId: 'pending-trace-follow-up', timestamp: 4 }
+      ]
+    }];
+    followUpInserted = true;
+
+    accepted.resolve({ messageId: 'message-1', runId: 'run-1', runtimeSelection });
+    await submit;
+
+    expect(stalePublishAfterFollowUp).toBe(false);
+    expect(latestSessions[0].messages.map((message) => message.id)).toEqual([
+      expect.any(String),
+      'stream-run-1',
+      'follow-up-user',
+      'follow-up-assistant'
+    ]);
+    expect(latestSessions[0].messages[0].runId).toBe('run-1');
+    expect(runTraces['run-1']).toMatchObject({ runId: 'run-1', status: 'cancelled' });
+    expect(runTraces[pendingRunId!]).toBeUndefined();
+    expect(cancelRun).toHaveBeenCalledWith('run-1');
   });
 });
 

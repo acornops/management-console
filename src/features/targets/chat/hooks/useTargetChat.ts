@@ -44,6 +44,7 @@ import {
 } from '@/features/targets/chat/hooks/chatDraftSession';
 import { isInFlightAssistantMessage } from '@/features/targets/chat/hooks/chatMessageVisibility';
 import { useTargetChatSessionDeepLink } from '@/features/targets/chat/hooks/useTargetChatSessionDeepLink';
+import { useTargetChatSessionReconciliation } from '@/features/targets/chat/hooks/useTargetChatSessionReconciliation';
 import { useSessionCachedState } from '@/hooks/sessionDataCache';
 export type { TargetChatController } from '@/features/targets/chat/hooks/targetChatControllerTypes';
 export function useTargetChat({
@@ -76,6 +77,10 @@ export function useTargetChat({
   const suppressedHydrationRunIdsRef = useRef<Set<string>>(new Set());
   const activeRunStreamControlsRef = useRef<Record<string, ActiveRunStreamControls>>({});
   const submitInFlightRef = useRef<symbol | null>(null);
+  const commitSessions = useCallback((nextSessions: ChatSession[]) => {
+    latestSessionsRef.current = nextSessions;
+    onUpdateSessions(nextSessions);
+  }, [onUpdateSessions]);
   const isRunCancelled = useCallback((runId: string) => cancelledRunIdsRef.current.has(runId), []);
   const markRunCancelled = useCallback((runId: string) => {
     cancelledRunIdsRef.current.add(runId);
@@ -280,24 +285,10 @@ export function useTargetChat({
     }
   };
 
-  const updateCurrentSession = (newMessages: ChatMessage[]) => {
-    let updatedSessions: ChatSession[];
-    if (target.chatSessions.find((s) => s.id === activeSessionId)) {
-      updatedSessions = target.chatSessions.map((s) =>
-        s.id === activeSessionId ? { ...s, messages: newMessages, messagesLoadFailed: false } : s
-      );
-    } else {
-      const newSession: ChatSession = {
-        id: activeSessionId || 'default',
-        name: activeSession.name,
-        messages: newMessages,
-        timestamp: Date.now()
-      };
-      updatedSessions = [...target.chatSessions, newSession];
-      if (!activeSessionId) setActiveSessionId(newSession.id);
-    }
-    onUpdateSessions(updatedSessions);
-  };
+  const { updateCurrentSession, reconcilePendingCancellation } = useTargetChatSessionReconciliation({
+    activeSession, activeSessionId, commitSessions, latestSessionsRef, setActiveSessionId,
+    setRunTracesByRunId: setRunTracesByRunIdAndRef, setTraceExpandedByRunId
+  });
 
   const createDraftSession = () => createDraftSessionWithWarning({
     getTargetChatActivity: () => (sessionApi?.getTargetChatActivity || controlPlaneApi.getTargetChatActivity)(target.workspaceId, target.id),
@@ -513,7 +504,7 @@ export function useTargetChat({
       runtimeSelection: args.runtimeSelection,
       assistantReferences: args.assistantReferences,
       shouldStickToBottomRef,
-      onUpdateSessions,
+      onUpdateSessions: commitSessions,
       setActiveSessionId,
       setInputValue,
       setIsLoading,
@@ -526,6 +517,7 @@ export function useTargetChat({
       runCancelledMessage: t('chat.runCancelledMessage'),
       isRunCancelled,
       markRunCancelled,
+      onPendingCancellationAccepted: reconcilePendingCancellation,
       registerRunStream,
       unregisterRunStream,
       suppressedRunIdsRef: suppressedHydrationRunIdsRef,
