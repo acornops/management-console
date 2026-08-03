@@ -27,7 +27,11 @@ catalog, pagination, and schedule-preview contracts.
 - Workflow run detail is read-only after launch: operators can inspect output,
   approvals, traces, and coordination, but cannot send follow-up instructions
   or steer the active run from the console.
-- Workflow creation has two decision-bearing steps, Describe and Agents.
+- Workflow creation has two decision-bearing steps, Name and Agents. The required
+  path asks only for a recognizable name and an Agent choice; description and
+  default instructions stay behind an explicit optional-details disclosure.
+  Navigation actions name their outcome, and a sole available Agent is selected
+  by default without preventing the operator from clearing that choice.
   Settings and the Agent assignment editor in Overview open directly in their
   actionable state for authorized operators rather than nesting another edit mode.
 - Compact workflow detail hides collection-only section and discovery chrome

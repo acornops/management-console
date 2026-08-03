@@ -18,9 +18,9 @@ Settings route and remove the redundant policy banner from Agent chat.
 
 - Agent Settings shows a labeled selector with the three supported modes:
   Read only, Ask before changes, and Auto-run allowed changes.
-- Each selection explains its operational effect.
-- Only users with `manage_agents` can change the mode.
-- Selecting a mode immediately updates the live Agent definition and reports success or failure.
+- Each selection explains its operational effect before save.
+- Only users with `manage_agents` can change and save the mode.
+- Saving updates the live Agent definition and reports success or failure.
 - Agent chat no longer renders the policy banner or its Pause changes action.
 - Existing prompt and composer safety copy continues to describe the effective
   permissions where relevant.
@@ -77,11 +77,3 @@ Settings route and remove the redundant policy banner from Agent chat.
   entrypoint pass, or any unrelated failures are documented with evidence.
 - End-user documentation needs no change because the current tools and MCP
   guide already documents all three Agent permission modes.
-
-## Follow-up: shared settings treatment
-
-- Agent and cluster settings use one shared Run permissions section and the
-  same compact settings-row selector.
-- Permission changes save immediately, matching the target-settings behavior.
-- Implementation provenance such as `Source: cluster setting` is not exposed in
-  the settings UI.

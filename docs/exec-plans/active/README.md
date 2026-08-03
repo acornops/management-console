@@ -15,6 +15,7 @@ Place active multi-step plans in this directory.
 - [Full App Consistency Closure](full-app-consistency-closure.md)
 - [Global Quiet Secondary Button](global-quiet-secondary-button.md)
 - [Infrastructure Catalog Chrome Consistency](infrastructure-catalog-chrome-consistency.md)
+- [Impeccable 40/40 and Audit 20/20 Closure](impeccable-40-audit-20-closure.md)
 - [Non-interactive Icon Tile Standardization](non-interactive-icon-tile-standardization.md)
 - [Management console production-readiness hardening](production-readiness-hardening.md)
 - [Production Tool Results](production-tool-results.md)

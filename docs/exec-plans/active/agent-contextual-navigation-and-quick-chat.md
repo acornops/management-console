@@ -92,11 +92,14 @@ workspace-owned automation definitions.
 
 ### Inline Agent definition follow-up
 
-- `npm run validate` — passed: 198 test files and 968 tests, design-system and
+- `npm run validate` — passed: 201 test files and 984 tests, design-system and
   adoption checks, membership and contract checks, harness checks, production
   build, bundle budget, and route smoke checks.
-- Focused Agent Settings fixture coverage — passed: 7 tests covering inline
-  save, collapsible draft retention, duplication-to-Settings, legacy edit-link
-  migration, guarded browser Back, lifecycle action sizing, and localization.
+- Focused Agent Settings fixture coverage — passed: 6 tests across the focused
+  runs, covering inline save, collapsible draft retention,
+  duplication-to-Settings, legacy edit-link migration, guarded browser Back,
+  and lifecycle action sizing.
+- Focused Agent history fixture coverage — passed: 3 tests covering clean
+  detail history, dirty inline definition edits, and dirty create-drawer edits.
 - Visual inspection of the desktop Agent Settings fixture confirmed the form
   stays within the standard Settings content measure without an edit overlay.

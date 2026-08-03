@@ -29,6 +29,6 @@ permission modes used by Agent Settings.
 - Full unit suite passed: 200 files, 982 tests.
 - App typecheck, contract check, and production build passed.
 - Focused browser validation found one visible Permission mode selector in the
-  Run permissions section. Internal policy provenance is intentionally omitted.
+  Run permissions section with the effective policy source shown separately.
 - Repository harness remains blocked by a pre-existing one-line budget overage
   in `src/styles.test.ts` in the dirty worktree.
