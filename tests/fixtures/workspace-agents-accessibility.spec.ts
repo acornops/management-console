@@ -57,12 +57,12 @@ test('full-page Agent chat opens model and capability menus outside the composer
   await expect(page.locator(`#${capabilityPreviewId}`)).toBeVisible();
 });
 
-test('Agent cards keep readiness and ownership visible', async ({ page }) => {
+test('Agent cards omit routine readiness while keeping ownership visible', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents', { waitUntil: 'domcontentloaded' });
 
   const readyCard = page.locator('[data-agent-card="true"][data-agent-id="fixture-specialist"]');
   await expect(readyCard).toBeVisible();
-  await expect(readyCard.getByText('Ready', { exact: true })).toBeVisible();
+  await expect(readyCard.getByText('Ready', { exact: true })).toHaveCount(0);
   await expect(readyCard.getByText('Test User · 1 skill', { exact: true })).toBeVisible();
 });
 
@@ -193,7 +193,7 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   );
 
   const card = page.locator('[data-agent-card="true"][data-agent-id="fixture-specialist"]');
-  await expect(card.getByText('Ready', { exact: true })).toBeVisible();
+  await expect(card.getByText('Ready', { exact: true })).toHaveCount(0);
   await expect(card.getByText('Test User · 1 skill', { exact: true })).toBeVisible();
   await expect(card.locator('[data-agent-avatar="true"]')).toHaveText('☸️');
   await expect(card.getByText('Chat', { exact: true })).toBeVisible();

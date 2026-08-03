@@ -21,7 +21,6 @@ import {
 } from '@/features/targets/catalog/TargetCatalogPrimitives';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
-import { statusTone } from '@/pages/WorkspaceAgentsPage.helpers';
 
 export type AgentFocusFilter = 'all' | 'active' | 'draft' | 'disabled';
 export interface AgentCatalogFilters { focus: AgentFocusFilter }
@@ -156,10 +155,9 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
         <div data-agent-card-grid="true" data-resource-card-grid="true" className="resource-card-grid min-w-0 gap-4">
           {visibleAgents.map((agent) => {
             const readinessBlocked = agent.status !== 'active' || agent.readiness.status !== 'ready';
-            const readinessLabel = readinessBlocked
-              ? agent.readiness.status === 'blocked' ? t('agentsWorkflows.agents.readiness.blocked') : t('agentsWorkflows.agents.readiness.needsSetup')
-              : t('agentsWorkflows.agents.readiness.ready');
-            const readinessTone = readinessBlocked ? 'warning' : statusTone(agent.status);
+            const readinessLabel = agent.readiness.status === 'blocked'
+              ? t('agentsWorkflows.agents.readiness.blocked')
+              : t('agentsWorkflows.agents.readiness.needsSetup');
             const purpose = agent.description || agent.instructions || t('agentsWorkflows.agents.noPurpose');
             const capabilitySummary = getAgentCapabilitySummary(agent, t);
             const readinessWarning = agentReadinessWarning(agent, t);
@@ -176,7 +174,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <h3 className="type-panel-title min-w-0 truncate text-ui-text" title={agent.name}>{agent.name}</h3>
-                      <StatusBadge tone={readinessTone}>{readinessLabel}</StatusBadge>
+                      {readinessBlocked && <StatusBadge tone="warning">{readinessLabel}</StatusBadge>}
                     </div>
                     <span aria-hidden="true" className="type-caption type-emphasis mt-1 inline-flex items-center gap-1 text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
                       {t('agentsWorkflows.agents.viewDetails')} <ICONS.ChevronRight className="h-3.5 w-3.5" />
