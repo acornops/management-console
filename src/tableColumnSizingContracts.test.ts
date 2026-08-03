@@ -15,6 +15,10 @@ const gridSizingContracts: Record<string, GridSizingContract> = {
     template: 'resourceLedgerGridClass',
     rowFile: 'src/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts.tsx'
   },
+  'src/features/targets/chat/components/ConversationHistory.tsx': {
+    template: 'conversationHistoryLedgerGridClass',
+    rowFile: 'src/features/targets/chat/components/ConversationHistory.tsx'
+  },
   'src/features/webhooks/WebhookList.tsx': {
     template: 'webhookLedgerGridClass',
     rowFile: 'src/features/webhooks/WebhookList.tsx'

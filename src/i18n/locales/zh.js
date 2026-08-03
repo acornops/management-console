@@ -1991,6 +1991,15 @@ export const zh = {
     noInvestigations: '暂无自动调查',
     searchChats: '搜索聊天',
     searchChatsPlaceholder: '搜索聊天',
+    chatCount: '{{count}} 个聊天',
+    chatCount_one: '{{count}} 个聊天',
+    chatCount_other: '{{count}} 个聊天',
+    acornOps: 'AcornOps',
+    columns: {
+      chat: '聊天',
+      startedBy: '发起人',
+      lastActivity: '最近活动'
+    },
     noMatchingConversations: '没有匹配的聊天',
     noMatchingConversationsBody: '请尝试其他搜索内容。',
     conversationHistory: '会话历史',
@@ -2006,6 +2015,7 @@ export const zh = {
     loadingConversation: '正在加载会话',
     conversationLoadFailed: '无法加载会话',
     conversationLoadFailedBody: '请刷新此页面，或重新打开会话后再试。',
+    noConversationsBody: '开始聊天后，故障排查历史将保留在这里。',
     sessionUnavailable: '此调查不属于该目标或已不可用。现已显示常规助手。',
     loadEarlier: '加载更早消息',
     loadingEarlier: '正在加载更早消息…',

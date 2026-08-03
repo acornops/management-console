@@ -1991,6 +1991,15 @@ export const en = {
     noInvestigations: 'No automatic investigations yet',
     searchChats: 'Search chats',
     searchChatsPlaceholder: 'Search chats',
+    chatCount: '{{count}} chats',
+    chatCount_one: '{{count}} chat',
+    chatCount_other: '{{count}} chats',
+    acornOps: 'AcornOps',
+    columns: {
+      chat: 'Chat',
+      startedBy: 'Started by',
+      lastActivity: 'Last activity'
+    },
     noMatchingConversations: 'No matching chats',
     noMatchingConversationsBody: 'Try another search.',
     conversationHistory: 'Conversation History',
@@ -2006,6 +2015,7 @@ export const en = {
     loadingConversation: 'Loading conversation',
     conversationLoadFailed: 'Conversation could not be loaded',
     conversationLoadFailedBody: 'Refresh this page or reopen the conversation to try again.',
+    noConversationsBody: 'Start a chat to keep troubleshooting history available here.',
     sessionUnavailable: 'That investigation is not available for this target. Showing the regular assistant instead.',
     loadEarlier: 'Load earlier',
     loadingEarlier: 'Loading earlier…',

@@ -1,11 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { TFunction } from 'i18next';
-import {
-  CONVERSATION_HISTORY_LOADING_DELAY_MS,
-  ConversationHistory,
-  scheduleConversationHistoryLoadingNotice
-} from '@/features/targets/chat/components/ConversationHistory';
+import { CONVERSATION_HISTORY_LOADING_DELAY_MS, ConversationHistory, scheduleConversationHistoryLoadingNotice } from '@/features/targets/chat/components/ConversationHistory';
 import type { ChatSession } from '@/types';
 
 const t = ((key: string, params?: Record<string, string>) => {
@@ -68,13 +64,13 @@ describe('ConversationHistory', () => {
     const markup = renderToStaticMarkup(
       <ConversationHistory
         appName="demo-target"
-        sessions={[
-          session({ id: 'running', name: 'Running check' }),
-          session({ id: 'review', name: 'Needs approval' }),
-          session({ id: 'done', name: 'Completed check' })
-        ]}
+        sessions={[session({ id: 'running', name: 'Running check' }), session({ id: 'review', name: 'Needs approval' }), session({ id: 'done', name: 'Completed check' })]}
         activeSessionId={null}
-        sessionAssistantStatuses={{ running: 'working', review: 'review', done: 'done' }}
+        sessionAssistantStatuses={{
+          running: 'working',
+          review: 'review',
+          done: 'done'
+        }}
         isSessionsLoading={false}
         canDeleteSessions={false}
         onSelectSession={() => undefined}
@@ -96,10 +92,7 @@ describe('ConversationHistory', () => {
       <ConversationHistory
         mode="page"
         appName="demo-target"
-        sessions={[
-          session({ id: 'rollout', name: 'Check rollout' }),
-          session({ id: 'ingress', name: 'Inspect ingress' })
-        ]}
+        sessions={[session({ id: 'rollout', name: 'Check rollout' }), session({ id: 'ingress', name: 'Inspect ingress' })]}
         activeSessionId={null}
         isSessionsLoading={false}
         canDeleteSessions={false}
@@ -123,7 +116,7 @@ describe('ConversationHistory', () => {
         sessions={[session({ name: 'Check rollout' })]}
         activeSessionId={null}
         isSessionsLoading={false}
-        canDeleteSessions={false}
+        canDeleteSessions
         onSelectSession={() => undefined}
         onDeleteSessionClick={() => undefined}
         onSearchValueChange={() => undefined}
@@ -134,7 +127,14 @@ describe('ConversationHistory', () => {
 
     expect(markup).toContain('Target context: demo-target');
     expect(markup).not.toContain('data-chat-history-search="true"');
-    expect(markup).toContain('px-4 py-3 pr-16');
+    expect(markup).toContain('py-2 pr-16');
+    expect(markup).toContain('flex-1 truncate type-row-title');
+    expect(markup).not.toContain('flex-1 break-words');
+    expect(markup).toContain('mt-0.5 flex min-w-0 flex-nowrap items-center gap-x-1.5 overflow-hidden whitespace-nowrap type-caption leading-4');
+    expect(markup).toContain('absolute top-1/2 -translate-y-1/2');
+    expect(markup).toContain('right-3');
+    expect(markup).toContain('hover:border-status-danger/30 hover:bg-status-danger-soft hover:text-status-danger-text');
+    expect(markup).toContain('active:border-status-danger/30 active:bg-status-danger-soft active:text-status-danger-text');
     expect(markup).not.toContain('chat.recent');
     expect(markup).not.toContain('GMT');
   });
@@ -209,8 +209,8 @@ describe('ConversationHistory', () => {
         mode="page"
         appName="demo-target"
         sessions={[
-          session({ id: 'rollout', name: 'Check rollout' }),
-          session({ id: 'ingress', name: 'Inspect ingress' })
+          session({ id: 'rollout', name: 'Check rollout', createdByUser: { id: 'user-1', displayName: 'Dev User' } }),
+          session({ id: 'ingress', name: 'Inspect ingress', createdByUser: { id: 'user-2', displayName: 'Platform Lead' } })
         ]}
         activeSessionId="rollout"
         isSessionsLoading={false}
@@ -230,8 +230,17 @@ describe('ConversationHistory', () => {
     expect(markup).toContain('<h1');
     expect(markup).toContain('chat.chats');
     expect(markup).toContain('chat.newChat');
-    expect(markup).toContain('max-w-3xl');
+    expect(markup).toContain('data-page-header-action="true"');
+    expect(markup).toContain('min-h-11');
+    expect(markup).not.toContain('sm:min-h-9');
+    expect(markup).not.toContain('max-w-[88rem]');
     expect(markup).not.toContain('mx-auto');
+    expect(markup).toContain('data-search-filter-frame="true"');
+    expect(markup).toContain('chat.columns.chat');
+    expect(markup).toContain('chat.columns.startedBy');
+    expect(markup).toContain('chat.columns.lastActivity');
+    expect(markup).toContain('Dev User');
+    expect(markup).toContain('Platform Lead');
     expect(markup).toContain('Check rollout');
     expect(markup).toContain('Inspect ingress');
     expect(markup).not.toContain('Target context: demo-target');
