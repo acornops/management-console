@@ -14,7 +14,7 @@ test('workspace overview exposes real links with a coherent heading structure', 
 
   const clusterLink = page.locator('[data-connected-targets="true"] a').filter({ hasText: 'Singapore Production' });
   const virtualMachineLink = page.locator('[data-connected-targets="true"] a').filter({ hasText: 'Payments VM' });
-  const issueLink = page.getByRole('link', { name: 'View More' }).first();
+  const issueLink = page.getByRole('link', { name: 'View target' }).first();
   const attentionBoard = page.locator('[data-attention-board="true"]');
   const warningIssue = attentionBoard.locator('article').filter({ hasText: 'Payment gateway service is degraded' });
   const warningIssueTargetIdentity = warningIssue.locator('[data-attention-target-identity="true"]');

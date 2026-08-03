@@ -2,7 +2,10 @@ import { spawn } from 'node:child_process';
 import { routeCoverageManifest } from './route-coverage-manifest.mjs';
 
 const host = '127.0.0.1';
-const port = 4188;
+const port = Number(process.env.DESIGN_ROUTES_PORT || 4188);
+if (!Number.isInteger(port) || port < 1024 || port > 65_535) {
+  throw new Error('DESIGN_ROUTES_PORT must be an integer between 1024 and 65535.');
+}
 const origin = `http://${host}:${port}`;
 const chunkSize = 6;
 const concurrency = 1;
@@ -95,6 +98,7 @@ if (!(await serverIsReady())) {
       env: {
         ...process.env,
         VITE_APP_DATA_MODE: 'mock',
+        VITE_UI_SOURCE_MODE: '1',
         VITE_CONTROL_PLANE_API_BASE_URL: 'http://127.0.0.1:59999'
       }
     }

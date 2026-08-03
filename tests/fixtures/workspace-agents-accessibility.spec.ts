@@ -32,11 +32,11 @@ test('the base Agent URL opens Chat and browser history restores it', async ({ p
   await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist', { waitUntil: 'domcontentloaded' });
 
   await expect(page.locator('header [data-agent-avatar="true"]')).toHaveText('☸️');
-  await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Specialist incident review' })).toBeVisible();
   await page.getByRole('link', { name: 'Agent Settings' }).click();
   await expect(page).toHaveURL(agentDetailPath('settings'));
   await page.goBack();
-  await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Specialist incident review' })).toBeVisible();
 });
 
 test('full-page Agent chat opens model and capability menus outside the composer capsule', async ({ page }) => {
@@ -274,7 +274,7 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(2);
   await panel.getByRole('button', { name: 'Open full chat' }).click();
   await expect(page).toHaveURL(agentDetailPath('chat'));
-  await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Specialist incident review' })).toBeVisible();
 });
 
 test('opening Agent Chat replaces an existing target assistant dock', async ({ page }) => {
@@ -582,7 +582,7 @@ test('Agent Chat follows the selected Chinese application locale', async ({ page
   await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
-  await expect(page.getByText('此 Agent 可立即检查，并会在每次更改前请求批准。')).toBeVisible();
+  await expect(page.getByText('每个具备写入能力的操作都需要你的批准。')).toBeVisible();
 });
 
 test('Agent tools follow the selected Chinese application locale', async ({ page }) => {
@@ -594,7 +594,7 @@ test('Agent tools follow the selected Chinese application locale', async ({ page
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   await expect(page.getByRole('heading', { level: 1, name: '工具' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2, name: '工具清单' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: '暂无可用的内置工具。' })).toBeVisible();
 });
 
 test('Agent tools use the dedicated stable route without nested capability navigation', async ({ page }) => {
@@ -602,8 +602,7 @@ test('Agent tools use the dedicated stable route without nested capability navig
 
   await expect(page.getByRole('heading', { level: 1, name: 'Tools' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Agent capability sections' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { level: 2, name: 'Tool inventory' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 3, name: 'No built-in tools are available.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'No built-in tools are available.' })).toBeVisible();
 });
 
 test('Agent detail stays within a narrow viewport in light and dark themes', async ({ browser }) => {

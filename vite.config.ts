@@ -11,6 +11,7 @@ export default defineConfig(({ command, mode }) => {
   const dataMode = resolveAppDataMode(env.VITE_APP_DATA_MODE, {
     production: command === 'build' && mode === 'production'
   });
+  const useUiSource = env.VITE_UI_SOURCE_MODE === '1';
   const analyzeBundle = process.env.ANALYZE === 'true' || env.ANALYZE === 'true';
   return {
     base: basePath.endsWith('/') ? basePath : `${basePath}/`,
@@ -20,6 +21,7 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      watch: useUiSource ? { ignored: ['**/packages/ui/dist/**'] } : undefined
     },
     plugins: [
       react(),
@@ -37,10 +39,18 @@ export default defineConfig(({ command, mode }) => {
         output: {
           manualChunks(id) {
             if (id.includes('/src/i18n/locales/')) {
-              return 'app-locales';
+              return id.endsWith('/en.js') ? 'app-locale-en' : 'app-locale-zh';
             }
-            if (id.includes('/src/features/targets/chat/')) {
-              return 'app-target-chat';
+            if (
+              id.includes('/src/features/targets/chat/hooks/') ||
+              id.includes('/src/features/targets/chat/lib/') ||
+              id.endsWith('/src/features/targets/chat/types.ts') ||
+              id.endsWith('/src/features/ai/aiRuntimeReadiness.ts')
+            ) {
+              return 'app-target-chat-runtime';
+            }
+            if (id.includes('/src/features/targets/chat/components/')) {
+              return 'app-target-chat-ui';
             }
             if (id.includes('/src/services/')) {
               return 'app-control-plane';
@@ -60,8 +70,11 @@ export default defineConfig(({ command, mode }) => {
             if (id.includes('i18next')) {
               return 'vendor-i18n';
             }
-            if (id.includes('react') || id.includes('scheduler')) {
-              return 'vendor-react';
+            if (id.includes('/node_modules/react-dom/') || id.includes('/node_modules/scheduler/')) {
+              return 'vendor-react-dom';
+            }
+            if (id.includes('/node_modules/react/') || id.includes('/node_modules/react-is/')) {
+              return 'vendor-react-core';
             }
             return undefined;
           }
@@ -82,9 +95,12 @@ export default defineConfig(({ command, mode }) => {
       }
     },
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, 'src'),
-      }
+      alias: [
+        { find: '@', replacement: path.resolve(__dirname, 'src') },
+        ...(useUiSource
+          ? [{ find: /^@acornops\/ui$/, replacement: path.resolve(__dirname, 'packages/ui/src/index.ts') }]
+          : [])
+      ]
     }
   };
 });

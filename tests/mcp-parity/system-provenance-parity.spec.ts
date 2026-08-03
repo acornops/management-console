@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const workspaceId = 'fixture-workspace';
-const fixtureApi = 'http://127.0.0.1:4190/api/v1';
+const fixtureApi = `http://127.0.0.1:${process.env.MCP_PARITY_API_PORT || '4190'}/api/v1`;
 
 async function reset(page: Page) {
   const response = await page.request.post(`${fixtureApi}/__fixtures/reset`);
@@ -19,8 +19,8 @@ test('default and custom Agents use the same compact resource treatment and sett
   const customCard = page.locator('[data-agent-id="fixture-specialist"]');
   await expect(defaultCard.getByText('Provided by AcornOps')).toHaveCount(0);
   await expect(customCard.getByText('Provided by AcornOps')).toHaveCount(0);
-  await expect(defaultCard.getByText(/MCP server/)).toBeVisible();
-  await expect(customCard.getByText(/skill/)).toBeVisible();
+  await expect(defaultCard.getByText('AcornOps Fixture Lab · No capabilities configured')).toBeVisible();
+  await expect(customCard.getByText('Test User · 1 skill')).toBeVisible();
 
   await page.getByRole('button', { name: 'Open details for Workflow Analyst' }).click();
   const defaultHeader = page.getByRole('heading', { level: 1, name: 'Agent chat' }).locator('..');

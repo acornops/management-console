@@ -6,6 +6,7 @@ const resourceCatalogRoutes = [
   '/workspaces/fixture-workspace/virtual-machines',
   '/workspaces/fixture-workspace/agents'
 ];
+const fixtureBaseUrl = `http://127.0.0.1:${process.env.FIXTURE_APP_PORT || '4186'}`;
 
 async function expectResourceGridReady(grid: Locator) {
   await expect(grid).toBeVisible();
@@ -161,7 +162,7 @@ test('three real cluster cards fit the supplied window at 110% effective scale',
 
   try {
     const page = await context.newPage();
-    await page.goto('http://127.0.0.1:4186/workspaces/fixture-workspace/kubernetes-clusters', {
+    await page.goto(`${fixtureBaseUrl}/workspaces/fixture-workspace/kubernetes-clusters`, {
       waitUntil: 'domcontentloaded'
     });
     await expect(page.locator('[data-cluster-card="true"]')).toHaveCount(1);

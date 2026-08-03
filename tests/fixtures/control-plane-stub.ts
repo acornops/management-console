@@ -2,8 +2,15 @@ import { createServer } from 'node:http';
 
 import { routeFixtureRequest } from '../../src/fixtures/router';
 
-const port = 4190;
-const allowedOrigin = 'http://127.0.0.1:4187';
+const port = Number(process.env.MCP_PARITY_API_PORT || 4190);
+const appPort = Number(process.env.MCP_PARITY_APP_PORT || 4187);
+
+for (const [name, value] of [['MCP_PARITY_API_PORT', port], ['MCP_PARITY_APP_PORT', appPort]] as const) {
+  if (!Number.isInteger(value) || value < 1024 || value > 65_535) {
+    throw new Error(`${name} must be an integer between 1024 and 65535.`);
+  }
+}
+const allowedOrigin = `http://127.0.0.1:${appPort}`;
 
 createServer(async (request, response) => {
   response.setHeader('Access-Control-Allow-Origin', allowedOrigin);

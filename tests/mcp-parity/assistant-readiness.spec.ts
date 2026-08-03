@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 const workspaceId = 'fixture-workspace';
 const clusterId = 'fixture-cluster';
 const virtualMachineId = 'fixture-vm';
-const controlPlaneUrl = 'http://127.0.0.1:4190';
+const controlPlaneUrl = `http://127.0.0.1:${process.env.MCP_PARITY_API_PORT || '4190'}`;
 
 async function resetWithAiRuntimeDisabled(page: Page) {
   await page.request.post(`${controlPlaneUrl}/api/v1/__fixtures/reset`);

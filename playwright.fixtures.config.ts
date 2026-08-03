@@ -1,6 +1,13 @@
 import { defineConfig } from '@playwright/test';
 
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+const fixtureAppPort = Number(process.env.FIXTURE_APP_PORT || 4186);
+
+if (!Number.isInteger(fixtureAppPort) || fixtureAppPort < 1024 || fixtureAppPort > 65_535) {
+  throw new Error('FIXTURE_APP_PORT must be an integer between 1024 and 65535.');
+}
+
+const fixtureBaseUrl = `http://127.0.0.1:${fixtureAppPort}`;
 
 export default defineConfig({
   testDir: './tests/fixtures',
@@ -13,7 +20,7 @@ export default defineConfig({
   expect: { timeout: 20_000 },
   reporter: 'line',
   use: {
-    baseURL: 'http://127.0.0.1:4186',
+    baseURL: fixtureBaseUrl,
     browserName: 'chromium',
     headless: true,
     reducedMotion: 'reduce',
@@ -23,8 +30,8 @@ export default defineConfig({
     launchOptions: chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}
   },
   webServer: {
-    command: 'VITE_APP_DATA_MODE=mock VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port 4186 --strictPort',
-    url: 'http://127.0.0.1:4186',
+    command: `VITE_APP_DATA_MODE=mock VITE_UI_SOURCE_MODE=1 VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port ${fixtureAppPort} --strictPort`,
+    url: fixtureBaseUrl,
     reuseExistingServer: process.env.FIXTURE_REUSE_SERVER === '1',
     timeout: 120_000
   }

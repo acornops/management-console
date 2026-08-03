@@ -43,9 +43,9 @@ test('webhooks hub aggregates inbound endpoints and returns configuration to the
   await page.goto('/workspaces/fixture-workspace/webhooks?direction=inbound', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: 'Webhooks' })).toBeVisible();
-  await expect(page.getByRole('tab')).toHaveText(['Outbound', 'Inbound']);
-  await expect(page.getByRole('tab', { name: 'Inbound' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tab', { name: 'Outbound' })).toHaveAttribute('aria-selected', 'false');
+  await expect(page.getByRole('tab')).toHaveText(['Outbound webhooks', 'Inbound webhooks']);
+  await expect(page.getByRole('tab', { name: 'Inbound webhooks' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Outbound webhooks' })).toHaveAttribute('aria-selected', 'false');
 
   const inboundWebhook = page.getByRole('article').filter({ hasText: 'External production review' });
   await expect(inboundWebhook).toContainText('Production health review');
@@ -356,13 +356,15 @@ test('workspace run links focus the exact execution in workflow history', async 
 test('Agent detail scopes lifecycle actions to Settings', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/chat', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Agent chat' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Specialist incident review' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Delete agent', exact: true })).toHaveCount(0);
 
   await page.getByRole('link', { name: 'Agent Settings' }).click();
   await expect(page).toHaveURL('/workspaces/fixture-workspace/agents/fixture-specialist/settings');
-  await expect(page.getByRole('button', { name: 'Edit agent' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit agent' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Agent definition' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Kubernetes Specialist');
   await expect(page.getByRole('button', { name: 'Disable agent', exact: true }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Delete agent', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Disable Agent' })).toBeVisible();

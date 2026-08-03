@@ -182,7 +182,7 @@ test('workflow detail keeps primary navigation lean across contextual and compac
   await expect(page.getByText('Choose one Agent for a direct run, or multiple Agents to coordinate.', { exact: true })).toHaveCount(0);
   await expect(page.getByText('AcornOps will coordinate work across 2 selected agents.', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit agents', exact: true }).click();
-  await expect(page.getByText('Choose one Agent for a direct run, or multiple Agents to coordinate.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Select at least one Agent. Choose one for a direct run, or multiple Agents to coordinate.', { exact: true })).toBeVisible();
   await expect(page.getByText('AcornOps will coordinate work across 2 selected agents.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Save agents', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -522,26 +522,36 @@ test('workflow launch uses the saved prompt without runtime template inputs', as
   await expect(page.getByRole('tab', { name: 'Runs', exact: true })).toHaveAttribute('aria-selected', 'true');
 });
 
-test('workflow authoring uses a target-aware prompt field and a two-step setup', async ({ page }) => {
+test('workflow authoring keeps optional details out of the required path', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Add workflow' }).click();
 
   const drawer = page.getByRole('dialog', { name: 'Create workflow' });
   const setup = drawer.getByLabel('Create workflow setup');
-  await expect(setup.getByText('Describe', { exact: true })).toBeVisible();
+  await expect(setup.getByText('Name', { exact: true })).toBeVisible();
   await expect(setup.getByText('Agents', { exact: true })).toBeVisible();
   await expect(setup.getByText('Review', { exact: true })).toHaveCount(0);
-  await expect(drawer.getByRole('button', { name: 'Reset' })).toBeDisabled();
-  const prompt = drawer.getByRole('combobox', { name: 'Workflow prompt' });
+  await expect(drawer.getByRole('button', { name: 'Reset' })).toHaveCount(0);
+  await expect(drawer.getByRole('button', { name: 'Back to name' })).toHaveCount(0);
+  await expect(drawer.getByRole('combobox', { name: 'Default instructions' })).toHaveCount(0);
+  await drawer.getByText('Add optional details', { exact: true }).click();
+  const prompt = drawer.getByRole('combobox', { name: 'Default instructions' });
   await expect(prompt).toHaveAttribute('aria-autocomplete', 'list');
   await expect(drawer.getByRole('listbox')).toHaveCount(0);
 
   await drawer.locator('#create-workflow-name-input').fill('Lean workflow');
+  await expect(drawer.getByText('Copied into every launch. Leave blank to use “Start Lean workflow.”')).toBeVisible();
   await prompt.fill('Review production health and summarize the result.');
-  await drawer.getByRole('button', { name: 'Next' }).click();
+  await drawer.getByRole('button', { name: 'Choose Agents' }).click();
+  await expect(drawer.getByRole('button', { name: 'Back to name' })).toBeVisible();
+  await expect(drawer.getByText('Select at least one Agent. Choose one for a direct run, or multiple Agents to coordinate.')).toBeVisible();
+  await expect(drawer.getByRole('status')).toHaveCount(0);
+  await expect(drawer.getByText('Inspects repository state and prepares bounded operational changes.')).toBeVisible();
   const createButton = drawer.getByRole('button', { name: 'Create workflow', exact: true });
   await expect(createButton).toBeDisabled();
   await drawer.getByRole('checkbox').first().check();
+  await expect(drawer.getByText('This workflow runs directly with Workflow Analyst.')).toBeVisible();
+  await expect(drawer.getByRole('status')).toHaveText('This workflow runs directly with Workflow Analyst.');
   await expect(createButton).toBeEnabled();
   await drawer.getByRole('button', { name: 'Close create workflow drawer' }).click();
   await expect(drawer.getByText('Discard workflow draft?')).toBeVisible();

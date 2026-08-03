@@ -2,6 +2,13 @@ import { defineConfig } from '@playwright/test';
 
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 const snapshotDirectory = process.platform === 'linux' ? '__snapshots__/linux' : '__snapshots__';
+const designRoutesPort = Number(process.env.DESIGN_ROUTES_PORT || 4188);
+
+if (!Number.isInteger(designRoutesPort) || designRoutesPort < 1024 || designRoutesPort > 65_535) {
+  throw new Error('DESIGN_ROUTES_PORT must be an integer between 1024 and 65535.');
+}
+
+const designRoutesBaseUrl = `http://127.0.0.1:${designRoutesPort}`;
 
 export default defineConfig({
   testDir: './tests/design-routes',
@@ -17,7 +24,7 @@ export default defineConfig({
   expect: { timeout: 20_000 },
   reporter: 'line',
   use: {
-    baseURL: 'http://127.0.0.1:4188',
+    baseURL: designRoutesBaseUrl,
     browserName: 'chromium',
     headless: true,
     reducedMotion: 'reduce',
@@ -58,8 +65,8 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'VITE_APP_DATA_MODE=mock VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port 4188 --strictPort',
-    url: 'http://127.0.0.1:4188',
+    command: `VITE_APP_DATA_MODE=mock VITE_UI_SOURCE_MODE=1 VITE_CONTROL_PLANE_API_BASE_URL=http://127.0.0.1:59999 npm run dev -- --host 127.0.0.1 --port ${designRoutesPort} --strictPort`,
+    url: designRoutesBaseUrl,
     reuseExistingServer: process.env.DESIGN_ROUTES_REUSE_SERVER === '1' || !process.env.CI,
     timeout: 120_000
   }

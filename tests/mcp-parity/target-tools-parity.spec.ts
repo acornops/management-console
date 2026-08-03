@@ -2,9 +2,10 @@ import { expect, test } from '@playwright/test';
 
 const workspaceId = 'fixture-workspace';
 const clusterId = 'fixture-cluster';
+const fixtureApi = `http://127.0.0.1:${process.env.MCP_PARITY_API_PORT || '4190'}/api/v1`;
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('http://127.0.0.1:4190/api/v1/__fixtures/reset');
+  const response = await page.request.post(`${fixtureApi}/__fixtures/reset`);
   expect(response.ok(), `fixture reset failed with ${response.status()}`).toBe(true);
 });
 

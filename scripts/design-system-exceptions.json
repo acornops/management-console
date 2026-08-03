@@ -11,6 +11,7 @@
     "src/app/theme.ts"
   ],
   "authenticatedRoutePages": [
+    "src/pages/WorkspacesPage.tsx",
     "src/pages/WorkspaceOverviewPage.tsx",
     "src/pages/WorkspaceAgentsPage.tsx",
     "src/pages/WorkspaceCatalogPage.tsx",

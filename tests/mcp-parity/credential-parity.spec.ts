@@ -3,9 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 const workspaceId = 'fixture-workspace';
 const agentId = 'fixture-specialist';
 const clusterId = 'fixture-cluster';
+const fixtureApi = `http://127.0.0.1:${process.env.MCP_PARITY_API_PORT || '4190'}/api/v1`;
 
 async function reset(page: Page) {
-  const response = await page.request.post('http://127.0.0.1:4190/api/v1/__fixtures/reset');
+  const response = await page.request.post(`${fixtureApi}/__fixtures/reset`);
   expect(response.ok(), `fixture reset failed with ${response.status()}`).toBe(true);
 }
 
@@ -117,8 +118,11 @@ test('schedule auto-pause exposes the bounded reason and a manual workflow recov
   await page.goto(`/workspaces/${workspaceId}/workflows/schedules`);
   const row = page.getByRole('row', { name: /MCP recovery review/ });
   await expect(row.getByText('Auto-paused')).toBeVisible();
+  await expect(row.getByText('MCP prerequisites were not ready.')).toBeVisible();
+  await expect(row.getByText('The schedule paused before a workflow run was created.')).toBeVisible();
+  await expect(row.getByText('Repair the required MCP access, then resume the schedule manually.')).toBeVisible();
+  await row.getByText('Technical details').click();
   await expect(row.getByText(/MCP_CONNECTION_REQUIRED/)).toBeVisible();
-  await expect(row.getByText('Repair MCP before resuming. Resume remains a manual action.')).toBeVisible();
   await expect(row.getByRole('button', { name: 'Resume' })).toBeEnabled();
   await expect(row.getByRole('link', { name: 'Review workflow access' })).toHaveAttribute('href', /workflows\?workflow=fixture-workflow&tab=capabilities/);
 });
