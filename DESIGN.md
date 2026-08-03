@@ -293,6 +293,7 @@ Buttons are compact, predictable, and text-led. They use lucide icons when an ic
 - **Danger icon:** Quiet destructive icon-only controls use the faint structural boundary and muted ink at rest. Hover and press add the danger-soft fill, danger text, and a restrained danger boundary; keyboard focus remains orange.
 - **Tertiary / Ghost:** Text-muted default, soft orange wash on hover.
 - **Sizing:** Default controls are at least `44px` high; compact controls may reduce to `36px` from the `sm` breakpoint upward. Inline text actions use the shared `inline` size instead of locally removing padding or minimum heights.
+- **Route actions:** Buttons in `PageHeader` or a route-equivalent custom header use `PageHeaderButton`. It owns the default `44px` control size so the same route action cannot drift between compact and default sizing across destinations.
 - **Variant ownership:** Every shared `Button` call site declares its semantic variant explicitly, even when it currently matches the component fallback. This makes intent reviewable and prevents a secondary boundary from leaking into brand, navigation, inline text, menu, or icon actions during migrations.
 - **Hover / Focus / Disabled:** Enabled foreground and fill pairs meet WCAG 2.1 AA normal-text contrast. Secondary outlines stay intentionally faint, while keyboard focus uses the high-visibility orange signal ring. Disabled controls keep their dimensions, reduce to `50%` opacity, and use a not-allowed cursor.
 

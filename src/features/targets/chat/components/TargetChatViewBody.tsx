@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { Button, DrawerFrame } from '@acornops/ui';
+import { Button, DrawerFrame, PageHeaderButton } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
 import { LiveRunTrace } from '@/features/targets/chat/types';
@@ -333,17 +333,16 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                     <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">
                       <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason} className="min-w-0 flex-1 lg:flex-none">
                         <span className="inline-flex w-full">
-                          <Button
+                          <PageHeaderButton
                             type="button"
                             onClick={handleCreateSessionClick}
                             disabled={!canChat || !hasReadyAiRuntime}
                             variant="primary"
-                            size="md"
-                            className="w-full whitespace-nowrap lg:w-auto"
+                            className="w-full lg:w-auto"
                           >
                             <Plus className="h-4 w-4" />
                             {t('chat.newChat')}
-                          </Button>
+                          </PageHeaderButton>
                         </span>
                       </Tooltip>
                     </div>

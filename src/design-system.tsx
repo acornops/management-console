@@ -15,7 +15,7 @@ import { FieldLabel, HelpText, MenuItem, MenuTrigger, Radio, Switch } from '@aco
 import { InlineAlert } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 import { DialogFrame, DrawerFrame } from '@acornops/ui';
-import { DataSurface, PageBackLink, PageHeader, PageSection, PageShell, TableToolbar } from '@acornops/ui';
+import { DataSurface, PageBackLink, PageHeader, PageHeaderButton, PageSection, PageShell, TableToolbar } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableCell, DataTableFrame, DataTableHeader, DataTableHeaderCell, DataTableRow, DataTableStateRow } from '@acornops/ui';
 import { DateTimePicker } from '@acornops/ui';
 import { Select } from '@acornops/ui';
@@ -99,10 +99,10 @@ const Catalog = () => {
         title="Operator’s ledger"
         description="Canonical route composition, controls, states, and overlay anatomy. This entrypoint is served by Vite in development and is not part of the production app router."
         actions={
-          <Button variant="secondary" onClick={() => setDark((value) => !value)} data-catalog-theme-toggle="true">
+          <PageHeaderButton variant="secondary" onClick={() => setDark((value) => !value)} data-catalog-theme-toggle="true">
             {dark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
             {dark ? 'Light theme' : 'Dark theme'}
-          </Button>
+          </PageHeaderButton>
         }
       />
 
