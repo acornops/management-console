@@ -9,7 +9,11 @@ export const defaultAuthConfig: ControlPlaneAuthConfig = {
   passwordAuthEnabled: false,
   passwordSignupEnabled: false,
   passwordEmailVerificationRequired: true,
-  passwordResetEnabled: false
+  passwordResetEnabled: false,
+  helpLinks: {
+    documentationUrl: 'https://docs.acornops.dev',
+    supportUrl: 'https://discord.gg/jBgTy4KhF'
+  }
 };
 
 export type AuthConfigLoadState =

@@ -53,6 +53,10 @@ export interface ControlPlaneAuthConfig {
   passwordSignupEnabled: boolean;
   passwordEmailVerificationRequired: boolean;
   passwordResetEnabled: boolean;
+  helpLinks?: {
+    documentationUrl: string;
+    supportUrl: string;
+  };
 }
 
 export interface ControlPlaneLogoutResult {

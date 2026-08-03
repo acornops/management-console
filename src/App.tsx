@@ -539,8 +539,8 @@ const App: React.FC = () => {
       sidebarMode={sidebarMode}
       isAccountMenuOpen={isAccountMenuOpen}
       isSidebarWorkspaceMenuOpen={isSidebarWorkspaceMenuOpen}
-      language={language}
-      languageOptions={getSupportedLanguages()}
+      language={language} languageOptions={getSupportedLanguages()}
+      helpLinks={authConfig.helpLinks}
       loadWorkspaceInvitation={loadWorkspaceInvitation}
       navigate={navigate}
       navigateToKubernetesCluster={navigateToKubernetesCluster}

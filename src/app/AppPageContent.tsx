@@ -159,6 +159,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
   isDark,
   language,
   languageOptions,
+  helpLinks,
   route,
   selectedTargetIssueSummary,
   user,
@@ -585,7 +586,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           )}
 
           {route.kind === 'help' && (
-            <HelpPage />
+            <HelpPage helpLinks={helpLinks} />
           )}
 
           {(route.kind === 'kubernetesClusterDiagnostics' || route.kind === 'workspaceKubernetesClusterDiagnostics') && (

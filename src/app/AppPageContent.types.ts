@@ -2,7 +2,7 @@ import type { TargetChatController } from '@/features/targets/chat/hooks/useTarg
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
 import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
-import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { ControlPlaneAuthConfig, ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
 import type { AppRoute, ClusterSubview, VmSubview } from '@/utils/routes';
@@ -19,6 +19,7 @@ export interface AppPageContentProps {
   isDark: boolean;
   language: AppLanguageCode;
   languageOptions: AppLanguageOption[];
+  helpLinks?: ControlPlaneAuthConfig['helpLinks'];
   route: AppRoute;
   selectedTargetIssueSummary: ControlPlaneTargetIssueSummary | null;
   user: User;

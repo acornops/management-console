@@ -7,7 +7,7 @@
   "counterparts": {
     "control-plane": {
       "authContract": {
-        "config": "GET /api/v1/auth/config returns effective workspace-user OIDC and password capability flags without exposing admission policy.",
+        "config": "GET /api/v1/auth/config returns effective workspace-user OIDC and password capability flags plus optional effective helpLinks destinations without exposing admission policy. Missing or invalid helpLinks fields retain the built-in documentation and support destinations during rolling upgrades.",
         "logout": "POST /api/v1/auth/logout returns {status=ok,mode=oidc|local,redirectPath}; redirectPath is an AcornOps path and never a provider URL.",
         "browserResults": [
           "auth_result=oidc_access_denied",

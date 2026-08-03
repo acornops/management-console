@@ -4,7 +4,7 @@ import type { ResolvedTheme, ThemePreference } from '@/app/theme';
 import type { DesktopSidebarMode } from '@/app/preferences';
 import type { NavigateOptions as RouterNavigateOptions } from '@/hooks/useAppRouter';
 import type { AppLanguageCode, AppLanguageOption } from '@/i18n/languageConfig';
-import type { controlPlaneApi as ControlPlaneApi, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import type { controlPlaneApi as ControlPlaneApi, ControlPlaneAuthConfig, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import type { AgentDefinitionApi } from '@/services/control-plane/agentApi';
 import type { KubernetesCluster, User, Workspace, WorkspaceInvitation } from '@/types';
@@ -67,6 +67,7 @@ export interface AppShellProps {
   isSidebarWorkspaceMenuOpen: boolean;
   language: AppLanguageCode;
   languageOptions: AppLanguageOption[];
+  helpLinks?: ControlPlaneAuthConfig['helpLinks'];
   loadWorkspaceInvitation: (token: string) => ReturnType<typeof ControlPlaneApi.getWorkspaceInvitation>;
   navigate: (path: string, options?: RouterNavigateOptions) => void;
   navigateToKubernetesCluster: (cluster: KubernetesCluster) => void;

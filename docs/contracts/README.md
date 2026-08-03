@@ -24,6 +24,10 @@ The management console is the browser client for the control-plane API. Keep thi
 
 - The console should call the control plane through typed service modules, not by scattering raw fetch calls through UI components.
 - Cookie-backed requests must use `credentials: include`.
+- Auth config may include additive effective `helpLinks`. The Help page accepts
+  only a credential-free HTTPS documentation URL and a credential-free HTTPS or
+  plain `mailto:` support URL; missing or invalid values retain the current
+  built-in AcornOps destinations during rolling upgrades.
 - Paginated list responses use `{ items, nextCursor? }`.
 - The workspace approval inbox additionally exposes `pendingCount`, the total pending approvals across target-tool and workflow-gate sources before pagination and independently of the list filter. The console treats a missing or invalid count from an older producer as unavailable.
 - Cluster registration returns `{ cluster, agentKey, installInstructions }`.

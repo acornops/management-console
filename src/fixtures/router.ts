@@ -139,7 +139,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   }
 
   if (path === '/api/v1/auth/config' && method === 'GET') {
-    return json({ oidcEnabled: false, oidcProviderName: 'Fixture mode', passwordAuthEnabled: false, passwordSignupEnabled: false, passwordEmailVerificationRequired: false, passwordResetEnabled: false });
+    return json({ oidcEnabled: false, oidcProviderName: 'Fixture mode', passwordAuthEnabled: false, passwordSignupEnabled: false, passwordEmailVerificationRequired: false, passwordResetEnabled: false, helpLinks: { documentationUrl: 'https://docs.acornops.dev', supportUrl: 'https://discord.gg/jBgTy4KhF' } });
   }
   if (path === '/api/v1/auth/csrf' && method === 'GET') return json({ csrfToken: 'fixture-csrf-token' });
   if (path === '/api/v1/auth/methods' && method === 'GET') return json({ methods: [], capabilities: { canChangePassword: false, canLinkOidc: false, canAddPassword: false } });

@@ -30,6 +30,8 @@ describe('runtime auth configuration', () => {
     expect(app).toContain('passwordResetEnabled={authConfig.passwordResetEnabled}');
     expect(authConfigHook).toContain('passwordEmailVerificationRequired: true');
     expect(authConfigHook).toContain('passwordResetEnabled: false');
+    expect(authConfigHook).toContain("documentationUrl: 'https://docs.acornops.dev'");
+    expect(app).toContain('helpLinks={authConfig.helpLinks}');
   });
 
   it('fails closed by default and hides disabled modes from login', () => {

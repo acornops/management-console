@@ -4,6 +4,34 @@ import { ArrowUpRight } from 'lucide-react';
 import { ICONS } from '@/constants';
 import { IconTile, PageHeader, PageShell } from '@acornops/ui';
 
+export const DEFAULT_HELP_LINKS = {
+  documentationUrl: 'https://docs.acornops.dev',
+  supportUrl: 'https://discord.gg/jBgTy4KhF'
+};
+
+function validHttpsDestination(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 2048) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && Boolean(url.hostname) && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+function validSupportDestination(value: unknown): value is string {
+  if (validHttpsDestination(value)) return true;
+  if (typeof value !== 'string' || value.length > 2048 || !value.startsWith('mailto:') || value.includes('?') || value.includes('#')) return false;
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.slice('mailto:'.length));
+}
+
+export function resolveHelpLinks(value?: { documentationUrl?: unknown; supportUrl?: unknown }) {
+  return {
+    documentationUrl: validHttpsDestination(value?.documentationUrl) ? value.documentationUrl : DEFAULT_HELP_LINKS.documentationUrl,
+    supportUrl: validSupportDestination(value?.supportUrl) ? value.supportUrl : DEFAULT_HELP_LINKS.supportUrl
+  };
+}
+
 const HelpAction: React.FC<{
   icon: React.ElementType;
   title: string;
@@ -25,8 +53,9 @@ const HelpAction: React.FC<{
   </a>
 );
 
-export const HelpPage: React.FC = () => {
+export const HelpPage: React.FC<{ helpLinks?: { documentationUrl: string; supportUrl: string } }> = ({ helpLinks }) => {
   const { t } = useTranslation();
+  const links = resolveHelpLinks(helpLinks);
 
   return (
     <PageShell data-route-state="help">
@@ -37,13 +66,13 @@ export const HelpPage: React.FC = () => {
           icon={ICONS.BookOpen}
           title={t('help.docsTitle')}
           description={t('help.docsBody')}
-          href="https://docs.acornops.dev"
+          href={links.documentationUrl}
         />
         <HelpAction
           icon={ICONS.MessageSquare}
           title={t('help.supportTitle')}
           description={t('help.supportBody')}
-          href="https://discord.gg/jBgTy4KhF"
+          href={links.supportUrl}
         />
       </div>
     </PageShell>

@@ -99,6 +99,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   isSidebarWorkspaceMenuOpen,
   language,
   languageOptions,
+  helpLinks,
   loadWorkspaceInvitation,
   navigate,
   navigateToKubernetesCluster,
@@ -376,6 +377,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         isDark={isDark}
         language={language}
         languageOptions={languageOptions}
+        helpLinks={helpLinks}
         route={route}
         selectedTargetIssueSummary={selectedTargetIssueSummary}
         user={user}
