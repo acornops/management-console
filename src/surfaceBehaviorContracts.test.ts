@@ -210,6 +210,8 @@ describe('surface behavior contracts', () => {
 
   it('auto-applies audit log filter selections without relying on an apply button', () => {
     expect(auditLogPage).toContain('data-audit-filter-toolbar="true"');
+    expect(auditLogPage).toContain('<ICONS.Clock');
+    expect(auditLogPage).toContain('<ICONS.Filter');
     expect(auditLogPage).toContain('aria-controls="audit-advanced-filter-controls"');
     expect(auditLogPage).toContain('const timer = window.setTimeout(() => {');
     expect(auditLogPage).toContain('applyNormalizedFilters(draftFilters);');

@@ -351,15 +351,16 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           }}
         >
           <div data-audit-filter-toolbar="true" className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <div className="w-full lg:w-56">
+            <div className="relative w-full lg:w-56">
               <label className="sr-only" htmlFor="audit-filter-time-range">{t('auditLog.timeRange')}</label>
+              <ICONS.Clock className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
               <Select<AuditTimeSelection>
                 id="audit-filter-time-range"
                 value={selectedTimeRange}
                 options={timeRangeOptions}
                 onChange={changeTimeRange}
                 ariaLabel={t('auditLog.timeRange')}
-                className="w-full"
+                className="w-full [&>button]:pl-10"
               />
             </div>
             <Button
@@ -371,7 +372,10 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
               aria-controls="audit-advanced-filter-controls"
               className="w-full justify-between lg:w-auto"
             >
-              <span>{advancedFilterCount ? t('auditLog.filterCount', { count: advancedFilterCount }) : t('auditLog.filters')}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <ICONS.Filter className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+                <span>{advancedFilterCount ? t('auditLog.filterCount', { count: advancedFilterCount }) : t('auditLog.filters')}</span>
+              </span>
               <ICONS.ChevronDown className={`h-4 w-4 transition-transform ${isAdvancedFiltersOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
             </Button>
             {hasAnyFilters && (
