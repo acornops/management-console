@@ -74,7 +74,7 @@ export const UserMessageTurn: React.FC<UserMessageTurnProps> = ({
                 ref={textareaRef}
                 value={editValue}
                 onChange={(event) => onEditValueChange(event.target.value)}
-                className="min-h-24 w-full resize-y rounded-md border border-ui-bg/20 bg-ui-bg/10 px-3 py-2 type-body text-ui-bg outline-none transition-colors placeholder:text-ui-bg/50 focus:border-ui-bg/45 focus:ring-2 focus:ring-ui-bg/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-24 w-full resize-y rounded-md border border-ui-bg/35 bg-ui-bg/20 px-3 py-2 type-body text-ui-bg outline-none transition-colors placeholder:text-ui-bg/50 hover:bg-ui-bg/20 focus:border-ui-bg/55 focus:bg-ui-bg/20 focus:ring-2 focus:ring-ui-bg/20 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSubmittingEdit}
                 aria-label={t('chat.editMessage')}
               />
