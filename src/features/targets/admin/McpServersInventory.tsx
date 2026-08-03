@@ -90,7 +90,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   const filteredServers = useMemo(() => {
     const normalizedSearch = serverSearch.trim().toLowerCase();
     return servers.filter((server) => {
-      const status = getMcpServerStatusDisplay(server);
+      const status = getMcpServerStatusDisplay(server, connections[server.id]);
       const matchesSearch = !normalizedSearch ||
         server.name.toLowerCase().includes(normalizedSearch) ||
         server.url.toLowerCase().includes(normalizedSearch);
@@ -105,7 +105,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
         (serverFilter === 'unchecked' && status.labelKey === 'mcpServers.statusNotChecked');
       return matchesSearch && matchesFilter;
     });
-  }, [serverFilter, serverSearch, servers]);
+  }, [connections, serverFilter, serverSearch, servers]);
   const hasActiveFilters = Boolean(serverSearch.trim()) || serverFilter !== 'all';
 
   return (

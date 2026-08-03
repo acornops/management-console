@@ -62,10 +62,27 @@ export function canOpenMcpServerSettings(
 
 export function getMcpServerStatusDisplay(
   server: Pick<TargetToolCatalogServer, 'enabled' | 'type' | 'connectionStatus' | 'lastDiscoveryError'>,
+  connection?: Pick<McpConnection, 'status' | 'errorCode'>,
   testResult?: TargetMcpServerTestConnectionResult
 ): ServerStatusDisplay {
   if (!server.enabled) {
     return { labelKey: 'mcpServers.statusDisabled', tone: 'muted' };
+  }
+
+  if (connection?.status === 'connected') {
+    return { labelKey: 'mcpServers.statusConnected', tone: 'success' };
+  }
+
+  if (connection?.status === 'missing'
+    || connection?.status === 'pending_authorization'
+    || connection?.status === 'reauthorization_required') {
+    return { labelKey: 'mcpServers.statusNeedsAuth', tone: 'warning' };
+  }
+
+  if (connection?.status === 'error') {
+    return mcpVerificationKind(connection.errorCode) === 'authenticationRejected'
+      ? { labelKey: 'mcpServers.statusNeedsAuth', tone: 'warning' }
+      : { labelKey: 'mcpServers.statusDiscoveryFailed', tone: 'danger' };
   }
 
   const connectionStatus = testResult?.connectionStatus || server.connectionStatus;
@@ -122,20 +139,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     : server.inherited
     ? `Platform default · ${server.url}`
     : server.url;
-  const status = getMcpServerStatusDisplay(server, testResult);
-  const writeCapableTools = server.toolCounts.writeCapable;
-  const readOnlyTools = server.toolCounts.readOnly;
-  const statusDetail = !server.canToggle
-    ? t('mcpServers.serverRecordMissing')
-    : isManagedServer
-    ? t('mcpServers.managed')
-    : server.lastDiscoveryError
-    ? server.lastDiscoveryError
-    : server.lastDiscoveryAt
-    ? formatDiscoveryTimestamp(server.lastDiscoveryAt)
-    : t('mcpServers.notChecked');
-  const statusDetailClassName = server.lastDiscoveryError && !isManagedServer ? 'text-status-danger-text' : !server.canToggle ? 'text-status-warning-text' : 'text-ui-text-muted';
-  const connectionDisabled = pendingConnection || !connection?.canManage || retryAfterSeconds > 0;
   const hasCredential = server.credentialMode !== 'none';
   const isOAuth = server.authType === 'oauth';
   const verificationKind = mcpVerificationKind(connection?.errorCode);
@@ -144,6 +147,24 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
       ? MCP_VERIFICATION_STATUS_KEYS[verificationKind]
       : MCP_CONNECTION_STATUS_KEYS[connection.status])
     : t('mcpServers.connectionStatusLoading');
+  const status = getMcpServerStatusDisplay(server, connection, testResult);
+  const writeCapableTools = server.toolCounts.writeCapable;
+  const readOnlyTools = server.toolCounts.readOnly;
+  const statusDetail = !server.canToggle
+    ? t('mcpServers.serverRecordMissing')
+    : isManagedServer
+    ? t('mcpServers.managed')
+    : hasCredential && !connectionLoadError
+    ? t(server.credentialMode === 'workspace' ? 'mcpServers.workspaceConnectionStatus' : 'mcpServers.individualConnectionStatus', {
+        status: connectionStatus
+      })
+    : server.lastDiscoveryError
+    ? server.lastDiscoveryError
+    : server.lastDiscoveryAt
+    ? formatDiscoveryTimestamp(server.lastDiscoveryAt)
+    : t('mcpServers.notChecked');
+  const statusDetailClassName = server.lastDiscoveryError && !isManagedServer ? 'text-status-danger-text' : !server.canToggle ? 'text-status-warning-text' : 'text-ui-text-muted';
+  const connectionDisabled = pendingConnection || !connection?.canManage || retryAfterSeconds > 0;
   const connectionErrorDetail = connection?.status === 'error'
     ? t(isOAuth
       ? MCP_VERIFICATION_DETAIL_KEYS[verificationKind]
@@ -349,11 +370,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
                       })}
                     </p>
                   )}
-                  <p className="type-caption mt-1 text-ui-text-muted">
-                    {t(server.credentialMode === 'workspace' ? 'mcpServers.workspaceConnectionStatus' : 'mcpServers.individualConnectionStatus', {
-                      status: connectionStatus
-                    })}
-                  </p>
                   {connectionErrorDetail && (
                     <p role="alert" className="type-caption mt-1 max-w-[56ch] text-status-danger-text">
                       {connectionErrorDetail}

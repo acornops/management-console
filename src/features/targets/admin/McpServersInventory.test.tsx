@@ -2,8 +2,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { initializeI18n } from '@/i18n';
 import { McpServersInventory } from '@/features/targets/admin/McpServersInventory';
-import { canOpenMcpServerSettings } from '@/features/targets/admin/McpServerCard';
+import { canOpenMcpServerSettings, getMcpServerStatusDisplay } from '@/features/targets/admin/McpServerCard';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
+import type { McpConnection } from '@/services/control-plane/catalogApi';
 
 beforeAll(async () => {
   await initializeI18n();
@@ -73,6 +74,105 @@ describe('McpServersInventory', () => {
     expect(canOpenMcpServerSettings({ ...systemServer, isSystem: false }, openSettings)).toBe(false);
     expect(canOpenMcpServerSettings({ ...systemServer, name: 'Another system server' }, openSettings)).toBe(false);
     expect(canOpenMcpServerSettings(systemServer)).toBe(false);
+  });
+
+  it.each([
+    ['custom_header', 'workspace'],
+    ['bearer_token', 'individual'],
+    ['oauth', 'individual']
+  ] as const)('uses the %s connection state in the table status for %s credentials', (authType, credentialMode) => {
+    const server: TargetToolCatalogServer = {
+      ...systemServer,
+      id: `${authType}-${credentialMode}`,
+      name: `${authType} server`,
+      type: 'mcp',
+      isSystem: false,
+      authType,
+      credentialMode,
+      connectionStatus: 'unknown'
+    };
+    const connection: McpConnection = {
+      serverId: server.id,
+      credentialMode,
+      status: 'connected',
+      managementScope: credentialMode,
+      canManage: true,
+      authType
+    };
+
+    expect(getMcpServerStatusDisplay(server, connection)).toEqual({
+      labelKey: 'mcpServers.statusConnected',
+      tone: 'success'
+    });
+  });
+
+  it('maps authenticated connection failures to the existing attention statuses', () => {
+    const server = { ...systemServer, type: 'mcp' as const, isSystem: false, connectionStatus: 'unknown' as const };
+
+    expect(getMcpServerStatusDisplay(server, { status: 'missing' })).toEqual({
+      labelKey: 'mcpServers.statusNeedsAuth',
+      tone: 'warning'
+    });
+    expect(getMcpServerStatusDisplay(server, { status: 'error', errorCode: 'MCP_AUTHENTICATION_REJECTED' })).toEqual({
+      labelKey: 'mcpServers.statusNeedsAuth',
+      tone: 'warning'
+    });
+    expect(getMcpServerStatusDisplay(server, { status: 'error', errorCode: 'MCP_DISCOVERY_TIMEOUT' })).toEqual({
+      labelKey: 'mcpServers.statusDiscoveryFailed',
+      tone: 'danger'
+    });
+  });
+
+  it('renders a credential-backed connection in the status column', () => {
+    const server: TargetToolCatalogServer = {
+      ...systemServer,
+      id: 'custom-header-server',
+      name: 'Custom header server',
+      url: 'https://mcp.example.com',
+      type: 'mcp',
+      isSystem: false,
+      authType: 'custom_header',
+      credentialMode: 'workspace',
+      connectionStatus: 'unknown'
+    };
+    const connection: McpConnection = {
+      serverId: server.id,
+      credentialMode: 'workspace',
+      status: 'connected',
+      managementScope: 'workspace',
+      canManage: true,
+      authType: 'custom_header'
+    };
+    const markup = renderToStaticMarkup(
+      <McpServersInventory
+        servers={[server]}
+        canEditServers
+        pendingTestServerId={null}
+        pendingToggleServerId={null}
+        testResultsByServerId={{}}
+        connections={{ [server.id]: connection }}
+        connectionErrors={{}}
+        pendingConnectionServerId={null}
+        retryAfterSecondsFor={() => 0}
+        recoveryServerId={null}
+        onManageTools={vi.fn()}
+        onTestConnection={vi.fn()}
+        onToggleServer={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onConnect={vi.fn()}
+        onVerify={vi.fn()}
+        onDisconnect={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    );
+    const rowMarkup = markup.match(/<tr[^>]*data-mcp-server-row="true"[\s\S]*?<\/tr>/)?.[0] || '';
+    const statusColumnIndex = rowMarkup.indexOf('data-mcp-server-secondary-context="true"');
+
+    expect(rowMarkup).not.toContain('No check yet');
+    expect(rowMarkup).toContain('Connected');
+    expect(rowMarkup.slice(0, statusColumnIndex)).not.toContain('Workspace connection: Connected');
+    expect(rowMarkup.slice(statusColumnIndex)).toContain('Workspace connection: Connected');
   });
 
   it('does not report disabled write-capable tools as read-only', () => {
