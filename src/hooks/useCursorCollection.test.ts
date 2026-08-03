@@ -58,6 +58,35 @@ describe('CursorCollectionController', () => {
     expect(controller.getState().items).toEqual([{ id: 'one', label: 'new' }]);
   });
 
+  it('retains visible items when filters reset while a new query is pending', async () => {
+    const filteredPage = deferred<PagedResult<Item>>();
+    const loadPage = vi.fn()
+      .mockResolvedValueOnce({ items: [{ id: 'one', label: 'old' }] })
+      .mockReturnValueOnce(filteredPage.promise);
+    const controller = new CursorCollectionController(options(loadPage, { cacheKey: 'workspace:1:items' }));
+    await controller.reset();
+
+    controller.updateOptions(options(loadPage, {
+      cacheKey: 'workspace:1:items',
+      filters: { query: 'new' }
+    }));
+    const pending = controller.reset();
+
+    expect(controller.getState()).toEqual({
+      items: [{ id: 'one', label: 'old' }],
+      nextCursor: undefined,
+      phase: 'refreshing'
+    });
+
+    filteredPage.resolve({ items: [{ id: 'one', label: 'new' }] });
+    await pending;
+    expect(controller.getState()).toEqual({
+      items: [{ id: 'one', label: 'new' }],
+      nextCursor: undefined,
+      phase: 'ready'
+    });
+  });
+
   it('hydrates a remounted collection from session cache while revalidating', async () => {
     const initialLoad = vi.fn(async (): Promise<PagedResult<Item>> => ({ items: [{ id: 'one', label: 'cached' }] }));
     const firstController = new CursorCollectionController(options(initialLoad, { cacheKey: 'workspace:1:items' }));

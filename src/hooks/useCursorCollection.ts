@@ -98,10 +98,13 @@ export class CursorCollectionController<T, TFilters> {
     const scopeChanged = nextScopeKey !== this.scopeKey;
     this.scopeKey = nextScopeKey;
     const cachedState = this.readCachedState();
+    const hasVisibleItems = this.state.items.length > 0;
     if (scopeChanged || cachedState) {
-      this.setState(cachedState ?? { items: [], phase: 'loading' });
+      this.setState(cachedState ?? (hasVisibleItems
+        ? { items: this.state.items, nextCursor: undefined, phase: 'refreshing' }
+        : { items: [], phase: 'loading' }));
     }
-    return this.request(cachedState ? 'refresh' : 'initial', Boolean(cachedState));
+    return this.request(cachedState || hasVisibleItems ? 'refresh' : 'initial', Boolean(cachedState));
   }
 
   refresh(): Promise<void> {
@@ -142,7 +145,7 @@ export class CursorCollectionController<T, TFilters> {
 
   private setState(state: CursorCollectionState<T>): void {
     this.state = state;
-    if (this.options.cacheKey && (state.phase === 'ready' || state.items.length > 0)) {
+    if (this.options.cacheKey && state.phase === 'ready') {
       writeSessionDataCache(this.scopeKey, {
         items: state.items,
         nextCursor: state.nextCursor,
