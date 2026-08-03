@@ -301,6 +301,28 @@ test('Agent conversations follow the Agent policy without a redundant access ele
   await expect(page.getByText('Fixture Agent analysis complete. No external changes were made.')).toBeVisible();
 });
 
+test('Agent chat composer follows the conversation measure', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
+
+  const composer = page.getByRole('combobox', { name: 'Message Kubernetes Specialist assistant' });
+  await composer.fill('Summarize the available incident evidence.');
+  await page.getByRole('button', { name: 'Send' }).click();
+  const assistantTurn = page.locator('[data-chat-assistant-turn="true"]').last();
+  await expect(assistantTurn).toBeVisible();
+
+  const composerMeasure = page.locator('[data-target-chat-surface="true"] form > div').first();
+  const conversationMeasure = assistantTurn.locator('xpath=../..');
+  const [composerBox, conversationBox] = await Promise.all([
+    composerMeasure.boundingBox(),
+    conversationMeasure.boundingBox()
+  ]);
+
+  expect(composerBox).not.toBeNull();
+  expect(conversationBox).not.toBeNull();
+  expect(composerBox!.width).toBeCloseTo(conversationBox!.width, 0);
+});
+
 test('Agent target mentions support keyboard-only Tab completion', async ({ page }) => {
   await page.goto(agentDetailPath('chat'), { waitUntil: 'domcontentloaded' });
 

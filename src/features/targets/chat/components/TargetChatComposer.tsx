@@ -167,7 +167,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
         void submitComposerMessage();
       }}
     >
-      <div ref={composerRootRef} className={`${isPanel ? 'max-w-2xl' : 'max-w-3xl'} relative mx-auto`}>
+      <div ref={composerRootRef} className={`${isPanel ? 'max-w-3xl' : 'max-w-4xl'} relative mx-auto`}>
         {isReferenceMenuOpen && (
           <TargetChatReferenceMenu
             id={referenceMenuId}
