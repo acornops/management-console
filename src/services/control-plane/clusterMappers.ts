@@ -206,6 +206,14 @@ function mapPodStats(pods: SnapshotResourcePod[] | undefined): KubernetesCluster
   return { running, failed, pending };
 }
 
+function mapSummaryPodStats(summary: ControlPlaneCluster['summary']): KubernetesCluster['podStats'] | undefined {
+  const podStats = summary?.podStats;
+  if (!podStats || ![podStats.running, podStats.failed, podStats.pending].every((value) => Number.isInteger(value) && value >= 0)) {
+    return undefined;
+  }
+  return podStats;
+}
+
 export function mapServices(services: SnapshotResourceService[] | undefined): ClusterService[] {
   return toArray(services)
     .filter((service) => Boolean(service.name))
@@ -498,7 +506,7 @@ export function mapControlPlaneClusterToKubernetesCluster(cluster: ControlPlaneC
   const resources = snapshotData?.resources;
   const metricNodes = snapshotData?.metrics?.nodes;
   const workloads = mapWorkloads(resources);
-  const podStats = mapPodStats(resources?.pods);
+  const podStats = mapSummaryPodStats(cluster.summary) || mapPodStats(resources?.pods);
   const hasFailedWorkload = workloads.some((workload) => {
     const normalized = workload.status.toLowerCase();
     return normalized === 'failed' || normalized === 'crashloopbackoff';

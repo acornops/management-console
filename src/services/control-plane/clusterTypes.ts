@@ -5,6 +5,11 @@ export interface ControlPlaneClusterSummary {
   namespaceCount: number;
   nodeCount: number;
   readyNodeCount?: number;
+  podStats?: {
+    running: number;
+    failed: number;
+    pending: number;
+  };
   resourceFamilyCounts?: {
     workloads: number;
     network: number;

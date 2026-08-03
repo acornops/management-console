@@ -43,6 +43,25 @@ describe('mapControlPlaneClusterToKubernetesCluster', () => {
     expect(mapControlPlaneClusterToKubernetesCluster(baseCluster).agentAccessMode).toBe('unknown');
   });
 
+  it('maps pod stats from the normalized cluster summary when raw snapshot data is omitted', () => {
+    const mappedCluster = mapControlPlaneClusterToKubernetesCluster({
+      id: 'cluster-1',
+      workspaceId: 'workspace-1',
+      name: 'demo-cluster',
+      status: 'online',
+      summary: {
+        resourceCount: 7,
+        findingCount: 1,
+        criticalFindingCount: 0,
+        namespaceCount: 1,
+        nodeCount: 1,
+        podStats: { running: 4, failed: 1, pending: 1 }
+      }
+    });
+
+    expect(mappedCluster.podStats).toEqual({ running: 4, failed: 1, pending: 1 });
+  });
+
   it('derives persistent cluster findings from unhealthy pod snapshot state', () => {
     const cluster: ControlPlaneClusterDetail = {
       id: 'cluster-1',
