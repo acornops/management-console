@@ -63,10 +63,16 @@ describe('WorkspaceWebhooksPage contract surface', () => {
   it('shows URL-backed search while loading or useful and searches operational fields', () => {
     expect(page).toContain("const query = urlSearch.get('q') || ''");
     expect(page).toContain('!workspaceStateCurrent || isInitialLoading || visibleWebhooks.length > 0 || hasActiveFilters');
+    expect(inboundPage).toContain("!workspaceStateCurrent || phase === 'loading' || triggers.length > 0 || hasActiveFilters");
     expect(page).toContain("queryLabel={t('workspaceWebhooks.filters.search')}");
     expect(page).toContain('webhook.name');
     expect(page).toContain('webhook.url');
     expect(page).toContain('...webhook.eventTypes');
+  });
+
+  it('uses the same empty-state icon for inbound and outbound webhooks', () => {
+    expect(list).toContain('icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Send />}');
+    expect(inboundPage).toContain('icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Send />}');
   });
 
   it('keeps read access separate from manage_webhooks mutations', () => {

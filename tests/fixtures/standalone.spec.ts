@@ -143,7 +143,7 @@ test('outbound webhooks remain usable from compact navigation', async ({ browser
   await context.close();
 });
 
-test('genuinely empty outbound webhooks omit inactive discovery controls', async ({ page }) => {
+test('genuinely empty webhook collections share their empty state and omit inactive discovery controls', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/webhooks', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Mattermost operations', { exact: true })).toBeVisible();
   try {
@@ -158,8 +158,27 @@ test('genuinely empty outbound webhooks omit inactive discovery controls', async
     await page.getByRole('button', { name: 'Refresh' }).click();
 
     await expect(page.getByRole('heading', { name: 'No webhooks configured' })).toBeVisible();
+    await expect(page.getByText('Create a webhook to deliver workspace events to an external system.', { exact: true })).toBeVisible();
     await expect(page.getByRole('searchbox', { name: 'Search outbound webhooks' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Configured webhooks' }).locator('svg.lucide-send')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Create webhook' })).toBeVisible();
+
+    await page.goto('/workspaces/fixture-workspace/webhooks?direction=inbound', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('External production review', { exact: true })).toBeVisible();
+    await page.evaluate(async () => {
+      const response = await fetch('/api/v1/workspaces/fixture-workspace/workflow-webhooks');
+      const body = await response.json() as { items: Array<{ id: string }> };
+      await Promise.all(body.items.map((webhook) => fetch(
+        `/api/v1/workflow-webhooks/${encodeURIComponent(webhook.id)}`,
+        { method: 'DELETE' }
+      )));
+    });
+    await page.getByRole('button', { name: 'Refresh' }).click();
+
+    await expect(page.getByRole('heading', { name: 'No inbound webhooks' })).toBeVisible();
+    await expect(page.getByText('Create a webhook to start a workflow from an external system.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('searchbox', { name: 'Search inbound webhooks' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Inbound workflow webhooks' }).locator('svg.lucide-send')).toBeVisible();
   } finally {
     await page.evaluate(() => fetch('/api/v1/__fixtures/reset', { method: 'POST' }));
   }

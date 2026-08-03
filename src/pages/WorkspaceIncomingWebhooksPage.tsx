@@ -405,7 +405,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         </section>
       )}
 
-      {!embedded && <DiscoveryFilterBar
+      {!embedded && (!workspaceStateCurrent || phase === 'loading' || triggers.length > 0 || hasActiveFilters) && <DiscoveryFilterBar
         idPrefix="workflow-triggers"
         query={query}
         queryLabel={searchLabel}
@@ -486,7 +486,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           loading={<CollectionLoadingSkeleton label={t('eventTriggers.loading')} />}
           empty={<EmptyState
             embedded
-            icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Zap />}
+            icon={hasActiveFilters ? <ICONS.Search /> : <ICONS.Send />}
             title={hasActiveFilters
               ? t('eventTriggers.filters.emptyTitle')
               : t('eventTriggers.emptyTitle')}
