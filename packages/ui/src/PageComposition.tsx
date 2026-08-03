@@ -2,7 +2,6 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { ChevronLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import { Button, type ButtonProps } from './Button';
 import { IconTile } from './IconTile';
 
 export interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -60,26 +59,6 @@ export const PageBackLink = React.forwardRef<HTMLAnchorElement, PageBackLinkProp
 );
 
 PageBackLink.displayName = 'PageBackLink';
-
-export interface PageHeaderButtonProps extends Omit<ButtonProps, 'size' | 'variant'> {
-  variant: NonNullable<ButtonProps['variant']>;
-}
-
-/** Canonical default-sized action for PageHeader and route-equivalent headers. */
-export const PageHeaderButton = React.forwardRef<HTMLButtonElement, PageHeaderButtonProps>(
-  ({ className, variant, ...props }, ref) => (
-    <Button
-      ref={ref}
-      {...props}
-      variant={variant}
-      size="md"
-      className={twMerge('whitespace-nowrap', className)}
-      data-page-header-action="true"
-    />
-  )
-);
-
-PageHeaderButton.displayName = 'PageHeaderButton';
 
 export interface PageHeaderProps {
   actions?: React.ReactNode;

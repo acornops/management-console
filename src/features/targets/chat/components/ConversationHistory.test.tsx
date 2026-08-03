@@ -232,7 +232,7 @@ describe('ConversationHistory', () => {
     expect(markup).toContain('<h1');
     expect(markup).toContain('chat.chats');
     expect(markup).toContain('chat.newChat');
-    expect(markup).toContain('data-page-header-action="true"');
+    expect(markup).toContain('data-chat-new-chat="true"');
     expect(markup).toContain('min-h-11');
     expect(markup).not.toContain('sm:min-h-9');
     expect(markup).not.toContain('max-w-[88rem]');

@@ -10,7 +10,6 @@ import { CloseButton } from '@acornops/ui';
 import { DataTableGridHeader, DataTableGridHeaderCell } from '@acornops/ui';
 import { EmptyState } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
-import { PageHeaderButton } from '@acornops/ui';
 import { PageSearchInput } from '@acornops/ui';
 import { SearchFilterFrame } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
@@ -79,10 +78,10 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ appNam
               <h1 className="type-route-title text-ui-text">{t('chat.chats')}</h1>
               <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason} className="w-full sm:w-auto">
                 <span className="inline-flex w-full sm:w-auto">
-                  <PageHeaderButton type="button" variant="primary" onClick={onCreateSession} disabled={!canCreateSession} className="w-full sm:w-auto">
+                  <Button type="button" variant="primary" size="md" onClick={onCreateSession} disabled={!canCreateSession} data-chat-new-chat="true" className="w-full whitespace-nowrap sm:w-auto">
                     <Plus className="h-4 w-4" aria-hidden="true" />
                     {t('chat.newChat')}
-                  </PageHeaderButton>
+                  </Button>
                 </span>
               </Tooltip>
             </div>

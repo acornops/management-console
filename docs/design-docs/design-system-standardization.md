@@ -10,7 +10,7 @@ This work changes UI composition only. URLs, permissions, route state, table col
 
 Page code supplies content and semantic intent through typed shared primitives:
 
-- `PageShell`, `PageBackLink`, `PageHeader`, `PageHeaderButton`, and `PageSection` compose routes and embedded sections.
+- `PageShell`, `PageBackLink`, `PageHeader`, and `PageSection` compose routes and embedded sections.
 - `DataSurface` and `TableToolbar` compose framed operational data and its loading, empty, and error states.
 - `DataTableHeader`, `DataTableHeaderCell`, `DataTableGridHeader`, and `DataTableGridHeaderCell` provide one header anatomy for semantic tables and responsive grid ledgers.
 - `SearchFilterFrame`, `DiscoveryFilterBar`, `CollectionResultSummary`, and typed definitions from `createDiscoveryFilterGroup` compose the canonical framed collection search, visible categorical filters, result feedback, and no-match recovery.
@@ -25,8 +25,6 @@ The supported button intents are neutral `primary`, `secondary`, `tertiary`, `ic
 Button foregrounds and fills resolve through control-specific tokens. Dark primary and secondary controls use light text on warm dark fills. Dark activation uses `#B8441F` and dark danger uses `#A92C3C`, both with `#F5F1EF` text. Interactive boundaries use the `#777371` dark token where a control or focus boundary must reach 3:1 against adjacent surfaces. Do not build a filled control by swapping generic page background and text tokens.
 
 Page-level return navigation uses `PageBackLink` immediately before `PageHeader`. The primitive owns the left-chevron icon, typography, target height, hover treatment, and focus boundary while page code supplies a real destination URL and optional client-side route interception. Do not render route-level Back navigation as a header action or restyle it within a feature.
-
-Route-header buttons use `PageHeaderButton`, including custom headers on route-equivalent surfaces such as chat. The primitive requires an explicit semantic variant and fixes the control to the default `44px` size. Compact `36px` buttons remain available for dense toolbars, rows, dialogs, and panels, but page destinations do not independently resize the same route action.
 
 Persistent lifecycle controls use the shared neutral, divided `DangerZone` surface. Exit and reversible actions such as logout, leave, and disable use secondary controls before confirmation; irreversible delete and remove actions retain the danger button intent. Reserve soft danger fills for errors, critical status, and active confirmation states rather than permanent settings-card backgrounds. Cluster and VM Settings expose permission-gated deletion through the same typed-name confirmation pattern used by their catalogs.
 

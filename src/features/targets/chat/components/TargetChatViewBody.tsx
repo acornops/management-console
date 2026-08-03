@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
-import { Button, DrawerFrame, PageHeaderButton } from '@acornops/ui';
+import { Button, DrawerFrame } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { ConversationHistory } from '@/features/targets/chat/components/ConversationHistory';
 import { LiveRunTrace } from '@/features/targets/chat/types';
@@ -307,7 +307,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
             <>
               <header
                 className={`${
-                  isPanel ? 'sticky top-0 z-10 border-b border-ui-border bg-ui-surface px-5 py-4 sm:px-6' : 'bg-ui-bg px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)]'
+                  isPanel ? 'sticky top-0 z-10 border-b border-ui-border bg-ui-surface px-5 py-4 sm:px-6' : 'stable-scrollbar-gutter overflow-y-auto bg-ui-bg px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)] custom-scrollbar'
                 } transition-colors`}
               >
                 {isPanel ? (
@@ -335,16 +335,18 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                     <div className="flex w-full min-w-0 shrink-0 items-center gap-3 lg:w-auto lg:max-w-2xl lg:justify-end">
                       <Tooltip content={newChatUnavailableReason} disabled={!newChatUnavailableReason} className="min-w-0 flex-1 lg:flex-none">
                         <span className="inline-flex w-full">
-                          <PageHeaderButton
+                          <Button
                             type="button"
                             onClick={handleCreateSessionClick}
                             disabled={!canChat || !hasReadyAiRuntime}
                             variant="primary"
-                            className="w-full lg:w-auto"
+                            size="md"
+                            data-chat-new-chat="true"
+                            className="w-full whitespace-nowrap lg:w-auto"
                           >
                             <Plus className="h-4 w-4" />
                             {t('chat.newChat')}
-                          </PageHeaderButton>
+                          </Button>
                         </span>
                       </Tooltip>
                     </div>

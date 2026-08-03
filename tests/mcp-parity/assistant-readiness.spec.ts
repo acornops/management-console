@@ -27,7 +27,7 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/chat?session=fixture-session`);
   await expect(page.getByText('Why is the payments worker restarting?')).toBeVisible();
   await expect(page.getByText('Connect an AI model to continue')).toBeVisible();
-  const chatNewChatBox = await page.locator('[data-page-header-action="true"]').boundingBox();
+  const chatNewChatBox = await page.locator('[data-chat-new-chat="true"]').boundingBox();
   expect(chatNewChatBox?.height).toBe(44);
   const railNewChat = page.locator('[data-chat-history-trigger="new-chat"]');
   await expect(railNewChat).toBeVisible();
@@ -42,9 +42,10 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
 
   await page.locator('[data-chat-history-trigger="search"]').click();
   await expect(page.getByRole('heading', { name: 'Chats' })).toBeVisible();
-  const historyNewChatBox = await page.locator('[data-page-header-action="true"]').boundingBox();
+  const historyNewChatBox = await page.locator('[data-chat-new-chat="true"]').boundingBox();
   expect(historyNewChatBox?.height).toBe(chatNewChatBox?.height);
   expect(historyNewChatBox?.width).toBe(chatNewChatBox?.width);
+  expect(historyNewChatBox?.x).toBe(chatNewChatBox?.x);
   const chatSearch = page.locator('[data-chat-history-search="true"]');
   await expect(chatSearch).toBeFocused();
   await expect(page.locator('[data-search-filter-frame="true"]')).toBeVisible();

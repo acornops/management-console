@@ -175,7 +175,8 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain("variant=\"secondary\"");
     expect(chatView).toContain('const newChatUnavailableReason =');
     expect(chatView).toMatch(/<Tooltip\s+content=\{newChatUnavailableReason\}/);
-    expect(chatView).toContain('<PageHeaderButton');
+    expect(chatView).toContain('data-chat-new-chat="true"');
+    expect(chatView).toContain("'stable-scrollbar-gutter overflow-y-auto bg-ui-bg px-[var(--ao-route-padding-x)] py-[var(--ao-route-padding-y)] custom-scrollbar'");
     expect(chatView).not.toContain('disabled={!canChat || isRunActive}');
     expect(chatView).toContain('composerActionLabel');
     expect(chatView).toContain('canCancelActiveRun');

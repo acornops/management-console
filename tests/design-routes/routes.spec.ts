@@ -9,6 +9,11 @@ const requestedRouteNames = new Set(
 const auditedRoutes = requestedRouteNames.size > 0
   ? routeCoverageManifest.filter((route) => requestedRouteNames.has(route.name))
   : routeCoverageManifest;
+const routeHeaderGeometryExemptions = new Set([
+  'login',
+  'workspace-invitation',
+  'external-integration-linked'
+]);
 
 function isDarkProject(testInfo: TestInfo) {
   return testInfo.project.name.endsWith('-dark');
@@ -50,6 +55,65 @@ function formatViolations(violations: Awaited<ReturnType<AxeBuilder['analyze']>>
   }));
 }
 
+async function assertRouteHeaderGeometry(page: Page, routeName: string) {
+  const geometry = await page.evaluate(() => {
+    const isVisible = (element: Element): element is HTMLElement => {
+      if (!(element instanceof HTMLElement)) return false;
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    };
+    const heading = [...document.querySelectorAll('h1')].find(isVisible);
+    const header = heading?.closest('header');
+    if (!header) return null;
+
+    const isSharedPageHeader = header.classList.contains('page-header');
+    const chatAction = header.querySelector<HTMLElement>('[data-chat-new-chat="true"]');
+    const scrollRegion = chatAction && !isSharedPageHeader
+      ? header
+      : header.closest<HTMLElement>('.page-shell');
+    if (!scrollRegion) return null;
+
+    const content = chatAction && !isSharedPageHeader
+      ? header.querySelector<HTMLElement>(':scope > div')
+      : header;
+    const actions = isSharedPageHeader
+      ? header.children.item(1)
+      : chatAction;
+    const controls = actions
+      ? [...actions.querySelectorAll<HTMLElement>('button, a[href], [role="button"]')].filter(isVisible)
+      : [];
+    if (actions instanceof HTMLElement && actions.matches('button, a[href], [role="button"]') && isVisible(actions)) {
+      controls.unshift(actions);
+    }
+
+    const contentRect = content?.getBoundingClientRect();
+    const actionsRect = actions?.getBoundingClientRect();
+    return {
+      actionRight: actionsRect?.right ?? null,
+      contentRight: contentRect?.right ?? null,
+      controlHeights: controls.map((control) => control.getBoundingClientRect().height),
+      scrollbarGutter: window.getComputedStyle(scrollRegion).scrollbarGutter
+    };
+  });
+
+  if (!geometry) return false;
+  expect.soft(
+    geometry.scrollbarGutter,
+    `${routeName} route header should reserve the canonical scrollbar gutter`
+  ).toBe('stable both-edges');
+  if (geometry.actionRight !== null && geometry.contentRight !== null) {
+    expect.soft(
+      Math.abs(geometry.actionRight - geometry.contentRight),
+      `${routeName} route actions should align with the route content edge`
+    ).toBeLessThanOrEqual(1);
+  }
+  for (const controlHeight of geometry.controlHeights) {
+    expect.soft(controlHeight, `${routeName} route header controls should use the default 44px size`).toBe(44);
+  }
+  return true;
+}
+
 test('all canonical routes satisfy the design contract', async ({ page }, testInfo) => {
   test.setTimeout(15 * 60_000);
   const theme = isDarkProject(testInfo) ? 'dark' : 'light';
@@ -88,6 +152,35 @@ test('all canonical routes satisfy the design contract', async ({ page }, testIn
       }
     });
   }
+});
+
+test('canonical route headers keep the shared gutter, edge, and control-size geometry', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-light', 'Desktop light owns the route-header geometry contract.');
+  test.setTimeout(5 * 60_000);
+  await page.addInitScript(() => {
+    window.localStorage.setItem('app_theme', 'light');
+    window.localStorage.setItem('acornops_active_theme_preference', 'light');
+  });
+
+  let verifiedHeaderCount = 0;
+  for (const route of auditedRoutes) {
+    await test.step(route.name, async () => {
+      await prepareRoute(page, 'light', route);
+      const verified = await assertRouteHeaderGeometry(page, route.name);
+      if (verified) {
+        verifiedHeaderCount += 1;
+      } else {
+        expect.soft(
+          routeHeaderGeometryExemptions.has(route.name),
+          `${route.name} should expose route-header geometry`
+        ).toBe(true);
+      }
+    });
+  }
+
+  expect(verifiedHeaderCount).toBe(
+    auditedRoutes.filter((route) => !routeHeaderGeometryExemptions.has(route.name)).length
+  );
 });
 
 test('forced-colors mode preserves visible keyboard focus', async ({ page }, testInfo) => {
