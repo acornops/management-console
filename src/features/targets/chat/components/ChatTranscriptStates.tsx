@@ -33,9 +33,9 @@ export function ChatEmptyPrompt({ isPanel, title, body, suggestions, canSendSugg
             variant="secondary"
             onClick={() => void onSendSuggestion(suggestion.label)}
             disabled={!canSendSuggestion}
-            className="control-target group flex min-h-14 items-start gap-3 rounded-lg px-4 py-3 text-left"
+            className="control-target group flex min-h-14 items-center gap-3 rounded-lg px-4 py-3 text-left"
           >
-            <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
+            <MessageSquare className="h-4 w-4 shrink-0 text-ui-text-muted transition-colors group-hover:text-ui-text" />
             <span className="min-w-0 break-words">{suggestion.label}</span>
           </Button>
         ))}

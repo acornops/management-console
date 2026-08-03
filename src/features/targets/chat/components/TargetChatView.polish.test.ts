@@ -162,6 +162,8 @@ describe('target chat polish contracts', () => {
     expect(chatTranscriptStates).toContain('suggestions: Array<{ key: string; label: string }>;');
     expect(chatTranscriptStates).toContain('key={suggestion.key}');
     expect(chatTranscriptStates).toContain('BotMessageSquare');
+    expect(chatTranscriptStates).toContain('min-h-14 items-center gap-3');
+    expect(chatTranscriptStates).not.toContain('<MessageSquare className="mt-0.5');
     expect(enLocale).toContain("loadingConversation: 'Loading conversation'");
     expect(enLocale).toContain("conversationLoadFailed: 'Conversation could not be loaded'");
     expect(zhLocale).toContain("loadingConversation: '正在加载会话'");
