@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  appShell,
   auditLogPage,
   chatSubmit,
   clusterOverviewView,
@@ -33,6 +34,12 @@ import {
 } from './stylesTestSupport';
 
 describe('surface behavior contracts', () => {
+  it('keeps workspace creation lookups stable across unrelated app-shell renders', () => {
+    expect(appShell).toContain('const loadWorkspaceAiSettings = React.useCallback(');
+    expect(appShell).toContain('onLoadWorkspaceAiSettings={loadWorkspaceAiSettings}');
+    expect(appShell).not.toContain('onLoadWorkspaceAiSettings={(workspaceId) =>');
+  });
+
   it('labels paged member and issue counts as loaded counts', () => {
     expect(membersPage).toContain('members.loadedTotalCount');
     expect(membersPage).toContain('members.loadedMatchingCount');

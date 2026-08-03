@@ -155,6 +155,10 @@ export const AppShell: React.FC<AppShellProps> = ({
     setWorkspaces,
     toWorkspaceInvitation
   });
+  const loadWorkspaceAiSettings = React.useCallback(
+    (workspaceId: string) => controlPlaneApi.getWorkspaceAiSettings(workspaceId),
+    []
+  );
   const handleLeaveWorkspaceSuccess = React.useCallback((workspaceId: string) => {
     setWorkspaces((current) => current.filter((workspace) => workspace.id !== workspaceId));
   }, [setWorkspaces]);
@@ -592,7 +596,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             onConfirmClusterInstalled={() => void handleConfirmAddCluster()}
             onConfirmDeleteWorkspace={(workspace) => handleDeleteWorkspace(workspace.id)}
             onCreateWorkspace={handleCreateWorkspace}
-            onLoadWorkspaceAiSettings={(workspaceId) => controlPlaneApi.getWorkspaceAiSettings(workspaceId)}
+            onLoadWorkspaceAiSettings={loadWorkspaceAiSettings}
             onOpenWorkspaceAiSettings={(workspaceId) => {
               setIsCreatingWorkspace(false);
               navigate(AppPaths.workspaceAiSettings(workspaceId));

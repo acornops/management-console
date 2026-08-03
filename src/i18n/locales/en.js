@@ -1824,7 +1824,19 @@ export const en = {
       inspect: 'Inspect the available evidence',
       summarize: 'Summarize the current situation',
       nextSteps: 'Recommend safe next steps',
-      readiness: 'Review configuration readiness'
+      readiness: 'Review configuration readiness',
+      kubernetes: {
+        issues: 'List cluster issues',
+        workloads: 'Inspect failing workloads',
+        events: 'Review warning events',
+        logs: 'Check recent pod logs'
+      },
+      virtualMachine: {
+        issues: 'List VM issues',
+        services: 'Inspect degraded services',
+        resources: 'Review resource usage',
+        logs: 'Check recent service logs'
+      }
     }
   },
   autoTriage: {
