@@ -204,15 +204,15 @@ export const McpServerToolsDialog: React.FC<{
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-                    <p className="type-data mt-0.5 inline-flex items-center gap-2">
-                      {server.toolCounts.total - server.toolCounts.writeConfigured}
+                    <p data-mcp-read-only-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
+                      {server.toolCounts.readOnly}
                       <span className="h-2 w-2 rounded-full bg-status-success" />
                     </p>
                   </div>
                   <div className="px-5 py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-                    <p className="type-data mt-0.5 inline-flex items-center gap-2">
-                      {server.toolCounts.writeConfigured}
+                    <p data-mcp-write-capable-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
+                      {server.toolCounts.writeCapable}
                       <span className="h-2 w-2 rounded-full bg-status-warning" />
                     </p>
                   </div>

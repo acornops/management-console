@@ -76,11 +76,12 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   const toolAccessSummary = useMemo(() => {
     const totalTools = servers.reduce((total, server) => total + server.toolCounts.total, 0);
     const enabledTools = servers.reduce((total, server) => total + server.toolCounts.enabledEffective, 0);
-    const writeCapableTools = servers.reduce((total, server) => total + server.toolCounts.writeConfigured, 0);
+    const readOnlyTools = servers.reduce((total, server) => total + server.toolCounts.readOnly, 0);
+    const writeCapableTools = servers.reduce((total, server) => total + server.toolCounts.writeCapable, 0);
     return {
       totalTools,
       enabledTools,
-      readOnlyTools: Math.max(0, totalTools - writeCapableTools),
+      readOnlyTools,
       writeCapableTools,
       serverCount: servers.length
     };
@@ -129,14 +130,14 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
           </div>
           <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 sm:border-b-0 sm:border-r xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
-            <p className="type-data mt-0.5 inline-flex items-center gap-2">
+            <p data-mcp-read-only-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.readOnlyTools}
               <span className="h-2 w-2 rounded-full bg-status-success" />
             </p>
           </div>
           <div className="col-span-2 px-5 py-3.5 sm:col-span-3 xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
-            <p className="type-data mt-0.5 inline-flex items-center gap-2">
+            <p data-mcp-write-capable-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.writeCapableTools}
               <span className="h-2 w-2 rounded-full bg-status-warning" />
             </p>

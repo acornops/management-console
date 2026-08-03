@@ -146,6 +146,8 @@ export interface ClusterToolCatalogServer {
   inherited?: boolean;
   toolCounts: {
     total: number;
+    readOnly: number;
+    writeCapable: number;
     enabledConfigured: number;
     enabledEffective: number;
     writeConfigured: number;

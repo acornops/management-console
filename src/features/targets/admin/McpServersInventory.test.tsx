@@ -25,7 +25,7 @@ describe('McpServersInventory', () => {
     connectionStatus: 'ok',
     lastDiscoveryAt: null,
     lastDiscoveryError: null,
-    toolCounts: { total: 3, enabledConfigured: 3, enabledEffective: 3, writeConfigured: 0, writeEffective: 0 },
+    toolCounts: { total: 3, readOnly: 3, writeCapable: 0, enabledConfigured: 3, enabledEffective: 3, writeConfigured: 0, writeEffective: 0 },
     tools: []
   };
 
@@ -73,5 +73,46 @@ describe('McpServersInventory', () => {
     expect(canOpenMcpServerSettings({ ...systemServer, isSystem: false }, openSettings)).toBe(false);
     expect(canOpenMcpServerSettings({ ...systemServer, name: 'Another system server' }, openSettings)).toBe(false);
     expect(canOpenMcpServerSettings(systemServer)).toBe(false);
+  });
+
+  it('does not report disabled write-capable tools as read-only', () => {
+    const markup = renderToStaticMarkup(
+      <McpServersInventory
+        servers={[{
+          ...systemServer,
+          toolCounts: {
+            total: 12,
+            readOnly: 0,
+            writeCapable: 12,
+            enabledConfigured: 0,
+            enabledEffective: 0,
+            writeConfigured: 0,
+            writeEffective: 0
+          }
+        }]}
+        canEditServers
+        pendingTestServerId={null}
+        pendingToggleServerId={null}
+        testResultsByServerId={{}}
+        connections={{}}
+        connectionErrors={{}}
+        pendingConnectionServerId={null}
+        retryAfterSecondsFor={() => 0}
+        recoveryServerId={null}
+        onManageTools={vi.fn()}
+        onTestConnection={vi.fn()}
+        onToggleServer={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onConnect={vi.fn()}
+        onVerify={vi.fn()}
+        onDisconnect={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    );
+
+    expect(markup).toMatch(/data-mcp-read-only-count="true"[^>]*>0</);
+    expect(markup).toMatch(/data-mcp-write-capable-count="true"[^>]*>12</);
+    expect(markup).toContain('0 Read · 12 Write');
   });
 });

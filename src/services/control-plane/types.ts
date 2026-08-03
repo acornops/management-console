@@ -388,6 +388,8 @@ export interface ControlPlaneClusterToolCatalogServer {
   lastDiscoveryError?: string | null;
   toolCounts: {
     total: number;
+    readOnly?: number;
+    writeCapable?: number;
     enabledConfigured: number;
     enabledEffective: number;
     writeConfigured: number;

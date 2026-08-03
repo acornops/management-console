@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 import { getMcpCreateFlowCopyKeys } from './McpServersDialogs';
 
@@ -31,5 +32,13 @@ describe('getMcpCreateFlowCopyKeys', () => {
       pending: 'mcpServers.discoveringTools',
       action: 'mcpServers.reviewToolsAction'
     });
+  });
+});
+
+describe('MCP server form dialog layout', () => {
+  it('keeps long discovered-tool reviews inside a scrollable dialog body', () => {
+    const source = readFileSync(new URL('./McpServersDialogs.tsx', import.meta.url), 'utf8');
+
+    expect(source).toContain('grid min-h-0 flex-1 gap-6 overflow-y-auto');
   });
 });

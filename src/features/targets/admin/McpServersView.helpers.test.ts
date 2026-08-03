@@ -19,6 +19,8 @@ const tool = (overrides: Partial<TargetToolCatalogItem> = {}): TargetToolCatalog
 
 const counts: TargetToolCatalogServer['toolCounts'] = {
   total: 1,
+  readOnly: 0,
+  writeCapable: 1,
   enabledConfigured: 1,
   enabledEffective: 1,
   writeConfigured: 1,
@@ -32,6 +34,8 @@ describe('target MCP tool capability updates', () => {
 
     expect(applyToolCountsDelta(counts, previous, next)).toEqual({
       total: 1,
+      readOnly: 1,
+      writeCapable: 0,
       enabledConfigured: 1,
       enabledEffective: 1,
       writeConfigured: 0,

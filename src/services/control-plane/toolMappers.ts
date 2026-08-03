@@ -66,37 +66,8 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
       canEdit: Boolean(catalog.permissions?.canEdit),
       editableRoles: Array.isArray(catalog.permissions?.editableRoles) ? catalog.permissions.editableRoles : []
     },
-    servers: toArray(catalog.servers).map((server): ClusterToolCatalogServer => ({
-      id: server.id,
-      name: server.name,
-      url: server.url,
-      type: server.type === 'builtin' ? 'builtin' : 'mcp',
-      enabled: Boolean(server.enabled),
-      isSystem: Boolean(server.isSystem),
-      canDelete: Boolean(server.canDelete),
-      canEditConnection: Boolean(server.canEditConnection),
-      canToggle: server.canToggle !== false,
-      authType: server.authType || 'none',
-      credentialMode: server.credentialMode,
-      authHeaderName: server.authHeaderName,
-      authHeaderPrefix: server.authHeaderPrefix,
-      revision: Number(server.revision || 1),
-      provenance: server.provenance,
-      publicHeaders: server.publicHeaders || {},
-      connectionStatus:
-        server.connectionStatus === 'ok' || server.connectionStatus === 'error'
-          ? server.connectionStatus
-          : 'unknown',
-      lastDiscoveryAt: server.lastDiscoveryAt || null,
-      lastDiscoveryError: server.lastDiscoveryError || null,
-      toolCounts: {
-        total: Number(server.toolCounts?.total || 0),
-        enabledConfigured: Number(server.toolCounts?.enabledConfigured || 0),
-        enabledEffective: Number(server.toolCounts?.enabledEffective || 0),
-        writeConfigured: Number(server.toolCounts?.writeConfigured || 0),
-        writeEffective: Number(server.toolCounts?.writeEffective || 0)
-      },
-      tools: toArray(server.tools).map((tool): ClusterToolCatalogItem => ({
+    servers: toArray(catalog.servers).map((server): ClusterToolCatalogServer => {
+      const tools = toArray(server.tools).map((tool): ClusterToolCatalogItem => ({
         name: tool.name,
         description: tool.description,
         capability: tool.capability === 'write' ? 'write' : 'read',
@@ -108,8 +79,48 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
           tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
             ? tool.effectiveDisabledReason
             : null
-      }))
-    }))
+      }));
+      const readOnly = typeof server.toolCounts?.readOnly === 'number'
+        ? server.toolCounts.readOnly
+        : tools.filter((tool) => tool.capability === 'read').length;
+      const writeCapable = typeof server.toolCounts?.writeCapable === 'number'
+        ? server.toolCounts.writeCapable
+        : tools.filter((tool) => tool.capability === 'write').length;
+      return {
+        id: server.id,
+        name: server.name,
+        url: server.url,
+        type: server.type === 'builtin' ? 'builtin' : 'mcp',
+        enabled: Boolean(server.enabled),
+        isSystem: Boolean(server.isSystem),
+        canDelete: Boolean(server.canDelete),
+        canEditConnection: Boolean(server.canEditConnection),
+        canToggle: server.canToggle !== false,
+        authType: server.authType || 'none',
+        credentialMode: server.credentialMode,
+        authHeaderName: server.authHeaderName,
+        authHeaderPrefix: server.authHeaderPrefix,
+        revision: Number(server.revision || 1),
+        provenance: server.provenance,
+        publicHeaders: server.publicHeaders || {},
+        connectionStatus:
+          server.connectionStatus === 'ok' || server.connectionStatus === 'error'
+            ? server.connectionStatus
+            : 'unknown',
+        lastDiscoveryAt: server.lastDiscoveryAt || null,
+        lastDiscoveryError: server.lastDiscoveryError || null,
+        toolCounts: {
+          total: Number(server.toolCounts?.total || 0),
+          readOnly,
+          writeCapable,
+          enabledConfigured: Number(server.toolCounts?.enabledConfigured || 0),
+          enabledEffective: Number(server.toolCounts?.enabledEffective || 0),
+          writeConfigured: Number(server.toolCounts?.writeConfigured || 0),
+          writeEffective: Number(server.toolCounts?.writeEffective || 0)
+        },
+        tools
+      };
+    })
   };
 }
 

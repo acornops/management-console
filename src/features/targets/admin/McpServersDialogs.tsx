@@ -187,7 +187,7 @@ export const McpServerFormDialog: React.FC<{
           <CloseButton onClick={onClose} disabled={pending} aria-label={t('mcpServers.closeForm')} />
         </div>
 
-        <div className="grid min-h-0 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-6 custom-scrollbar lg:grid-cols-[minmax(0,1fr)_19rem]">
           {isReviewStep ? (
             <>
               <div className="overflow-hidden rounded-lg border border-ui-border bg-ui-bg">

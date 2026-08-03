@@ -123,8 +123,8 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     ? `Platform default · ${server.url}`
     : server.url;
   const status = getMcpServerStatusDisplay(server, testResult);
-  const writeConfiguredTools = server.toolCounts.writeConfigured;
-  const readConfiguredTools = Math.max(0, server.toolCounts.total - writeConfiguredTools);
+  const writeCapableTools = server.toolCounts.writeCapable;
+  const readOnlyTools = server.toolCounts.readOnly;
   const statusDetail = !server.canToggle
     ? t('mcpServers.serverRecordMissing')
     : isManagedServer
@@ -412,7 +412,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             })}
           </p>
           <p className="type-caption mt-1 text-ui-text-muted">
-            {readConfiguredTools} {t('mcpServers.capabilityRead')} · {writeConfiguredTools} {t('mcpServers.capabilityWrite')}
+            {readOnlyTools} {t('mcpServers.capabilityRead')} · {writeCapableTools} {t('mcpServers.capabilityWrite')}
           </p>
         </div>
       </DataTableCell>

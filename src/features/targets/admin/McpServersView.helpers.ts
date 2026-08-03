@@ -35,8 +35,14 @@ export function applyToolCountsDelta(
   const isConfiguredWrite = nextTool.capability === 'write' && nextTool.enabledConfigured;
   const wasEffectiveWrite = previousTool.capability === 'write' && previousTool.enabledEffective;
   const isEffectiveWrite = nextTool.capability === 'write' && nextTool.enabledEffective;
+  const wasReadOnly = previousTool.capability === 'read';
+  const isReadOnly = nextTool.capability === 'read';
+  const wasWriteCapable = previousTool.capability === 'write';
+  const isWriteCapable = nextTool.capability === 'write';
   return {
     ...counts,
+    readOnly: counts.readOnly + delta(isReadOnly, wasReadOnly),
+    writeCapable: counts.writeCapable + delta(isWriteCapable, wasWriteCapable),
     enabledConfigured: counts.enabledConfigured + delta(nextTool.enabledConfigured, previousTool.enabledConfigured),
     enabledEffective: counts.enabledEffective + delta(nextTool.enabledEffective, previousTool.enabledEffective),
     writeConfigured: counts.writeConfigured + delta(isConfiguredWrite, wasConfiguredWrite),
@@ -67,6 +73,8 @@ export function pendingCatalogServer(created: TargetMcpServer): TargetToolCatalo
     inherited: created.inherited,
     toolCounts: {
       total: 0,
+      readOnly: 0,
+      writeCapable: 0,
       enabledConfigured: 0,
       enabledEffective: 0,
       writeConfigured: 0,

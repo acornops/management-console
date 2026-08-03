@@ -189,6 +189,8 @@ describe('tool mappers', () => {
         connectionStatus: 'unknown',
         toolCounts: {
           total: 0,
+          readOnly: 0,
+          writeCapable: 1,
           enabledConfigured: 0,
           enabledEffective: 0,
           writeConfigured: 0,

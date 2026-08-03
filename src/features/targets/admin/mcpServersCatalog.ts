@@ -203,6 +203,8 @@ function mapTool(tool: McpTool): TargetToolCatalogItem {
 export function computeToolCounts(tools: TargetToolCatalogItem[]): TargetToolCatalogServer['toolCounts'] {
   return {
     total: tools.length,
+    readOnly: tools.filter((tool) => tool.capability === 'read').length,
+    writeCapable: tools.filter((tool) => tool.capability === 'write').length,
     enabledConfigured: tools.filter((tool) => tool.enabledConfigured).length,
     enabledEffective: tools.filter((tool) => tool.enabledEffective).length,
     writeConfigured: tools.filter((tool) => tool.capability === 'write' && tool.enabledConfigured).length,

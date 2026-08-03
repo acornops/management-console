@@ -72,6 +72,8 @@ function mapConnectionStatus(status?: string): McpToolCatalogServer['connectionS
 
 function mapAgentMcpServer(server: AgentMcpServerApi): McpToolCatalogServer {
   const tools = server.tools.map((tool) => mapAgentMcpTool(tool, server.enabled));
+  const readOnly = tools.filter((tool) => tool.capability === 'read').length;
+  const writeCapable = tools.filter((tool) => tool.capability === 'write').length;
   const enabledConfigured = tools.filter((tool) => tool.enabledConfigured).length;
   const enabledEffective = tools.filter((tool) => tool.enabledEffective).length;
   const writeConfigured = tools.filter((tool) => tool.enabledConfigured && tool.capability === 'write').length;
@@ -98,6 +100,8 @@ function mapAgentMcpServer(server: AgentMcpServerApi): McpToolCatalogServer {
     lastDiscoveryError: server.lastDiscoveryError || null,
     toolCounts: {
       total: tools.length,
+      readOnly,
+      writeCapable,
       enabledConfigured,
       enabledEffective,
       writeConfigured,
