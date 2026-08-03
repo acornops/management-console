@@ -10,6 +10,11 @@ import { DialogFrame } from '@acornops/ui';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
 
+export const getBulkConfiguredOverrides = (
+  tools: TargetToolCatalogItem[],
+  enabled: boolean
+): Record<string, boolean> => Object.fromEntries(tools.map((tool) => [tool.name, enabled]));
+
 export const McpServerToolsDialog: React.FC<{
   server: TargetToolCatalogServer;
   canManageTools: boolean;
@@ -21,6 +26,7 @@ export const McpServerToolsDialog: React.FC<{
   loadMoreSentinelRef?: React.RefCallback<HTMLElement>;
   onClose: () => void;
   onToggleTool: (tool: TargetToolCatalogItem, enabled: boolean) => void | Promise<void>;
+  onLoadAllTools?: () => Promise<TargetToolCatalogItem[]>;
   onLoadMoreTools?: () => void;
 }> = ({
   server,
@@ -33,10 +39,13 @@ export const McpServerToolsDialog: React.FC<{
   loadMoreSentinelRef,
   onClose,
   onToggleTool,
+  onLoadAllTools,
   onLoadMoreTools
 }) => {
   const { t } = useTranslation();
   const [configuredOverrides, setConfiguredOverrides] = React.useState<Record<string, boolean>>({});
+  const [bulkLoadedTools, setBulkLoadedTools] = React.useState<TargetToolCatalogItem[]>([]);
+  const [bulkLoadingCapability, setBulkLoadingCapability] = React.useState<'read' | 'write' | null>(null);
   const [isSavingTools, setIsSavingTools] = React.useState(false);
   const isManagedServer = isManagedMcpServer(server);
   const serverSubtitle = isManagedServer ? t('common.providedByAcornOps') : server.url;
@@ -50,18 +59,26 @@ export const McpServerToolsDialog: React.FC<{
 
   React.useEffect(() => {
     setConfiguredOverrides({});
+    setBulkLoadedTools([]);
+    setBulkLoadingCapability(null);
   }, [server.id]);
+
+  const tools = React.useMemo(() => {
+    const toolsByName = new Map(server.tools.map((tool) => [tool.name, tool]));
+    bulkLoadedTools.forEach((tool) => toolsByName.set(tool.name, tool));
+    return [...toolsByName.values()];
+  }, [bulkLoadedTools, server.tools]);
 
   const getConfiguredEnabled = React.useCallback((tool: TargetToolCatalogItem) => (
     configuredOverrides[tool.name] ?? tool.enabledConfigured
   ), [configuredOverrides]);
 
   const changedTools = React.useMemo(() => (
-    server.tools.filter((tool) => configuredOverrides[tool.name] !== undefined && configuredOverrides[tool.name] !== tool.enabledConfigured)
-  ), [configuredOverrides, server.tools]);
+    tools.filter((tool) => configuredOverrides[tool.name] !== undefined && configuredOverrides[tool.name] !== tool.enabledConfigured)
+  ), [configuredOverrides, tools]);
 
-  const readTools = server.tools.filter((tool) => tool.capability === 'read');
-  const writeTools = server.tools.filter((tool) => tool.capability === 'write');
+  const readTools = tools.filter((tool) => tool.capability === 'read');
+  const writeTools = tools.filter((tool) => tool.capability === 'write');
   const getSectionBlockReason = (tools: TargetToolCatalogItem[]) => {
     const configuredTools = tools.filter((tool) => getConfiguredEnabled(tool));
     const blockedTools = configuredTools.filter((tool) => tool.effectiveDisabledReason);
@@ -70,6 +87,38 @@ export const McpServerToolsDialog: React.FC<{
     return reason && blockedTools.every((tool) => tool.effectiveDisabledReason === reason) ? reason : null;
   };
   const globalBlockReason = getSectionBlockReason(server.tools);
+
+  const getGroupState = (capability: 'read' | 'write', sectionTools: TargetToolCatalogItem[]) => {
+    const total = capability === 'read' ? server.toolCounts.readOnly : server.toolCounts.writeCapable;
+    const configuredBase = capability === 'read'
+      ? server.toolCounts.enabledConfigured - server.toolCounts.writeConfigured
+      : server.toolCounts.writeConfigured;
+    const configuredDelta = sectionTools.reduce((delta, tool) => {
+      const override = configuredOverrides[tool.name];
+      return override === undefined ? delta : delta + Number(override) - Number(tool.enabledConfigured);
+    }, 0);
+    const configured = configuredBase + configuredDelta;
+    return { total, configured, allEnabled: total > 0 && configured === total };
+  };
+
+  const handleToggleGroup = async (capability: 'read' | 'write', sectionTools: TargetToolCatalogItem[]) => {
+    if (!canManageTools || bulkLoadingCapability || isSavingTools) return;
+    const nextEnabled = !getGroupState(capability, sectionTools).allEnabled;
+    setBulkLoadingCapability(capability);
+    try {
+      const completeTools = hasMoreTools && onLoadAllTools ? await onLoadAllTools() : tools;
+      const completeSectionTools = completeTools.filter((tool) => tool.capability === capability);
+      setBulkLoadedTools(completeTools);
+      setConfiguredOverrides((current) => ({
+        ...current,
+        ...getBulkConfiguredOverrides(completeSectionTools, nextEnabled)
+      }));
+    } catch {
+      // The paged collection owns the visible loading error.
+    } finally {
+      setBulkLoadingCapability(null);
+    }
+  };
 
   const handleSaveTools = async () => {
     if (!canManageTools || changedTools.length === 0 || isSavingTools) return;
@@ -116,14 +165,22 @@ export const McpServerToolsDialog: React.FC<{
     );
   };
 
-  const renderToolSection = (title: string, subtitle: string, tools: TargetToolCatalogItem[]) => {
-    const blockReason = globalBlockReason ? null : getSectionBlockReason(tools);
+  const renderToolSection = (capability: 'read' | 'write', title: string, subtitle: string, sectionTools: TargetToolCatalogItem[]) => {
+    const blockReason = globalBlockReason ? null : getSectionBlockReason(sectionTools);
     const isBlocked = Boolean(globalBlockReason || blockReason);
+    const groupState = getGroupState(capability, sectionTools);
+    const groupPending = bulkLoadingCapability !== null || isLoadingMoreTools || isSavingTools;
+    const groupLabel = t(groupState.allEnabled
+      ? capability === 'read' ? 'mcpServers.disableAllReadTools' : 'mcpServers.disableAllWriteTools'
+      : capability === 'read' ? 'mcpServers.enableAllReadTools' : 'mcpServers.enableAllWriteTools');
     return (
-      <section className={`overflow-hidden rounded-lg border border-ui-border bg-ui-surface ${isBlocked ? 'opacity-70' : ''}`}>
+      <section data-mcp-tool-capability={capability} className={`overflow-hidden rounded-lg border border-ui-border bg-ui-surface ${isBlocked ? 'opacity-70' : ''}`}>
         <div className="flex items-center justify-between gap-3 border-b border-ui-border bg-ui-bg px-4 py-3">
           <div className="min-w-0">
-            <h3 className="type-row-title">{title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="type-row-title">{title}</h3>
+              <span className="type-micro-label rounded-full bg-ui-surface px-2 py-1 text-ui-text-muted">{groupState.total}</span>
+            </div>
             <p className="type-caption text-ui-text-muted">{subtitle}</p>
             {blockReason && (
               <p className="type-caption mt-1 text-status-warning-text">
@@ -131,9 +188,21 @@ export const McpServerToolsDialog: React.FC<{
               </p>
             )}
           </div>
-          <span className="type-micro-label rounded-full bg-ui-surface px-2 py-1 text-ui-text-muted">{tools.length}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="type-caption text-ui-text-muted">
+              {bulkLoadingCapability === capability ? t('mcpServers.loadingAllTools') : t('mcpServers.allToolsInSection')}
+            </span>
+            <Switch
+              data-mcp-tool-group-switch={capability}
+              checked={groupState.allEnabled}
+              disabled={!canManageTools || groupState.total === 0 || groupPending}
+              aria-busy={bulkLoadingCapability === capability}
+              onCheckedChange={() => void handleToggleGroup(capability, sectionTools)}
+              label={groupLabel}
+            />
+          </div>
         </div>
-        {tools.length > 0 ? tools.map(renderToolRow) : (
+        {sectionTools.length > 0 ? sectionTools.map(renderToolRow) : (
           <p className="type-caption px-4 py-4 text-ui-text-muted">{t('mcpServers.noToolsInSection')}</p>
         )}
       </section>
@@ -218,8 +287,8 @@ export const McpServerToolsDialog: React.FC<{
                   </div>
                 </div>
               </section>
-              {renderToolSection(t('mcpServers.readOnlySection'), t('mcpServers.readOnlySectionHelp'), readTools)}
-              {renderToolSection(t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
+              {renderToolSection('read', t('mcpServers.readOnlySection'), t('mcpServers.readOnlySectionHelp'), readTools)}
+              {renderToolSection('write', t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
               <div ref={loadMoreSentinelRef}>
                 {hasMoreTools && (
                   <Button type="button" variant="secondary" size="sm" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="w-full">

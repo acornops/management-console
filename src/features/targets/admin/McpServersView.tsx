@@ -579,13 +579,13 @@ export const McpServersView: React.FC<McpServersViewProps> = ({
             loadMoreSentinelRef={activeServerTools?.sentinelRef}
             onClose={() => setSelectedServerId(null)}
             onToggleTool={(tool, enabled) => handleToggleTool(activeServerWithPagedTools, tool, enabled)}
+            onLoadAllTools={activeServerTools?.loadAll}
             onLoadMoreTools={() => {
               if (activeServerTools?.nextCursor) void activeServerTools.loadMore();
             }}
           />
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {serverModalOpen && (
           <McpServerFormDialog

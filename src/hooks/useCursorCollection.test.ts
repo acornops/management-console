@@ -122,6 +122,27 @@ describe('CursorCollectionController', () => {
     });
   });
 
+  it('loads every remaining page for a bulk collection action', async () => {
+    const loadPage = vi.fn()
+      .mockResolvedValueOnce({ items: [{ id: 'one' }], nextCursor: 'two' })
+      .mockResolvedValueOnce({ items: [{ id: 'two' }], nextCursor: 'three' })
+      .mockResolvedValueOnce({ items: [{ id: 'three' }] });
+    const controller = new CursorCollectionController(options(loadPage));
+    await controller.reset();
+
+    await expect(controller.loadAll()).resolves.toEqual([
+      { id: 'one' },
+      { id: 'two' },
+      { id: 'three' }
+    ]);
+    expect(loadPage).toHaveBeenCalledTimes(3);
+    expect(controller.getState()).toEqual({
+      items: [{ id: 'one' }, { id: 'two' }, { id: 'three' }],
+      nextCursor: undefined,
+      phase: 'ready'
+    });
+  });
+
   it('aborts and ignores a stale response when filters reset', async () => {
     const first = deferred<PagedResult<Item>>();
     const second = deferred<PagedResult<Item>>();

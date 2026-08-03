@@ -28,6 +28,7 @@ export interface CursorCollectionState<T> {
 
 export interface CursorCollectionResult<T> extends CursorCollectionState<T> {
   loadMore(): Promise<void>;
+  loadAll(): Promise<T[]>;
   refresh(): Promise<void>;
   retry(): Promise<void>;
   sentinelRef: React.RefCallback<HTMLElement>;
@@ -112,6 +113,18 @@ export class CursorCollectionController<T, TFilters> {
     return this.request('append');
   }
 
+  async loadAll(): Promise<T[]> {
+    if (!this.state.nextCursor) return this.state.items;
+    if (this.state.phase === 'loadingMore') {
+      throw new Error('Wait for the current page to finish loading before loading all items.');
+    }
+    await this.request('append', false, true);
+    if (this.state.phase === 'error' || this.state.nextCursor) {
+      throw new Error(this.state.error || 'The complete collection could not be loaded.');
+    }
+    return this.state.items;
+  }
+
   retry(): Promise<void> {
     return this.request(this.failedMode);
   }
@@ -155,7 +168,7 @@ export class CursorCollectionController<T, TFilters> {
     return readSessionDataCache<CursorCollectionState<T>>(this.scopeKey)?.value;
   }
 
-  private async request(mode: RequestMode, preserveCachedEmpty = false): Promise<void> {
+  private async request(mode: RequestMode, preserveCachedEmpty = false, drainRemaining = false): Promise<void> {
     this.abort();
     const version = this.requestVersion;
     const controller = new AbortController();
@@ -175,7 +188,7 @@ export class CursorCollectionController<T, TFilters> {
     });
 
     try {
-      const shouldDrain = this.options.strategy === 'drain' && mode !== 'append';
+      const shouldDrain = drainRemaining || (this.options.strategy === 'drain' && mode !== 'append');
       let cursor = mode === 'append' ? this.state.nextCursor : undefined;
       let loadedItems: T[] = [];
       let nextCursor: string | undefined;
@@ -263,12 +276,14 @@ export function useCursorCollection<T, TFilters>(
   React.useEffect(() => () => controller.dispose(), [controller]);
 
   const loadMore = React.useCallback(() => controller.loadMore(), [controller]);
+  const loadAll = React.useCallback(() => controller.loadAll(), [controller]);
   const refresh = React.useCallback(() => controller.refresh(), [controller]);
   const retry = React.useCallback(() => controller.retry(), [controller]);
 
   return {
     ...state,
     loadMore,
+    loadAll,
     refresh,
     retry,
     sentinelRef: setSentinel
