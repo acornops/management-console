@@ -35,4 +35,12 @@ describe('overview refresh continuity', () => {
     expect(source).toMatch(/loadVmLogs,\s+selectedTargetId,\s+view,/);
     expect(source).not.toMatch(/loadVmLogs,\s+selected,\s+view,/);
   });
+
+  it('keeps the VM overview header free of a target-wide assistant shortcut', () => {
+    const source = readSource('src/pages/VirtualMachinesPage.tsx');
+
+    expect(source).not.toContain('openVmTriage');
+    expect(source).not.toContain('triageHostPrompt');
+    expect(source).toContain('onOpenIssueTriage={openVmIssueTriage}');
+  });
 });

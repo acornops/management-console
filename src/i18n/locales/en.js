@@ -843,7 +843,6 @@ export const en = {
       hostSource: 'Host',
       action: 'Action',
       triageIssuePrompt: 'Triage "{{title}}" on this VM. Severity: {{severity}}. Scope: {{source}}. Issue summary: {{message}}',
-      triageHostPrompt: 'Summarize current VM health, active issues, host inventory, and logs for {{name}}.',
       loadAverage: 'Load Average',
       memory: 'Memory',
       loadingMetricHistory: 'Loading VM telemetry',

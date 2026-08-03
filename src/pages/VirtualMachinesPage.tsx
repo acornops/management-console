@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Bot, Gauge } from 'lucide-react';
+import { Activity, Gauge } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button, StatusBadge } from '@acornops/ui';
@@ -401,12 +401,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     const tab: VmSubview = category === 'all' ? 'resources' : category;
     navigate(vmDetailPath(selected.id, tab));
   }, [navigate, selected, vmDetailPath]);
-  const openVmTriage = React.useCallback(() => {
-    if (!selected) return;
-    const prompt = t('virtualMachines.overview.triageHostPrompt', { name: selected.name });
-    setPendingChatPrompt(prompt);
-    navigate(vmDetailPath(selected.id, 'chat'));
-  }, [navigate, selected, t, vmDetailPath]);
   const openVmIssueTriage = React.useCallback((issue: ControlPlaneIssueItem) => {
     if (!selected) return;
     const prompt = t('virtualMachines.overview.triageIssuePrompt', {
@@ -521,18 +515,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     return (
       <PageShell>
         <PageHeader title={t('virtualMachines.overview.title')} description={t('virtualMachines.overview.latestTelemetryFor', { name: selected.name })} actions={
-          <>
-            <Button onClick={() => openVmTriage()} variant="secondary" size="md" className="whitespace-nowrap">
-              <Bot className="h-4 w-4" aria-hidden="true" />
-              {t('virtualMachines.overview.openAssistant')}
-            </Button>
-            <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
-              <StatusBadge tone={selected.status === 'online' ? 'success' : selected.status === 'degraded' ? 'warning' : 'danger'}>
-                {getVmStatusLabel(selected.status, t)}
-              </StatusBadge>
-              <span className="type-caption text-ui-text-muted">{formatSnapshotTime(selected)}</span>
-            </div>
-          </>
+          <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
+            <StatusBadge tone={selected.status === 'online' ? 'success' : selected.status === 'degraded' ? 'warning' : 'danger'}>
+              {getVmStatusLabel(selected.status, t)}
+            </StatusBadge>
+            <span className="type-caption text-ui-text-muted">{formatSnapshotTime(selected)}</span>
+          </div>
         } />
 
         <VirtualMachineIssuesPanel

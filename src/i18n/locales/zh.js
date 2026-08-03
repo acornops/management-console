@@ -843,7 +843,6 @@ export const zh = {
       hostSource: '主机',
       action: '操作',
       triageIssuePrompt: '分诊此虚拟机上的“{{title}}”。严重度：{{severity}}。范围：{{source}}。问题摘要：{{message}}',
-      triageHostPrompt: '总结 {{name}} 当前的虚拟机健康、活跃问题、主机资源清单和日志。',
       loadAverage: '平均负载',
       memory: '内存',
       loadingMetricHistory: '正在加载虚拟机遥测',
