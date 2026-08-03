@@ -454,9 +454,11 @@ describe('target chat polish contracts', () => {
     expect(messageActions).toContain('} catch {');
     expect(messageActions).toContain('opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100');
     expect(messageActions).toContain('<time>{timestampLabel}</time>');
+    expect(messageActions.match(/size="icon"/g)).toHaveLength(2);
     expect(messageActions).toContain("aria-label={t('chat.editMessage')}");
-    expect(messageActions).toContain('<Pencil className="h-3.5 w-3.5" />');
+    expect(messageActions).toContain('<Pencil size={16} />');
     expect(messageActions).toContain("aria-label={hasCopied ? t('chat.copiedMessage') : t('chat.copyMessage')}");
+    expect(messageActions).toContain('hasCopied ? <Check size={16} /> : <Copy size={16} />');
     expect(messageActions).not.toContain('onGeneratePdf');
     expect(messageActions).not.toContain('FileDown');
     expect(chatView).not.toContain('createRunGeneratedDocument');
