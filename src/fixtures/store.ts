@@ -237,6 +237,7 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
+      templateRef: { templateId: 'acornops-starter', recordKey: 'agent:kubernetesAgent' },
       mcpInstallations: [agentTargetsMcpServer],
       targetAccessPolicy: { mode: 'all', targetIds: [] },
       tools: ['documents.create'], readiness: { status: 'ready', reasons: [] },
@@ -251,6 +252,7 @@ export function createFixtureState(): FixtureState {
       reviewState: 'reviewed', providerType: 'internal', createdBy: FIXTURE_IDS.user,
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read'],
+      templateRef: { templateId: 'acornops-starter', recordKey: 'agent:virtualMachineAgent' },
       tools: ['documents.create'],
       readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Virtual-machine MCP tools', createdAt: EARLIER, updatedAt: NOW

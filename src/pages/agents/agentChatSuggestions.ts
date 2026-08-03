@@ -1,3 +1,5 @@
+import type { AgentDefinition } from '@/pages/agents/agentModel';
+
 export const genericAgentChatSuggestionKeys = [
   'agentChat.suggestions.inspect',
   'agentChat.suggestions.summarize',
@@ -19,9 +21,13 @@ const virtualMachineAgentSuggestionKeys = [
   'agentChat.suggestions.virtualMachine.logs'
 ];
 
-export function getAgentChatSuggestionKeys(agentName: string): string[] {
-  const normalizedName = agentName.trim().toLowerCase();
-  if (normalizedName === 'kubernetes agent') return kubernetesAgentSuggestionKeys;
-  if (normalizedName === 'virtual machine agent') return virtualMachineAgentSuggestionKeys;
+const starterTemplateId = 'acornops-starter';
+
+export function getAgentChatSuggestionKeys(
+  agent: Pick<AgentDefinition, 'name' | 'templateRef'>
+): string[] {
+  if (agent.templateRef?.templateId !== starterTemplateId) return genericAgentChatSuggestionKeys;
+  if (agent.templateRef.recordKey === 'agent:kubernetesAgent') return kubernetesAgentSuggestionKeys;
+  if (agent.templateRef.recordKey === 'agent:virtualMachineAgent') return virtualMachineAgentSuggestionKeys;
   return genericAgentChatSuggestionKeys;
 }

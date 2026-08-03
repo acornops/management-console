@@ -358,7 +358,7 @@ export const AgentChatPanel: React.FC<{
         promptBodyKey={promptBodyKey}
         inputPlaceholderKey="agentChat.inputPlaceholder"
         footerKey={footerKey}
-        suggestionKeys={getAgentChatSuggestionKeys(agent.name)}
+        suggestionKeys={getAgentChatSuggestionKeys(agent)}
         canChat={canChat}
         isConversationOwner={isOwner}
         conversationNotice={!isOwner ? t('agentChat.readerNotice') : null}

@@ -31,6 +31,10 @@ export interface AgentDefinition {
     status: 'ready' | 'needs_setup' | 'blocked';
     reasons: string[];
   };
+  templateRef?: {
+    templateId: string;
+    recordKey: string;
+  };
 }
 
 export function getAgentAccessClass(agent: AgentDefinition): string {

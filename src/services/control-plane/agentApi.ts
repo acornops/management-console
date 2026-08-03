@@ -117,6 +117,10 @@ export interface AgentDefinitionApi {
   readiness?: { status: 'ready' | 'needs_setup' | 'blocked'; reasons: string[] };
   capabilitySummary?: string;
   capabilities?: AgentCapability[];
+  templateRef?: {
+    templateId: string;
+    recordKey: string;
+  };
   createdAt?: string;
   updatedAt?: string;
 }

@@ -103,7 +103,8 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     readiness: item.readiness || {
       status: item.status === 'active' ? 'ready' : 'needs_setup',
       reasons: item.status === 'active' ? [] : ['Activate this Agent before starting a conversation.']
-    }
+    },
+    templateRef: item.templateRef
   };
 };
 
