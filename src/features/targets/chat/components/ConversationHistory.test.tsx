@@ -126,6 +126,8 @@ describe('ConversationHistory', () => {
     );
 
     expect(markup).toContain('Target context: demo-target');
+    expect(markup.match(/lucide-messages-square/g)).toHaveLength(1);
+    expect(markup).not.toContain('lucide-history');
     expect(markup).not.toContain('data-chat-history-search="true"');
     expect(markup).toContain('py-2 pr-16');
     expect(markup).toContain('flex-1 truncate type-row-title');

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bot, History, MessageSquare, Plus, Search, Trash2, X } from 'lucide-react';
+import { Bot, MessageSquare, MessagesSquare, Plus, Search, Trash2, X } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { AssistantNavStatusIndicator } from '@/app/AssistantNavStatusIndicator';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
@@ -90,7 +90,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ appNam
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  {isInvestigations ? <Bot className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" /> : <History className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
+                  {isInvestigations ? <Bot className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" /> : <MessagesSquare className="h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />}
                   <h2 className="type-panel-title text-ui-text">{isInvestigations ? t('chat.investigations') : t('chat.chats')}</h2>
                 </div>
                 <p className="type-caption mt-1 truncate text-ui-text-muted">{t(isInvestigations ? 'chat.investigationsContext' : 'chat.historyContext', { name: appName })}</p>
@@ -223,7 +223,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({ appNam
                       </>
                     ) : (
                       <>
-                        {isInvestigations ? <Bot className={`h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} /> : <History className={`h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />}
+                        {isInvestigations && <Bot className={`h-4 w-4 shrink-0 ${isActive ? 'text-ui-text' : 'text-ui-text-muted'}`} />}
                         <div className="min-w-0 flex-1">
                           <div className="flex min-w-0 items-center gap-2">
                             <p className="min-w-0 flex-1 truncate type-row-title text-ui-text" title={session.name}>{session.name}</p>
