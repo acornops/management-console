@@ -17,6 +17,8 @@ export type {
   ControlPlaneTargetIssueSummary
 } from './issueTypes';
 export type {
+  ControlPlaneAgentAssistantCapabilitiesPreview,
+  ControlPlaneAssistantCapabilitiesPreview,
   ControlPlaneTargetAssistantCapabilitiesPreview,
   ControlPlaneTargetAssistantCapabilitySkillPreviewItem,
   ControlPlaneTargetAssistantCapabilityToolPreviewItem,

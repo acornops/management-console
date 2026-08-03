@@ -16,6 +16,7 @@ import {
   createAgentConversation,
   deleteAgentConversation,
   getAgentConversation,
+  getAgentAssistantCapabilitiesPreview,
   listAgentConversations,
   postAgentConversationMessage,
   type AgentConversationApiResponse,
@@ -69,6 +70,7 @@ function approvalToPending(approval: Awaited<ReturnType<typeof controlPlaneApi.l
 async function conversationMessages(response: AgentConversationApiResponse): Promise<{
   messages: ChatMessage[];
   traces: Record<string, LiveRunTrace>;
+  runtimeSelection?: ChatRuntimeSelection;
 }> {
   const traces = Object.fromEntries(response.runs.map((run) => [run.id, runTrace(run)]));
   const messages: ChatMessage[] = response.messages.map((message) => ({
@@ -96,7 +98,14 @@ async function conversationMessages(response: AgentConversationApiResponse): Pro
       });
     }
   }
-  return { messages: messages.sort((left, right) => left.timestamp - right.timestamp), traces };
+  const latestRuntimeRun = [...response.runs]
+    .filter((run) => run.runtimeSelection)
+    .sort((left, right) => Date.parse(right.requestedAt) - Date.parse(left.requestedAt))[0];
+  return {
+    messages: messages.sort((left, right) => left.timestamp - right.timestamp),
+    traces,
+    runtimeSelection: latestRuntimeRun?.runtimeSelection
+  };
 }
 
 function toChatSession(
@@ -144,6 +153,7 @@ export const AgentChatPanel: React.FC<{
   const [sessions, setSessions] = useSessionCachedState<ChatSession[]>(`${agentChatCachePrefix}sessions`, []);
   const [activeSessionId, setActiveSessionId] = useSessionCachedState<string | null>(`${agentChatCachePrefix}active-session`, null);
   const [inputValue, setInputValue] = React.useState('');
+  const [composerRuntimeSelection, setComposerRuntimeSelection] = React.useState<ChatRuntimeSelection>();
   const [isSessionsLoading, setIsSessionsLoading] = React.useState(() => !hasSessionDataCacheValue(summariesCacheKey));
   const [isSending, setIsSending] = React.useState(false);
   const [isCancellingRun, setIsCancellingRun] = React.useState(false);
@@ -250,6 +260,7 @@ export const AgentChatPanel: React.FC<{
       ? toChatSession(response.conversation, hydrated.messages, true)
       : session));
     setRunTracesByRunId((current) => ({ ...current, ...hydrated.traces }));
+    setComposerRuntimeSelection(hydrated.runtimeSelection);
   }, []);
 
   React.useEffect(() => {
@@ -296,13 +307,19 @@ export const AgentChatPanel: React.FC<{
     return response.conversation.id;
   }, [agent.id, agent.workspaceId]);
 
-  const send = React.useCallback(async (overrideInput?: string) => {
+  const send = React.useCallback(async (overrideInput?: string, runtimeSelection?: ChatRuntimeSelection) => {
     const content = (overrideInput ?? inputValue).trim();
     if (!content || !canChat || isSending) return;
     setIsSending(true);
     try {
       const conversationId = activeSessionId || await createConversation();
-      await postAgentConversationMessage(conversationId, content, globalThis.crypto?.randomUUID?.());
+      const accepted = await postAgentConversationMessage(
+        conversationId,
+        content,
+        globalThis.crypto?.randomUUID?.(),
+        runtimeSelection
+      );
+      setComposerRuntimeSelection(accepted.runtimeSelection || runtimeSelection);
       setInputValue('');
       await refreshConversation(conversationId);
       await refreshSummaries(conversationId);
@@ -349,7 +366,8 @@ export const AgentChatPanel: React.FC<{
         headerLeading={<AgentAvatar emoji={agent.avatarEmoji} size={displayMode === 'panel' ? 'md' : 'lg'} />}
         title={title}
         automaticInvestigationsEnabled={false}
-        capabilityPreviewEnabled={false}
+        assistantReferencesEnabled={false}
+        loadAssistantCapabilitiesPreview={getAgentAssistantCapabilitiesPreview}
         targetMentionsEnabled
         isDark={isDark}
         titleKey="agentChat.title"
@@ -377,6 +395,7 @@ export const AgentChatPanel: React.FC<{
         inputValue={inputValue}
         sessions={sessions}
         activeSessionId={activeSessionId}
+        composerRuntimeSelection={composerRuntimeSelection}
         workspaceAiSettings={workspaceAiSettings}
         isWorkspaceAiSettingsLoading={!workspaceAiSettings && !workspaceAiSettingsError}
         workspaceAiSettingsError={workspaceAiSettingsError}
@@ -389,9 +408,9 @@ export const AgentChatPanel: React.FC<{
         onLoadEarlierMessages={() => undefined}
         onOpenAiSettings={onOpenAiSettings}
         onInputChange={setInputValue}
-        onComposerRuntimeSelectionChange={(_selection: ChatRuntimeSelection) => undefined}
-        onSend={(value) => send(value)}
-        onEditLastUserMessage={(_messageId, content) => send(content)}
+        onComposerRuntimeSelectionChange={setComposerRuntimeSelection}
+        onSend={(value, runtimeSelection) => send(value, runtimeSelection)}
+        onEditLastUserMessage={(_messageId, content, runtimeSelection) => send(content, runtimeSelection)}
         onApprove={async (approvalId) => {
           if (!activeRunId) return;
           try {

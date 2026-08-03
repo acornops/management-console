@@ -16,7 +16,6 @@ type TargetChatComposerProps = Pick<
   | 'allowedReasoningOptions'
   | 'assistantCapabilitiesPreview'
   | 'assistantCapabilitiesPreviewError'
-  | 'capabilityPreviewEnabled'
   | 'targetMentionsEnabled'
   | 'canChat'
   | 'canCancelActiveRun'
@@ -85,7 +84,6 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   allowedReasoningOptions,
   assistantCapabilitiesPreview,
   assistantCapabilitiesPreviewError,
-  capabilityPreviewEnabled,
   targetMentionsEnabled,
   canChat,
   canCancelActiveRun,
@@ -296,19 +294,15 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
             <span className="min-w-0 flex-1" aria-hidden="true" />
             <div className="inline-flex h-8 items-center rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60">
-              {capabilityPreviewEnabled ? (
-                <>
-                  <AssistantCapabilityPreviewControl
-                    canChat={canChat}
-                    isPanel={isPanel}
-                    isLoading={isAssistantCapabilitiesPreviewLoading}
-                    error={assistantCapabilitiesPreviewError}
-                    preview={assistantCapabilitiesPreview}
-                    requestedToolAccessMode={requestedToolAccessMode}
-                  />
-                  <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
-                </>
-              ) : null}
+              <AssistantCapabilityPreviewControl
+                canChat={canChat}
+                isPanel={isPanel}
+                isLoading={isAssistantCapabilitiesPreviewLoading}
+                error={assistantCapabilitiesPreviewError}
+                preview={assistantCapabilitiesPreview}
+                requestedToolAccessMode={requestedToolAccessMode}
+              />
+              <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
               <div ref={modelMenuRef} className={isPanel ? 'static' : 'relative'}>
                 <Button
                   type="button"

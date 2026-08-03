@@ -3,6 +3,7 @@ import type { Components } from 'react-markdown';
 import type { AssistantNavStatus } from '@/app/assistantNavStatus';
 import type { ChatAssistantReference, ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
+import type { ControlPlaneAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 export interface ChatPresentationSubject {
   id: string;
   workspaceId: string;
@@ -14,7 +15,12 @@ export interface TargetChatViewProps {
   subject: ChatPresentationSubject;
   headerLeading?: React.ReactNode;
   automaticInvestigationsEnabled?: boolean;
-  capabilityPreviewEnabled?: boolean;
+  assistantReferencesEnabled?: boolean;
+  loadAssistantCapabilitiesPreview?: (
+    workspaceId: string,
+    subjectId: string,
+    toolAccessMode: 'read_only' | 'read_write'
+  ) => Promise<ControlPlaneAssistantCapabilitiesPreview>;
   targetMentionsEnabled?: boolean;
   isDark: boolean;
   title?: string; titleKey?: string;

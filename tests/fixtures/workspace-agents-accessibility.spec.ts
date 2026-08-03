@@ -164,6 +164,22 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   expect(modelSubmenuBox.x + modelSubmenuBox.width).toBeLessThanOrEqual(panelBox.x + panelBox.width);
   await page.keyboard.press('Escape');
 
+  const capabilityPreviewButton = panel.locator('[data-assistant-capability-preview-trigger="true"]');
+  await expect(capabilityPreviewButton).toBeVisible();
+  await expect(capabilityPreviewButton).toHaveAccessibleName(/Assistant capabilities/);
+  await capabilityPreviewButton.click();
+  const capabilityPreviewId = await capabilityPreviewButton.getAttribute('aria-controls');
+  if (!capabilityPreviewId) throw new Error('The Agent capability preview trigger must identify its popover');
+  const capabilityPreview = page.locator(`#${capabilityPreviewId}`);
+  await expect(capabilityPreview).toBeVisible();
+  await expect(capabilityPreview.getByText('Inspect infrastructure')).toBeVisible();
+  const capabilityPreviewBox = await capabilityPreview.boundingBox();
+  expect(capabilityPreviewBox).not.toBeNull();
+  if (!capabilityPreviewBox) throw new Error('The Agent capability preview must have a layout box');
+  expect(capabilityPreviewBox.x).toBeGreaterThanOrEqual(panelBox.x);
+  expect(capabilityPreviewBox.x + capabilityPreviewBox.width).toBeLessThanOrEqual(panelBox.x + panelBox.width);
+  await page.keyboard.press('Escape');
+
   await panel.getByRole('button', { name: 'Close' }).click();
   await expect(panel).toHaveCount(0);
   await expect.poll(() => cardGrid.evaluate(renderedResourceCardColumns)).toBe(3);

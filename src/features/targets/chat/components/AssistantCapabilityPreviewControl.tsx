@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, BookOpen, Loader2, SlidersHorizontal, Wrench } from 'lucide-react';
 import type {
-  ControlPlaneTargetAssistantCapabilitiesPreview,
+  ControlPlaneAssistantCapabilitiesPreview,
   ControlPlaneTargetAssistantCapabilitySkillPreviewItem,
   ControlPlaneTargetAssistantCapabilityToolPreviewItem
 } from '@/services/control-plane/types';
@@ -15,7 +15,7 @@ interface AssistantCapabilityPreviewControlProps {
   isPanel: boolean;
   isLoading: boolean;
   error: string;
-  preview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
+  preview: ControlPlaneAssistantCapabilitiesPreview | null;
   requestedToolAccessMode: 'read_only' | 'read_write';
 }
 
@@ -45,7 +45,7 @@ function capabilityBadgeClassName(capability: ControlPlaneTargetAssistantCapabil
 }
 
 function capabilityChipLabel(
-  preview: ControlPlaneTargetAssistantCapabilitiesPreview | null,
+  preview: ControlPlaneAssistantCapabilitiesPreview | null,
   isLoading: boolean,
   error: string,
   t: (key: string, options?: Record<string, unknown>) => string

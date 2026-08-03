@@ -7,6 +7,7 @@ import {
   deleteAgent,
   deleteAgentConversation,
   duplicateAgent,
+  getAgentAssistantCapabilitiesPreview,
   getAgentTargetAccessSettings,
   getAgent,
   getAgentConversation,
@@ -84,7 +85,12 @@ describe('agent control-plane api', () => {
     await expect(changeAgentConversationAccess('conversation-1', 'read_write')).resolves.toMatchObject({
       accessMode: 'read_write'
     });
-    await expect(postAgentConversationMessage('conversation-1', 'Inspect the incident.', 'request-1')).resolves.toMatchObject({
+    await expect(postAgentConversationMessage(
+      'conversation-1',
+      'Inspect the incident.',
+      'request-1',
+      { provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' }
+    )).resolves.toMatchObject({
       run_id: 'run-1'
     });
     await expect(deleteAgentConversation('conversation-1')).resolves.toBeUndefined();
@@ -102,8 +108,40 @@ describe('agent control-plane api', () => {
     expect(JSON.parse(accessCall?.[1]?.body as string)).toEqual({ accessMode: 'read_write' });
     expect(JSON.parse(messageCall?.[1]?.body as string)).toEqual({
       content: 'Inspect the incident.',
-      clientRequestId: 'request-1'
+      clientRequestId: 'request-1',
+      llm: { provider: 'openai', model: 'gpt-5.5', reasoningEffort: 'high' }
     });
+  });
+
+  it('loads the Agent chat capability preview for the requested access mode', async () => {
+    const preview = {
+      workspaceId: 'workspace/a',
+      agentId: 'agent/a',
+      toolAccessMode: 'read_only',
+      confirmationRequiredForWrite: false,
+      writeUnavailableReason: 'run_read_only',
+      unavailableMcpToolCount: 0,
+      toolSummary: { totalAllowed: 1, nativeAllowed: 1, readAllowed: 1, writeAllowed: 0 },
+      skillSummary: { totalAvailable: 0 },
+      tools: [{
+        id: 'documents.create',
+        name: 'acornops_create_document',
+        label: 'Create Document',
+        description: 'Create a PDF or Markdown document.',
+        capability: 'read',
+        runtimeKind: 'function',
+        source: 'builtin'
+      }],
+      skills: []
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(preview), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getAgentAssistantCapabilitiesPreview('workspace/a', 'agent/a', 'read_only'))
+      .resolves.toEqual(preview);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'http://localhost:8081/api/v1/workspaces/workspace%2Fa/agents/agent%2Fa/assistant/capabilities-preview?toolAccessMode=read_only'
+    );
   });
 
   it('lists and assigns code-owned native tools through manage_agents routes', async () => {

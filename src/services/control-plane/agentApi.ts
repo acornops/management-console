@@ -1,5 +1,7 @@
 import { requestJson } from './http';
 import type { ImportSkillInput, ResolveGitSkillInput } from './skillTypes';
+import type { ControlPlaneAgentAssistantCapabilitiesPreview } from './targetToolTypes';
+import type { ChatRuntimeSelection } from '@/types';
 
 export type AgentStatus = 'draft' | 'active' | 'disabled';
 export type AgentProviderType = 'internal' | 'external';
@@ -70,6 +72,7 @@ export interface AgentConversationRunApi {
   sessionId: string;
   messageId: string;
   toolAccessMode: AgentConversationAccessMode;
+  runtimeSelection?: ChatRuntimeSelection;
   status: string;
   requestedAt: string;
   startedAt: string | null;
@@ -134,6 +137,16 @@ export function listAgentConversations(
   ).then((response) => response.items);
 }
 
+export function getAgentAssistantCapabilitiesPreview(
+  workspaceId: string,
+  agentId: string,
+  toolAccessMode: 'read_only' | 'read_write'
+): Promise<ControlPlaneAgentAssistantCapabilitiesPreview> {
+  return requestJson<ControlPlaneAgentAssistantCapabilitiesPreview>(
+    `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/agents/${encodeURIComponent(agentId)}/assistant/capabilities-preview?toolAccessMode=${encodeURIComponent(toolAccessMode)}`
+  );
+}
+
 export function createAgentConversation(
   workspaceId: string,
   agentId: string
@@ -170,13 +183,18 @@ export function changeAgentConversationAccess(
 export function postAgentConversationMessage(
   conversationId: string,
   content: string,
-  clientRequestId?: string
-): Promise<{ message_id: string; run_id: string; status: string }> {
+  clientRequestId?: string,
+  runtimeSelection?: ChatRuntimeSelection
+): Promise<{ message_id: string; run_id: string; status: string; runtimeSelection?: ChatRuntimeSelection }> {
   return requestJson(
     `/api/v1/agent-conversations/${encodeURIComponent(conversationId)}/messages`,
     {
       method: 'POST',
-      body: JSON.stringify({ content, ...(clientRequestId ? { clientRequestId } : {}) })
+      body: JSON.stringify({
+        content,
+        ...(clientRequestId ? { clientRequestId } : {}),
+        ...(runtimeSelection ? { llm: runtimeSelection } : {})
+      })
     }
   );
 }

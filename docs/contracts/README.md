@@ -182,6 +182,10 @@ The management console is the browser client for the control-plane API. Keep thi
 - Established chats restore provider, model, and reasoning effort from the
   control plane's latest accepted run snapshot; workspace AI settings seed
   chats that do not yet have a run.
+- Agent chat uses the Agent capability-preview endpoint for the tools-and-skills
+  control. The console does not derive effective run authority from Agent
+  configuration; the control plane compiles it for the current actor and access
+  mode.
 
 ## Control-Plane Boundary Notes
 

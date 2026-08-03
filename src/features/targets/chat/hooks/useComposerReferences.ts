@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
+import type { ControlPlaneAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 import type { ChatAssistantReference } from '@/types';
 import {
   MAX_CHAT_ASSISTANT_REFERENCES,
@@ -8,7 +8,8 @@ import {
 } from '@/features/targets/chat/types';
 
 interface UseComposerReferencesArgs {
-  assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
+  enabled: boolean;
+  assistantCapabilitiesPreview: ControlPlaneAssistantCapabilitiesPreview | null;
   composerRootRef: React.RefObject<HTMLDivElement | null>;
   composerTextareaRef: React.RefObject<HTMLTextAreaElement | null>;
   inputValue: string;
@@ -17,13 +18,13 @@ interface UseComposerReferencesArgs {
 }
 
 export function useComposerReferences(args: UseComposerReferencesArgs) {
-  const { assistantCapabilitiesPreview, composerRootRef, composerTextareaRef, inputValue, onInputChange, closeModelMenus } = args;
+  const { assistantCapabilitiesPreview, composerRootRef, composerTextareaRef, enabled, inputValue, onInputChange, closeModelMenus } = args;
   const [composerReferences, setComposerReferences] = React.useState<ChatAssistantReference[]>([]);
   const [slashReferenceQuery, setSlashReferenceQuery] = React.useState<ReturnType<typeof resolveSlashReferenceQuery>>(null);
   const [referenceActiveIndex, setReferenceActiveIndex] = React.useState(0);
   const referenceMenuId = React.useId();
   const availableComposerReferences = React.useMemo<ChatAssistantReference[]>(() => {
-    if (!assistantCapabilitiesPreview) return [];
+    if (!enabled || !assistantCapabilitiesPreview) return [];
     const selected = new Set(composerReferences.map((reference) => `${reference.kind}:${reference.id}`));
     const references: ChatAssistantReference[] = [
       ...assistantCapabilitiesPreview.tools.map((tool) => ({
@@ -47,8 +48,8 @@ export function useComposerReferences(args: UseComposerReferencesArgs) {
       ? references.filter((reference) => [reference.label, reference.id, reference.description || '']
         .some((value) => value.toLocaleLowerCase().includes(query)))
       : references;
-  }, [assistantCapabilitiesPreview, composerReferences, slashReferenceQuery?.query]);
-  const isReferenceMenuOpen = Boolean(slashReferenceQuery)
+  }, [assistantCapabilitiesPreview, composerReferences, enabled, slashReferenceQuery?.query]);
+  const isReferenceMenuOpen = enabled && Boolean(slashReferenceQuery)
     && composerReferences.length < MAX_CHAT_ASSISTANT_REFERENCES;
   const dismissReferenceMenu = React.useCallback(() => setSlashReferenceQuery(null), []);
   const clearComposerReferences = React.useCallback(() => {

@@ -52,6 +52,7 @@
   "GET /api/v1/workspaces",
   "GET /api/v1/workspaces/{workspaceId}",
   "GET /api/v1/workspaces/{workspaceId}/agents",
+  "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/assistant/capabilities-preview",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/conversations",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers",
   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/connection",

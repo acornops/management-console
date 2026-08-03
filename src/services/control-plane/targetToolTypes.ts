@@ -78,10 +78,8 @@ export interface ControlPlaneTargetAssistantCapabilitySkillPreviewItem {
   source: 'manual' | 'git_import';
 }
 
-export interface ControlPlaneTargetAssistantCapabilitiesPreview {
+export interface ControlPlaneAssistantCapabilitiesPreview {
   workspaceId: string;
-  targetId: string;
-  targetType: 'kubernetes' | 'virtual_machine';
   toolAccessMode: 'read_only' | 'read_write';
   confirmationRequiredForWrite: boolean;
   writeUnavailableReason: 'run_read_only' | 'agent_write_disabled' | null;
@@ -97,6 +95,15 @@ export interface ControlPlaneTargetAssistantCapabilitiesPreview {
   };
   tools: ControlPlaneTargetAssistantCapabilityToolPreviewItem[];
   skills: ControlPlaneTargetAssistantCapabilitySkillPreviewItem[];
+}
+
+export interface ControlPlaneTargetAssistantCapabilitiesPreview extends ControlPlaneAssistantCapabilitiesPreview {
+  targetId: string;
+  targetType: 'kubernetes' | 'virtual_machine';
+}
+
+export interface ControlPlaneAgentAssistantCapabilitiesPreview extends ControlPlaneAssistantCapabilitiesPreview {
+  agentId: string;
 }
 
 export interface UpdateTargetToolInput {

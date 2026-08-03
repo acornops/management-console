@@ -33,7 +33,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     assistantCapabilitiesPreview,
     assistantCapabilitiesPreviewError,
     automaticInvestigationsEnabled,
-    capabilityPreviewEnabled,
     targetMentionsEnabled,
     canApproveWriteActions,
     canCancelActiveRun,
@@ -509,7 +508,6 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   allowedReasoningOptions={allowedReasoningOptions}
                   assistantCapabilitiesPreview={assistantCapabilitiesPreview}
                   assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
-                  capabilityPreviewEnabled={capabilityPreviewEnabled}
                   targetMentionsEnabled={targetMentionsEnabled}
                   canChat={canChat}
                   canCancelActiveRun={canCancelActiveRun}

@@ -41,7 +41,52 @@ export async function routeAgentConversationFixtureRequest({
   state: FixtureState;
   now: string;
 }): Promise<FixtureResponse | null> {
-  let match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/conversations$/);
+  let match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/assistant\/capabilities-preview$/);
+  if (match && method === 'GET') {
+    const workspaceId = decode(match[1]);
+    const agentId = decode(match[2]);
+    const agent = state.agents.find((item) => item.id === agentId && item.workspaceId === workspaceId);
+    if (!agent) return notFound('Agent');
+    const accessMode = new URL(request.url).searchParams.get('toolAccessMode') === 'read_write'
+      ? 'read_write'
+      : 'read_only';
+    const tools = (agent.semanticCapabilityIds || []).includes('infrastructure.diagnostics.read')
+      ? [{
+          id: 'infrastructure.diagnostics.read',
+          name: 'inspect_infrastructure',
+          label: 'Inspect infrastructure',
+          description: 'Inspect infrastructure evidence available to this Agent.',
+          capability: 'read',
+          runtimeKind: 'function',
+          source: 'mcp'
+        }]
+      : [];
+    const skills = (agent.skills || []).map((skillId: string) => ({
+      id: skillId,
+      name: skillId === 'fixture-kubernetes-triage' ? 'Kubernetes triage' : skillId,
+      description: 'Fixture Agent skill.',
+      source: 'manual'
+    }));
+    return json({
+      workspaceId,
+      agentId,
+      toolAccessMode: accessMode,
+      confirmationRequiredForWrite: false,
+      writeUnavailableReason: null,
+      unavailableMcpToolCount: 0,
+      toolSummary: {
+        totalAllowed: tools.length,
+        nativeAllowed: 0,
+        readAllowed: tools.length,
+        writeAllowed: 0
+      },
+      skillSummary: { totalAvailable: skills.length },
+      tools,
+      skills
+    });
+  }
+
+  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/conversations$/);
   if (match) {
     const workspaceId = decode(match[1]);
     const agentId = decode(match[2]);
@@ -131,6 +176,7 @@ export async function routeAgentConversationFixtureRequest({
     sessionId: conversationId,
     messageId,
     toolAccessMode: conversation.accessMode,
+    runtimeSelection: input.llm,
     status: 'completed',
     requestedAt: now,
     startedAt: now,
@@ -149,6 +195,7 @@ export async function routeAgentConversationFixtureRequest({
   return json({
     message_id: messageId,
     run_id: runId,
-    status: 'completed'
+    status: 'completed',
+    runtimeSelection: input.llm
   }, 202);
 }

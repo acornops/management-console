@@ -6,7 +6,7 @@ import type { AiRuntimeReadiness } from '@/features/ai/aiRuntimeReadiness';
 import type { LiveRunTrace } from '@/features/targets/chat/types';
 import type { ComposerAttachment, ComposerModelOption } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ChatAssistantReference, ChatMessage, ChatSession, ReasoningEffort } from '@/types';
-import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
+import type { ControlPlaneAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 import type { ChatPresentationSubject } from '@/features/targets/chat/components/TargetChatView.types';
 
 export interface TargetChatViewBodyProps {
@@ -16,10 +16,9 @@ export interface TargetChatViewBodyProps {
   aiRuntimeReadiness: AiRuntimeReadiness;
   allowedReasoningOptions: Array<{ value: string; labelKey: string }>;
   assistantMarkdownComponents: Components;
-  assistantCapabilitiesPreview: ControlPlaneTargetAssistantCapabilitiesPreview | null;
+  assistantCapabilitiesPreview: ControlPlaneAssistantCapabilitiesPreview | null;
   assistantCapabilitiesPreviewError: string;
   automaticInvestigationsEnabled: boolean;
-  capabilityPreviewEnabled: boolean;
   targetMentionsEnabled: boolean;
   canApproveWriteActions: boolean;
   canCancelActiveRun: boolean;

@@ -26,11 +26,11 @@ import {
   SUGGESTION_KEYS, useTargetChatOverlayHistory, useTargetChatHistoryFocus
 } from '@/features/targets/chat/components/targetChatViewHelpers';
 import type { ReasoningEffort } from '@/types';
-import type { ControlPlaneTargetAssistantCapabilitiesPreview } from '@/services/control-plane/types';
+import type { ControlPlaneAssistantCapabilitiesPreview } from '@/services/control-plane/types';
 export const TargetChatView: React.FC<TargetChatViewProps> = ({
   currentUserId = '',
   subject,
-  headerLeading, automaticInvestigationsEnabled = true, capabilityPreviewEnabled = true, targetMentionsEnabled = false,
+  headerLeading, automaticInvestigationsEnabled = true, assistantReferencesEnabled = true, loadAssistantCapabilitiesPreview = controlPlaneApi.getTargetAssistantCapabilitiesPreview, targetMentionsEnabled = false,
   title: titleOverride, titleKey,
   descriptionKey,
   promptTitleKey,
@@ -100,7 +100,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const [isSubmittingEdit, setIsSubmittingEdit] = React.useState(false);
   const [composerAttachments, setComposerAttachments] = React.useState<ComposerAttachment[]>([]);
   const [composerAttachmentNotice, setComposerAttachmentNotice] = React.useState('');
-  const [assistantCapabilitiesPreview, setAssistantCapabilitiesPreview] = React.useState<ControlPlaneTargetAssistantCapabilitiesPreview | null>(null);
+  const [assistantCapabilitiesPreview, setAssistantCapabilitiesPreview] = React.useState<ControlPlaneAssistantCapabilitiesPreview | null>(null);
   const [isAssistantCapabilitiesPreviewLoading, setIsAssistantCapabilitiesPreviewLoading] = React.useState(canChat);
   const [assistantCapabilitiesPreviewError, setAssistantCapabilitiesPreviewError] = React.useState('');
   const [runtimeFallbackNotice, setRuntimeFallbackNotice] = React.useState('');
@@ -134,7 +134,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     handleComposerInputChange, handleReferenceKeyDown, isReferenceMenuOpen, referenceActiveIndex,
     referenceMenuId, removeComposerReference, selectComposerReference, setReferenceActiveIndex, slashReferenceQuery
   } = useComposerReferences({
-    assistantCapabilitiesPreview, composerRootRef, composerTextareaRef, inputValue, onInputChange,
+    assistantCapabilitiesPreview, composerRootRef, composerTextareaRef, enabled: assistantReferencesEnabled, inputValue, onInputChange,
     closeModelMenus: () => { setIsModelMenuOpen(false); setIsModelSubmenuOpen(false); }
   });
   const deleteTargetSession = React.useMemo(
@@ -496,7 +496,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     await processComposerFiles(Array.from(event.dataTransfer.files || []));
   };
   React.useEffect(() => {
-    if (!canChat || !capabilityPreviewEnabled) {
+    if (!canChat) {
       setAssistantCapabilitiesPreview(null);
       setAssistantCapabilitiesPreviewError('');
       setIsAssistantCapabilitiesPreviewLoading(false);
@@ -507,7 +507,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     setIsAssistantCapabilitiesPreviewLoading(true);
     setAssistantCapabilitiesPreviewError('');
     setAssistantCapabilitiesPreview(null);
-    controlPlaneApi.getTargetAssistantCapabilitiesPreview(subject.workspaceId, subject.id, requestedToolAccessMode)
+    loadAssistantCapabilitiesPreview(subject.workspaceId, subject.id, requestedToolAccessMode)
       .then((preview) => {
         if (cancelled) return;
         setAssistantCapabilitiesPreview(preview);
@@ -525,7 +525,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [canChat, capabilityPreviewEnabled, subject.id, subject.workspaceId, requestedToolAccessMode, t]);
+  }, [canChat, loadAssistantCapabilitiesPreview, subject.id, subject.workspaceId, requestedToolAccessMode, t]);
 
   React.useEffect(() => {
     setRuntimeFallbackNotice('');
@@ -628,7 +628,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   return (
     <TargetChatViewBody
       {...{
-        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, automaticInvestigationsEnabled, capabilityPreviewEnabled, targetMentionsEnabled, canApproveWriteActions,
+        activeRunId, activeSession, activeSessionId, aiRuntimeReadiness, allowedReasoningOptions, assistantMarkdownComponents, assistantCapabilitiesPreview, assistantCapabilitiesPreviewError, automaticInvestigationsEnabled, targetMentionsEnabled, canApproveWriteActions,
         canCancelActiveRun, canChat, canDeleteSessions, canManageAiSettings, canPost, subject, composerActionLabel, composerAttachmentNotice: composerNotice,
         composerAttachments, composerReferences, composerModelOptions: selectableComposerModelOptions, composerRootRef, composerSubmitUnavailableReason, composerTextareaRef, conversationNotice, currentUserId, deleteSessionError, deleteTargetSession,
         deletingSessionId, desktopHistoryPanelId, dismissReferenceMenu, fileInputRef, hasComposerSubmitPayload, hasConversationLoadError, hasEarlierMessages, handleAttachmentInputChange, handleChatWindowDragEnter,
