@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { initializeI18n } from '@/i18n';
 import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
+import { draftFromTool, prepareToolForConfiguration } from '@/features/targets/admin/TargetToolsView.helpers';
 import type { ControlPlaneTargetToolsCatalog } from '@/services/controlPlaneApi';
 import type { TargetDescriptor } from '@/features/targets/targetDescriptor';
 
@@ -10,6 +11,24 @@ beforeAll(async () => {
 });
 
 describe('TargetToolsView', () => {
+  it('enables Fetch when opening its required URL-policy configuration', () => {
+    const fetchTool = {
+      id: 'http.fetch.get',
+      label: 'Fetch',
+      description: 'Fetch an allowed HTTPS URL.',
+      enabled: false,
+      origin: 'platform_native' as const,
+      capability: 'read' as const,
+      runtimeKind: 'function' as const,
+      config: {}
+    };
+
+    expect(draftFromTool(prepareToolForConfiguration(fetchTool))).toMatchObject({
+      enabled: true,
+      allowedUrlPatternsText: ''
+    });
+  });
+
   it('hides discovery controls for a true empty inventory', () => {
     const target: TargetDescriptor = {
       id: 'target-1',

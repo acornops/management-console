@@ -26,6 +26,7 @@ import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
 import {
   draftFromTool,
   parseDomainList,
+  prepareToolForConfiguration,
   summarizeDomainFilters,
   summarizeToolConfig,
   targetToolsDataSource,
@@ -134,8 +135,9 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   }, [catalog, onCatalogChange]);
 
   const openConfigure = (tool: ControlPlaneTargetToolItem) => {
-    setEditingTool(tool);
-    setDraft(tool.id === 'target_insights' ? null : draftFromTool(tool));
+    const configuredTool = prepareToolForConfiguration(tool);
+    setEditingTool(configuredTool);
+    setDraft(configuredTool.id === 'target_insights' ? null : draftFromTool(configuredTool));
     setTargetInsightsAction(tool.id === 'target_insights' ? 'files' : null);
     setValidationError(null);
     setSavingError(null);
@@ -251,6 +253,10 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
   const toggleTool = async (tool: ControlPlaneTargetToolItem, enabled: boolean) => {
     const canEditTargetTool = canEditTools && (tool.permissions?.canEdit ?? true);
     if (!canEditTargetTool || pendingToolId || enabled === tool.enabled) return;
+    if (tool.id === 'http.fetch.get' && enabled) {
+      openConfigure(tool);
+      return;
+    }
     setPendingToolId(tool.id);
     setCatalogError(null);
     try {

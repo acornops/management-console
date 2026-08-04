@@ -106,6 +106,12 @@ export function draftFromTool(tool: ControlPlaneTargetToolItem): ToolDraft {
   };
 }
 
+export function prepareToolForConfiguration(tool: ControlPlaneTargetToolItem): ControlPlaneTargetToolItem {
+  return tool.id === 'http.fetch.get' && !tool.enabled
+    ? { ...tool, enabled: true }
+    : tool;
+}
+
 export function summarizeDomainFilters(tool: ControlPlaneTargetToolItem, t: Translate): string {
   const domainFilters = getDomainFilters(tool);
   const allowed = domainFilters.allowedDomains.length;
