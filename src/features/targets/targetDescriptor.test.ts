@@ -54,6 +54,12 @@ function vm(overrides: Partial<ControlPlaneVirtualMachine> = {}): ControlPlaneVi
     hostname: 'build-01',
     osFamily: 'linux',
     serviceManager: 'systemd',
+    agentAccessMode: 'read_only',
+    restartServices: [],
+    pendingAgentAccessPolicy: null,
+    permissionMode: 'ask_before_changes',
+    permissionModeOverride: null,
+    permissionModeSource: 'deployment_default',
     createdAt: '2026-07-02T00:00:00.000Z',
     updatedAt: '2026-07-03T00:00:00.000Z',
     latestSnapshot: {
@@ -103,6 +109,9 @@ describe('target descriptor mappers', () => {
       status: 'online',
       agentConnectionState: 'connected',
       lastUpdate: '2026-07-03T00:05:00.000Z',
+      permissionMode: 'ask_before_changes',
+      permissionModeOverride: null,
+      permissionModeSource: 'deployment_default',
       chatSessions: [{ id: 'session-1', name: 'Host triage', messages: [], timestamp: 1 }],
       mcpTools: []
     });

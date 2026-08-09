@@ -28,7 +28,7 @@ export interface TargetDescriptor {
   lastUpdate?: string;
   permissionMode?: RunPermissionMode;
   permissionModeOverride?: RunPermissionMode | null;
-  permissionModeSource?: 'cluster_override' | 'deployment_default';
+  permissionModeSource?: 'cluster_override' | 'virtual_machine_override' | 'deployment_default';
   writeConfirmationPolicy?: {
     effectiveRequired: boolean;
     overrideRequired: boolean | null;
@@ -75,6 +75,9 @@ export function toVirtualMachineTargetDescriptor(
     status: vm.status,
     agentConnectionState: mapVirtualMachineConnectionState(vm.status),
     lastUpdate: vm.latestSnapshot?.timestamp || vm.updatedAt,
+    permissionMode: vm.permissionMode,
+    permissionModeOverride: vm.permissionModeOverride,
+    permissionModeSource: vm.permissionModeSource,
     chatSessions,
     mcpTools: []
   };

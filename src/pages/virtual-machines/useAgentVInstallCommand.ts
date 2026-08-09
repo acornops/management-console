@@ -1,6 +1,13 @@
 import React from 'react';
 import type { ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
 
+export async function copyAgentVInstallCommand(
+  command: string,
+  writeText: (value: string) => Promise<void> = (value) => navigator.clipboard.writeText(value)
+) {
+  await writeText(command);
+}
+
 export function useAgentVInstallCommand(
   instructions: ControlPlaneVirtualMachineInstallInstructions | null,
   active = true
@@ -42,7 +49,7 @@ export function useAgentVInstallCommand(
     if (!instructions?.command || enrollmentExpired) return;
     setCopyFailed(false);
     try {
-      await navigator.clipboard.writeText(instructions.command);
+      await copyAgentVInstallCommand(instructions.command);
       setHasCopied(true);
       if (copiedTimerRef.current !== null) window.clearTimeout(copiedTimerRef.current);
       copiedTimerRef.current = window.setTimeout(() => {

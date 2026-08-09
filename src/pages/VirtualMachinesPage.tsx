@@ -50,6 +50,7 @@ interface VirtualMachinesPageProps {
   canManageTargets: boolean;
   canManageAgentKeys: boolean;
   canCreateReadWriteRuns: boolean;
+  showToast: (message: string) => void;
   navigate: (path: string, options?: NavigateOptions) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
@@ -80,6 +81,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   canManageTargets,
   canManageAgentKeys,
   canCreateReadWriteRuns,
+  showToast,
   navigate,
   onUpdateWorkspace,
   onReplaceWorkspaceVirtualMachines,
@@ -175,10 +177,12 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     onUpdateWorkspace(workspace.id, updates);
   }, [onUpdateWorkspace, workspace.id]);
   const {
-    credentialReplacementError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
-    isReplacingCredential, isGeneratingRepairInstructions, newVmName, openAddVmModal, registerVm,
+    agentAccessPolicyError, credentialReplacementError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
+    isReplacingCredential, isGeneratingRepairInstructions, isUpdatingAgentAccessPolicy,
+    newVmName, newVmAgentAccessMode, newVmRestartServices, openAddVmModal, registerVm,
     resetVmCreationState, replaceCredential, generateRepairInstructions, regenerateEnrollment, generateInitialEnrollment,
-    setNewVmName, vmCreationError, vmCreationStep
+    updateAgentAccessPolicy,
+    setNewVmName, setNewVmAgentAccessMode, setNewVmRestartServices, vmCreationError, vmCreationStep
   } = useVirtualMachineAgentSetup({
     workspaceId: workspace.id,
     canManageTargets,
@@ -199,6 +203,20 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       virtualMachine.id === installInstructions.vmId && virtualMachine.status !== 'unknown'
     )
   );
+
+  const refreshPendingAgentAccessPolicy = React.useCallback(async () => {
+    if (!selectedTargetId) return;
+    try {
+      const virtualMachine = await controlPlaneApi.getVirtualMachine(workspace.id, selectedTargetId);
+      onUpsertWorkspaceVirtualMachine(workspace.id, virtualMachine);
+    } catch (error) {
+      console.error('Failed refreshing pending AgentV host policy', error);
+    }
+  }, [onUpsertWorkspaceVirtualMachine, selectedTargetId, workspace.id]);
+  useVisibilityAwareRefresh(refreshPendingAgentAccessPolicy, {
+    enabled: view === 'settings' && Boolean(selected?.pendingAgentAccessPolicy),
+    refreshImmediately: true
+  });
 
   React.useEffect(() => {
     if (!selectedId || selected || isLoading) return;
@@ -448,12 +466,18 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           isOpen={isAddingVm}
           creationStep={vmCreationStep}
           vmName={newVmName}
+          agentAccessMode={newVmAgentAccessMode}
+          restartServices={newVmRestartServices}
           installInstructions={installInstructions?.value || null}
           isAgentConnected={isRegisteredVmAgentConnected}
           isRegistering={isRegisteringVm}
           errorMessage={vmCreationError}
           onClose={resetVmCreationState}
           onVmNameChange={setNewVmName}
+          onAgentAccessChange={(mode, services) => {
+            setNewVmAgentAccessMode(mode);
+            setNewVmRestartServices(services);
+          }}
           onProceedToInstructions={registerVm}
           onConfirmInstalled={() => void confirmVmInstalled()}
           onRegenerateEnrollment={() => void regenerateEnrollment()}
@@ -570,15 +594,49 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         vm={selected}
         workspace={workspace}
         installInstructions={installInstructions?.vmId === selected.id ? installInstructions.value : null}
+        installInstructionKind={installInstructions?.vmId === selected.id ? installInstructions.kind : null}
         requiresInitialEnrollment={selected.status === 'unknown'}
         onGenerateInitialEnrollment={canManageTargets && selected.status === 'unknown' ? () => generateInitialEnrollment(selected) : undefined}
-        onReplaceCredential={canManageAgentKeys && selected.status !== 'unknown' ? () => replaceCredential(selected) : undefined}
-        onGenerateRepairInstructions={canManageTargets && selected.status !== 'unknown' ? () => generateRepairInstructions(selected) : undefined}
+        onReplaceCredential={canManageAgentKeys && selected.status !== 'unknown' && !selected.pendingAgentAccessPolicy ? () => replaceCredential(selected) : undefined}
+        onGenerateRepairInstructions={canManageTargets && selected.status !== 'unknown' && !selected.pendingAgentAccessPolicy ? () => generateRepairInstructions(selected) : undefined}
         isGeneratingRepairInstructions={isGeneratingRepairInstructions}
         isReplacingCredential={isReplacingCredential}
         isGeneratingInitialEnrollment={isRegisteringVm}
         credentialError={credentialReplacementError}
+        agentAccessPolicyError={agentAccessPolicyError}
+        isUpdatingAgentAccessPolicy={isUpdatingAgentAccessPolicy}
+        onUpdateAgentAccessPolicy={canManageTargets && selected.status !== 'unknown'
+          ? (accessMode, restartServices) => updateAgentAccessPolicy(selected, accessMode, restartServices)
+          : undefined}
+        onRegenerateInstallInstructions={installInstructions?.vmId === selected.id
+          ? installInstructions.kind === 'initial'
+            ? () => generateInitialEnrollment(selected)
+            : installInstructions.kind === 'replace'
+              ? () => replaceCredential(selected)
+              : installInstructions.kind === 'policy_update' && selected.pendingAgentAccessPolicy
+                ? () => updateAgentAccessPolicy(
+                    selected,
+                    selected.pendingAgentAccessPolicy!.accessMode,
+                    selected.pendingAgentAccessPolicy!.restartServices
+                  )
+                : undefined
+          : undefined}
         onDeleteVirtualMachine={canManageTargets ? () => deleteVirtualMachine(selected) : undefined}
+        onUpdatePermissionMode={canManageTargets ? async (permissionMode) => {
+          try {
+            const updated = await controlPlaneApi.updateVirtualMachine(workspace.id, selected.id, {
+              permissionModeOverride: permissionMode
+            });
+            onUpsertWorkspaceVirtualMachine(workspace.id, updated);
+            showToast(t('virtualMachines.settings.permissionModeUpdated'));
+          } catch (error) {
+            showToast(formatControlPlaneError(
+              error,
+              t('virtualMachines.settings.permissionModeUpdateFailed'),
+              { area: 'virtualMachines' }
+            ));
+          }
+        } : undefined}
         canManageTargets={canManageTargets}
         canCreateReadWriteRuns={canCreateReadWriteRuns}
       />

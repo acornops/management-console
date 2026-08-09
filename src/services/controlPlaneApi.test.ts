@@ -58,7 +58,12 @@ describe('controlPlaneApi', () => {
 
   it('returns structured AgentV enrollment instructions without a durable key', async () => {
     requestJson.mockResolvedValue({
-      virtualMachine: { id: 'vm-1', workspaceId: 'workspace-1', name: 'prod-vm', status: 'unknown' },
+      virtualMachine: {
+        id: 'vm-1', workspaceId: 'workspace-1', name: 'prod-vm', status: 'unknown', osFamily: 'linux', serviceManager: 'systemd',
+        agentAccessMode: 'read_write', restartServices: ['nginx.service'], permissionMode: 'ask_before_changes',
+        permissionModeOverride: null, permissionModeSource: 'deployment_default',
+        createdAt: '2026-08-09T00:00:00.000Z', updatedAt: '2026-08-09T00:00:00.000Z'
+      },
       installInstructions: {
         command: 'set -o pipefail; curl example | sudo bash',
         releaseVersion: '0.0.1-experimental.6',
@@ -69,7 +74,10 @@ describe('controlPlaneApi', () => {
     });
     const { controlPlaneApi } = await import('./controlPlaneApi');
 
-    await expect(controlPlaneApi.registerVirtualMachine('workspace-1', { name: 'prod-vm' })).resolves.toMatchObject({
+    await expect(controlPlaneApi.registerVirtualMachine('workspace-1', {
+      name: 'prod-vm', agentAccessMode: 'read_write', restartServices: ['nginx.service']
+    })).resolves.toMatchObject({
+      virtualMachine: { agentAccessMode: 'read_write', restartServices: ['nginx.service'] },
       installInstructions: {
         command: 'set -o pipefail; curl example | sudo bash',
         releaseVersion: '0.0.1-experimental.6',
@@ -77,6 +85,32 @@ describe('controlPlaneApi', () => {
         enrollmentExpiresAt: '2026-08-09T12:15:00.000Z'
       }
     });
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace-1/virtual-machines',
+      { method: 'POST', body: JSON.stringify({ name: 'prod-vm', agentAccessMode: 'read_write', restartServices: ['nginx.service'] }) }
+    );
+  });
+
+  it('updates and parses a VM-specific run permission policy', async () => {
+    requestJson.mockResolvedValue({
+      id: 'vm-1', workspaceId: 'workspace-1', name: 'prod-vm', status: 'online', osFamily: 'linux', serviceManager: 'systemd',
+      agentAccessMode: 'read_write', restartServices: ['nginx.service'], permissionMode: 'read_only',
+      permissionModeOverride: 'read_only', permissionModeSource: 'virtual_machine_override',
+      createdAt: '2026-08-09T00:00:00.000Z', updatedAt: '2026-08-09T00:01:00.000Z'
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.updateVirtualMachine('workspace-1', 'vm-1', {
+      permissionModeOverride: 'read_only'
+    })).resolves.toMatchObject({
+      permissionMode: 'read_only',
+      permissionModeOverride: 'read_only',
+      permissionModeSource: 'virtual_machine_override'
+    });
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace-1/virtual-machines/vm-1',
+      { method: 'PATCH', body: JSON.stringify({ permissionModeOverride: 'read_only' }) }
+    );
   });
 
   it('sends an explicit purpose when issuing an AgentV enrollment', async () => {
@@ -107,7 +141,9 @@ describe('controlPlaneApi', () => {
     });
     const { controlPlaneApi } = await import('./controlPlaneApi');
 
-    await expect(controlPlaneApi.registerVirtualMachine('workspace-1', { name: 'prod-vm' }))
+    await expect(controlPlaneApi.registerVirtualMachine('workspace-1', {
+      name: 'prod-vm', agentAccessMode: 'read_only', restartServices: []
+    }))
       .rejects.toThrow('invalid virtual machine registration response');
   });
 

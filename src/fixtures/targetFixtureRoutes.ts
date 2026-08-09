@@ -34,8 +34,15 @@ export function targetSkillCatalog(state: FixtureState, targetId: string) {
   };
 }
 
-function autoTriageSettings(targetId: string, input: Record<string, any> = {}) {
+function autoTriageSettings(state: FixtureState, targetId: string, input: Record<string, any> = {}) {
   const writeMode = input.writeMode || 'approval_required';
+  const target = [...state.clusters, ...state.virtualMachines].find((item) => item.id === targetId);
+  const targetPermissionMode = target?.permissionMode || 'ask_before_changes';
+  const effectiveToolMode = writeMode === 'read_only' || targetPermissionMode === 'read_only'
+    ? 'read_only'
+    : 'read_write';
+  const confirmationRequiredForWrite = effectiveToolMode === 'read_write'
+    && (writeMode === 'approval_required' || targetPermissionMode === 'ask_before_changes');
   return {
     workspaceId: FIXTURE_IDS.workspace,
     targetId,
@@ -52,11 +59,15 @@ function autoTriageSettings(targetId: string, input: Record<string, any> = {}) {
     queueSummary: { activeCount: 0, waitingCount: 0 },
     effectiveBehavior: {
       requestedWriteMode: writeMode,
-      effectiveToolMode: writeMode === 'read_only' ? 'read_only' : 'read_write',
-      confirmationRequiredForWrite: writeMode !== 'read_only',
-      targetCeilingApplied: false,
+      effectiveToolMode,
+      confirmationRequiredForWrite,
+      targetCeilingApplied: writeMode !== 'read_only' && effectiveToolMode === 'read_only',
       targetSupportsWrite: true,
-      summary: writeMode === 'read_only' ? 'read_only' : 'approval_required'
+      summary: effectiveToolMode === 'read_only'
+        ? 'read_only'
+        : confirmationRequiredForWrite
+          ? 'approval_required'
+          : 'full_write'
     },
     readiness: { status: 'ready', reasons: [], unavailableOptionalMcpToolCount: 0 }
   };
@@ -96,7 +107,7 @@ export async function routeTargetFixtureRequest({
     }
     return {
       status: 200,
-      body: autoTriageSettings(targetId, input),
+      body: autoTriageSettings(state, targetId, input),
       headers: { 'content-type': 'application/json' }
     };
   }
@@ -117,8 +128,12 @@ export async function routeTargetFixtureRequest({
     const accessMode = new URL(request.url).searchParams.get('toolAccessMode') === 'read_write'
       ? 'read_write'
       : 'read_only';
+    const target = [...state.clusters, ...state.virtualMachines].find((item) => item.id === targetId);
+    const targetPermissionMode = target?.permissionMode || 'ask_before_changes';
+    const hostPolicyPending = Boolean(target && 'pendingAgentAccessPolicy' in target && target.pendingAgentAccessPolicy);
+    const runAllowsWrite = accessMode === 'read_write' && targetPermissionMode !== 'read_only' && !hostPolicyPending;
     const targetTools = state.targetMcpServers.find((server) => server.target_id === targetId)?.tools ?? [];
-    const tools = targetTools.filter((tool) => accessMode === 'read_write' || tool.capability === 'read');
+    const tools = targetTools.filter((tool) => runAllowsWrite || tool.capability === 'read');
     const skills = state.targetSkills.filter((skill) => skill.target_id === targetId);
     const writeAllowed = tools.filter((tool) => tool.capability === 'write').length;
     return {
@@ -129,8 +144,8 @@ export async function routeTargetFixtureRequest({
         targetId,
         targetType: fixtureTargetType(state, targetId),
         toolAccessMode: accessMode,
-        confirmationRequiredForWrite: accessMode === 'read_write' && writeAllowed > 0,
-        writeUnavailableReason: accessMode === 'read_only'
+        confirmationRequiredForWrite: runAllowsWrite && targetPermissionMode === 'ask_before_changes' && writeAllowed > 0,
+        writeUnavailableReason: !runAllowsWrite
           && targetTools.some((tool) => tool.capability === 'write')
           ? 'run_read_only'
           : null,

@@ -15,8 +15,10 @@ function permissions(overrides: Partial<NonNullable<Workspace['permissions']>> =
 }
 
 describe('virtual machine chat access', () => {
+  const vm = (permissionMode: 'read_only' | 'ask_before_changes' | 'auto_allowed_changes' = 'ask_before_changes') => ({ permissionMode });
+
   it('enables approval-gated write runs for authorized workspace roles', () => {
-    expect(resolveVirtualMachineChatAccess(permissions({ create_read_write_runs: true }))).toMatchObject({
+    expect(resolveVirtualMachineChatAccess(vm(), permissions({ create_read_write_runs: true }))).toMatchObject({
       canChat: true,
       canRequestWriteRuns: true,
       canApproveWriteActions: true,
@@ -25,7 +27,7 @@ describe('virtual machine chat access', () => {
   });
 
   it('keeps operator chat read-only without the write-run capability', () => {
-    expect(resolveVirtualMachineChatAccess(permissions())).toMatchObject({
+    expect(resolveVirtualMachineChatAccess(vm(), permissions())).toMatchObject({
       canChat: true,
       canRequestWriteRuns: false,
       canApproveWriteActions: false,
@@ -34,7 +36,7 @@ describe('virtual machine chat access', () => {
   });
 
   it('never requests a write run when the user cannot start chat', () => {
-    expect(resolveVirtualMachineChatAccess(permissions({
+    expect(resolveVirtualMachineChatAccess(vm(), permissions({
       create_sessions: false,
       create_read_write_runs: true
     }))).toMatchObject({
@@ -43,5 +45,11 @@ describe('virtual machine chat access', () => {
       canApproveWriteActions: false,
       footerKey: 'chat.footerReadOnlyRole'
     });
+  });
+
+  it('explains VM-specific read-only and auto-run policies without hiding the restart approval boundary', () => {
+    const writeRole = permissions({ create_read_write_runs: true });
+    expect(resolveVirtualMachineChatAccess(vm('read_only'), writeRole).footerKey).toBe('chat.footerReadOnlyVmPolicy');
+    expect(resolveVirtualMachineChatAccess(vm('auto_allowed_changes'), writeRole).footerKey).toBe('chat.footerVmAutoAllowed');
   });
 });

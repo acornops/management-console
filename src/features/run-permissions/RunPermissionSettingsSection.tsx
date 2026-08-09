@@ -12,6 +12,7 @@ export interface RunPermissionSettingsSectionProps {
   permissionMode: RunPermissionMode;
   disabled?: boolean;
   disabledReason?: React.ReactNode;
+  note?: React.ReactNode;
   busy?: boolean;
   onChange?: (permissionMode: RunPermissionMode) => void | Promise<void>;
 }
@@ -23,18 +24,20 @@ export const RunPermissionSettingsSection: React.FC<RunPermissionSettingsSection
   permissionMode,
   disabled = false,
   disabledReason,
+  note,
   busy = false,
   onChange
 }) => {
   const { t } = useTranslation();
   const [pendingMode, setPendingMode] = React.useState<RunPermissionMode | null>(null);
+  const [isUpdating, setIsUpdating] = React.useState(false);
   const displayedMode = pendingMode ?? permissionMode;
   const options = React.useMemo<Array<SelectOption<RunPermissionMode>>>(() => [
     { value: 'read_only', label: t('agentChat.permissionSettings.modes.read_only.label') },
     { value: 'ask_before_changes', label: t('agentChat.permissionSettings.modes.ask_before_changes.label') },
     { value: 'auto_allowed_changes', label: t('agentChat.permissionSettings.modes.auto_allowed_changes.label') }
   ], [t]);
-  const isDisabled = disabled || busy || !onChange;
+  const isDisabled = disabled || busy || isUpdating || !onChange;
 
   React.useEffect(() => {
     setPendingMode(null);
@@ -43,10 +46,12 @@ export const RunPermissionSettingsSection: React.FC<RunPermissionSettingsSection
   const updatePermissionMode = async (nextMode: RunPermissionMode) => {
     if (nextMode === displayedMode || isDisabled || !onChange) return;
     setPendingMode(nextMode);
+    setIsUpdating(true);
     try {
       await onChange(nextMode);
     } finally {
       setPendingMode(null);
+      setIsUpdating(false);
     }
   };
 
@@ -64,6 +69,7 @@ export const RunPermissionSettingsSection: React.FC<RunPermissionSettingsSection
           <span>
             <span className="block">{t(`agentChat.permissionSettings.modes.${displayedMode}.description`)}</span>
             {disabledReason && <span className="mt-0.5 block type-emphasis">{disabledReason}</span>}
+            {note && <span className="mt-0.5 block">{note}</span>}
           </span>
         )}
         action={(

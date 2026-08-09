@@ -8,18 +8,23 @@ import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
+import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
 import { useAgentVInstallCommand } from './useAgentVInstallCommand';
+import { VirtualMachineAgentAccessSelector } from './VirtualMachineAgentAccessSelector';
 
 interface AddVirtualMachineModalProps {
   isOpen: boolean;
   creationStep: 'details' | 'instructions';
   vmName: string;
+  agentAccessMode: AgentVAccessMode;
+  restartServices: string[];
   installInstructions: ControlPlaneVirtualMachineInstallInstructions | null;
   isAgentConnected: boolean;
   isRegistering: boolean;
   errorMessage?: string | null;
   onClose: () => void;
   onVmNameChange: (value: string) => void;
+  onAgentAccessChange: (value: AgentVAccessMode, restartServices: string[]) => void;
   onProceedToInstructions: () => void | Promise<void>;
   onConfirmInstalled: () => void | Promise<void>;
   onRegenerateEnrollment: () => void | Promise<void>;
@@ -29,12 +34,15 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   isOpen,
   creationStep,
   vmName,
+  agentAccessMode,
+  restartServices,
   installInstructions,
   isAgentConnected,
   isRegistering,
   errorMessage,
   onClose,
   onVmNameChange,
+  onAgentAccessChange,
   onProceedToInstructions,
   onConfirmInstalled,
   onRegenerateEnrollment
@@ -88,6 +96,14 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
               />
             </section>
 
+            <VirtualMachineAgentAccessSelector
+              value={agentAccessMode}
+              restartServices={restartServices}
+              onChange={onAgentAccessChange}
+              disabled={isRegistering}
+              idPrefix="add-vm-agent-access"
+            />
+
             {errorMessage && (
               <div className="rounded-lg border border-status-danger/25 bg-status-danger-soft p-4 type-body type-emphasis text-status-danger-text">{errorMessage}</div>
             )}
@@ -96,7 +112,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
             <Button onClick={onClose} disabled={isRegistering} variant="secondary" size="sm" className="rounded-lg">
               {t('app.cancel')}
             </Button>
-            <Button onClick={() => void onProceedToInstructions()} disabled={!vmName.trim() || isRegistering} variant="primary" size="sm" className="rounded-lg">
+            <Button onClick={() => void onProceedToInstructions()} disabled={!vmName.trim() || isRegistering || (agentAccessMode === 'read_write' && restartServices.length === 0)} variant="primary" size="sm" className="rounded-lg">
               <Zap className="h-4 w-4" />
               {isRegistering ? t('virtualMachines.list.registering') : t('virtualMachines.list.continueToInstallAgent')}
             </Button>

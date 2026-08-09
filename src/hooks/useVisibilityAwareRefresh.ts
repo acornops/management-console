@@ -4,12 +4,13 @@ export const ISSUE_ACTIVITY_REFRESH_MS = 5000;
 
 export function useVisibilityAwareRefresh(
   refresh: () => void | Promise<void>,
-  options?: { enabled?: boolean; intervalMs?: number }
+  options?: { enabled?: boolean; intervalMs?: number; refreshImmediately?: boolean }
 ): void {
   const refreshRef = React.useRef(refresh);
   refreshRef.current = refresh;
   const enabled = options?.enabled ?? true;
   const intervalMs = options?.intervalMs ?? ISSUE_ACTIVITY_REFRESH_MS;
+  const refreshImmediately = options?.refreshImmediately ?? false;
 
   React.useEffect(() => {
     if (!enabled) return undefined;
@@ -29,4 +30,9 @@ export function useVisibilityAwareRefresh(
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [enabled, intervalMs]);
+
+  React.useEffect(() => {
+    if (!enabled || !refreshImmediately || document.visibilityState === 'hidden') return;
+    void refreshRef.current();
+  }, [enabled, refresh, refreshImmediately]);
 }

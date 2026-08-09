@@ -522,6 +522,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               canManageTargets={getWorkspacePermission(workspaceContext.id, 'manage_targets')}
               canCreateReadWriteRuns={getWorkspacePermission(workspaceContext.id, 'create_read_write_runs')}
               canManageAgentKeys={getWorkspacePermission(workspaceContext.id, 'manage_agent_keys')}
+              showToast={showToast}
               navigate={navigate}
               onUpdateWorkspace={onUpdateWorkspace}
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}

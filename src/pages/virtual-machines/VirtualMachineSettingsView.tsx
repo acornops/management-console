@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
-import { Check, Copy, KeyRound, PlugZap, Wrench } from 'lucide-react';
+import { Check, Copy, KeyRound, PlugZap, ShieldCheck, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineAlert, SettingsSection } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
@@ -8,15 +8,21 @@ import { SettingsRow } from '@/components/common/SettingsRow';
 import { ICONS } from '@/constants';
 import { TargetDeleteZone } from '@/features/targets/TargetDeleteZone';
 import { TargetAutoTriageSettingsSection } from '@/features/targets/auto-triage/TargetAutoTriageSettingsSection';
+import { RunPermissionSettingsSection } from '@/features/run-permissions/RunPermissionSettingsSection';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { formatSnapshotTime, getVmStatusLabel } from '@/pages/virtual-machines/virtualMachineUi';
 import { useAgentVInstallCommand } from './useAgentVInstallCommand';
+import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
+import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
+import type { AgentVInstructionKind } from './useVirtualMachineAgentSetup';
+import { VirtualMachineAgentAccessSelector } from './VirtualMachineAgentAccessSelector';
 
 export const VirtualMachineSettingsView: React.FC<{
   vm: ControlPlaneVirtualMachine;
   workspace: Workspace;
   installInstructions: ControlPlaneVirtualMachineInstallInstructions | null;
+  installInstructionKind?: AgentVInstructionKind | null;
   requiresInitialEnrollment?: boolean;
   onGenerateInitialEnrollment?: () => void | Promise<void>;
   onReplaceCredential?: () => void | Promise<void>;
@@ -25,13 +31,19 @@ export const VirtualMachineSettingsView: React.FC<{
   isGeneratingInitialEnrollment?: boolean;
   isReplacingCredential?: boolean;
   credentialError?: string | null;
+  agentAccessPolicyError?: string | null;
   onDeleteVirtualMachine?: () => void | Promise<void>;
+  onUpdatePermissionMode?: (permissionMode: RunPermissionMode) => void | Promise<void>;
+  onUpdateAgentAccessPolicy?: (accessMode: AgentVAccessMode, restartServices: string[]) => void | Promise<void>;
+  onRegenerateInstallInstructions?: () => void | Promise<void>;
+  isUpdatingAgentAccessPolicy?: boolean;
   canManageTargets?: boolean;
   canCreateReadWriteRuns?: boolean;
 }> = ({
   vm,
   workspace,
   installInstructions,
+  installInstructionKind = null,
   requiresInitialEnrollment = false,
   onGenerateInitialEnrollment,
   onReplaceCredential,
@@ -40,13 +52,41 @@ export const VirtualMachineSettingsView: React.FC<{
   isGeneratingInitialEnrollment = false,
   isReplacingCredential = false,
   credentialError,
+  agentAccessPolicyError,
   onDeleteVirtualMachine,
+  onUpdatePermissionMode,
+  onUpdateAgentAccessPolicy,
+  onRegenerateInstallInstructions,
+  isUpdatingAgentAccessPolicy = false,
   canManageTargets = false,
   canCreateReadWriteRuns = false
 }) => {
   const { t } = useTranslation();
   const allowedLogs = vm.allowedLogSources?.join(', ') || t('virtualMachines.settings.defaultAllowedLogs');
+  const appliedAgentAccess = vm.agentAccessMode === 'read_write'
+    ? t('virtualMachines.settings.agentAccessReadWrite', { services: vm.restartServices.join(', ') })
+    : t('virtualMachines.settings.agentAccessReadOnly');
+  const pendingAgentAccess = vm.pendingAgentAccessPolicy?.accessMode === 'read_write'
+    ? t('virtualMachines.settings.agentAccessReadWrite', { services: vm.pendingAgentAccessPolicy.restartServices.join(', ') })
+    : t('virtualMachines.settings.agentAccessReadOnly');
   const installCommand = useAgentVInstallCommand(installInstructions);
+  const configuredAccessMode = vm.pendingAgentAccessPolicy?.accessMode || vm.agentAccessMode;
+  const configuredRestartServices = vm.pendingAgentAccessPolicy?.restartServices || vm.restartServices;
+  const configuredRestartServicesKey = configuredRestartServices.join('\u0000');
+  const [draftAccessMode, setDraftAccessMode] = React.useState<AgentVAccessMode>(configuredAccessMode);
+  const [draftRestartServices, setDraftRestartServices] = React.useState<string[]>(configuredRestartServices);
+
+  React.useEffect(() => {
+    setDraftAccessMode(configuredAccessMode);
+    setDraftRestartServices(configuredRestartServices);
+  }, [configuredAccessMode, configuredRestartServicesKey, vm.id]);
+
+  const policyChanged = draftAccessMode !== configuredAccessMode
+    || [...draftRestartServices].sort().join('\u0000') !== [...configuredRestartServices].sort().join('\u0000');
+  const policyValid = draftAccessMode === 'read_only' || draftRestartServices.length > 0;
+  const policyBusy = isUpdatingAgentAccessPolicy || isGeneratingInitialEnrollment
+    || isGeneratingRepairInstructions || isReplacingCredential;
+  const policyCommandVisible = installInstructionKind === 'policy_update' && Boolean(installInstructions?.command);
 
   return (
     <PageShell>
@@ -105,6 +145,75 @@ export const VirtualMachineSettingsView: React.FC<{
           />
         </SettingsSection>
 
+        <RunPermissionSettingsSection
+          title={t('virtualMachines.settings.permissionModeTitle')}
+          description={t('virtualMachines.settings.permissionModeBody')}
+          permissionMode={vm.permissionMode}
+          disabled={!canManageTargets || !onUpdatePermissionMode}
+          note={t('virtualMachines.settings.restartLocalPolicyApplies')}
+          onChange={onUpdatePermissionMode}
+        />
+
+        <SettingsSection
+          title={t('virtualMachines.settings.hostPolicyTitle')}
+          description={t('virtualMachines.settings.hostPolicyBody')}
+        >
+          <SettingsRow
+            icon={ShieldCheck}
+            label={t('virtualMachines.settings.appliedHostPolicy')}
+            description={appliedAgentAccess}
+          />
+          {vm.pendingAgentAccessPolicy && (
+            <SettingsRow
+              icon={ICONS.Clock}
+              label={t('virtualMachines.settings.pendingHostPolicy')}
+              description={pendingAgentAccess}
+            />
+          )}
+          {vm.pendingAgentAccessPolicy && (
+            <InlineAlert tone="warning" className="rounded-none border-x-0 border-b-0 p-4 type-caption">
+              {t('virtualMachines.settings.pendingHostPolicyBody')}
+            </InlineAlert>
+          )}
+          {!requiresInitialEnrollment && (
+            <div className="space-y-4 border-t border-ui-border p-4 sm:p-6">
+              <VirtualMachineAgentAccessSelector
+                value={draftAccessMode}
+                restartServices={draftRestartServices}
+                disabled={!canManageTargets || !onUpdateAgentAccessPolicy || policyBusy}
+                idPrefix="vm-settings-agent-access"
+                onChange={(accessMode, restartServices) => {
+                  setDraftAccessMode(accessMode);
+                  setDraftRestartServices(restartServices);
+                }}
+              />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={!canManageTargets || !onUpdateAgentAccessPolicy || !policyValid || policyBusy
+                    || (!policyChanged && !vm.pendingAgentAccessPolicy)}
+                  onClick={() => void onUpdateAgentAccessPolicy?.(draftAccessMode, draftRestartServices)}
+                  className="w-full sm:w-auto"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  {isUpdatingAgentAccessPolicy
+                    ? t('virtualMachines.settings.generatingInstructions')
+                    : vm.pendingAgentAccessPolicy && !policyChanged
+                      ? t('virtualMachines.settings.generateNewPolicyCommand')
+                      : t('virtualMachines.settings.applyHostPolicy')}
+                </Button>
+              </div>
+            </div>
+          )}
+          {agentAccessPolicyError && (
+            <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 p-4 type-body type-emphasis">
+              {agentAccessPolicyError}
+            </InlineAlert>
+          )}
+        </SettingsSection>
+
         <TargetAutoTriageSettingsSection
           workspaceId={workspace.id}
           targetId={vm.id}
@@ -153,11 +262,15 @@ export const VirtualMachineSettingsView: React.FC<{
             )}
           />}
           {credentialError && <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 p-4 type-body type-emphasis">{credentialError}</InlineAlert>}
-          {installInstructions?.command && (
+          {installInstructions?.command && (!policyCommandVisible || vm.pendingAgentAccessPolicy) && (
             <div className="border-t border-ui-border bg-ui-bg/60 p-6">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <p className="type-row-title">{t('virtualMachines.settings.installInstructions')}</p>
+                  <p className="type-row-title">
+                    {t(installInstructionKind === 'policy_update'
+                      ? 'virtualMachines.settings.hostPolicyCommand'
+                      : 'virtualMachines.settings.installInstructions')}
+                  </p>
                   {installCommand.enrollmentExpiry !== null && (
                     <span className="rounded-full bg-status-warning-soft px-2 py-0.5 type-micro-label text-status-warning-text">
                       {t('virtualMachines.list.sensitiveUntilUsed')}
@@ -195,8 +308,8 @@ export const VirtualMachineSettingsView: React.FC<{
                       ? t('virtualMachines.list.enrollmentExpired')
                       : t('virtualMachines.list.enrollmentExpiresIn', { time: installCommand.timeRemaining })}
                   </span>
-                  {installCommand.enrollmentExpired && (onGenerateInitialEnrollment || onReplaceCredential) && (
-                    <Button size="sm" variant="secondary" disabled={isGeneratingInitialEnrollment || isReplacingCredential || isGeneratingRepairInstructions} onClick={onGenerateInitialEnrollment || onReplaceCredential}>
+                  {installCommand.enrollmentExpired && onRegenerateInstallInstructions && (
+                    <Button size="sm" variant="secondary" disabled={policyBusy} onClick={onRegenerateInstallInstructions}>
                       {t('virtualMachines.list.generateNewCommand')}
                     </Button>
                   )}

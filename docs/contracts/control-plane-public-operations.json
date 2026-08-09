@@ -216,6 +216,7 @@
   "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/entries/{entryId}/promote",
   "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/reset",
   "POST /api/v1/workspaces/{workspaceId}/virtual-machines",
+  "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/agent-access-policy-updates",
   "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/agent-enrollments",
   "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/install-instructions",
   "POST /api/v1/workspaces/{workspaceId}/webhooks",

@@ -22,6 +22,12 @@ function vmWithStatus(
     status,
     osFamily: 'linux',
     serviceManager: 'systemd',
+    agentAccessMode: 'read_only',
+    restartServices: [],
+    pendingAgentAccessPolicy: null,
+    permissionMode: 'ask_before_changes',
+    permissionModeOverride: null,
+    permissionModeSource: 'deployment_default',
     summary,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z'

@@ -44,9 +44,11 @@ describe('frontend fixture router', () => {
   it('keeps dynamically registered VMs on virtual-machine capability contracts', async () => {
     const created = await routeFixtureRequest(request(
       `/api/v1/workspaces/${FIXTURE_IDS.workspace}/virtual-machines`,
-      { method: 'POST', body: JSON.stringify({ name: 'New fixture VM' }) }
+      { method: 'POST', body: JSON.stringify({ name: 'New fixture VM', agentAccessMode: 'read_write', restartServices: ['nginx.service'] }) }
     ));
-    const virtualMachine = (created.body as { virtualMachine: { id: string } }).virtualMachine;
+    const virtualMachine = (created.body as { virtualMachine: { id: string; agentAccessMode: string; restartServices: string[] } }).virtualMachine;
+
+    expect(virtualMachine).toMatchObject({ agentAccessMode: 'read_write', restartServices: ['nginx.service'] });
 
     const tools = await routeFixtureRequest(request(
       `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${virtualMachine.id}/tools`
@@ -86,6 +88,42 @@ describe('frontend fixture router', () => {
       confirmationRequiredForWrite: false,
       writeUnavailableReason: 'run_read_only',
       toolSummary: { readAllowed: 1, writeAllowed: 0 }
+    });
+
+    await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/virtual-machines/${FIXTURE_IDS.virtualMachine}`,
+      { method: 'PATCH', body: JSON.stringify({ permissionModeOverride: 'auto_allowed_changes' }) }
+    ));
+    const automaticPreview = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.virtualMachine}/assistant/capabilities-preview?toolAccessMode=read_write`
+    ));
+    expect(automaticPreview.body).toMatchObject({
+      confirmationRequiredForWrite: false,
+      toolSummary: { writeAllowed: 1 }
+    });
+  });
+
+  it('keeps VM writes closed while a fixture host policy command is pending', async () => {
+    const update = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/virtual-machines/${FIXTURE_IDS.virtualMachine}/agent-access-policy-updates`,
+      { method: 'POST', body: JSON.stringify({ agentAccessMode: 'read_write', restartServices: ['payments-worker.service'] }) }
+    ));
+    expect(update.status).toBe(201);
+    expect(update.body).toMatchObject({
+      virtualMachine: {
+        agentAccessMode: 'read_write',
+        restartServices: ['payments-api.service'],
+        pendingAgentAccessPolicy: { accessMode: 'read_write', restartServices: ['payments-worker.service'] }
+      },
+      installInstructions: { command: expect.stringContaining('--replace-credential') }
+    });
+
+    const preview = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.virtualMachine}/assistant/capabilities-preview?toolAccessMode=read_write`
+    ));
+    expect(preview.body).toMatchObject({
+      writeUnavailableReason: 'run_read_only',
+      toolSummary: { writeAllowed: 0 }
     });
   });
 

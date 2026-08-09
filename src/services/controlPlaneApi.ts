@@ -28,9 +28,11 @@ import {
 import { userFromControlPlane } from './control-plane/userMappers';
 import { mapVirtualMachineMetricsHistoryResponse } from './control-plane/virtualMachineMetricMappers';
 import {
+  parseControlPlaneVirtualMachine,
   parseVirtualMachineInstallInstructions,
   parseVirtualMachineInstructionResponse
 } from './control-plane/virtualMachineTypes';
+import { createVirtualMachineAgentAccessPolicyUpdate } from './control-plane/virtualMachineAgentAccessApi';
 import type {
   ControlPlaneVirtualMachine,
   ControlPlaneVirtualMachineInstallInstructions,
@@ -60,6 +62,7 @@ import type {
 import { webhookApi } from './control-plane/webhookApi';
 import { autoTriageApi } from './control-plane/autoTriageApi';
 import { targetSessionApi } from './control-plane/targetSessionApi';
+import type { RunPermissionMode } from './control-plane/runPermissionTypes';
 
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -457,14 +460,16 @@ export const controlPlaneApi = {
         q: options?.q,
         filters: { status: options?.status }
       })}`;
-    return options?.signal
+    const response = options?.signal
       ? requestJson<PagedResult<ControlPlaneVirtualMachine>>(path, { signal: options.signal })
       : requestJson<PagedResult<ControlPlaneVirtualMachine>>(path);
+    const page = await response;
+    return { ...page, items: page.items.map(parseControlPlaneVirtualMachine) };
   },
 
   async registerVirtualMachine(
     workspaceId: string,
-    input: { name: string; hostname?: string; allowedLogSources?: string[] }
+    input: { name: string; hostname?: string; allowedLogSources?: string[]; agentAccessMode: 'read_only' | 'read_write'; restartServices: string[] }
   ): Promise<RegisterVirtualMachineResponse> {
     const response = await requestJson<unknown>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`,
@@ -475,22 +480,26 @@ export const controlPlaneApi = {
       throw new Error('Control plane returned an invalid virtual machine registration response');
     }
     return {
-      virtualMachine: response.virtualMachine as ControlPlaneVirtualMachine,
+      virtualMachine: parseControlPlaneVirtualMachine(response.virtualMachine),
       installInstructions: parseVirtualMachineInstallInstructions(response.installInstructions)
     };
   },
 
   async getVirtualMachine(workspaceId: string, vmId: string): Promise<ControlPlaneVirtualMachine> {
-    return requestJson<ControlPlaneVirtualMachine>(
+    return parseControlPlaneVirtualMachine(await requestJson<unknown>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`
-    );
+    ));
   },
 
-  async updateVirtualMachine(workspaceId: string, vmId: string, input: { name?: string; hostname?: string; allowedLogSources?: string[] }): Promise<ControlPlaneVirtualMachine> {
-    return requestJson<ControlPlaneVirtualMachine>(
+  async updateVirtualMachine(
+    workspaceId: string,
+    vmId: string,
+    input: { name?: string; hostname?: string; allowedLogSources?: string[]; permissionModeOverride?: RunPermissionMode | null }
+  ): Promise<ControlPlaneVirtualMachine> {
+    return parseControlPlaneVirtualMachine(await requestJson<unknown>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}`,
       { method: 'PATCH', body: JSON.stringify(input) }
-    );
+    ));
   },
 
   async deleteVirtualMachine(workspaceId: string, vmId: string): Promise<void> {
@@ -507,6 +516,8 @@ export const controlPlaneApi = {
     );
     return parseVirtualMachineInstructionResponse(response);
   },
+
+  createVirtualMachineAgentAccessPolicyUpdate,
 
   async getVirtualMachineInstallInstructions(workspaceId: string, vmId: string): Promise<{ targetId: string; installInstructions: ControlPlaneVirtualMachineInstallInstructions }> {
     const response = await requestJson<unknown>(

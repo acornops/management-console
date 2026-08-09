@@ -40,7 +40,16 @@ The management console is the browser client for the control-plane API. Keep thi
   The onboarding dialog copies only the command, labels it sensitive, counts
   down the 15-minute enrollment window, and regenerates an initial command
   after expiry. VM settings keep credential-free repair separate from explicit
-  credential replacement.
+  credential replacement. VM registration defaults to `agentAccessMode:
+  read_only`; read-write registration requires a non-empty list of unique exact
+  non-AgentV `.service` units in `restartServices`. The command does not embed
+  that non-secret policy: the control plane binds it to enrollment. VM settings
+  distinguish applied and pending host policies, return one root command for a
+  whitelist change, and keep writes unavailable until the transaction commits.
+  VM payloads also expose
+  `permissionMode`, `permissionModeOverride`, and `permissionModeSource`.
+  VM settings writes `permissionModeOverride` through the VM patch route; this
+  run policy can only narrow or govern tools inside the installed host ceiling.
 - Workspace payloads include `currentUserRole` and permissions from the control plane; the console must not fabricate current-user membership locally.
 - The UI must not fabricate a member row when the control-plane member list is empty or unavailable.
 - Role templates come from `GET /api/v1/workspaces/{workspaceId}/roles`; invite and member-role controls must use that catalog.

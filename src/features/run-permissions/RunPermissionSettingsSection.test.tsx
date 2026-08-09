@@ -38,4 +38,19 @@ describe('RunPermissionSettingsSection', () => {
     expect(markup).toContain('disabled=""');
     expect(markup).toContain('Manage Agents permission required.');
   });
+
+  it('renders a target-specific safety note without presenting it as a disabled reason', () => {
+    const markup = renderToStaticMarkup(
+      <RunPermissionSettingsSection
+        title="Run permissions"
+        description="Set the maximum change access."
+        permissionMode="auto_allowed_changes"
+        note="Service restarts still require approval."
+        onChange={() => undefined}
+      />
+    );
+
+    expect(markup).toContain('Service restarts still require approval.');
+    expect(markup).not.toContain('disabled=""');
+  });
 });

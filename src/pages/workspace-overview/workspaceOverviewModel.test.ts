@@ -46,6 +46,12 @@ const vm = (overrides: Partial<ControlPlaneVirtualMachine> = {}): ControlPlaneVi
   status: 'online',
   osFamily: 'linux',
   serviceManager: 'systemd',
+  agentAccessMode: 'read_only',
+  restartServices: [],
+  pendingAgentAccessPolicy: null,
+  permissionMode: 'ask_before_changes',
+  permissionModeOverride: null,
+  permissionModeSource: 'deployment_default',
   createdAt: new Date(0).toISOString(),
   updatedAt: new Date(0).toISOString(),
   ...overrides

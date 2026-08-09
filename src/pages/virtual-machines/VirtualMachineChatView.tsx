@@ -50,7 +50,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     [chatSessions, vm]
   );
   const permissions = workspace.permissions;
-  const chatAccess = resolveVirtualMachineChatAccess(permissions);
+  const chatAccess = resolveVirtualMachineChatAccess(vm, permissions);
   const controller = useTargetChat({
     target,
     currentUserId,

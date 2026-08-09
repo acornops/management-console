@@ -13,6 +13,7 @@ import { routeAgentTargetAccessFixtureRequest } from './agentTargetAccessRoutes'
 import { applyFixtureRole } from './roleProfiles';
 import { applyClusterPermissionFixturePatch } from './clusterPermissionRoutes';
 import { fixtureAgentVEnrollmentInstructions, fixtureAgentVRepairInstructions } from './agentVInstallInstructions';
+import { routeAgentVAccessPolicyFixtureRequest } from './agentVAccessPolicyRoutes';
 import { fixtureTargetType, routeTargetFixtureRequest, targetSkillCatalog } from './targetFixtureRoutes';
 
 export interface FixtureResponse {
@@ -288,7 +289,9 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.virtualMachines.filter((target) => target.workspaceId === decode(match![1]))) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const virtualMachine = { ...clone(state.virtualMachines[0]), id: id('fixture-vm'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture VM'), hostname: input.hostname, status: 'unknown', createdAt: NOW, updatedAt: NOW, latestSnapshot: null };
+      const agentAccessMode = input.agentAccessMode === 'read_write' ? 'read_write' : 'read_only';
+      const restartServices = agentAccessMode === 'read_write' && Array.isArray(input.restartServices) ? input.restartServices : [];
+      const virtualMachine = { ...clone(state.virtualMachines[0]), id: id('fixture-vm'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture VM'), hostname: input.hostname, agentAccessMode, restartServices, status: 'unknown', createdAt: NOW, updatedAt: NOW, latestSnapshot: null };
       state.virtualMachines.push(virtualMachine);
       return json({ virtualMachine, installInstructions: fixtureAgentVEnrollmentInstructions('initial') }, 201);
     }
@@ -308,6 +311,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (input.purpose !== 'initial' && input.purpose !== 'replace') return fixtureError('AgentV enrollment purpose is required.');
     return json({ targetId: decode(match[2]), installInstructions: fixtureAgentVEnrollmentInstructions(input.purpose) });
   }
+  const agentVAccessPolicyResponse = await routeAgentVAccessPolicyFixtureRequest({ method, path, request, state });
+  if (agentVAccessPolicyResponse) return agentVAccessPolicyResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/install-instructions$/);
   if (match && method === 'POST') return json({ targetId: decode(match[2]), installInstructions: fixtureAgentVRepairInstructions() });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)$/);
@@ -316,7 +321,21 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     const target = state.virtualMachines.find((item) => item.id === targetId);
     if (!target) return notFound('Virtual machine');
     if (method === 'GET') return json(clone(target));
-    if (method === 'PATCH') { Object.assign(target, await bodyOf(request), { updatedAt: NOW }); return json(clone(target)); }
+    if (method === 'PATCH') {
+      const input = await bodyOf(request);
+      Object.assign(target, input, { updatedAt: NOW });
+      if (Object.prototype.hasOwnProperty.call(input, 'permissionModeOverride')) {
+        const override = input.permissionModeOverride === 'read_only'
+          || input.permissionModeOverride === 'ask_before_changes'
+          || input.permissionModeOverride === 'auto_allowed_changes'
+          ? input.permissionModeOverride
+          : null;
+        target.permissionModeOverride = override;
+        target.permissionMode = override || 'ask_before_changes';
+        target.permissionModeSource = override ? 'virtual_machine_override' : 'deployment_default';
+      }
+      return json(clone(target));
+    }
     if (method === 'DELETE') { state.virtualMachines = state.virtualMachines.filter((item) => item.id !== targetId); return noContent(); }
   }
 
