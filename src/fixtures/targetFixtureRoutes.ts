@@ -110,5 +110,55 @@ export async function routeTargetFixtureRequest({
     };
   }
 
+  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/assistant\/capabilities-preview$/);
+  if (match && method === 'GET') {
+    const workspaceId = decodeURIComponent(match[1]);
+    const targetId = decodeURIComponent(match[2]);
+    const accessMode = new URL(request.url).searchParams.get('toolAccessMode') === 'read_write'
+      ? 'read_write'
+      : 'read_only';
+    const targetTools = state.targetMcpServers.find((server) => server.target_id === targetId)?.tools ?? [];
+    const tools = targetTools.filter((tool) => accessMode === 'read_write' || tool.capability === 'read');
+    const skills = state.targetSkills.filter((skill) => skill.target_id === targetId);
+    const writeAllowed = tools.filter((tool) => tool.capability === 'write').length;
+    return {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      body: {
+        workspaceId,
+        targetId,
+        targetType: fixtureTargetType(state, targetId),
+        toolAccessMode: accessMode,
+        confirmationRequiredForWrite: accessMode === 'read_write' && writeAllowed > 0,
+        writeUnavailableReason: accessMode === 'read_only'
+          && targetTools.some((tool) => tool.capability === 'write')
+          ? 'run_read_only'
+          : null,
+        toolSummary: {
+          totalAllowed: tools.length,
+          nativeAllowed: tools.length,
+          readAllowed: tools.filter((tool) => tool.capability === 'read').length,
+          writeAllowed,
+        },
+        skillSummary: { totalAvailable: skills.length },
+        tools: tools.map((tool) => ({
+          id: tool.name,
+          name: tool.name,
+          label: tool.name,
+          description: tool.description,
+          capability: tool.capability,
+          runtimeKind: 'function',
+          source: 'builtin',
+        })),
+        skills: skills.map((skill) => ({
+          id: skill.id,
+          name: skill.name,
+          description: skill.description,
+          source: 'manual',
+        })),
+      }
+    };
+  }
+
   return null;
 }

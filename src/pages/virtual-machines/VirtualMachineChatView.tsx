@@ -7,6 +7,7 @@ import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { ChatSession, Workspace } from '@/types';
 import { assistantSessionFromLocation } from '@/utils/routes';
 import { useSessionCachedState } from '@/hooks/sessionDataCache';
+import { resolveVirtualMachineChatAccess } from '@/pages/virtual-machines/virtualMachineChatAccess';
 
 interface VirtualMachineChatViewProps {
   vm: ControlPlaneVirtualMachine;
@@ -49,15 +50,12 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     [chatSessions, vm]
   );
   const permissions = workspace.permissions;
-  const canChat = Boolean(permissions?.create_sessions && permissions.create_read_only_runs);
-  const canCancelRuns = Boolean(permissions?.cancel_runs);
-  const canDeleteSessions = Boolean(permissions?.delete_sessions);
-  const canManageAiSettings = Boolean(permissions?.manage_ai_settings);
+  const chatAccess = resolveVirtualMachineChatAccess(permissions);
   const controller = useTargetChat({
     target,
     currentUserId,
-    canChat,
-    canRequestWriteRuns: false,
+    canChat: chatAccess.canChat,
+    canRequestWriteRuns: chatAccess.canRequestWriteRuns,
     isChatActive: true,
     initialActiveSessionId,
     onUpdateSessions: setChatSessions
@@ -88,18 +86,18 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       suggestionKeys={suggestionKeys}
       inputPlaceholderKey="virtualMachines.chat.inputPlaceholder"
       noChatAccessKey="virtualMachines.chat.noChatAccess"
-      footerKey="virtualMachines.chat.footer"
+      footerKey={chatAccess.footerKey}
       footerNoAccessKey="chat.footerNoAccess"
-      canChat={canChat}
+      canChat={chatAccess.canChat}
       isConversationOwner={controller.isActiveSessionOwner}
       conversationNotice={controller.conversationNotice}
       sessionDeepLinkError={controller.sessionDeepLinkError}
       recentActivityWarning={controller.recentActivityWarning}
-      canRequestWriteRuns={false}
-      canApproveWriteActions={false}
-      canCancelRuns={canCancelRuns}
-      canDeleteSessions={canDeleteSessions}
-      canManageAiSettings={canManageAiSettings}
+      canRequestWriteRuns={chatAccess.canRequestWriteRuns}
+      canApproveWriteActions={chatAccess.canApproveWriteActions}
+      canCancelRuns={chatAccess.canCancelRuns}
+      canDeleteSessions={chatAccess.canDeleteSessions}
+      canManageAiSettings={chatAccess.canManageAiSettings}
       isRunActive={controller.isRunActive}
       isSessionsLoading={controller.isSessionsLoading}
       isLoadingEarlierMessages={controller.isLoadingEarlierMessages}

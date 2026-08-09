@@ -920,13 +920,12 @@ export const zh = {
     chat: {
       title: '虚拟机助手',
       context: '助手',
-      description: '询问此虚拟机、检查主机状态，并运行只读检查。',
+      description: '检查此虚拟机，并请求重启已配置的服务。',
       readOnly: '只读',
       promptTitle: '询问 {{name}}',
-      promptBody: '虚拟机助手运行使用只读访问。可以询问服务、进程、网络监听、主机资源清单或近期日志条目。',
+      promptBody: '只读检查会自动运行。重启已配置的服务前，必须先获得明确批准。',
       inputPlaceholder: '询问 {{name}}',
       noChatAccess: '你没有权限在此工作区启动虚拟机聊天。',
-      footer: '虚拟机助手运行使用只读访问，不请求写入批准。',
       runStarted: '{{name}} 的运行 {{runId}} 已启动。',
       runStatus: {
         idle: '空闲',

@@ -1,7 +1,7 @@
 const baseInstructions = {
   command: 'fixture-mode: no agent installation is required',
-  releaseVersion: '0.0.1-experimental.5',
-  bootstrapUrl: 'https://github.com/acornops/agentv/releases/download/v0.0.1-experimental.5/install-agentv.sh',
+  releaseVersion: '0.0.1-experimental.6',
+  bootstrapUrl: 'https://github.com/acornops/agentv/releases/download/v0.0.1-experimental.6/install-agentv.sh',
   warnings: ['This command is illustrative and cannot connect an external VM.']
 };
 

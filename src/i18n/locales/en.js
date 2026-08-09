@@ -920,13 +920,12 @@ export const en = {
     chat: {
       title: 'VM Assistant',
       context: 'Assistant',
-      description: 'Ask about this VM, inspect host state, and run read-only checks.',
+      description: 'Inspect this VM and request approved restarts of configured services.',
       readOnly: 'Read-only',
       promptTitle: 'Ask about {{name}}',
-      promptBody: 'VM assistant runs use read-only access. Ask about services, processes, network listeners, host inventory, or recent log entries.',
+      promptBody: 'Read checks run automatically. Restarting a configured service requires explicit approval before execution.',
       inputPlaceholder: 'Ask about {{name}}',
       noChatAccess: 'You do not have permission to start VM chat in this workspace.',
-      footer: 'VM assistant sessions use read-only access and do not request write approvals.',
       runStarted: 'Run {{runId}} started for {{name}}.',
       runStatus: {
         idle: 'Idle',

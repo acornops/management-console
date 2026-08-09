@@ -61,7 +61,7 @@ describe('controlPlaneApi', () => {
       virtualMachine: { id: 'vm-1', workspaceId: 'workspace-1', name: 'prod-vm', status: 'unknown' },
       installInstructions: {
         command: 'set -o pipefail; curl example | sudo bash',
-        releaseVersion: '0.0.1-experimental.5',
+        releaseVersion: '0.0.1-experimental.6',
         bootstrapUrl: 'https://example.test/install-agentv.sh',
         warnings: ['Contains a one-use token.'],
         enrollmentExpiresAt: '2026-08-09T12:15:00.000Z'
@@ -72,7 +72,7 @@ describe('controlPlaneApi', () => {
     await expect(controlPlaneApi.registerVirtualMachine('workspace-1', { name: 'prod-vm' })).resolves.toMatchObject({
       installInstructions: {
         command: 'set -o pipefail; curl example | sudo bash',
-        releaseVersion: '0.0.1-experimental.5',
+        releaseVersion: '0.0.1-experimental.6',
         warnings: ['Contains a one-use token.'],
         enrollmentExpiresAt: '2026-08-09T12:15:00.000Z'
       }
@@ -84,7 +84,7 @@ describe('controlPlaneApi', () => {
       targetId: 'vm-1',
       installInstructions: {
         command: 'set -o pipefail; curl example | sudo bash',
-        releaseVersion: '0.0.1-experimental.5',
+        releaseVersion: '0.0.1-experimental.6',
         bootstrapUrl: 'https://example.test/install-agentv.sh',
         warnings: ['Contains a one-use token.']
       }

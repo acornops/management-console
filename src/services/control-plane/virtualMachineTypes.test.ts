@@ -6,7 +6,7 @@ import {
 
 const instructions = {
   command: "set -o pipefail; curl -fsSL 'https://example.test/install-agentv.sh' | sudo bash",
-  releaseVersion: '0.0.1-experimental.5',
+  releaseVersion: '0.0.1-experimental.6',
   bootstrapUrl: 'https://example.test/install-agentv.sh',
   warnings: ['Contains a one-use token.'],
   enrollmentExpiresAt: '2026-08-09T12:15:00.000Z'

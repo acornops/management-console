@@ -604,9 +604,9 @@ export function createFixtureState(): FixtureState {
     ],
     targetMcpServers: [
       { id: 'fixture-mcp', workspace_id: FIXTURE_IDS.workspace, target_id: FIXTURE_IDS.cluster, target_type: 'kubernetes', server_name: 'AcornOps Kubernetes Tools', server_url: 'builtin://agentk', enabled: true, auth_type: 'none', credential_mode: 'none', connection_status: 'ok', last_discovery_at: NOW, last_discovery_error: null, revision: 1, tools: targetTools.map((tool) => ({ name: tool.name, description: tool.description, capability: tool.capability, version: tool.version, source: tool.source, enabled: true, mcp_server_url: 'builtin://agentk', timeout_ms: 10000 })) },
-      { id: 'fixture-vm-mcp', workspace_id: FIXTURE_IDS.workspace, target_id: FIXTURE_IDS.virtualMachine, target_type: 'virtual_machine', server_name: 'AcornOps VM Tools', server_url: 'builtin://agentk', enabled: true, auth_type: 'none', credential_mode: 'none', connection_status: 'ok', last_discovery_at: NOW, last_discovery_error: null, revision: 1, tools: [
-        { name: 'get_service', description: 'Read Linux service status', capability: 'read', version: '1.0.0', source: 'builtin', enabled: true, mcp_server_url: 'builtin://agentk', timeout_ms: 10000 },
-        { name: 'restart_service', description: 'Restart a Linux service after approval', capability: 'write', version: '1.0.0', source: 'builtin', enabled: true, mcp_server_url: 'builtin://agentk', timeout_ms: 10000 }
+      { id: 'fixture-vm-mcp', workspace_id: FIXTURE_IDS.workspace, target_id: FIXTURE_IDS.virtualMachine, target_type: 'virtual_machine', server_name: 'AcornOps VM Tools', server_url: 'builtin://agentv', enabled: true, auth_type: 'none', credential_mode: 'none', connection_status: 'ok', last_discovery_at: NOW, last_discovery_error: null, revision: 1, tools: [
+        { name: 'get_service', description: 'Read Linux service status', capability: 'read', version: '2.0.0', source: 'builtin', enabled: true, mcp_server_url: 'builtin://agentv', timeout_ms: 8000 },
+        { name: 'restart_service', description: 'Restart a Linux service after approval', capability: 'write', version: '2.0.0', source: 'builtin', enabled: true, mcp_server_url: 'builtin://agentv', timeout_ms: 30000 }
       ] }
     ],
     agentMcpServers: [{ ...agentTargetsMcpServer, agentId: FIXTURE_IDS.kubernetesAgent }],

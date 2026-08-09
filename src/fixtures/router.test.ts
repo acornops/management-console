@@ -63,6 +63,32 @@ describe('frontend fixture router', () => {
     expect(autoTriage.body).toMatchObject({ targetId: virtualMachine.id, readiness: { status: 'ready' } });
   });
 
+  it('previews AgentV tools for the connected VM write-approval fixture', async () => {
+    const preview = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.virtualMachine}/assistant/capabilities-preview?toolAccessMode=read_write`
+    ));
+
+    expect(preview.body).toMatchObject({
+      targetType: 'virtual_machine',
+      toolAccessMode: 'read_write',
+      confirmationRequiredForWrite: true,
+      toolSummary: { readAllowed: 1, writeAllowed: 1 },
+      tools: expect.arrayContaining([
+        expect.objectContaining({ name: 'get_service', capability: 'read' }),
+        expect.objectContaining({ name: 'restart_service', capability: 'write' })
+      ])
+    });
+
+    const readOnlyPreview = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.virtualMachine}/assistant/capabilities-preview?toolAccessMode=read_only`
+    ));
+    expect(readOnlyPreview.body).toMatchObject({
+      confirmationRequiredForWrite: false,
+      writeUnavailableReason: 'run_read_only',
+      toolSummary: { readAllowed: 1, writeAllowed: 0 }
+    });
+  });
+
   it('serves and persists Agent target access settings', async () => {
     const path = `/api/v1/workspaces/${FIXTURE_IDS.workspace}/agents/${FIXTURE_IDS.kubernetesAgent}/mcp/servers/${FIXTURE_IDS.targetsMcpServer}/target-access`;
     const initial = await routeFixtureRequest(request(path));

@@ -548,12 +548,6 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (stored) stored.enabledConfigured = tool.enabled;
     return json(tool);
   }
-  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/assistant\/capabilities-preview$/);
-  if (match && method === 'GET') {
-    const accessMode = url.searchParams.get('toolAccessMode') === 'read_write' ? 'read_write' : 'read_only';
-    const tools = state.targetTools.filter((tool) => accessMode === 'read_write' || tool.capability === 'read');
-    return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: state.virtualMachines.some((target) => target.id === decode(match![2])) ? 'virtual_machine' : 'kubernetes', toolAccessMode: accessMode, confirmationRequiredForWrite: true, writeUnavailableReason: accessMode === 'read_only' ? 'run_read_only' : null, toolSummary: { totalAllowed: tools.length, nativeAllowed: tools.length, readAllowed: tools.filter((tool) => tool.capability === 'read').length, writeAllowed: tools.filter((tool) => tool.capability === 'write').length }, skillSummary: { totalAvailable: state.targetSkills.length }, tools: tools.map((tool) => ({ id: tool.id, name: tool.name, label: tool.name, description: tool.description, capability: tool.capability, runtimeKind: 'function', source: 'builtin' })), skills: state.targetSkills.map((skill) => ({ id: skill.id, name: skill.name, description: skill.description, source: 'manual' })) });
-  }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/skills$/);
   if (match) {
     if (method === 'GET') return json(targetSkillCatalog(state, decode(match[2])));

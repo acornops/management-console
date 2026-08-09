@@ -126,7 +126,14 @@ test('workspace overview opens VM issue assistance in the desktop dock', async (
   await vmIssue.getByRole('button', { name: 'Open assistant' }).click();
 
   await expect(page).toHaveURL(overviewPath);
-  await expect(page.getByRole('complementary', { name: 'VM Assistant' })).toBeVisible();
+  const assistant = page.getByRole('complementary', { name: 'VM Assistant' });
+  await expect(assistant).toBeVisible();
+  await expect(assistant.getByText('Read operations can run automatically. Write actions require explicit approval before execution.')).toBeVisible();
+  const capabilityPreviewButton = assistant.locator('[data-assistant-capability-preview-trigger="true"]');
+  await capabilityPreviewButton.click();
+  const capabilityPreviewId = await capabilityPreviewButton.getAttribute('aria-controls');
+  if (!capabilityPreviewId) throw new Error('The VM capability preview trigger must identify its popover');
+  await expect(page.locator(`#${capabilityPreviewId}`).getByText('restart_service', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Workspace Overview', includeHidden: true })).toBeVisible();
 });
 
