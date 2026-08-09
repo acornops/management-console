@@ -22,6 +22,9 @@ chat while preserving read-only behavior for roles without write-run access.
   membership, contract, harness, build, bundle, and route checks.
 - Focused fixture Playwright coverage verifies the VM assistant footer and the
   visible `restart_service` capability.
+- The two affected Linux mobile-dark VM-chat baselines were reviewed and
+  refreshed for the approval copy and corrected capability count; the CI run
+  and retry produced byte-identical actual images.
 
 ## Release impact
 
