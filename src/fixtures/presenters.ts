@@ -29,7 +29,9 @@ export function workflowOptions(state: FixtureState) {
 }
 
 export function targetToolCatalog(state: FixtureState, targetId: string) {
-  const targetType = targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes';
+  const targetType = state.virtualMachines.some((target) => target.id === targetId)
+    ? 'virtual_machine'
+    : 'kubernetes';
   return {
     workspaceId: FIXTURE_IDS.workspace,
     targetId,

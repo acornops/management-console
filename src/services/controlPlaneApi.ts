@@ -27,8 +27,13 @@ import {
 } from './control-plane/targetApi';
 import { userFromControlPlane } from './control-plane/userMappers';
 import { mapVirtualMachineMetricsHistoryResponse } from './control-plane/virtualMachineMetricMappers';
+import {
+  parseVirtualMachineInstallInstructions,
+  parseVirtualMachineInstructionResponse
+} from './control-plane/virtualMachineTypes';
 import type {
   ControlPlaneVirtualMachine,
+  ControlPlaneVirtualMachineInstallInstructions,
   ControlPlaneVirtualMachineMetricsHistoryResponse,
   RegisterVirtualMachineResponse
 } from './control-plane/virtualMachineTypes';
@@ -123,7 +128,11 @@ export type {
   ControlPlaneTargetChatActivity,
   ControlPlaneTargetChatActivityEvent
 } from './control-plane/sessionActivityTypes';
-export type { ControlPlaneVirtualMachine, RegisterVirtualMachineResponse } from './control-plane/virtualMachineTypes';
+export type {
+  ControlPlaneVirtualMachine,
+  ControlPlaneVirtualMachineInstallInstructions,
+  RegisterVirtualMachineResponse
+} from './control-plane/virtualMachineTypes';
 export type {
   AutomaticInvestigationSummary,
   AutoTriageMinimumSeverity,
@@ -457,10 +466,18 @@ export const controlPlaneApi = {
     workspaceId: string,
     input: { name: string; hostname?: string; allowedLogSources?: string[] }
   ): Promise<RegisterVirtualMachineResponse> {
-    return requestJson<RegisterVirtualMachineResponse>(
+    const response = await requestJson<unknown>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`,
       { method: 'POST', body: JSON.stringify(input) }
     );
+    if (!response || typeof response !== 'object' || Array.isArray(response) || 'agentKey' in response
+      || !('virtualMachine' in response) || !('installInstructions' in response)) {
+      throw new Error('Control plane returned an invalid virtual machine registration response');
+    }
+    return {
+      virtualMachine: response.virtualMachine as ControlPlaneVirtualMachine,
+      installInstructions: parseVirtualMachineInstallInstructions(response.installInstructions)
+    };
   },
 
   async getVirtualMachine(workspaceId: string, vmId: string): Promise<ControlPlaneVirtualMachine> {
@@ -483,11 +500,20 @@ export const controlPlaneApi = {
     );
   },
 
-  async rotateVirtualMachineAgentKey(workspaceId: string, vmId: string): Promise<{ targetId: string; agentKey: string; keyVersion: number; installInstructions: string }> {
-    return requestJson<{ targetId: string; agentKey: string; keyVersion: number; installInstructions: string }>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/rotate-agent-key`,
+  async createVirtualMachineAgentEnrollment(workspaceId: string, vmId: string, purpose: 'initial' | 'replace'): Promise<{ targetId: string; installInstructions: ControlPlaneVirtualMachineInstallInstructions }> {
+    const response = await requestJson<unknown>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/agent-enrollments`,
+      { method: 'POST', body: JSON.stringify({ purpose }) }
+    );
+    return parseVirtualMachineInstructionResponse(response);
+  },
+
+  async getVirtualMachineInstallInstructions(workspaceId: string, vmId: string): Promise<{ targetId: string; installInstructions: ControlPlaneVirtualMachineInstallInstructions }> {
+    const response = await requestJson<unknown>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/install-instructions`,
       { method: 'POST' }
     );
+    return parseVirtualMachineInstructionResponse(response);
   },
 
   async listVirtualMachineInventory(workspaceId: string, vmId: string): Promise<PagedResult<Record<string, unknown>>> {

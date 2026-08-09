@@ -175,9 +175,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     onUpdateWorkspace(workspace.id, updates);
   }, [onUpdateWorkspace, workspace.id]);
   const {
-    agentKeyRotationError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
-    isRotatingAgentKey, newVmInstallInstructions, newVmName, openAddVmModal, registerVm,
-    resetVmCreationState, rotateKey, setNewVmName, vmCreationError, vmCreationStep
+    credentialReplacementError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
+    isReplacingCredential, isGeneratingRepairInstructions, newVmName, openAddVmModal, registerVm,
+    resetVmCreationState, replaceCredential, generateRepairInstructions, regenerateEnrollment, generateInitialEnrollment,
+    setNewVmName, vmCreationError, vmCreationStep
   } = useVirtualMachineAgentSetup({
     workspaceId: workspace.id,
     canManageTargets,
@@ -447,7 +448,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           isOpen={isAddingVm}
           creationStep={vmCreationStep}
           vmName={newVmName}
-          installInstructions={newVmInstallInstructions}
+          installInstructions={installInstructions?.value || null}
           isAgentConnected={isRegisteredVmAgentConnected}
           isRegistering={isRegisteringVm}
           errorMessage={vmCreationError}
@@ -455,6 +456,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           onVmNameChange={setNewVmName}
           onProceedToInstructions={registerVm}
           onConfirmInstalled={() => void confirmVmInstalled()}
+          onRegenerateEnrollment={() => void regenerateEnrollment()}
         />
       </>
     );
@@ -568,9 +570,14 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         vm={selected}
         workspace={workspace}
         installInstructions={installInstructions?.vmId === selected.id ? installInstructions.value : null}
-        onRotateKey={canManageAgentKeys ? () => rotateKey(selected) : undefined}
-        isRotatingKey={isRotatingAgentKey}
-        rotationError={agentKeyRotationError}
+        requiresInitialEnrollment={selected.status === 'unknown'}
+        onGenerateInitialEnrollment={canManageTargets && selected.status === 'unknown' ? () => generateInitialEnrollment(selected) : undefined}
+        onReplaceCredential={canManageAgentKeys && selected.status !== 'unknown' ? () => replaceCredential(selected) : undefined}
+        onGenerateRepairInstructions={canManageTargets && selected.status !== 'unknown' ? () => generateRepairInstructions(selected) : undefined}
+        isGeneratingRepairInstructions={isGeneratingRepairInstructions}
+        isReplacingCredential={isReplacingCredential}
+        isGeneratingInitialEnrollment={isRegisteringVm}
+        credentialError={credentialReplacementError}
         onDeleteVirtualMachine={canManageTargets ? () => deleteVirtualMachine(selected) : undefined}
         canManageTargets={canManageTargets}
         canCreateReadWriteRuns={canCreateReadWriteRuns}

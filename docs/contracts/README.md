@@ -32,6 +32,15 @@ The management console is the browser client for the control-plane API. Keep thi
 - The workspace approval inbox additionally exposes `pendingCount`, the total pending approvals across target-tool and workflow-gate sources before pagination and independently of the list filter. The console treats a missing or invalid count from an older producer as unavailable.
 - Cluster registration returns `{ cluster, agentKey, installInstructions }`.
 - Agent-key rotation returns `{ clusterId, agentKey, keyVersion, installInstructions }`.
+- VM registration and credential replacement return structured
+  `installInstructions` with `{ command, releaseVersion, bootstrapUrl,
+  enrollmentExpiresAt?, warnings }`. Enrollment commands contain a one-use
+  token and only `command` is displayed and copied; repair commands contain no
+  credential. The AgentV contract has no legacy raw-key decoder.
+  The onboarding dialog copies only the command, labels it sensitive, counts
+  down the 15-minute enrollment window, and regenerates an initial command
+  after expiry. VM settings keep credential-free repair separate from explicit
+  credential replacement.
 - Workspace payloads include `currentUserRole` and permissions from the control plane; the console must not fabricate current-user membership locally.
 - The UI must not fabricate a member row when the control-plane member list is empty or unavailable.
 - Role templates come from `GET /api/v1/workspaces/{workspaceId}/roles`; invite and member-role controls must use that catalog.

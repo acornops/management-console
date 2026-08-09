@@ -25,9 +25,54 @@ export interface ControlPlaneVirtualMachine {
 
 export interface RegisterVirtualMachineResponse {
   virtualMachine: ControlPlaneVirtualMachine;
-  agentKey: string;
-  keyVersion: number;
-  installInstructions: string;
+  installInstructions: ControlPlaneVirtualMachineInstallInstructions;
+}
+
+export interface ControlPlaneVirtualMachineInstallInstructions {
+  command: string;
+  releaseVersion: string;
+  bootstrapUrl: string;
+  enrollmentExpiresAt?: string;
+  warnings: string[];
+}
+
+export function parseVirtualMachineInstallInstructions(value: unknown): ControlPlaneVirtualMachineInstallInstructions {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Control plane returned invalid AgentV install instructions');
+  }
+  const input = value as Record<string, unknown>;
+  const warnings = input.warnings;
+  const enrollmentExpiresAt = input.enrollmentExpiresAt;
+  if ('agentKey' in input
+    || typeof input.command !== 'string' || input.command.length === 0 || input.command.includes('\n') || input.command.includes('\r')
+    || typeof input.releaseVersion !== 'string'
+    || typeof input.bootstrapUrl !== 'string'
+    || !Array.isArray(warnings) || !warnings.every((warning) => typeof warning === 'string')
+    || (enrollmentExpiresAt !== undefined
+      && (typeof enrollmentExpiresAt !== 'string' || !Number.isFinite(Date.parse(enrollmentExpiresAt))))) {
+    throw new Error('Control plane returned invalid AgentV install instructions');
+  }
+  return {
+    command: input.command,
+    releaseVersion: input.releaseVersion,
+    bootstrapUrl: input.bootstrapUrl,
+    warnings: [...warnings],
+    ...(typeof enrollmentExpiresAt === 'string' ? { enrollmentExpiresAt } : {})
+  };
+}
+
+export function parseVirtualMachineInstructionResponse(value: unknown): {
+  targetId: string;
+  installInstructions: ControlPlaneVirtualMachineInstallInstructions;
+} {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || 'agentKey' in value) {
+    throw new Error('Control plane returned an invalid AgentV instruction response');
+  }
+  const input = value as Record<string, unknown>;
+  if (typeof input.targetId !== 'string') {
+    throw new Error('Control plane returned an invalid AgentV instruction response');
+  }
+  return { targetId: input.targetId, installInstructions: parseVirtualMachineInstallInstructions(input.installInstructions) };
 }
 
 export interface ControlPlaneVirtualMachineMetricHistoryPoint {

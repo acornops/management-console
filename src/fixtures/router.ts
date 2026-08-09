@@ -12,13 +12,14 @@ import { routeAgentConversationFixtureRequest } from './agentConversationRoutes'
 import { routeAgentTargetAccessFixtureRequest } from './agentTargetAccessRoutes';
 import { applyFixtureRole } from './roleProfiles';
 import { applyClusterPermissionFixturePatch } from './clusterPermissionRoutes';
+import { fixtureAgentVEnrollmentInstructions, fixtureAgentVRepairInstructions } from './agentVInstallInstructions';
+import { fixtureTargetType, routeTargetFixtureRequest, targetSkillCatalog } from './targetFixtureRoutes';
 
 export interface FixtureResponse {
   status: number;
   body?: unknown;
   headers?: Record<string, string>;
 }
-
 const NOW = new Date().toISOString();
 
 function json(body: unknown, status = 200): FixtureResponse {
@@ -58,31 +59,6 @@ function id(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function targetSkillCatalog(state: ReturnType<typeof getFixtureState>, targetId: string) {
-  const targetType = targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes';
-  return {
-    workspaceId: FIXTURE_IDS.workspace,
-    targetId,
-    targetType,
-    clusterId: targetType === 'kubernetes' ? targetId : undefined,
-    permissions: { canEdit: true, editableRoles: ['owner', 'admin'] },
-    items: state.targetSkills.filter((skill) => skill.target_id === targetId).map((skill) => ({
-      ...skill,
-      id: skill.id,
-      workspaceId: FIXTURE_IDS.workspace,
-      targetId,
-      targetType,
-      validationStatus: 'valid',
-      validationErrors: [],
-      bundleStats: { fileCount: skill.files.length, totalBytes: skill.files.reduce((total: number, file: Record<string, any>) => total + file.content.length, 0) },
-      source: { ...skill.source, type: skill.source.type === 'git' ? 'git_import' : 'manual', syncStatus: 'not_applicable' },
-      createdAt: '2026-07-15T07:45:00.000Z',
-      updatedAt: NOW,
-      files: skill.files.map((file: Record<string, any>) => ({ ...file, sizeBytes: file.content.length }))
-    }))
-  };
-}
-
 function mcpCatalog(state: ReturnType<typeof getFixtureState>, targetId: string) {
   const servers = state.targetMcpServers
     .filter((server) => server.target_id === targetId)
@@ -104,7 +80,7 @@ function mcpCatalog(state: ReturnType<typeof getFixtureState>, targetId: string)
       toolCounts: { total: server.tools.length, readOnly: server.tools.filter((tool: Record<string, any>) => tool.capability === 'read').length, writeCapable: server.tools.filter((tool: Record<string, any>) => tool.capability === 'write').length, enabledConfigured: server.tools.filter((tool: Record<string, any>) => tool.enabled).length, enabledEffective: server.tools.filter((tool: Record<string, any>) => tool.enabled).length, writeConfigured: server.tools.filter((tool: Record<string, any>) => tool.capability === 'write' && tool.enabled).length, writeEffective: server.tools.filter((tool: Record<string, any>) => tool.capability === 'write' && tool.enabled).length },
       tools: server.tools.map((tool: Record<string, any>) => ({ name: tool.name, description: tool.description, capability: tool.capability, version: tool.version, source: tool.source, enabledConfigured: tool.enabled, enabledEffective: tool.enabled, effectiveDisabledReason: null }))
     }));
-  return { workspaceId: FIXTURE_IDS.workspace, clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', permissions: { canEdit: true, editableRoles: ['owner', 'admin'] }, servers };
+  return { workspaceId: FIXTURE_IDS.workspace, clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, targetId, targetType: fixtureTargetType(state, targetId), permissions: { canEdit: true, editableRoles: ['owner', 'admin'] }, servers };
 }
 
 export async function routeFixtureRequest(request: Request): Promise<FixtureResponse> {
@@ -314,7 +290,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
       const input = await bodyOf(request);
       const virtualMachine = { ...clone(state.virtualMachines[0]), id: id('fixture-vm'), workspaceId: decode(match[1]), name: String(input.name || 'Fixture VM'), hostname: input.hostname, status: 'unknown', createdAt: NOW, updatedAt: NOW, latestSnapshot: null };
       state.virtualMachines.push(virtualMachine);
-      return json({ virtualMachine, agentKey: 'ak_fixture_vm_local_only', keyVersion: 1, installInstructions: 'Fixture mode does not connect external machines.' }, 201);
+      return json({ virtualMachine, installInstructions: fixtureAgentVEnrollmentInstructions('initial') }, 201);
     }
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/resources$/);
@@ -326,8 +302,14 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'GET') return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), windowMs: 21600000, points: [{ timestamp: '2026-07-15T08:00:00.000Z', loadAverage1m: 0.8, loadAverage5m: 0.7, loadAverage15m: 0.6, cpuUsagePercent: 31, memoryUsedBytes: 3221225472, memoryTotalBytes: 8589934592, memoryFreeBytes: 5368709120, memoryUsedPercent: 37.5, swapUsedBytes: 0, swapTotalBytes: 2147483648, swapUsedPercent: 0, rootDiskUsedBytes: 32212254720, rootDiskTotalBytes: 107374182400, rootDiskUsedPercent: 30 }] });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/logs$/);
   if (match && method === 'GET') return json({ entries: [{ id: 'fixture-log', timestamp: NOW, source: 'system', severity: 'warning', message: 'payments-worker restarted after configuration reload', unit: 'payments-worker.service' }] });
-  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/rotate-agent-key$/);
-  if (match && method === 'POST') return json({ targetId: decode(match[2]), agentKey: 'ak_fixture_vm_rotated_local_only', keyVersion: 2, installInstructions: 'Fixture mode does not connect external machines.' });
+  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/agent-enrollments$/);
+  if (match && method === 'POST') {
+    const input = await bodyOf(request);
+    if (input.purpose !== 'initial' && input.purpose !== 'replace') return fixtureError('AgentV enrollment purpose is required.');
+    return json({ targetId: decode(match[2]), installInstructions: fixtureAgentVEnrollmentInstructions(input.purpose) });
+  }
+  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/install-instructions$/);
+  if (match && method === 'POST') return json({ targetId: decode(match[2]), installInstructions: fixtureAgentVRepairInstructions() });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)$/);
   if (match) {
     const targetId = decode(match[2]);
@@ -344,7 +326,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     if (method === 'GET') return json({ items: clone(state.sessions.filter((item) => item.targetId === targetId)) });
     if (method === 'POST') {
       const input = await bodyOf(request);
-      const session = { id: id('fixture-session'), workspaceId: decode(match[1]), targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' }, title: String(input.title || 'Fixture conversation'), status: 'open', createdAt: NOW, updatedAt: NOW, lastMessageAt: NOW, expiresAt: '2026-08-14T08:30:00.000Z' };
+      const session = { id: id('fixture-session'), workspaceId: decode(match[1]), targetId, targetType: fixtureTargetType(state, targetId), clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, createdBy: FIXTURE_IDS.user, createdByUser: { id: FIXTURE_IDS.user, displayName: 'Test User' }, title: String(input.title || 'Fixture conversation'), status: 'open', createdAt: NOW, updatedAt: NOW, lastMessageAt: NOW, expiresAt: '2026-08-14T08:30:00.000Z' };
       state.sessions.push(session);
       state.messages[session.id] = [];
       return json(session, 201);
@@ -380,7 +362,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'GET') {
     const targetId = decode(match[2]);
     const target = [...state.clusters, ...state.virtualMachines].find((item) => item.id === targetId);
-    return json({ targetId, targetType: targetId === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', targetName: target?.name || 'Fixture target', windowSeconds: Number(url.searchParams.get('windowSeconds') || 300), generatedAt: NOW, recentActivity: state.sessions.filter((session) => session.targetId === targetId).map((session) => ({ sessionId: session.id, title: session.title, createdBy: session.createdBy, createdByUser: session.createdByUser, lastActivityAt: session.lastMessageAt, lastRunId: FIXTURE_IDS.run, lastRunStatus: 'completed', hasActiveRun: false, hasRecentWriteCapableRun: false, latestToolAccessMode: 'read_only' })) });
+    return json({ targetId, targetType: fixtureTargetType(state, targetId), targetName: target?.name || 'Fixture target', windowSeconds: Number(url.searchParams.get('windowSeconds') || 300), generatedAt: NOW, recentActivity: state.sessions.filter((session) => session.targetId === targetId).map((session) => ({ sessionId: session.id, title: session.title, createdBy: session.createdBy, createdByUser: session.createdByUser, lastActivityAt: session.lastMessageAt, lastRunId: FIXTURE_IDS.run, lastRunStatus: 'completed', hasActiveRun: false, hasRecentWriteCapableRun: false, latestToolAccessMode: 'read_only' })) });
   }
   if (/\/chat-activity\/stream$/.test(path) && method === 'GET') return { status: 200, body: '', headers: { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' } };
 
@@ -548,6 +530,9 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   const catalogResponse = await routeCatalogFixtureRequest({ request, state, path, method });
   if (catalogResponse) return catalogResponse;
 
+  const targetResponse = await routeTargetFixtureRequest({ method, path, request, state });
+  if (targetResponse) return targetResponse;
+
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/mcp\/catalog$/);
   if (match && method === 'GET') return json(mcpCatalog(state, decode(match[2])));
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/tools$/);
@@ -567,7 +552,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'GET') {
     const accessMode = url.searchParams.get('toolAccessMode') === 'read_write' ? 'read_write' : 'read_only';
     const tools = state.targetTools.filter((tool) => accessMode === 'read_write' || tool.capability === 'read');
-    return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: decode(match[2]) === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', toolAccessMode: accessMode, confirmationRequiredForWrite: true, writeUnavailableReason: accessMode === 'read_only' ? 'run_read_only' : null, toolSummary: { totalAllowed: tools.length, nativeAllowed: tools.length, readAllowed: tools.filter((tool) => tool.capability === 'read').length, writeAllowed: tools.filter((tool) => tool.capability === 'write').length }, skillSummary: { totalAvailable: state.targetSkills.length }, tools: tools.map((tool) => ({ id: tool.id, name: tool.name, label: tool.name, description: tool.description, capability: tool.capability, runtimeKind: 'function', source: 'builtin' })), skills: state.targetSkills.map((skill) => ({ id: skill.id, name: skill.name, description: skill.description, source: 'manual' })) });
+    return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: state.virtualMachines.some((target) => target.id === decode(match![2])) ? 'virtual_machine' : 'kubernetes', toolAccessMode: accessMode, confirmationRequiredForWrite: true, writeUnavailableReason: accessMode === 'read_only' ? 'run_read_only' : null, toolSummary: { totalAllowed: tools.length, nativeAllowed: tools.length, readAllowed: tools.filter((tool) => tool.capability === 'read').length, writeAllowed: tools.filter((tool) => tool.capability === 'write').length }, skillSummary: { totalAvailable: state.targetSkills.length }, tools: tools.map((tool) => ({ id: tool.id, name: tool.name, label: tool.name, description: tool.description, capability: tool.capability, runtimeKind: 'function', source: 'builtin' })), skills: state.targetSkills.map((skill) => ({ id: skill.id, name: skill.name, description: skill.description, source: 'manual' })) });
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/skills$/);
   if (match) {
@@ -595,7 +580,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
       const input = await bodyOf(request);
       if (input.auth?.credential || input.bearerToken || input.customHeaderValue) return fixtureError('External credentials are unavailable in frontend fixture mode.');
       const authType = input.auth?.type || input.authType || 'none';
-      const server = { id: id('fixture-mcp'), workspace_id: decode(match[1]), target_id: decode(match[2]), target_type: decode(match[2]) === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', server_name: input.name || input.serverName, server_url: input.url || input.serverUrl, enabled: input.enabled !== false, auth_type: authType, credential_mode: authType === 'none' ? 'none' : input.credentialMode || 'individual', auth_header_name: input.auth?.headerName, auth_header_prefix: input.auth?.headerPrefix, connection_status: 'unknown', last_discovery_at: null, last_discovery_error: null, revision: 1, tools: input.tools || [] };
+      const server = { id: id('fixture-mcp'), workspace_id: decode(match[1]), target_id: decode(match[2]), target_type: fixtureTargetType(state, decode(match[2])), server_name: input.name || input.serverName, server_url: input.url || input.serverUrl, enabled: input.enabled !== false, auth_type: authType, credential_mode: authType === 'none' ? 'none' : input.credentialMode || 'individual', auth_header_name: input.auth?.headerName, auth_header_prefix: input.auth?.headerPrefix, connection_status: 'unknown', last_discovery_at: null, last_discovery_error: null, revision: 1, tools: input.tools || [] };
       state.targetMcpServers.push(server);
       return json(server, 201);
     }
@@ -620,7 +605,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/issues$/);
   if (match && method === 'GET') return json({ items: clone(state.issues.filter((issue) => issue.targetId === decode(match![2]))) });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/target-insights$/);
-  if (match && method === 'GET') return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: decode(match[2]) === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', permissions: { canEdit: true }, items: [{ id: 'fixture-insight', workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: decode(match[2]) === FIXTURE_IDS.virtualMachine ? 'virtual_machine' : 'kubernetes', title: 'Payments worker startup dependency', status: 'active', bodyMarkdown: 'Validate queue configuration before restarting the worker.', frontmatter: {}, tags: ['payments', 'startup'], signals: {}, scope: { namespace: 'production' }, evidenceSummary: 'Observed across four restarts.', observationCount: 4, confidence: 0.92, firstObservedAt: '2026-07-15T07:45:00.000Z', lastObservedAt: NOW, createdAt: '2026-07-15T07:45:00.000Z', updatedAt: NOW }] });
+  if (match && method === 'GET') return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: fixtureTargetType(state, decode(match[2])), permissions: { canEdit: true }, items: [{ id: 'fixture-insight', workspaceId: decode(match[1]), targetId: decode(match[2]), targetType: fixtureTargetType(state, decode(match[2])), title: 'Payments worker startup dependency', status: 'active', bodyMarkdown: 'Validate queue configuration before restarting the worker.', frontmatter: {}, tags: ['payments', 'startup'], signals: {}, scope: { namespace: 'production' }, evidenceSummary: 'Observed across four restarts.', observationCount: 4, confidence: 0.92, firstObservedAt: '2026-07-15T07:45:00.000Z', lastObservedAt: NOW, createdAt: '2026-07-15T07:45:00.000Z', updatedAt: NOW }] });
 
   if (path === '/api/v1/__fixtures/reset' && method === 'POST') {
     resetFixtureStore();

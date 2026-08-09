@@ -56,6 +56,61 @@ describe('controlPlaneApi', () => {
     vi.unstubAllGlobals();
   });
 
+  it('returns structured AgentV enrollment instructions without a durable key', async () => {
+    requestJson.mockResolvedValue({
+      virtualMachine: { id: 'vm-1', workspaceId: 'workspace-1', name: 'prod-vm', status: 'unknown' },
+      installInstructions: {
+        command: 'set -o pipefail; curl example | sudo bash',
+        releaseVersion: '0.0.1-experimental.5',
+        bootstrapUrl: 'https://example.test/install-agentv.sh',
+        warnings: ['Contains a one-use token.'],
+        enrollmentExpiresAt: '2026-08-09T12:15:00.000Z'
+      }
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.registerVirtualMachine('workspace-1', { name: 'prod-vm' })).resolves.toMatchObject({
+      installInstructions: {
+        command: 'set -o pipefail; curl example | sudo bash',
+        releaseVersion: '0.0.1-experimental.5',
+        warnings: ['Contains a one-use token.'],
+        enrollmentExpiresAt: '2026-08-09T12:15:00.000Z'
+      }
+    });
+  });
+
+  it('sends an explicit purpose when issuing an AgentV enrollment', async () => {
+    requestJson.mockResolvedValue({
+      targetId: 'vm-1',
+      installInstructions: {
+        command: 'set -o pipefail; curl example | sudo bash',
+        releaseVersion: '0.0.1-experimental.5',
+        bootstrapUrl: 'https://example.test/install-agentv.sh',
+        warnings: ['Contains a one-use token.']
+      }
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await controlPlaneApi.createVirtualMachineAgentEnrollment('workspace-1', 'vm-1', 'replace');
+
+    expect(requestJson).toHaveBeenCalledWith(
+      '/api/v1/workspaces/workspace-1/virtual-machines/vm-1/agent-enrollments',
+      { method: 'POST', body: JSON.stringify({ purpose: 'replace' }) }
+    );
+  });
+
+  it('rejects a legacy VM registration response containing a durable key', async () => {
+    requestJson.mockResolvedValue({
+      virtualMachine: { id: 'vm-1' },
+      agentKey: 'ak_vm-1_must-not-reach-the-browser',
+      installInstructions: 'legacy command'
+    });
+    const { controlPlaneApi } = await import('./controlPlaneApi');
+
+    await expect(controlPlaneApi.registerVirtualMachine('workspace-1', { name: 'prod-vm' }))
+      .rejects.toThrow('invalid virtual machine registration response');
+  });
+
   it('builds filtered member queries and maps results', async () => {
     requestJson.mockResolvedValue({
       items: [

@@ -41,6 +41,28 @@ describe('frontend fixture router', () => {
     ]));
   });
 
+  it('keeps dynamically registered VMs on virtual-machine capability contracts', async () => {
+    const created = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/virtual-machines`,
+      { method: 'POST', body: JSON.stringify({ name: 'New fixture VM' }) }
+    ));
+    const virtualMachine = (created.body as { virtualMachine: { id: string } }).virtualMachine;
+
+    const tools = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${virtualMachine.id}/tools`
+    ));
+    const preview = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${virtualMachine.id}/assistant/capabilities-preview`
+    ));
+    const autoTriage = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${virtualMachine.id}/auto-triage`
+    ));
+
+    expect(tools.body).toMatchObject({ targetId: virtualMachine.id, targetType: 'virtual_machine' });
+    expect(preview.body).toMatchObject({ targetId: virtualMachine.id, targetType: 'virtual_machine' });
+    expect(autoTriage.body).toMatchObject({ targetId: virtualMachine.id, readiness: { status: 'ready' } });
+  });
+
   it('serves and persists Agent target access settings', async () => {
     const path = `/api/v1/workspaces/${FIXTURE_IDS.workspace}/agents/${FIXTURE_IDS.kubernetesAgent}/mcp/servers/${FIXTURE_IDS.targetsMcpServer}/target-access`;
     const initial = await routeFixtureRequest(request(path));

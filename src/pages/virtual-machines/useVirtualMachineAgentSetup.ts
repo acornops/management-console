@@ -1,7 +1,11 @@
 import React from 'react';
 import type { TFunction } from 'i18next';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
-import { controlPlaneApi, type ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
+import {
+  controlPlaneApi,
+  type ControlPlaneVirtualMachine,
+  type ControlPlaneVirtualMachineInstallInstructions
+} from '@/services/controlPlaneApi';
 
 export function useVirtualMachineAgentSetup({
   workspaceId,
@@ -18,13 +22,13 @@ export function useVirtualMachineAgentSetup({
   onUpsertVirtualMachine: (virtualMachine: ControlPlaneVirtualMachine) => void;
   t: TFunction;
 }) {
-  const [installInstructions, setInstallInstructions] = React.useState<{ vmId: string; value: string } | null>(null);
+  const [installInstructions, setInstallInstructions] = React.useState<{ vmId: string; value: ControlPlaneVirtualMachineInstallInstructions } | null>(null);
   const [isAddingVm, setIsAddingVm] = React.useState(false);
   const [vmCreationStep, setVmCreationStep] = React.useState<'details' | 'instructions'>('details');
   const [isRegisteringVm, setIsRegisteringVm] = React.useState(false);
-  const [isRotatingAgentKey, setIsRotatingAgentKey] = React.useState(false);
-  const [agentKeyRotationError, setAgentKeyRotationError] = React.useState<string | null>(null);
-  const [newVmInstallInstructions, setNewVmInstallInstructions] = React.useState('');
+  const [isReplacingCredential, setIsReplacingCredential] = React.useState(false);
+  const [isGeneratingRepairInstructions, setIsGeneratingRepairInstructions] = React.useState(false);
+  const [credentialReplacementError, setCredentialReplacementError] = React.useState<string | null>(null);
   const [vmCreationError, setVmCreationError] = React.useState<string | null>(null);
   const [newVmName, setNewVmName] = React.useState('');
 
@@ -33,7 +37,6 @@ export function useVirtualMachineAgentSetup({
     setVmCreationStep('details');
     setIsRegisteringVm(false);
     setInstallInstructions(null);
-    setNewVmInstallInstructions('');
     setVmCreationError(null);
     setNewVmName('');
   };
@@ -42,7 +45,7 @@ export function useVirtualMachineAgentSetup({
     if (!canManageTargets) return;
     setIsAddingVm(true);
     setVmCreationStep('details');
-    setNewVmInstallInstructions('');
+    setInstallInstructions(null);
     setVmCreationError(null);
   };
 
@@ -53,10 +56,11 @@ export function useVirtualMachineAgentSetup({
     try {
       const result = await controlPlaneApi.registerVirtualMachine(workspaceId, { name: newVmName.trim() });
       setInstallInstructions({ vmId: result.virtualMachine.id, value: result.installInstructions });
-      setNewVmInstallInstructions(result.installInstructions);
       onUpsertVirtualMachine(result.virtualMachine);
-      await refreshWorkspaceSummary();
       setVmCreationStep('instructions');
+      // Registration and enrollment have succeeded. A nonessential summary
+      // refresh must not hide the command or encourage a duplicate VM.
+      void refreshWorkspaceSummary().catch(() => undefined);
     } catch (error) {
       console.error('Failed registering virtual machine in control plane', error);
       setVmCreationError(formatControlPlaneError(error, t('virtualMachines.list.registerFailed'), { area: 'virtualMachines' }));
@@ -84,33 +88,78 @@ export function useVirtualMachineAgentSetup({
     }
   };
 
-  const rotateKey = async (virtualMachine: ControlPlaneVirtualMachine | null) => {
-    if (!virtualMachine || !canManageAgentKeys || isRotatingAgentKey) return;
-    setIsRotatingAgentKey(true);
-    setAgentKeyRotationError(null);
+  const regenerateEnrollment = async () => {
+    if (!installInstructions?.vmId || isRegisteringVm) return;
+    setIsRegisteringVm(true);
+    setVmCreationError(null);
     try {
-      const result = await controlPlaneApi.rotateVirtualMachineAgentKey(workspaceId, virtualMachine.id);
+      const result = await controlPlaneApi.createVirtualMachineAgentEnrollment(workspaceId, installInstructions.vmId, 'initial');
+      setInstallInstructions({ vmId: installInstructions.vmId, value: result.installInstructions });
+    } catch (error) {
+      setVmCreationError(formatControlPlaneError(error, t('virtualMachines.list.registerFailed'), { area: 'virtualMachines' }));
+    } finally {
+      setIsRegisteringVm(false);
+    }
+  };
+
+  const generateInitialEnrollment = async (virtualMachine: ControlPlaneVirtualMachine | null) => {
+    if (!virtualMachine || !canManageTargets || isRegisteringVm || isReplacingCredential || isGeneratingRepairInstructions) return;
+    setIsRegisteringVm(true);
+    setCredentialReplacementError(null);
+    try {
+      const result = await controlPlaneApi.createVirtualMachineAgentEnrollment(workspaceId, virtualMachine.id, 'initial');
       setInstallInstructions({ vmId: virtualMachine.id, value: result.installInstructions });
     } catch (error) {
-      setAgentKeyRotationError(formatControlPlaneError(error, t('virtualMachines.settings.rotateKeyFailed'), { area: 'virtualMachines' }));
+      setCredentialReplacementError(formatControlPlaneError(error, t('virtualMachines.settings.initialEnrollmentFailed'), { area: 'virtualMachines' }));
     } finally {
-      setIsRotatingAgentKey(false);
+      setIsRegisteringVm(false);
+    }
+  };
+
+  const replaceCredential = async (virtualMachine: ControlPlaneVirtualMachine | null) => {
+    if (!virtualMachine || !canManageAgentKeys || isReplacingCredential || isGeneratingRepairInstructions) return;
+    setIsReplacingCredential(true);
+    setCredentialReplacementError(null);
+    try {
+      const result = await controlPlaneApi.createVirtualMachineAgentEnrollment(workspaceId, virtualMachine.id, 'replace');
+      setInstallInstructions({ vmId: virtualMachine.id, value: result.installInstructions });
+    } catch (error) {
+      setCredentialReplacementError(formatControlPlaneError(error, t('virtualMachines.settings.replaceCredentialFailed'), { area: 'virtualMachines' }));
+    } finally {
+      setIsReplacingCredential(false);
+    }
+  };
+
+  const generateRepairInstructions = async (virtualMachine: ControlPlaneVirtualMachine | null) => {
+    if (!virtualMachine || !canManageTargets || isGeneratingRepairInstructions || isReplacingCredential) return;
+    setIsGeneratingRepairInstructions(true);
+    setCredentialReplacementError(null);
+    try {
+      const result = await controlPlaneApi.getVirtualMachineInstallInstructions(workspaceId, virtualMachine.id);
+      setInstallInstructions({ vmId: virtualMachine.id, value: result.installInstructions });
+    } catch (error) {
+      setCredentialReplacementError(formatControlPlaneError(error, t('virtualMachines.settings.repairInstructionsFailed'), { area: 'virtualMachines' }));
+    } finally {
+      setIsGeneratingRepairInstructions(false);
     }
   };
 
   return {
-    agentKeyRotationError,
+    credentialReplacementError,
     confirmVmInstalled,
     installInstructions,
     isAddingVm,
     isRegisteringVm,
-    isRotatingAgentKey,
-    newVmInstallInstructions,
+    isReplacingCredential,
+    isGeneratingRepairInstructions,
     newVmName,
     openAddVmModal,
     registerVm,
+    regenerateEnrollment,
+    generateInitialEnrollment,
     resetVmCreationState,
-    rotateKey,
+    replaceCredential,
+    generateRepairInstructions,
     setNewVmName,
     vmCreationError,
     vmCreationStep

@@ -529,14 +529,15 @@
         ],
         "virtualMachineRegistration": [
           "virtualMachine",
-          "agentKey",
-          "installInstructions"
+          "installInstructions.{command,releaseVersion,bootstrapUrl,enrollmentExpiresAt,warnings}"
         ],
-        "rotateVirtualMachineAgentKey": [
-          "vmId",
-          "agentKey",
-          "keyVersion",
-          "installInstructions"
+        "virtualMachineAgentEnrollment": [
+          "targetId",
+          "installInstructions.{command,releaseVersion,bootstrapUrl,enrollmentExpiresAt,warnings}"
+        ],
+        "virtualMachineRepairInstructions": [
+          "targetId",
+          "installInstructions.{command,releaseVersion,bootstrapUrl,warnings}"
         ],
         "sessionList": [
           "items",
