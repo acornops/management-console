@@ -7,6 +7,7 @@ export type CursorCollectionStrategy = 'manual' | 'sentinel' | 'drain';
 
 export interface CursorCollectionOptions<T, TFilters> {
   cacheKey?: string;
+  clearItemsOnScopeChange?: boolean;
   filters: TFilters;
   getKey: (item: T) => string;
   loadPage: (request: {
@@ -32,6 +33,17 @@ export interface CursorCollectionResult<T> extends CursorCollectionState<T> {
   refresh(): Promise<void>;
   retry(): Promise<void>;
   sentinelRef: React.RefCallback<HTMLElement>;
+}
+
+export function cursorCollectionStateForScope<T>(
+  state: CursorCollectionState<T>,
+  clearItemsOnScopeChange: boolean | undefined,
+  renderedFiltersKey: string,
+  requestedFiltersKey: string
+): CursorCollectionState<T> {
+  return clearItemsOnScopeChange && renderedFiltersKey !== requestedFiltersKey
+    ? { items: [], phase: 'loading' }
+    : state;
 }
 
 type RequestMode = 'initial' | 'refresh' | 'append';
@@ -99,6 +111,10 @@ export class CursorCollectionController<T, TFilters> {
     this.scopeKey = nextScopeKey;
     const cachedState = this.readCachedState();
     const hasVisibleItems = this.state.items.length > 0;
+    if (scopeChanged && this.options.clearItemsOnScopeChange && !cachedState) {
+      this.setState({ items: [], phase: 'loading' });
+      return this.request('initial');
+    }
     if (scopeChanged || cachedState) {
       this.setState(cachedState ?? (hasVisibleItems
         ? { items: this.state.items, nextCursor: undefined, phase: 'refreshing' }
@@ -253,11 +269,13 @@ export function useCursorCollection<T, TFilters>(
   const [state, setState] = React.useState<CursorCollectionState<T>>(() => controller.getState());
   const [sentinel, setSentinel] = React.useState<HTMLElement | null>(null);
   const filtersKey = stableFilterKey(options.filters);
+  const [renderedFiltersKey, setRenderedFiltersKey] = React.useState(filtersKey);
 
   React.useEffect(() => controller.subscribe(setState), [controller]);
 
   React.useEffect(() => {
     void controller.reset();
+    setRenderedFiltersKey(filtersKey);
     return () => controller.abort();
   }, [controller, filtersKey, options.pageSize, options.strategy]);
 
@@ -284,7 +302,7 @@ export function useCursorCollection<T, TFilters>(
   const retry = React.useCallback(() => controller.retry(), [controller]);
 
   return {
-    ...state,
+    ...cursorCollectionStateForScope(state, options.clearItemsOnScopeChange, renderedFiltersKey, filtersKey),
     loadMore,
     loadAll,
     refresh,

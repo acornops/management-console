@@ -48,10 +48,9 @@ describe('initial collection loading continuity', () => {
       expect(readSource(path), path).toContain('<TargetCapabilityInventoryLoading');
     }
 
-    expect(readSource('src/features/targets/admin/McpServersView.tsx')).toContain('<McpServersCatalogLoading');
+    expect(readSource('src/features/targets/admin/McpServersCatalogState.tsx')).toContain('<McpServersCatalogLoading');
 
     expect(readSource('src/features/targets/admin/McpServerToolsDialog.tsx')).toContain('<CollectionLoadingSkeleton');
-    expect(readSource('src/pages/WorkspaceCatalogSources.tsx')).toContain('<CollectionLoadingSkeleton');
     expect(readSource('src/pages/WorkspaceOverviewPage.tsx')).toContain('<CollectionLoadingSkeleton');
     expect(readSource('src/pages/virtual-machines/VirtualMachineResourcesView.tsx')).toContain('<CollectionLoadingSkeleton');
     expect(readSource('src/pages/WorkspaceWebhookDrawerTable.tsx')).toContain('<TableLoadingRows columns={5}');

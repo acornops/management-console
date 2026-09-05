@@ -549,9 +549,9 @@ describe('theme color contract', () => {
     expect(addMcpServerAction).toContain("size = 'md'");
     expect(addMcpServerAction).toContain('size={size}');
   });
-
   it('keeps MCP connection state copy action-oriented instead of ambiguous', () => {
-    expect(mcpServerCard).toContain("server.type === 'builtin'");
+    expect(mcpServerCard).toContain("if (connectionStatus === 'ok')");
+    expect(mcpServerCard).not.toContain("server.type === 'builtin' || connectionStatus === 'ok'");
     expect(mcpServerCard).toContain("'mcpServers.statusNotChecked'");
     expect(mcpServerCard).toContain("t('mcpServers.managedByAcornOps')");
     expect(mcpServerCard).not.toContain('detailKey');

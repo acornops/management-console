@@ -8,7 +8,7 @@ import {
   getMcpServerStatusDisplay
 } from '@/features/targets/admin/McpServerCard';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import type { McpConnection } from '@/services/control-plane/catalogApi';
+import type { McpConnection } from '@/services/control-plane/mcpConnectionApi';
 
 beforeAll(async () => {
   await initializeI18n();
@@ -125,6 +125,76 @@ describe('McpServersInventory', () => {
       labelKey: 'mcpServers.statusDiscoveryFailed',
       tone: 'danger'
     });
+  });
+
+  it('does not report a disconnected built-in target server as connected', () => {
+    expect(getMcpServerStatusDisplay({
+      ...systemServer,
+      connectionStatus: 'error'
+    })).toEqual({
+      labelKey: 'mcpServers.statusTargetDisconnected',
+      tone: 'danger'
+    });
+  });
+
+  it('explains that a disconnected built-in server needs its target agent', () => {
+    const markup = renderToStaticMarkup(
+      <McpServersInventory
+        servers={[{ ...systemServer, connectionStatus: 'error' }]}
+        canEditServers
+        pendingTestServerId={null}
+        pendingToggleServerId={null}
+        testResultsByServerId={{}}
+        connections={{}}
+        connectionErrors={{}}
+        pendingConnectionServerId={null}
+        retryAfterSecondsFor={() => 0}
+        recoveryServerId={null}
+        onManageTools={vi.fn()}
+        onTestConnection={vi.fn()}
+        onToggleServer={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onConnect={vi.fn()}
+        onVerify={vi.fn()}
+        onDisconnect={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    );
+
+    expect(markup).toContain('Target disconnected');
+    expect(markup).toContain('Reconnect the target agent to restore built-in tools.');
+    expect(markup).not.toContain('Discovery failed');
+  });
+
+  it('allows a revocation-only operator to disable but not re-enable an Agent MCP server', () => {
+    const renderServer = (server: TargetToolCatalogServer) => renderToStaticMarkup(
+      <McpServersInventory
+        servers={[server]}
+        canEditServers={false}
+        canRemoveServers
+        pendingTestServerId={null}
+        pendingToggleServerId={null}
+        testResultsByServerId={{}}
+        connections={{}}
+        connectionErrors={{}}
+        pendingConnectionServerId={null}
+        retryAfterSecondsFor={() => 0}
+        recoveryServerId={null}
+        onManageTools={vi.fn()}
+        onTestConnection={vi.fn()}
+        onToggleServer={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onConnect={vi.fn()}
+        onVerify={vi.fn()}
+        onDisconnect={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    );
+
+    expect(renderServer(systemServer)).toMatch(/aria-label="Disable AcornOps Targets"(?![^>]*disabled="")/);
+    expect(renderServer({ ...systemServer, enabled: false })).toMatch(/aria-label="Enable AcornOps Targets"[^>]*disabled=""/);
   });
 
   it('offers tool refresh only for a manageable connected credential', () => {
@@ -244,5 +314,47 @@ describe('McpServersInventory', () => {
     expect(markup).not.toContain('data-mcp-read-only-count="true"');
     expect(markup).toContain('0<span class="type-caption text-ui-text-muted"> / 12</span>');
     expect(markup).toContain('0 Read · 12 Write');
+  });
+
+  it('labels an untouched workspace snapshot as a starter rather than a managed platform server', () => {
+    const server: TargetToolCatalogServer = {
+      ...systemServer,
+      id: 'platform-default:default-1',
+      name: 'Starter MCP',
+      url: 'https://mcp.example.test',
+      type: 'mcp',
+      isSystem: false,
+      inherited: true,
+      enabled: false
+    };
+    const markup = renderToStaticMarkup(
+      <McpServersInventory
+        servers={[server]}
+        canEditServers
+        pendingTestServerId={null}
+        pendingToggleServerId={null}
+        testResultsByServerId={{}}
+        connections={{}}
+        connectionErrors={{}}
+        pendingConnectionServerId={null}
+        retryAfterSecondsFor={() => 0}
+        recoveryServerId={null}
+        onManageTools={vi.fn()}
+        onTestConnection={vi.fn()}
+        onToggleServer={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onConnect={vi.fn()}
+        onVerify={vi.fn()}
+        onDisconnect={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    );
+
+    expect(markup).toContain('Workspace starter · https://mcp.example.test');
+    expect(markup).not.toContain('Platform default');
+    expect(markup).not.toContain('Manage tools');
+    expect(markup).not.toContain('Refresh tools');
+    expect(markup).not.toContain('data-mcp-server-primary-actions="true"');
   });
 });

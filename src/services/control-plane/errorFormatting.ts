@@ -176,6 +176,11 @@ function mapControlPlaneCode(
       return tr('controlPlaneErrors.gatewayCredentialsRejected', 'The gateway rejected the saved credentials. Check the configuration and try again.');
     case 'UPSTREAM_ERROR':
       return upstreamMessage(area);
+    case 'MCP_CREDENTIAL_CLEANUP_INCOMPLETE':
+      return tr(
+        'controlPlaneErrors.mcp.credentialCleanupIncomplete',
+        'Connection settings were saved, but credential cleanup is incomplete. Retry the update.'
+      );
     case 'PROVIDER_NOT_ALLOWED':
     case 'PROVIDER_NOT_SUPPORTED':
       return tr('controlPlaneErrors.providerNotAllowed', 'Choose an enabled provider for this workspace.');

@@ -17,3 +17,5 @@ Keep only completed plans that remain useful as durable design or validation con
 - [Chat Cancel Follow-up Race](chat-cancel-followup-race.md)
 - [Table Column Sizing Policy](table-column-sizing-policy.md)
 - [Stale Code and Unused Symbol Cleanup](stale-code-and-unused-symbol-cleanup.md)
+- [Workspace MCP registry removal](workspace-mcp-registry-removal.md)
+- [MCP Production Hardening](mcp-production-hardening.md)

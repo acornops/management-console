@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useMcpRateLimit } from '@/features/catalog/useMcpRateLimit';
 import {
-  catalogApi,
+  mcpConnectionApi,
   type McpConnection,
   type McpOAuthPreparation
-} from '@/services/control-plane/catalogApi';
+} from '@/services/control-plane/mcpConnectionApi';
 import { formatMcpError } from '@/services/control-plane/mcpError';
 
 export interface McpConnectionInstallation {
@@ -64,31 +64,31 @@ export function useMcpConnections<TInstallation extends McpConnectionInstallatio
   const rateLimit = useMcpRateLimit();
 
   const getConnection = useCallback((serverId: string) => destination.kind === 'agent'
-    ? catalogApi.getAgentMcpConnection(workspaceId, destination.id, serverId)
-    : catalogApi.getTargetMcpConnection(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
+    ? mcpConnectionApi.getAgentMcpConnection(workspaceId, destination.id, serverId)
+    : mcpConnectionApi.getTargetMcpConnection(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
   const putConnection = useCallback((serverId: string, credential: string) => destination.kind === 'agent'
-    ? catalogApi.putAgentMcpConnection(workspaceId, destination.id, serverId, { credential, consentGranted: true })
-    : catalogApi.putTargetMcpConnection(workspaceId, destination.id, serverId, { credential, consentGranted: true }), [destination.id, destination.kind, workspaceId]);
+    ? mcpConnectionApi.putAgentMcpConnection(workspaceId, destination.id, serverId, { credential, consentGranted: true })
+    : mcpConnectionApi.putTargetMcpConnection(workspaceId, destination.id, serverId, { credential, consentGranted: true }), [destination.id, destination.kind, workspaceId]);
   const verifyConnection = useCallback((serverId: string) => destination.kind === 'agent'
-    ? catalogApi.verifyAgentMcpConnection(workspaceId, destination.id, serverId)
-    : catalogApi.verifyTargetMcpConnection(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
+    ? mcpConnectionApi.verifyAgentMcpConnection(workspaceId, destination.id, serverId)
+    : mcpConnectionApi.verifyTargetMcpConnection(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
   const deleteConnection = useCallback((serverId: string) => destination.kind === 'agent'
-    ? catalogApi.disconnectAgentMcp(workspaceId, destination.id, serverId)
-    : catalogApi.disconnectTargetMcp(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
+    ? mcpConnectionApi.disconnectAgentMcp(workspaceId, destination.id, serverId)
+    : mcpConnectionApi.disconnectTargetMcp(workspaceId, destination.id, serverId), [destination.id, destination.kind, workspaceId]);
   const prepareOAuthConnection = useCallback((serverId: string, returnPath: string) => destination.kind === 'agent'
-    ? catalogApi.prepareAgentMcpOAuth(workspaceId, destination.id, serverId, returnPath)
-    : catalogApi.prepareTargetMcpOAuth(workspaceId, destination.id, serverId, returnPath), [destination.id, destination.kind, workspaceId]);
+    ? mcpConnectionApi.prepareAgentMcpOAuth(workspaceId, destination.id, serverId, returnPath)
+    : mcpConnectionApi.prepareTargetMcpOAuth(workspaceId, destination.id, serverId, returnPath), [destination.id, destination.kind, workspaceId]);
   const startOAuthConnection = useCallback((
     serverId: string,
     preparationHandle: string,
     issuer?: string
   ) => destination.kind === 'agent'
-    ? catalogApi.startAgentMcpOAuth(workspaceId, destination.id, serverId, {
+    ? mcpConnectionApi.startAgentMcpOAuth(workspaceId, destination.id, serverId, {
         preparationHandle,
         ...(issuer ? { issuer } : {}),
         consentGranted: true
       })
-    : catalogApi.startTargetMcpOAuth(workspaceId, destination.id, serverId, {
+    : mcpConnectionApi.startTargetMcpOAuth(workspaceId, destination.id, serverId, {
         preparationHandle,
         ...(issuer ? { issuer } : {}),
         consentGranted: true

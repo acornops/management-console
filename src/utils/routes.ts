@@ -3,7 +3,6 @@ export type VmSubview = 'overview' | 'resources' | 'services' | 'processes' | 'n
 export type AgentSubview = 'chat' | 'mcpServers' | 'skills' | 'tools' | 'settings';
 export type ClusterCatalogStatusFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 export type VmCatalogStatusFilter = ClusterCatalogStatusFilter;
-export type McpCatalogCompatibility = 'all' | 'compatible' | 'incompatible';
 export type WorkflowActivityStateFilter = 'all' | 'open' | 'attention' | 'completed' | 'failed' | 'cancelled';
 export type WorkflowActivityOriginFilter = 'manual' | 'external_integration' | 'schedule' | 'webhook';
 export type WorkflowSection = 'all' | 'schedules' | 'incomingWebhooks';
@@ -13,14 +12,6 @@ export interface WorkflowActivityRouteState {
   state?: WorkflowActivityStateFilter;
   origin?: WorkflowActivityOriginFilter;
   workflowId?: string;
-}
-
-export interface McpCatalogRouteState {
-  q?: string;
-  source?: string;
-  compatibility?: McpCatalogCompatibility;
-  artifact?: string;
-  destination?: string;
 }
 
 export interface ClusterCatalogRouteState {
@@ -48,7 +39,6 @@ export type AppRoute =
   | { kind: 'workspaceOverview'; workspaceId: string }
   | { kind: 'workspaceAgents'; workspaceId: string }
   | { kind: 'workspaceAgentDetail'; workspaceId: string; agentId: string; tab: AgentSubview }
-  | ({ kind: 'workspaceCatalog'; workspaceId: string } & McpCatalogRouteState)
   | ({
       kind: 'workspaceWorkflows';
       workspaceId: string;
@@ -199,31 +189,6 @@ function withWorkflowActivityRouteState(path: string, state?: WorkflowActivityRo
   if (state?.origin) params.set('origin', state.origin);
   if (state?.workflowId) params.set('workflow', state.workflowId);
   return appendQuery(pathname, params);
-}
-
-function parseMcpCatalogRouteState(params: URLSearchParams): McpCatalogRouteState {
-  const compatibilityValue = params.get('compatibility');
-  const compatibility = compatibilityValue === 'compatible' || compatibilityValue === 'incompatible' || compatibilityValue === 'all'
-    ? compatibilityValue
-    : undefined;
-  const destination = cleanQueryParam(params.get('destination'));
-  return {
-    ...(cleanQueryParam(params.get('q')) ? { q: cleanQueryParam(params.get('q')) } : {}),
-    ...(cleanQueryParam(params.get('source')) ? { source: cleanQueryParam(params.get('source')) } : {}),
-    ...(compatibility ? { compatibility } : {}),
-    ...(cleanQueryParam(params.get('artifact')) ? { artifact: cleanQueryParam(params.get('artifact')) } : {}),
-    ...(destination && /^(agent|target):.+/.test(destination) ? { destination } : {})
-  };
-}
-
-function withMcpCatalogRouteState(path: string, state?: McpCatalogRouteState): string {
-  const params = new URLSearchParams();
-  if (state?.q?.trim()) params.set('q', state.q.trim());
-  if (state?.source?.trim()) params.set('source', state.source.trim());
-  if (state?.compatibility && state.compatibility !== 'all') params.set('compatibility', state.compatibility);
-  if (state?.artifact?.trim()) params.set('artifact', state.artifact.trim());
-  if (state?.destination?.trim()) params.set('destination', state.destination.trim());
-  return appendQuery(path, params);
 }
 
 function parseClusterCatalogRouteState(params: URLSearchParams): ClusterCatalogRouteState {
@@ -413,13 +378,12 @@ export function parseAppRoute(path: string): AppRoute {
     return { kind: 'workspaceRedirect', workspaceId, target };
   }
 
-  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|catalog|activity|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
+  const workspaceSectionMatch = pathname.match(/^\/workspaces\/([^/]+)\/(overview|agents|activity|approvals|members|ai-settings|webhooks|settings|audit-log)$/);
   if (workspaceSectionMatch) {
     const workspaceId = decodeParam(workspaceSectionMatch[1]);
     const section = workspaceSectionMatch[2];
     if (section === 'overview') return { kind: 'workspaceOverview', workspaceId };
     if (section === 'agents') return { kind: 'workspaceAgents', workspaceId };
-    if (section === 'catalog') return { kind: 'workspaceCatalog', workspaceId, ...parseMcpCatalogRouteState(params) };
     if (section === 'activity') {
       return {
         kind: 'workspaceRedirect',
@@ -543,8 +507,6 @@ export const AppPaths = {
     if (action) params.set('mcpAction', action);
     return appendQuery(AppPaths.workspaceAgentDetail(workspaceId, agentId, 'mcpServers'), params);
   },
-  workspaceCatalog: (workspaceId: string, state?: McpCatalogRouteState): string =>
-    withMcpCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/catalog`, state),
   workspaceWorkflows: (
     workspaceId: string,
     section: WorkflowSection = 'all',
@@ -593,8 +555,6 @@ export const AppPaths = {
   },
   workspaceSettings: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/settings`,
   workspaceWebhooks: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/webhooks`,
-  workspaceMcpRegistries: (workspaceId: string): string =>
-    `/workspaces/${encodeURIComponent(workspaceId)}/settings?section=mcp-registries`,
   workspaceAuditLog: (workspaceId: string): string => `/workspaces/${encodeURIComponent(workspaceId)}/audit-log`,
   workspaceKubernetesClusters: (workspaceId: string, state?: ClusterCatalogRouteState): string =>
     withClusterCatalogRouteState(`/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters`, state),

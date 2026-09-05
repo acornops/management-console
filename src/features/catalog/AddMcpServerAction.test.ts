@@ -1,6 +1,36 @@
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import { describe, expect, it, vi } from 'vitest';
 
-import { getMcpMenuPosition } from './AddMcpServerAction';
+import { en } from '@/i18n/locales/en.js';
+
+import { AddMcpServerMenuItems, getMcpMenuPosition } from './AddMcpServerAction';
+
+describe('AddMcpServerMenuItems', () => {
+  it('keeps registry installation visible but disabled without a navigation target', async () => {
+    const translation = createInstance();
+    await translation.init({ resources: { en: { translation: en } }, lng: 'en' });
+    const markup = renderToStaticMarkup(createElement(
+      I18nextProvider,
+      { i18n: translation },
+      createElement(AddMcpServerMenuItems, {
+        close: vi.fn(),
+        onConnectByUrl: vi.fn()
+      })
+    ));
+
+    expect(markup).toContain('Add from registry');
+    expect(markup).toContain('Coming soon');
+    expect(markup).toContain('disabled=""');
+    expect(markup).toContain('aria-disabled="true"');
+    expect(markup).not.toContain('href=');
+    expect(markup.match(/role="menuitem"/g)).toHaveLength(2);
+    expect(markup.match(/disabled=""/g)).toHaveLength(1);
+    expect(markup).toContain('Connect by URL');
+  });
+});
 
 describe('getMcpMenuPosition', () => {
   it('keeps the menu inside the floating layer and right-aligns it to the trigger', () => {

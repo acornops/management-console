@@ -33,6 +33,7 @@ import { WorkflowHelpDrawer } from '@/pages/WorkflowHelpDrawer';
 import { useWorkflowLaunchShortcut, useWorkflowSearchShortcut } from '@/pages/workflows/useWorkflowKeyboardShortcuts';
 import { WorkflowTriggerPanel } from '@/pages/WorkflowTriggerPanel';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { WorkflowMcpOAuthResultBridge } from '@/pages/WorkflowMcpCredentialDialog';
 export const WorkspaceWorkflowsPage: React.FC<{
   workspace: Workspace;
   navigate: (path: string) => void;
@@ -355,6 +356,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
       className="min-[1440px]:overflow-y-hidden"
       contentClassName="min-[1440px]:flex min-[1440px]:h-full min-[1440px]:min-h-0 min-[1440px]:flex-col"
     >
+      <WorkflowMcpOAuthResultBridge />
       <WorkspaceWorkflowsChrome
         canManageWorkflows={canManageWorkflows}
         hiddenOnCompact={hasExplicitWorkflowSelection}

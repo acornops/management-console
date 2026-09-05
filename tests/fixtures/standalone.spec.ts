@@ -10,10 +10,6 @@ const routes = [
   { path: '/workspaces/fixture-workspace/workflows/schedules', text: 'Weekday morning review' },
   { path: '/workspaces/fixture-workspace/workflows/incoming-webhooks', text: 'External production review' },
   { path: '/workspaces/fixture-workspace/approvals', text: 'Restart the payments worker' },
-  { path: '/workspaces/fixture-workspace/catalog', text: 'GitHub Observer' },
-  { path: '/workspaces/fixture-workspace/catalog?destination=agent%3Afixture-specialist', text: 'Destination: Kubernetes Specialist' },
-  { path: '/workspaces/fixture-workspace/catalog?destination=target%3Afixture-cluster', text: 'Destination: Singapore Production' },
-  { path: '/workspaces/fixture-workspace/settings?section=mcp-registries', text: 'MCP registries' },
   { path: '/workspaces/fixture-workspace/webhooks', text: 'Mattermost operations' },
   { path: '/workspaces/fixture-workspace/webhooks?direction=inbound', text: 'External production review' },
   { path: '/workspaces/fixture-workspace/settings', text: 'AcornOps Fixture Lab' }
@@ -134,13 +130,6 @@ test('configuration forms disclose expert controls only when needed on compact s
   await page.getByRole('button', { name: 'Filters' }).click();
   await expect(page.getByRole('button', { name: 'Filter audit events by category' })).toBeVisible();
 
-  await page.goto('/workspaces/fixture-workspace/settings?section=mcp-registries', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Add registry' }).click();
-  await expect(page.getByLabel('Registry base URL')).toBeVisible();
-  await expect(page.getByLabel('Display name (optional)')).toBeHidden();
-  await page.getByText('Name and authentication', { exact: true }).click();
-  await expect(page.getByLabel('Display name (optional)')).toBeVisible();
-
   await page.goto('/kubernetes-clusters/fixture-cluster/tools', { waitUntil: 'domcontentloaded' });
   const insightsRow = page.getByRole('row').filter({ hasText: 'Insights' });
   await insightsRow.getByRole('button', { name: 'Actions for Insights' }).click();
@@ -149,6 +138,55 @@ test('configuration forms disclose expert controls only when needed on compact s
   await expect(insightsDialog.getByLabel('Idle checkpoint delay')).toBeHidden();
   await insightsDialog.getByText('Advanced tuning', { exact: true }).click();
   await expect(insightsDialog.getByLabel('Idle checkpoint delay')).toBeVisible();
+});
+
+test('MCP add menu keeps registry installation visible but unavailable', async ({ page }) => {
+  const registryRequests: string[] = [];
+  page.on('request', (request) => {
+    if (/\/catalog\/(sources|artifacts)|\/mcp\/servers\/(import|[^/]+\/reimport)/.test(request.url())) {
+      registryRequests.push(request.url());
+    }
+  });
+  await page.goto('/kubernetes-clusters/fixture-cluster/mcp-servers', { waitUntil: 'domcontentloaded' });
+
+  const targetAddButton = page.getByRole('button', { name: 'Add MCP server' });
+  await expect(targetAddButton).toBeEnabled();
+  await targetAddButton.click();
+  const registryPlaceholder = page.getByRole('menuitem', { name: /Add from registry.*Coming soon/ });
+  await expect(registryPlaceholder).toBeVisible();
+  await expect(registryPlaceholder).toBeDisabled();
+  await expect(registryPlaceholder).toHaveAttribute('aria-disabled', 'true');
+  await expect(registryPlaceholder).not.toHaveAttribute('href', /.+/);
+  const targetUrl = page.url();
+  await registryPlaceholder.click({ force: true });
+  await expect(page).toHaveURL(targetUrl);
+  expect(registryRequests).toEqual([]);
+
+  const connectByUrl = page.getByRole('menuitem', { name: /Connect by URL/ });
+  await expect(connectByUrl).toBeEnabled();
+  await connectByUrl.click();
+  await expect(page.getByRole('dialog', { name: 'Add MCP server' })).toBeVisible();
+
+  await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/mcp-servers', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('button', { name: 'Add MCP server' })).toBeEnabled();
+
+  await page.goto('/workspaces/fixture-workspace/virtual-machines/fixture-vm/mcp-servers', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('button', { name: 'Add MCP server' })).toBeEnabled();
+});
+
+test('workspace settings no longer expose registry source management', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/settings?section=mcp-registries', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: 'Workspace settings' })).toBeVisible();
+  await expect(page.getByText('MCP registries', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add registry' })).toHaveCount(0);
+});
+
+test('former workspace MCP catalog URL is unmatched', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/catalog?artifact=legacy&destination=agent%3Afixture-specialist', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.locator('[data-route-state="not-found"]')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Page Not Found' })).toBeVisible();
 });
 
 test('outbound webhooks remain usable from compact navigation', async ({ browser }) => {

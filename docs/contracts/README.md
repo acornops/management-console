@@ -17,7 +17,7 @@ The management console is the browser client for the control-plane API. Keep thi
 | Control plane | Auth, workspace, membership, audit, AI settings, target, tooling, chat, run, and cluster APIs | Frontend services plus manifest checks |
 | Docs website | Public API reference for exact endpoint parameters and schemas | Generated OpenAPI artifacts |
 | AgentK | Cluster registration, agent-key rotation, snapshots, logs, tools, and chat-backed target actions | Control-plane contracts and UI mappers |
-| LLM gateway | MCP registries, Agent/target installations, discovered tools, and workspace/individual connections exposed through control-plane APIs | Registry browsing and permission checks |
+| LLM gateway | Agent/target MCP catalogs, direct installations, discovered tools, and workspace/individual connections exposed through control-plane APIs | Direct registration and connection checks |
 | Execution engine | Run event stream, approval, cancel, and chat result state | Run/chat service checks |
 
 ## Platform Dependency Summary
@@ -73,7 +73,6 @@ The management console is the browser client for the control-plane API. Keep thi
 - Deploy the control-plane resolver before this URL-only consumer. Pause legacy
   custom-host imports during a mixed-version rollout because their
   browser-supplied API bases are intentionally rejected by the new producer.
-- MCP registry role, policy, and editability data comes from the control plane; the console must not hard-code editable role keys or workspace-management availability.
 - Workspace MCP credentials are write-only; responses expose only whether a credential is configured. Workflows inherit their complete effective capabilities from selected Agents.
 - Workflow creation sends only Workflow metadata and selected Agent IDs. Review
   surfaces show the assigned Agents' effective capabilities without offering
@@ -103,17 +102,14 @@ The management console is the browser client for the control-plane API. Keep thi
 - Cluster Tools labels every built-in tool as provided by AcornOps. Tool origin
   controls configurability: platform-native target-chat tools do not offer
   configuration actions. The built-in MCP server uses the same provenance
-  label; external MCP servers continue to show their endpoint and catalog
-  provenance. System-provided Agents use the same label in their catalog and
-  definition header, while custom Agents retain their actual owner attribution.
+  label; external MCP servers continue to show their endpoint. System-provided
+  Agents use the same label in their catalog and definition header, while custom
+  Agents retain their actual owner attribution.
   Installed Workflows do not use provider badges; the template catalog attributes
   its templates to AcornOps instead. MCP tools and Skills remain in their dedicated inventories.
-- Desktop and mobile workspace navigation do not expose a standalone Catalog item. Agent and target MCP surfaces provide one **Add MCP server** action with **Browse registries** and **Connect by URL** choices.
-- The route-backed **Browse MCP servers** page stores search, source, compatibility, selected artifact, and Agent/target destination in URL state. A destination-bound visit keeps that destination fixed and links back to it; visits without a destination require an explicit destination before installation.
-- Only specialist Agents are installation destinations; AcornOps Manager is never an installation destination.
-- Registry installs and re-imports target either a workspace specialist Agent or a Cluster/VM default Agent. The browser never supplies an authoritative target type.
-- **MCP registries** settings provide add, probe, edit, enable/disable, synchronize, and delete controls when allowed by `manage_catalog_sources` and deployment policy. Deployment-managed registries are configuration-read-only but remain synchronizable. The console sends no connector route and treats omitted authentication during edits as credential preservation.
-- Catalog provenance and installation revision determine Install, Installed, and explicit Update states. MCP tools are reviewed after discovery and are not installed independently.
+- Desktop and mobile workspace navigation do not expose a standalone Catalog item. Agent and target MCP surfaces provide one **Add MCP server** action with a disabled **Add from registry · Coming soon** placeholder and an enabled **Connect by URL** action.
+- Management Console has no workspace registry settings or catalog browser route and does not call catalog source or artifact APIs. Public Agent and target catalog import/reimport routes are unmounted, so active MCP installations originate only from direct workspace registration or platform-managed synchronization. Catalog producer storage remains reserved for a future Platform Admin Console integration behind a new explicit boundary.
+- Direct MCP servers are registered into a specialist Agent or a Cluster/VM default Agent from that destination's MCP catalog. MCP tools are reviewed after discovery and are not installed independently.
 - MCP installations select workspace-managed or individual credential ownership.
   Each target or Agent installation has independent write-only connections, and
   workflows reuse the selected Agent installation. The console never persists
@@ -144,10 +140,10 @@ The management console is the browser client for the control-plane API. Keep thi
   enter credential connection before pending-tool review; unauthenticated installations
   retain direct discovery and review.
 - Kubernetes clusters and VMs retain target-scoped MCP servers, skills, and tools for their generic target agents. These target capabilities are administered on the target and are not reassigned to workspace agents.
-- Platform MCP and skill defaults copied when the workspace was created appear
-  as disabled rows in the existing Agent, Kubernetes, and VM inventories with a
-  `Platform default` label. Their source cannot be edited or removed while they
-  remain untouched initialization entries. Explicit enablement creates a normal
+- Platform MCP and skill definitions copied when the workspace was created
+  appear as disabled rows in the existing Agent, Kubernetes, and VM inventories
+  with a `Workspace starter` label. A starter is not installed yet, so it can
+  only be enabled. Explicit enablement creates a detached, normal
   workspace-owned installation used by the existing credential or skill flow.
   Later Platform Admin changes do not modify that workspace snapshot or any
   enabled workspace-managed copy. Local additions remain fully

@@ -321,10 +321,36 @@ export const kubernetesClusterApi = {
   },
 
   async getTargetMcpCatalog(workspaceId: string, targetId: string): Promise<ClusterToolCatalog> {
-    const catalog = await requestJson<ControlPlaneClusterToolCatalog>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/mcp/catalog?limit=50`
-    );
-    return mapClusterToolsCatalog(catalog);
+    const basePath = `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}/mcp/catalog`;
+    const servers: ControlPlaneClusterToolCatalog['servers'] = [];
+    const seenCursors = new Set<string>();
+    let cursor: string | undefined;
+    let catalog: ControlPlaneClusterToolCatalog | undefined;
+    do {
+      const query = new URLSearchParams({ limit: '100' });
+      if (cursor) query.set('cursor', cursor);
+      const page = await requestJson<ControlPlaneClusterToolCatalog>(`${basePath}?${query.toString()}`);
+      catalog ??= page;
+      servers.push(...toArray(page.servers));
+      const nextCursor = typeof page.nextCursor === 'string' && page.nextCursor
+        ? page.nextCursor
+        : undefined;
+      if (nextCursor && seenCursors.has(nextCursor)) {
+        throw new Error('MCP server catalog returned a repeated cursor');
+      }
+      if (nextCursor) seenCursors.add(nextCursor);
+      cursor = nextCursor;
+    } while (cursor);
+    return mapClusterToolsCatalog({
+      ...(catalog || {
+        workspaceId,
+        targetId,
+        permissions: { canEdit: false, editableRoles: [] },
+        servers: []
+      }),
+      servers,
+      nextCursor: undefined
+    });
   },
 
   async listTargetTools(workspaceId: string, targetId: string): Promise<ControlPlaneTargetToolsCatalog> {

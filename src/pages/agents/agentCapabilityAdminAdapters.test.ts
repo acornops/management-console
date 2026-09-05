@@ -6,6 +6,7 @@ import type { AgentDefinition } from '@/pages/agents/agentModel';
 const agentApi = vi.hoisted(() => ({
   createAgentMcpServer: vi.fn(),
   listAgentMcpServers: vi.fn(),
+  reviewAgentMcpTool: vi.fn(),
   testAgentMcpServer: vi.fn(),
   updateAgentMcpServer: vi.fn()
 }));
@@ -59,12 +60,19 @@ const oauthServer: AgentMcpServerApi = {
   tools: []
 };
 
+const reviewedTool = {
+  name: 'records.list', serverId: oauthServer.id, alias: 'records.list',
+  capability: 'read' as const, enabled: true, reviewState: 'approved' as const,
+  riskLevel: 'read_only' as const, autoAllowed: false
+};
+
 describe('Agent MCP data source', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     agentApi.listAgentMcpServers.mockResolvedValue([oauthServer]);
     agentApi.createAgentMcpServer.mockResolvedValue(oauthServer);
     agentApi.updateAgentMcpServer.mockResolvedValue(oauthServer);
+    agentApi.reviewAgentMcpTool.mockResolvedValue(reviewedTool);
     agentApi.testAgentMcpServer.mockResolvedValue({
       server_id: oauthServer.id,
       server_name: oauthServer.name,
@@ -87,6 +95,24 @@ describe('Agent MCP data source', () => {
       connectionStatus: 'ok',
       lastDiscoveryAt: '2026-08-03T08:00:00.000Z'
     });
+  });
+
+  it('preserves platform-default provenance in Agent catalog mappings', async () => {
+    agentApi.listAgentMcpServers.mockResolvedValue([{ ...oauthServer, inherited: true }]);
+    agentApi.createAgentMcpServer.mockResolvedValue({ ...oauthServer, inherited: true });
+
+    const dataSource = createAgentMcpDataSource(agent, true);
+    const catalog = await dataSource.getCatalog(agent.workspaceId, agent.id);
+    const installation = await dataSource.createServer(agent.workspaceId, agent.id, {
+      name: oauthServer.name,
+      url: oauthServer.url,
+      enabled: true,
+      credentialMode: 'individual',
+      auth: { type: 'oauth' }
+    });
+
+    expect(catalog.servers[0].inherited).toBe(true);
+    expect(installation.inherited).toBe(true);
   });
 
   it('forwards the complete common MCP configuration', async () => {
@@ -146,5 +172,28 @@ describe('Agent MCP data source', () => {
       discoveredTools: [],
       error: null
     });
+  });
+
+  it('approves managed Agent tools with capability while keeping system updates enable-only', async () => {
+    const dataSource = createAgentMcpDataSource(agent, true);
+
+    await dataSource.updateServerTool(
+      agent.workspaceId, agent.id, oauthServer.id, reviewedTool.name,
+      { enabled: true, capability: 'read' }
+    );
+    expect(agentApi.reviewAgentMcpTool).toHaveBeenLastCalledWith(
+      agent.workspaceId, agent.id, oauthServer.id, reviewedTool.name,
+      { enabled: true, capability: 'read', reviewState: 'approved' }
+    );
+
+    agentApi.listAgentMcpServers.mockResolvedValue([{ ...oauthServer, isSystem: true }]);
+    await dataSource.updateServerTool(
+      agent.workspaceId, agent.id, oauthServer.id, reviewedTool.name,
+      { enabled: true, capability: 'read' }
+    );
+    expect(agentApi.reviewAgentMcpTool).toHaveBeenLastCalledWith(
+      agent.workspaceId, agent.id, oauthServer.id, reviewedTool.name,
+      { enabled: true }
+    );
   });
 });

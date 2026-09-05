@@ -1,4 +1,4 @@
-import { ChatRuntimeSelection, ClusterMetricHistoryPoint, ClusterToolCatalogServer, UserQuota, WorkspaceAuditEvent } from '@/types';
+import { ChatRuntimeSelection, ClusterMetricHistoryPoint, UserQuota, WorkspaceAuditEvent } from '@/types';
 import type { AutomaticInvestigationSessionContext } from './autoTriageTypes';
 import type { ControlPlaneCluster } from './clusterTypes';
 export type { ControlPlaneCluster, ControlPlaneClusterSummary } from './clusterTypes';
@@ -370,6 +370,7 @@ export interface ControlPlaneClusterToolCatalog {
     editableRoles: string[];
   };
   servers: ControlPlaneClusterToolCatalogServer[];
+  nextCursor?: string;
 }
 
 export interface ControlPlaneClusterToolCatalogServer {
@@ -382,13 +383,14 @@ export interface ControlPlaneClusterToolCatalogServer {
   canDelete: boolean;
   canEditConnection: boolean;
   canToggle?: boolean;
+  inherited?: boolean;
   authType: 'none' | 'bearer_token' | 'custom_header' | 'oauth';
   credentialMode: 'none' | 'workspace' | 'individual';
   authHeaderName?: string;
   authHeaderPrefix?: string;
   revision?: number;
-  provenance?: ClusterToolCatalogServer['provenance'];
   publicHeaders?: Record<string, string>;
+  credentialTransitioning?: boolean;
   connectionStatus?: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt?: string | null;
   lastDiscoveryError?: string | null;
@@ -412,7 +414,7 @@ export interface ControlPlaneClusterToolCatalogItem {
   source: 'builtin' | 'mcp';
   enabledConfigured: boolean;
   enabledEffective: boolean;
-  effectiveDisabledReason: 'server_disabled' | 'agent_write_disabled' | null;
+  effectiveDisabledReason: 'server_disabled' | 'agent_disconnected' | 'agent_write_disabled' | null;
 }
 
 export interface ControlPlaneMcpServer {
@@ -428,15 +430,11 @@ export interface ControlPlaneMcpServer {
   auth_header_name?: string;
   auth_header_prefix?: string;
   public_headers?: Record<string, string> | null;
+  credential_transitioning?: boolean;
   connection_status?: 'unknown' | 'ok' | 'error';
   last_discovery_at?: string | null;
   last_discovery_error?: string | null;
   revision?: number;
-  catalog_source_id?: string | null;
-  catalog_artifact_name?: string | null;
-  catalog_version?: string | null;
-  catalog_digest?: string | null;
-  catalog_imported_at?: string | null;
   tools: ControlPlaneClusterTool[];
   inherited?: boolean;
 }
@@ -450,13 +448,6 @@ export interface ControlPlaneMcpServerTestConnectionResponse {
   discovered_tool_count: number;
   discovered_tools: string[];
   error?: string | null;
-}
-
-export interface TargetMcpServerToolInput {
-  name: string;
-  timeoutMs?: number;
-  inputSchema?: Record<string, unknown>;
-  enabled?: boolean;
 }
 
 export interface TargetMcpServerAuthInput {
@@ -481,8 +472,6 @@ export interface UpdateTargetMcpServerInput {
   auth?: TargetMcpServerAuthInput;
   credentialMode?: 'none' | 'workspace' | 'individual';
   expectedRevision?: number;
-  tools?: TargetMcpServerToolInput[];
-  removeTools?: string[];
 }
 export type {
   ControlPlaneTargetSkillDetail,

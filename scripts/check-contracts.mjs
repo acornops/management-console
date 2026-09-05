@@ -1,10 +1,21 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
 
 function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
+}
+
+function readSourceTree(relativeDirectory) {
+  const absoluteDirectory = path.join(root, relativeDirectory);
+  return readdirSync(absoluteDirectory, { withFileTypes: true })
+    .flatMap((entry) => {
+      const relativePath = path.join(relativeDirectory, entry.name);
+      if (entry.isDirectory()) return [readSourceTree(relativePath)];
+      return /\.(?:ts|tsx|js|mjs)$/.test(entry.name) ? [read(relativePath)] : [];
+    })
+    .join('\n');
 }
 
 const failures = [];
@@ -48,16 +59,17 @@ const controlPlaneAuthApi = read('src/services/control-plane/authApi.ts');
 const kubernetesClusterApi = read('src/services/control-plane/kubernetesClusterApi.ts');
 const targetApi = read('src/services/control-plane/targetApi.ts');
 const agentApi = read('src/services/control-plane/agentApi.ts');
-const catalogApi = read('src/services/control-plane/catalogApi.ts');
+const mcpConnectionApi = read('src/services/control-plane/mcpConnectionApi.ts');
 const workflowApi = read('src/services/control-plane/workflowApi.ts');
-const controlPlaneApiSurface = [controlPlaneApi, controlPlaneAuthApi, kubernetesClusterApi, targetApi, agentApi, catalogApi, workflowApi].join('\n');
+const controlPlaneApiSurface = [controlPlaneApi, controlPlaneAuthApi, kubernetesClusterApi, targetApi, agentApi, mcpConnectionApi, workflowApi].join('\n');
+const controlPlaneServiceTree = readSourceTree('src/services/control-plane');
 const controlPlaneMapping = [
   read('src/types.ts'),
   controlPlaneApi,
   controlPlaneAuthApi,
   kubernetesClusterApi,
   targetApi,
-  catalogApi,
+  mcpConnectionApi,
   read('src/services/control-plane/clusterMappers.ts'),
   read('src/services/control-plane/toolMappers.ts'),
   read('src/services/control-plane/targetToolTypes.ts'),
@@ -146,8 +158,6 @@ for (const [docPath, implNeedle, label] of [
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', '/targets/${encodeURIComponent(targetId)}/mcp/servers', 'List target MCP servers path'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools`', 'listMcpServerTools(', 'List target MCP server tools implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers`', 'createTargetMcpServer(', 'Create target MCP server implementation'],
-  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/import`', 'importTargetMcpServer(', 'Import target MCP server implementation'],
-  ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/reimport`', 'reimportTargetMcpServer(', 'Reimport target MCP server implementation'],
   ['`GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'getTargetMcpConnection(', 'Target credential connection implementation'],
   ['`PUT /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection`', 'putTargetMcpConnection(', 'Target credential implementation'],
   ['`POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/verify`', 'verifyTargetMcpConnection(', 'Target credential verification implementation'],
@@ -260,10 +270,24 @@ expectIncludes(controlPlaneMapping, 'manage_ai_settings: boolean', 'Workspace AI
 expectIncludes(controlPlaneMapping, 'WorkspaceAiSettings', 'Workspace AI settings type');
 expectIncludes(controlPlaneApiSurface, 'ai-provider-credentials', 'Workspace AI provider credential path');
 expectIncludes(doc, 'must never expect or display API key values', 'Workspace AI credential redaction doc');
-expectIncludes(doc, 'AcornOps Manager is never an installation destination', 'Catalog Manager exclusion doc');
 expectIncludes(doc, 'current user principal', 'User-only schedule principal doc');
-expectIncludes(read('src/utils/routes.ts'), '/workspaces/${encodeURIComponent(workspaceId)}/catalog', 'Route-backed catalog path');
-expectIncludes(read('src/pages/WorkspaceCatalogPage.tsx'), 'destination', 'Catalog destination URL state');
+expectIncludes(doc, 'disabled **Add from registry · Coming soon** placeholder', 'Registry placeholder doc');
+expectIncludes(read('src/features/catalog/AddMcpServerAction.tsx'), 'aria-disabled="true"', 'Registry placeholder disabled semantics');
+expect(!read('src/utils/routes.ts').includes('workspaceCatalog'), 'Workspace catalog route must stay removed');
+expect(!manifestText.includes('catalogRouteState'), 'Workspace catalog route contract must stay removed');
+expect(!read('src/pages/WorkspaceSettingsPage.tsx').includes('WorkspaceCatalogSources'), 'Workspace registry settings must stay removed');
+for (const removedPath of [
+  'src/pages/WorkspaceCatalogPage.tsx',
+  'src/pages/WorkspaceCatalogSources.tsx',
+  'src/fixtures/catalogRoutes.ts',
+  'src/services/control-plane/catalogApi.ts'
+]) {
+  expect(!existsSync(path.join(root, removedPath)), `${removedPath} must stay removed`);
+}
+expect(!controlPlaneServiceTree.includes('/catalog/sources'), 'Management Console must not call catalog source APIs');
+expect(!controlPlaneServiceTree.includes('/catalog/artifacts'), 'Management Console must not call catalog artifact APIs');
+expect(!controlPlaneServiceTree.includes('/mcp/servers/import'), 'Management Console must not import MCP servers from a registry');
+expect(!/\/mcp\/servers\/\$\{[^}]+\}\/reimport/.test(controlPlaneServiceTree), 'Management Console must not reimport MCP servers from a registry');
 expect(!workflowApi.includes('/mcp/servers'), 'Workflow API must not expose retired workspace-scoped MCP management');
 expectIncludes(controlPlaneMapping, 'currentUserRole', 'Workspace current-user role mapping');
 expectIncludes(controlPlaneMapping, 'permissions: workspace.permissions', 'Workspace permissions mapping');

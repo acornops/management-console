@@ -7,7 +7,7 @@ import { formatMcpError } from '@/services/control-plane/mcpError';
 import type {
   McpOAuthIssuerCandidate,
   McpOAuthPreparation
-} from '@/services/control-plane/catalogApi';
+} from '@/services/control-plane/mcpConnectionApi';
 import { openMcpOAuthAuthorizationTab } from './mcpOAuthWindowHandoff';
 
 interface McpOAuthDialogProps {
@@ -205,6 +205,7 @@ export const McpOAuthDialog: React.FC<McpOAuthDialogProps> = ({
         )
       );
       authorizationTab.location.replace(authorizationUrl);
+      setStarting(false);
     } catch (cause) {
       authorizationTab.close();
       setOperationError(cause);

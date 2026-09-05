@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  mcpServersCatalogState,
   mcpServersInventory,
   mcpServersView,
   mcpServersViewHeader,
@@ -14,9 +15,10 @@ describe('MCP server route presentation', () => {
     expect(mcpServersInventory).toContain('icon={hasActiveFilters ? <Search /> : <Server />}');
     expect(mcpServersInventory).not.toContain('<DataTableStateRow');
     expect(mcpServersView).toContain('const inventory = (');
-    expect(mcpServersView).toContain('empty={inventory}');
-    expect(mcpServersView).toContain('{inventory}');
-    expect(mcpServersView).not.toContain("empty={<EmptyState");
+    expect(mcpServersView).toContain('>{inventory}</McpServersCatalogState>');
+    expect(mcpServersCatalogState).toContain('empty={children}');
+    expect(mcpServersCatalogState).toContain('{children}');
+    expect(mcpServersCatalogState).not.toContain("empty={<EmptyState");
   });
 
   it('uses the shared route header and permission-aware add action', () => {

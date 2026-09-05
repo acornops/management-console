@@ -37,10 +37,10 @@ manifest entry and route-specific readiness landmark before score closure.
 | Invitation | `/invites/:token` | Valid invite, wrong signed-in account, expired or failed invite, accepting | Desktop/mobile, keyboard, error recovery, long identity | Valid invite covered; mismatch and failure recovery are gaps |
 | External integration | `/integrations/external/link` | Approval, checking, linked, expired, cancelled, failure, long workspace list | Desktop/mobile, light/dark, keyboard, 200-percent text, terminal-state action | Linked covered; approval, loading, expired, cancelled, failure, and long-list states are gaps |
 | Workspace orientation | `/workspaces/:id/overview`, `/workspaces/:id/kubernetes-clusters`, `/workspaces/:id/virtual-machines`, `/kubernetes-clusters` | Populated, empty, filtered-empty, initial loading, background refresh, failure, permission-restricted, high-count, long name | Route snapshots, fixture state suites, Axe, 200-percent text | Populated workspace routes covered; global cluster catalog and state variants are gaps |
-| Catalog and agents | `/workspaces/:id/catalog`, `/workspaces/:id/agents`, agent capability query state | Search and filter, artifact focus, destination focus, incompatible destination, capability drawer, empty and high-count inventory | Route-specific drawer/detail landmark, desktop/mobile, keyboard, long content | Base routes and one capability query covered; artifact, destination, incompatible, empty, and high-count states are gaps |
+| Agents | `/workspaces/:id/agents`, agent capability query state | Search and filter, capability drawer, empty and high-count catalog | Route-specific drawer/detail landmark, desktop/mobile, keyboard, long content | Base route and one capability query covered; empty and high-count states are gaps |
 | Automation | Workflows, Activity, Schedules, Incoming Webhooks, Outbound Webhooks | Workflow focus, run focus, create drawers, recommendation panel, empty/loading/failure, schedule and webhook repair | Drawer/detail landmark, desktop/mobile, keyboard, state-preserving error recovery | Base routes covered; focused, create, recommendation, empty/loading/failure, and repair states are gaps |
 | Governance | Approvals and Audit Log | Focused approval, long translated decision, permission-restricted, destructive action, advanced filters, filtered-empty | 320-390 pixel completion, keyboard, 200-percent text, focus landmark | Base routes covered; focused approval and state variants are gaps |
-| Workspace settings | Members, AI Settings, Workspace Settings root, MCP registry deep link | Pending invitations, limited permission, dirty/saved AI state, Assistant return context, destructive/leave state, deep-linked registry | Route-specific section landmark, desktop/mobile, keyboard, 200-percent text | Members, AI Settings, and registry deep link covered; Settings root, Assistant return, permission, dirty, and destructive states are gaps |
+| Workspace settings | Members, AI Settings, Workspace Settings root | Pending invitations, limited permission, dirty/saved AI state, Assistant return context, destructive/leave state | Route-specific section landmark, desktop/mobile, keyboard, 200-percent text | Members and AI Settings are covered; Settings root, Assistant return, permission, dirty, and destructive states are gaps |
 | Account settings | `/account` | Security controls unavailable, long provider identity, mutation success/failure | Desktop/mobile, keyboard, recovery | Base route covered; state variants are gaps |
 | Agent detail | Chat, MCP Servers, Skills, Tools, Settings | New chat, existing session, long transcript, active run, empty capability inventory, dependency failure, disable/delete consequence | Desktop/mobile, keyboard, 200-percent text, long content, route-specific session landmark | Base routes and one chat state covered; explicit new/existing session, long, failure, and destructive states are gaps |
 | Kubernetes detail | Overview, Resources, Health, MCP Servers, Skills, Tools, Chat, Settings, workspace-scoped aliases | Thin/history telemetry, empty/loading/failure, long resource names, capability dependency failure, new/existing chat session, auto-triage failure | Desktop/mobile, light/dark, keyboard, 200-percent text, long content | All base routes except Health covered; state variants and workspace-scoped non-chat aliases are gaps |
@@ -137,9 +137,7 @@ and no required context is lost during recovery.
 4. Simplify Audit Log time and advanced filter disclosure.
 5. Clarify ambiguous actions such as View More and normalize inbound versus
    outbound webhook naming.
-6. Reorder MCP Catalog decisions so destination selection matches the stated
-   task sequence.
-7. Preserve operational density where it materially improves scan speed.
+6. Preserve operational density where it materially improves scan speed.
 
 Exit gate: the cognitive-load checklist has zero failures and the revised
 surfaces retain or improve expert scan speed.
@@ -148,8 +146,8 @@ surfaces retain or improve expert scan speed.
 
 1. Cover Help, Home/Workspaces, Not Found, Workspace Settings root, VM Services,
    Processes, Network, Logs, Kubernetes Health, and external-link outcomes.
-2. Cover focused approvals, create drawers, assistant sessions, AI return
-   context, and catalog artifact or destination states.
+2. Cover focused approvals, create drawers, assistant sessions, and AI return
+   context.
 3. Cover populated, empty, filtered-empty, initial-loading, background-refresh,
    failure, permission, destructive, long-content, and high-count variants.
 4. Run every relevant route in light and dark themes, desktop and mobile

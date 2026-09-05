@@ -5,6 +5,13 @@ export interface McpOAuthWindowResult {
   id: string;
   result: string;
   returnPath: string;
+  serverId?: string;
+}
+
+const MCP_OAUTH_SERVER_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
+export function safeMcpOAuthServerId(value: unknown): string | null {
+  return typeof value === 'string' && MCP_OAUTH_SERVER_ID_PATTERN.test(value) ? value : null;
 }
 
 export function openMcpOAuthAuthorizationTab(): Window | null {
@@ -21,13 +28,19 @@ export function openMcpOAuthAuthorizationTab(): Window | null {
   return authorizationTab;
 }
 
-export function publishMcpOAuthWindowResult(result: string, returnPath: string): boolean {
+export function publishMcpOAuthWindowResult(
+  result: string,
+  returnPath: string,
+  serverId?: string | null
+): boolean {
+  const safeServerId = safeMcpOAuthServerId(serverId);
   const payload: McpOAuthWindowResult = {
     id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random()}`,
     result,
-    returnPath
+    returnPath,
+    ...(safeServerId ? { serverId: safeServerId } : {})
   };
   try {
     window.localStorage.setItem(MCP_OAUTH_RESULT_STORAGE_KEY, JSON.stringify(payload));
@@ -51,6 +64,8 @@ export function readMcpOAuthWindowResult(
       || typeof (payload as McpOAuthWindowResult).id !== 'string'
       || typeof (payload as McpOAuthWindowResult).result !== 'string'
       || typeof (payload as McpOAuthWindowResult).returnPath !== 'string'
+      || ((payload as McpOAuthWindowResult).serverId !== undefined
+        && !safeMcpOAuthServerId((payload as McpOAuthWindowResult).serverId))
     ) {
       return null;
     }

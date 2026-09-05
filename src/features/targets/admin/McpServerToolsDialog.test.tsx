@@ -63,6 +63,21 @@ const server: TargetToolCatalogServer = {
 };
 
 describe('McpServerToolsDialog group controls', () => {
+  it('keeps large tool collections inside a bounded scroll region', () => {
+    const markup = renderToStaticMarkup(
+      <McpServerToolsDialog
+        server={server}
+        canManageTools
+        pendingToolName={null}
+        onClose={vi.fn()}
+        onToggleTool={vi.fn()}
+      />
+    );
+
+    expect(markup).toContain('max-h-[88vh]');
+    expect(markup).toContain('min-h-0 flex-1 overflow-y-auto');
+  });
+
   it('offers separate accessible controls for read-only and write-capable tools', () => {
     const markup = renderToStaticMarkup(
       <McpServerToolsDialog
@@ -93,6 +108,24 @@ describe('McpServerToolsDialog group controls', () => {
 
     expect(markup).toMatch(/aria-label="Enable all read-only tools"[^>]*disabled=""/);
     expect(markup).toMatch(/aria-label="Disable all write-capable tools"[^>]*disabled=""/);
+  });
+
+  it('allows revocation-only operators to disable but not enable tools', () => {
+    const markup = renderToStaticMarkup(
+      <McpServerToolsDialog
+        server={server}
+        canManageTools={false}
+        canDisableTools
+        pendingToolName={null}
+        onClose={vi.fn()}
+        onToggleTool={vi.fn()}
+      />
+    );
+
+    expect(markup).toMatch(/aria-label="Enable all read-only tools"[^>]*disabled=""/);
+    expect(markup).toMatch(/aria-label="Disable all write-capable tools"(?![^>]*disabled="")/);
+    expect(markup).toMatch(/aria-label="Disable records\.list"(?![^>]*disabled="")/);
+    expect(markup).toMatch(/aria-label="Enable records\.get"[^>]*disabled=""/);
   });
 
   it('builds overrides for every tool returned by the drained collection', () => {

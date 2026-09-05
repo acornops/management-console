@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { activateFrontendFixtureRuntime } from '@/config/appDataMode';
-import { catalogApi } from './catalogApi';
+
+import { mcpConnectionApi } from './mcpConnectionApi';
 
 describe('external MCP OAuth in frontend fixture mode', () => {
   it('reports OAuth as unavailable without making a network request', async () => {
@@ -9,7 +10,7 @@ describe('external MCP OAuth in frontend fixture mode', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(catalogApi.prepareAgentMcpOAuth(
+    await expect(mcpConnectionApi.prepareAgentMcpOAuth(
       'workspace-1',
       'agent-1',
       'server-1',

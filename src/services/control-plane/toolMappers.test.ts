@@ -153,6 +153,7 @@ describe('tool mappers', () => {
           canDelete: 1 as unknown as boolean,
           canEditConnection: 0 as unknown as boolean,
           canToggle: false,
+          inherited: true,
           authType: 'custom_header',
           credentialMode: 'individual',
           connectionStatus: 'degraded' as 'unknown',
@@ -186,6 +187,7 @@ describe('tool mappers', () => {
     expect(catalog.servers).toEqual([
       expect.objectContaining({
         canToggle: false,
+        inherited: true,
         connectionStatus: 'unknown',
         toolCounts: {
           total: 0,
@@ -274,6 +276,29 @@ describe('tool mappers', () => {
       enabledEffective: false,
       effectiveDisabledReason: 'agent_write_disabled'
     }));
+  });
+
+  it('preserves pagination and disconnected-agent disabled reasons', () => {
+    const catalog = mapClusterToolsCatalog({
+      workspaceId: 'workspace-1',
+      targetId: 'cluster-1',
+      nextCursor: 'cursor-2',
+      permissions: { canEdit: true, editableRoles: [] },
+      servers: [{
+        id: 'server-1', name: 'Built-in tools', url: 'local://builtin', type: 'builtin',
+        enabled: true, isSystem: true, canDelete: false, canEditConnection: false,
+        authType: 'none', credentialMode: 'none',
+        toolCounts: { total: 1, enabledConfigured: 1, enabledEffective: 0, writeConfigured: 0, writeEffective: 0 },
+        tools: [{
+          name: 'get_resource', description: 'Get resource', capability: 'read', version: 'v1',
+          source: 'builtin', enabledConfigured: true, enabledEffective: false,
+          effectiveDisabledReason: 'agent_disconnected'
+        }]
+      }]
+    });
+
+    expect(catalog.nextCursor).toBe('cursor-2');
+    expect(catalog.servers[0].tools[0].effectiveDisabledReason).toBe('agent_disconnected');
   });
 
   it('maps MCP servers and test results into UI models', () => {

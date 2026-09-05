@@ -4,20 +4,17 @@ import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@acornops/ui';
 import { AddMcpServerAction } from '@/features/catalog/AddMcpServerAction';
 import type { CapabilitySubject } from '@/features/capabilities/admin';
-import { AppPaths } from '@/utils/routes';
 
 interface McpServersViewHeaderProps {
   subject: CapabilitySubject;
   canEditServers: boolean;
   onConnectByUrl: () => void;
-  catalogDestination?: string;
 }
 
 export const McpServersViewHeader: React.FC<McpServersViewHeaderProps> = ({
   subject,
   canEditServers,
-  onConnectByUrl,
-  catalogDestination = `target:${subject.id}`
+  onConnectByUrl
 }) => {
   const { t } = useTranslation();
   return (
@@ -27,7 +24,6 @@ export const McpServersViewHeader: React.FC<McpServersViewHeaderProps> = ({
       actions={(
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <AddMcpServerAction
-            browseHref={AppPaths.workspaceCatalog(subject.workspaceId, { destination: catalogDestination })}
             disabled={!canEditServers}
             onConnectByUrl={onConnectByUrl}
           />

@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 import i18n, { initializeI18n } from '@/i18n';
 import {
@@ -60,5 +61,16 @@ describe('McpOAuthConsentReview', () => {
     expect(markup).toContain('No scope was specified by the server.');
     expect(markup).not.toContain('password');
     expect(markup).not.toContain('client secret');
+  });
+});
+
+describe('McpOAuthDialog authorization handoff', () => {
+  it('unlocks the original dialog after the child tab accepts the authorization URL', () => {
+    const source = readFileSync(new URL('./McpOAuthDialog.tsx', import.meta.url), 'utf8');
+    const navigation = source.indexOf('authorizationTab.location.replace(authorizationUrl);');
+    const unlock = source.indexOf('setStarting(false);', navigation);
+
+    expect(navigation).toBeGreaterThan(-1);
+    expect(unlock).toBeGreaterThan(navigation);
   });
 });

@@ -190,8 +190,8 @@ test('collection discovery supports responsive layouts, keyboard filters, and no
   }
 
   const multi = page.locator('[data-catalog-discovery="multi-filter"]');
-  const searchBox = await multi.getByRole('searchbox', { name: 'Search MCP catalog' }).boundingBox();
-  const sourceBox = await multi.getByRole('button', { name: 'Catalog source' }).boundingBox();
+  const searchBox = await multi.getByRole('searchbox', { name: 'Search package catalog' }).boundingBox();
+  const sourceBox = await multi.getByRole('button', { name: 'Publisher' }).boundingBox();
   const compatibilityBox = await multi.getByRole('button', { name: 'Compatibility' }).boundingBox();
 
   if (testInfo.project.name === 'mobile') {
@@ -246,13 +246,13 @@ test('collection discovery supports responsive layouts, keyboard filters, and no
   await expect(singleSearch).toBeFocused();
   await expect(singleSearch).toHaveValue('');
 
-  await expect(multi.getByRole('status')).toHaveText('0 of 12 servers');
-  await expect(multi.getByRole('button', { name: 'Catalog source' })).toContainText('Community');
+  await expect(multi.getByRole('status')).toHaveText('0 of 12 packages');
+  await expect(multi.getByRole('button', { name: 'Publisher' })).toContainText('Community');
   await expect(multi.getByRole('button', { name: 'Compatibility' })).toContainText('Incompatible');
   await multi.getByRole('button', { name: 'Clear all' }).click();
-  await expect(multi.getByRole('searchbox', { name: 'Search MCP catalog' })).toBeFocused();
-  await expect(multi.getByRole('button', { name: 'Catalog source' })).toContainText('All sources');
+  await expect(multi.getByRole('searchbox', { name: 'Search package catalog' })).toBeFocused();
+  await expect(multi.getByRole('button', { name: 'Publisher' })).toContainText('All publishers');
   await expect(multi.getByRole('button', { name: 'Compatibility' })).toContainText('All compatibility');
-  await expect(multi.getByRole('status')).toHaveText('12 servers');
+  await expect(multi.getByRole('status')).toHaveText('12 packages');
   await expect(multi.getByRole('button', { name: 'Clear all' })).toHaveCount(0);
 });

@@ -10,7 +10,6 @@ Place active multi-step plans in this directory.
 - [Design system 20/20 hardening](design-system-20-of-20.md)
 - [Design-System Adoption Completion](design-system-adoption-completion.md)
 - [Destructive Confirmation Hardening](destructive-confirmation-hardening.md)
-- [MCP catalog and capability ownership UI](extensible-catalog-sources.md)
 - [First-Class Target Auto-Triage](first-class-target-auto-triage.md)
 - [Full App Consistency Closure](full-app-consistency-closure.md)
 - [Global Quiet Secondary Button](global-quiet-secondary-button.md)

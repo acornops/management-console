@@ -8,7 +8,7 @@ import type { SelectOption } from '@acornops/ui';
 import { formInputClassName } from '@acornops/ui';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
-import type { McpConnection } from '@/services/control-plane/catalogApi';
+import type { McpConnection } from '@/services/control-plane/mcpConnectionApi';
 import { getMcpServerStatusDisplay, McpServerCard } from '@/features/targets/admin/McpServerCard';
 import { TextInput } from '@acornops/ui';
 import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
@@ -16,6 +16,7 @@ import { DataTable, DataTableBody, DataTableRow } from '@acornops/ui';
 interface McpServersInventoryProps {
   servers: TargetToolCatalogServer[];
   canEditServers: boolean;
+  canRemoveServers?: boolean;
   pendingTestServerId: string | null;
   pendingToggleServerId: string | null;
   testResultsByServerId: Record<string, TargetMcpServerTestConnectionResult>;
@@ -42,6 +43,7 @@ const mcpServerSearchInputClassName = formInputClassName('py-3 pl-11 pr-4 type-b
 export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   servers,
   canEditServers,
+  canRemoveServers = canEditServers,
   pendingTestServerId,
   pendingToggleServerId,
   testResultsByServerId,
@@ -97,7 +99,8 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
         (serverFilter === 'connected' && status.labelKey === 'mcpServers.statusConnected') ||
         (serverFilter === 'attention' && (
           status.labelKey === 'mcpServers.statusNeedsAuth' ||
-          status.labelKey === 'mcpServers.statusDiscoveryFailed'
+          status.labelKey === 'mcpServers.statusDiscoveryFailed' ||
+          status.labelKey === 'mcpServers.statusTargetDisconnected'
         )) ||
         (serverFilter === 'disabled' && status.labelKey === 'mcpServers.statusDisabled') ||
         (serverFilter === 'unchecked' && status.labelKey === 'mcpServers.statusNotChecked');
@@ -195,6 +198,7 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
                       key={server.id}
                       server={server}
                       canEditServers={canEditServers}
+                      canRemoveServers={canRemoveServers}
                       pendingTestServerId={pendingTestServerId}
                       pendingToggleServerId={pendingToggleServerId}
                       testResult={testResultsByServerId[server.id]}

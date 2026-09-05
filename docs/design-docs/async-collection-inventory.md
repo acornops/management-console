@@ -6,7 +6,6 @@ limited to bounded overview aggregates and selectors.
 
 | Surface or endpoint | Consumer | Strategy | Status or exception |
 | --- | --- | --- | --- |
-| Catalog artifacts | `WorkspaceCatalogPage` | manual | Migrated to `useCursorCollection` and `CollectionState`. |
 | Workflow execution ledger | `WorkspaceActivityPage`, `WorkspaceWorkflowActivityContext` | manual cursor plus bounded polling | Activity owns cursor pagination; the shell fetches one bounded summary page every two seconds while visible and on focus. |
 | Workflow schedules | `WorkspaceSchedulesPage` | not paginated | `ResourcePhase` owns loading and retained refresh state; compact cards use `CollectionState` while the desktop table keeps its headings mounted through every state. |
 | Incoming workflow webhooks | `WorkspaceIncomingWebhooksPage` | not paginated | The Workflows section retains the collection through refresh and supports status, workflow, and search controls; desktop headings remain mounted through every state. |
@@ -15,7 +14,6 @@ limited to bounded overview aggregates and selectors.
 | Agent catalog | `WorkspaceAgentsCatalog` | not paginated | Migrated to one mounted `CollectionState` frame. |
 | Workflow library | `WorkspaceWorkflowsPage` | not paginated | Existing master-detail frame now remains mounted; empty state is owned by the library pane. |
 | Conversation history | `ConversationHistory` | live/backfill exception | Visible lifecycle migrated. Cursor ownership stays in target-chat synchronization because live events merge with historical pages. |
-| Catalog registry sources | `WorkspaceCatalogSources` | not paginated | Migrated to `ResourcePhase` and retained-content `CollectionState`; mutation feedback remains feature-owned. |
 | Workspace members | `WorkspaceMembersPage` | sentinel | Migrated to `useCursorCollection`; table states stay inside the existing frame. |
 | Workspace invitations | `WorkspaceMembersPage`, `WorkspaceInvitationsPanel` | sentinel | Migrated to `useCursorCollection`; replacement invite links remain in local mutation state. |
 | Audit events | `WorkspaceAuditLogPage` | sentinel | Migrated to `useCursorCollection` and `DataTableStateRow`. |

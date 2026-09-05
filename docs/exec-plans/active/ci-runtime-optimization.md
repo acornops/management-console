@@ -131,6 +131,10 @@ gates.
     MCP registries passed while creating temporary macOS baselines and passed
     again against them. The temporary baselines were removed.
 
+The MCP registries references above are retained as historical CI evidence.
+That workspace route and its preserve-scroll baseline were subsequently
+removed and are not part of the current route-coverage contract.
+
 The initial sub-12-minute target is satisfied. Establishing the below-10-minute
 median still requires two more representative full runs rather than rerunning
 identical CI solely to manufacture timing samples.

@@ -2,15 +2,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, CloseButton, CollectionState, DialogFrame, DiscoveryFilterBar, IconTile, InlineAlert, MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, StatusBadge, TextInput, masterDetailDiscoverySpacingClass } from '@acornops/ui';
 import { ICONS } from '@/constants';
-import { McpCredentialDialog } from '@/features/catalog/McpCredentialDialog';
-import { McpOAuthDialog } from '@/features/catalog/McpOAuthDialog';
-import { useMcpConnections } from '@/features/catalog/useMcpConnections';
+import { WorkflowMcpCredentialDialog, useWorkflowMcpOAuthFeedback } from '@/pages/WorkflowMcpCredentialDialog';
 import { appendWorkflowSearchTag, type WorkflowAgentReference, type WorkflowDefinition } from '@/pages/workflows/workflowModel';
 import { workflowStatusTone } from '@/pages/workflows/workflowPageHelpers';
 import type { WorkflowCapabilitiesPreview, WorkflowCapabilityToolPreview, WorkflowMcpRequirementPreview } from '@/services/control-plane/workflowApi';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 export { WorkflowLaunchActions } from '@/pages/workflows/WorkflowLaunchActions';
+export { WorkflowMcpCredentialDialog, workflowMcpCredentialMode } from '@/pages/WorkflowMcpCredentialDialog';
 function workflowProvenanceLabel(workflow: WorkflowDefinition): string { return workflow.owner; }
+const noWorkflowMcpRequirements: WorkflowMcpRequirementPreview[] = [];
 export const WorkflowSearchTagSuggestions: React.FC<{
   query: string;
   workflowSearchTags: string[];
@@ -391,10 +391,6 @@ export function canConnectWorkflowMcpRequirement(requirement: WorkflowMcpRequire
     );
 }
 
-export function workflowMcpCredentialMode(requirement: WorkflowMcpRequirementPreview): 'connect' | 'replace' {
-  return requirement.connectionState === 'connection_error' ? 'replace' : 'connect';
-}
-
 export function workflowCapabilityBlockerMessage(fallback: string): string {
   return fallback;
 }
@@ -459,91 +455,6 @@ export const WorkflowPreviewAuthRow: React.FC<{
   );
 };
 
-export const WorkflowMcpCredentialDialog: React.FC<{
-  workspaceId: string;
-  requirement: WorkflowMcpRequirementPreview;
-  onClose: () => void;
-  onConnected: () => void;
-}> = ({ workspaceId, requirement, onClose, onConnected }) => {
-  const { t } = useTranslation();
-  const installation = React.useMemo(
-    () => ({
-      id: requirement.serverId,
-      credentialMode: requirement.authRequirement.scope,
-      authType: requirement.authType
-    }),
-    [requirement.authRequirement.scope, requirement.authType, requirement.serverId]
-  );
-  const installations = React.useMemo(() => [installation], [installation]);
-  const titleId = React.useId();
-  const {
-    connections,
-    loadingByServerId,
-    connect,
-    prepareOAuth,
-    startOAuth,
-    retryAfterSecondsFor
-  } = useMcpConnections({
-    workspaceId,
-    destination: { kind: 'agent', id: requirement.owningAgent.id },
-    installations
-  });
-  const connection = connections[requirement.serverId];
-  if (loadingByServerId[requirement.serverId] || !connection) {
-    return (
-      <DialogFrame unframed titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
-        <h2 id={titleId} className="type-section-title">
-          {t('mcpServers.loadingCredentialStatus')}
-        </h2>
-      </DialogFrame>
-    );
-  }
-  if (!connection.canManage) {
-    return (
-      <DialogFrame unframed titleId={titleId} onClose={onClose} className="w-full max-w-md rounded-lg border border-ui-border bg-ui-surface p-6 shadow-2xl">
-        <h2 id={titleId} className="type-section-title">
-          {t('mcpServers.workspaceCredentialRequired')}
-        </h2>
-        <p className="type-caption mt-2 text-ui-text-muted">{t('mcpServers.askWorkspaceAdmin')}</p>
-        <div className="mt-5 flex justify-end">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            {t('common.close')}
-          </Button>
-        </div>
-      </DialogFrame>
-    );
-  }
-  if (requirement.authType === 'oauth') {
-    const returnUrl = new URL(window.location.href);
-    returnUrl.searchParams.delete('mcpOAuthResult');
-    return <McpOAuthDialog
-      serverName={requirement.serverName}
-      returnPath={`${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`}
-      mode={connection.status === 'reauthorization_required' ? 'reauthorize' : 'authorize'}
-      retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
-      onClose={onClose}
-      onPrepare={(returnPath) => prepareOAuth(installation, returnPath)}
-      onStart={(preparationHandle, issuer) => startOAuth(installation, preparationHandle, issuer)}
-    />;
-  }
-  return <McpCredentialDialog
-    serverName={requirement.serverName}
-    authType={requirement.authType}
-    credentialLabel={requirement.authRequirement.credentialLabel}
-    credentialMode={requirement.authRequirement.scope}
-    mode={workflowMcpCredentialMode(requirement)}
-    retryAfterSeconds={retryAfterSecondsFor(requirement.serverId)}
-    onClose={onClose}
-    onSubmit={async (credential) => {
-      const next = await connect(installation, credential);
-      if (next?.status === 'connected') {
-        onClose();
-        onConnected();
-      }
-    }}
-  />;
-};
-
 export const WorkflowCapabilityLedger: React.FC<{
   workspaceId: string;
   preview: WorkflowCapabilitiesPreview | null;
@@ -552,8 +463,16 @@ export const WorkflowCapabilityLedger: React.FC<{
   onRetry: () => void;
 }> = ({ workspaceId, preview, loading, error, onRetry }) => {
   const [credentialRequirement, setCredentialRequirement] = React.useState<WorkflowMcpRequirementPreview | null>(null);
+  const oauth = useWorkflowMcpOAuthFeedback({
+    workspaceId,
+    requirements: preview?.mcpRequirements || noWorkflowMcpRequirements,
+    openRequirement: credentialRequirement,
+    closeOpenRequirement: () => setCredentialRequirement(null),
+    reloadReadiness: onRetry
+  });
   return (
     <>
+      {oauth.feedback && <InlineAlert tone={oauth.feedback.tone} className="mt-4 type-body">{oauth.feedback.message}</InlineAlert>}
       <section aria-label="Run capabilities" className="mt-4 border-y border-ui-border py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -592,7 +511,7 @@ export const WorkflowCapabilityLedger: React.FC<{
           )}
         </CollectionState>
       </section>
-      {credentialRequirement && canConnectWorkflowMcpRequirement(credentialRequirement) && <WorkflowMcpCredentialDialog workspaceId={workspaceId} requirement={credentialRequirement} onClose={() => setCredentialRequirement(null)} onConnected={onRetry} />}
+      {credentialRequirement && canConnectWorkflowMcpRequirement(credentialRequirement) && <WorkflowMcpCredentialDialog workspaceId={workspaceId} requirement={credentialRequirement} oauthReturnPath={oauth.returnPath} onClose={() => setCredentialRequirement(null)} onConnected={onRetry} />}
     </>
   );
 };
@@ -605,8 +524,16 @@ export const WorkflowCapabilitySummary: React.FC<{
   onRetry: () => void;
 }> = ({ workspaceId, preview, loading, error, onRetry }) => {
   const [credentialRequirement, setCredentialRequirement] = React.useState<WorkflowMcpRequirementPreview | null>(null);
+  const oauth = useWorkflowMcpOAuthFeedback({
+    workspaceId,
+    requirements: preview?.mcpRequirements || noWorkflowMcpRequirements,
+    openRequirement: credentialRequirement,
+    closeOpenRequirement: () => setCredentialRequirement(null),
+    reloadReadiness: onRetry
+  });
   return (
     <>
+      {oauth.feedback && <InlineAlert tone={oauth.feedback.tone} className="mt-4 type-body">{oauth.feedback.message}</InlineAlert>}
       <section aria-label="Capability summary" className="mt-4 rounded-md border border-ui-border bg-ui-surface px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <p className="type-caption max-w-[70ch] text-ui-text-muted">Inherited from selected Agents. Checked again at launch.</p>
@@ -642,7 +569,7 @@ export const WorkflowCapabilitySummary: React.FC<{
           )}
         </CollectionState>
       </section>
-      {credentialRequirement && canConnectWorkflowMcpRequirement(credentialRequirement) && <WorkflowMcpCredentialDialog workspaceId={workspaceId} requirement={credentialRequirement} onClose={() => setCredentialRequirement(null)} onConnected={onRetry} />}
+      {credentialRequirement && canConnectWorkflowMcpRequirement(credentialRequirement) && <WorkflowMcpCredentialDialog workspaceId={workspaceId} requirement={credentialRequirement} oauthReturnPath={oauth.returnPath} onClose={() => setCredentialRequirement(null)} onConnected={onRetry} />}
     </>
   );
 };

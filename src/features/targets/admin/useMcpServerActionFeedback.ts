@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { TFunction } from 'i18next';
 
-import type { McpConnection } from '@/services/control-plane/catalogApi';
+import type { McpConnection } from '@/services/control-plane/mcpConnectionApi';
 import type { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 
 import {
   canConnectWorkflowMcpRequirement,
@@ -45,5 +46,20 @@ describe('workflow MCP authentication recovery', () => {
   it('does not offer credential entry for a connected or inconsistent requirement', () => {
     expect(canConnectWorkflowMcpRequirement(requirement({ connectionState: 'connected', action: 'none' }))).toBe(false);
     expect(canConnectWorkflowMcpRequirement(requirement({ connectionState: 'connection_missing', action: 'none' }))).toBe(false);
+  });
+});
+
+describe('workflow MCP OAuth callback route', () => {
+  it('keeps a route-level result publisher and a correlated readiness consumer', () => {
+    const page = readFileSync(new URL('./WorkspaceWorkflowsPage.tsx', import.meta.url), 'utf8');
+    const components = readFileSync(new URL('./WorkspaceWorkflowsPage.components.tsx', import.meta.url), 'utf8');
+    const scheduleDialog = readFileSync(new URL('./WorkspaceScheduleDialog.tsx', import.meta.url), 'utf8');
+
+    expect(page).toContain('<WorkflowMcpOAuthResultBridge />');
+    expect(components).toContain('useWorkflowMcpOAuthFeedback({');
+    expect(components).toContain('oauthReturnPath={oauth.returnPath}');
+    expect(scheduleDialog).toContain('<WorkflowMcpOAuthResultBridge />');
+    expect(scheduleDialog).toContain('useWorkflowMcpOAuthFeedback({');
+    expect(scheduleDialog).toContain('oauthReturnPath={oauth.returnPath}');
   });
 });

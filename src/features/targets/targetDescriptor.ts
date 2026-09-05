@@ -15,7 +15,7 @@ export interface TargetMcpToolSummary {
   sourceServerUrl?: string;
   enabledConfigured?: boolean;
   enabledEffective?: boolean;
-  effectiveDisabledReason?: 'server_disabled' | 'agent_write_disabled' | null;
+  effectiveDisabledReason?: 'server_disabled' | 'agent_disconnected' | 'agent_write_disabled' | null;
 }
 
 export interface TargetDescriptor {

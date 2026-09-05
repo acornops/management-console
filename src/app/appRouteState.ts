@@ -9,7 +9,6 @@ export type ActiveResourceNav =
   | 'agentSkills'
   | 'agentTools'
   | 'agentSettings'
-  | 'catalog'
   | 'workflows'
   | 'activity'
   | 'approvals'
@@ -42,7 +41,6 @@ export function getWorkspaceRouteId(route: AppRoute): string | null {
   if (
     route.kind === 'workspaceOverview' ||
     route.kind === 'workspaceAgents' || route.kind === 'workspaceAgentDetail' ||
-    route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceWorkflows' ||
     route.kind === 'workspaceActivity' ||
     route.kind === 'workspaceRedirect' ||
@@ -96,7 +94,6 @@ export function getActiveResourceNav(route: AppRoute): ActiveResourceNav {
     if (route.tab === 'settings') return 'agentSettings';
     return 'agentChat';
   }
-  if (route.kind === 'workspaceCatalog') return 'catalog';
   if (route.kind === 'workspaceWorkflows') return 'workflows';
   if (route.kind === 'workspaceActivity') return 'activity';
   if (route.kind === 'workspaceApprovals') return 'approvals';

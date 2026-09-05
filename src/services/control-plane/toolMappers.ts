@@ -46,7 +46,9 @@ export function mapClusterToolsFromCatalog(catalog: ControlPlaneClusterToolCatal
         enabledConfigured: Boolean(tool.enabledConfigured),
         enabledEffective: Boolean(tool.enabledEffective),
         effectiveDisabledReason:
-          tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+          tool.effectiveDisabledReason === 'server_disabled'
+            || tool.effectiveDisabledReason === 'agent_disconnected'
+            || tool.effectiveDisabledReason === 'agent_write_disabled'
             ? tool.effectiveDisabledReason
             : null
       });
@@ -66,6 +68,7 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
       canEdit: Boolean(catalog.permissions?.canEdit),
       editableRoles: Array.isArray(catalog.permissions?.editableRoles) ? catalog.permissions.editableRoles : []
     },
+    nextCursor: typeof catalog.nextCursor === 'string' ? catalog.nextCursor : undefined,
     servers: toArray(catalog.servers).map((server): ClusterToolCatalogServer => {
       const tools = toArray(server.tools).map((tool): ClusterToolCatalogItem => ({
         name: tool.name,
@@ -76,7 +79,9 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
         enabledConfigured: Boolean(tool.enabledConfigured),
         enabledEffective: Boolean(tool.enabledEffective),
         effectiveDisabledReason:
-          tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+          tool.effectiveDisabledReason === 'server_disabled'
+            || tool.effectiveDisabledReason === 'agent_disconnected'
+            || tool.effectiveDisabledReason === 'agent_write_disabled'
             ? tool.effectiveDisabledReason
             : null
       }));
@@ -96,13 +101,14 @@ export function mapClusterToolsCatalog(catalog: ControlPlaneClusterToolCatalog):
         canDelete: Boolean(server.canDelete),
         canEditConnection: Boolean(server.canEditConnection),
         canToggle: server.canToggle !== false,
+        inherited: server.inherited === true,
         authType: server.authType || 'none',
         credentialMode: server.credentialMode,
         authHeaderName: server.authHeaderName,
         authHeaderPrefix: server.authHeaderPrefix,
         revision: Number(server.revision || 1),
-        provenance: server.provenance,
         publicHeaders: server.publicHeaders || {},
+        credentialTransitioning: server.credentialTransitioning === true,
         connectionStatus:
           server.connectionStatus === 'ok' || server.connectionStatus === 'error'
             ? server.connectionStatus
@@ -137,6 +143,7 @@ export function mapMcpServer(server: ControlPlaneMcpServer): TargetMcpServer {
     authHeaderName: server.auth_header_name,
     authHeaderPrefix: server.auth_header_prefix,
     publicHeaders: server.public_headers || undefined,
+    credentialTransitioning: server.credential_transitioning === true,
     connectionStatus:
       server.connection_status === 'ok' || server.connection_status === 'error'
         ? server.connection_status
@@ -145,15 +152,6 @@ export function mapMcpServer(server: ControlPlaneMcpServer): TargetMcpServer {
     lastDiscoveryError: server.last_discovery_error || null,
     revision: server.revision,
     inherited: server.inherited === true,
-    provenance: server.catalog_source_id && server.catalog_artifact_name && server.catalog_version && server.catalog_digest
-      ? {
-          sourceId: server.catalog_source_id,
-          artifactName: server.catalog_artifact_name,
-          version: server.catalog_version,
-          digest: server.catalog_digest,
-          importedAt: server.catalog_imported_at || undefined
-        }
-      : undefined,
     tools: mapClusterTools(server.tools)
   };
 }

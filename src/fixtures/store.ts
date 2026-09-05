@@ -41,8 +41,6 @@ export interface FixtureState {
   workflowWebhooks: Array<Record<string, any>>;
   workflowExecutions: Array<Record<string, any>>;
   approvals: Array<Record<string, any>>;
-  catalogSources: Array<Record<string, any>>;
-  catalogArtifacts: Array<Record<string, any>>;
   sessions: Array<Record<string, any>>;
   messages: Record<string, Array<Record<string, any>>>;
   runs: Record<string, Record<string, any>>;
@@ -65,7 +63,6 @@ const allPermissions = {
   manage_members: true,
   manage_targets: true,
   manage_mcp: true,
-  manage_catalog_sources: true,
   manage_tools: true,
   manage_target_insights: true,
   manage_skills: true,
@@ -548,8 +545,6 @@ export function createFixtureState(): FixtureState {
       }
     ],
     workflowExecutions,
-    catalogSources: [{ id: 'fixture-catalog-source', workspaceId: FIXTURE_IDS.workspace, displayName: 'Internal MCP Registry', baseUrl: 'https://registry.internal.example', authType: 'none', credentialConfigured: false, networkRoute: 'direct', enabled: true, managementMode: 'bootstrap', bindings: [{ id: 'fixture-binding', artifactKind: 'mcp_server', adapterType: 'mcp_registry_v0_1', adapterBasePath: '/v0.1', syncStatus: 'ready', lastSyncAt: NOW }] }],
-    catalogArtifacts: [{ id: 'fixture-catalog-artifact', workspaceId: FIXTURE_IDS.workspace, sourceId: 'fixture-catalog-source', bindingId: 'fixture-binding', artifactKind: 'mcp_server', name: 'github-observer', title: 'GitHub Observer', description: 'Read-only repository and pull request context for operational workflows.', version: '1.4.0', digest: 'sha256:fixture-catalog-digest', metadata: { publisher: 'AcornOps', categories: ['developer-tools'] }, compatible: true, remoteEndpoints: [{ type: 'streamable-http', url: 'https://mcp.fixture.acornops.dev/github', supported: true, supportedCredentialModes: ['workspace', 'individual'], recommendedCredentialMode: 'individual' }], publishedAt: EARLIER, upstreamUpdatedAt: NOW }],
     sessions,
     messages,
     webhooks: [{

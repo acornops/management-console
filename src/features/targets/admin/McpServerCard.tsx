@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { TargetMcpServerTestConnectionResult } from '@/services/controlPlaneApi';
 import type { TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatDiscoveryTimestamp, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
-import type { McpConnection } from '@/services/control-plane/catalogApi';
+import type { McpConnection } from '@/services/control-plane/mcpConnectionApi';
 import { formatUserDateTime } from '@/utils/dateTime';
 import {
   mcpConnectAction,
@@ -24,6 +24,7 @@ import { DataTableCell, DataTableRow } from '@acornops/ui';
 interface McpServerCardProps {
   server: TargetToolCatalogServer;
   canEditServers: boolean;
+  canRemoveServers?: boolean;
   pendingTestServerId: string | null;
   pendingToggleServerId: string | null;
   testResult?: TargetMcpServerTestConnectionResult;
@@ -72,12 +73,16 @@ export function canRefreshAuthenticatedMcpTools(
 }
 
 export function getMcpServerStatusDisplay(
-  server: Pick<TargetToolCatalogServer, 'enabled' | 'type' | 'connectionStatus' | 'lastDiscoveryError'>,
+  server: Pick<TargetToolCatalogServer, 'enabled' | 'isSystem' | 'connectionStatus' | 'lastDiscoveryError'>,
   connection?: Pick<McpConnection, 'status' | 'errorCode'>,
   testResult?: TargetMcpServerTestConnectionResult
 ): ServerStatusDisplay {
   if (!server.enabled) {
     return { labelKey: 'mcpServers.statusDisabled', tone: 'muted' };
+  }
+
+  if (server.isSystem && server.connectionStatus === 'error') {
+    return { labelKey: 'mcpServers.statusTargetDisconnected', tone: 'danger' };
   }
 
   if (connection?.status === 'connected') {
@@ -97,7 +102,7 @@ export function getMcpServerStatusDisplay(
   }
 
   const connectionStatus = testResult?.connectionStatus || server.connectionStatus;
-  if (server.type === 'builtin' || connectionStatus === 'ok') {
+  if (connectionStatus === 'ok') {
     return { labelKey: 'mcpServers.statusConnected', tone: 'success' };
   }
 
@@ -113,6 +118,7 @@ export function getMcpServerStatusDisplay(
 export const McpServerCard: React.FC<McpServerCardProps> = ({
   server,
   canEditServers,
+  canRemoveServers = canEditServers,
   pendingTestServerId,
   pendingToggleServerId,
   testResult,
@@ -138,18 +144,25 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   const managedConnectionRef = React.useRef<HTMLParagraphElement>(null);
   const rowRef = React.useRef<HTMLTableRowElement>(null);
   const [actionMenuOpen, setActionMenuOpen] = React.useState(false);
-  const canDeleteServer = canEditServers && server.canDelete && !server.isSystem;
+  const canDeleteServer = canRemoveServers && server.canDelete && !server.isSystem;
   const canEditServer = canEditServers && server.canEditConnection && !server.isSystem;
-  const canRefreshUnauthenticatedServer = canEditServers && !server.isSystem && server.canToggle && server.authType === 'none';
+  const canRefreshUnauthenticatedServer = canEditServers
+    && !server.isSystem
+    && !server.inherited
+    && server.canToggle
+    && server.authType === 'none';
   const canRefreshAuthenticatedServer = canRefreshAuthenticatedMcpTools(server, connection, connectionLoadError);
   const isTogglingServer = pendingToggleServerId === server.id;
   const isBlockedByOtherServerToggle = Boolean(pendingToggleServerId && !isTogglingServer);
-  const canToggleServer = canEditServers && server.canToggle && !isBlockedByOtherServerToggle && !isTogglingServer;
+  const canToggleServer = (server.enabled ? canRemoveServers : canEditServers)
+    && server.canToggle
+    && !isBlockedByOtherServerToggle
+    && !isTogglingServer;
   const isManagedServer = isManagedMcpServer(server);
   const serverSubtitle = isManagedServer
     ? t('mcpServers.managedByAcornOps')
     : server.inherited
-    ? `Platform default · ${server.url}`
+    ? t('mcpServers.workspaceStarterSubtitle', { url: server.url })
     : server.url;
   const hasCredential = server.credentialMode !== 'none';
   const isOAuth = server.authType === 'oauth';
@@ -164,6 +177,8 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   const readOnlyTools = server.toolCounts.readOnly;
   const statusDetail = !server.canToggle
     ? t('mcpServers.serverRecordMissing')
+    : isManagedServer && server.connectionStatus === 'error'
+    ? t('mcpServers.targetDisconnectedDetail')
     : isManagedServer
     ? t('mcpServers.managed')
     : hasCredential && !connectionLoadError
@@ -202,7 +217,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
     setActionMenuOpen(true);
   }, [connection, recoveryAction]);
 
-  const actionMenu = (
+  const actionMenu = !server.inherited ? (
     <ActionMenu
       label={t('mcpServers.serverActionsNamed', { name: server.name })}
       open={actionMenuOpen}
@@ -353,7 +368,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             </MenuItem>
           )}
     </ActionMenu>
-  );
+  ) : null;
 
   return (
     <DataTableRow
@@ -376,14 +391,6 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
             <p className={`${isManagedServer ? 'type-caption' : 'type-code'} mt-1 truncate text-ui-text-muted`} title={serverSubtitle}>
               {serverSubtitle}
             </p>
-            {server.provenance && (
-              <p className="type-caption mt-1 truncate text-ui-text-muted" title={`${server.provenance.artifactName} ${server.provenance.version}`}>
-                {t('mcpServers.catalogProvenance', {
-                  artifact: server.provenance.artifactName,
-                  version: server.provenance.version
-                })}
-              </p>
-            )}
             {hasCredential &&
               (connectionLoadError ? (
                 <p role="alert" className="type-caption mt-1 text-status-danger-text">
@@ -439,7 +446,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
           aria-disabled={!canToggleServer}
           label={t(server.enabled ? 'mcpServers.disableServerNamed' : 'mcpServers.enableServerNamed', { name: server.name })}
           title={!server.canToggle ? t('mcpServers.serverRecordMissing') : undefined}
-          disabled={!canEditServers || !server.canToggle}
+          disabled={!canToggleServer}
           onCheckedChange={(enabled) => {
             if (!canToggleServer) return;
             onToggleServer(server, enabled);

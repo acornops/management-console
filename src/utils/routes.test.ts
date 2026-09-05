@@ -443,27 +443,6 @@ describe('routes', () => {
     );
     expect(AppPaths.workspaceTargetMcp('team alpha', 'cluster/a', 'kubernetes')).toBe('/workspaces/team%20alpha/kubernetes-clusters/cluster%2Fa/mcp-servers');
     expect(AppPaths.workspaceTargetMcp('team alpha', 'vm/a', 'virtual_machine', 'connect_by_url')).toBe('/workspaces/team%20alpha/virtual-machines/vm%2Fa/mcp-servers?mcpAction=connect_by_url');
-    const catalogPath = AppPaths.workspaceCatalog('team alpha', {
-      q: 'github tools',
-      source: 'source/a',
-      compatibility: 'compatible',
-      artifact: 'artifact/a',
-      destination: 'target:cluster/a'
-    });
-    expect(catalogPath).toBe('/workspaces/team%20alpha/catalog?q=github+tools&source=source%2Fa&compatibility=compatible&artifact=artifact%2Fa&destination=target%3Acluster%2Fa');
-    expect(parseAppRoute(catalogPath)).toEqual({
-      kind: 'workspaceCatalog',
-      workspaceId: 'team alpha',
-      q: 'github tools',
-      source: 'source/a',
-      compatibility: 'compatible',
-      artifact: 'artifact/a',
-      destination: 'target:cluster/a'
-    });
-    expect(parseAppRoute('/workspaces/team-alpha/catalog?compatibility=unknown&destination=manager:manager-a')).toEqual({
-      kind: 'workspaceCatalog',
-      workspaceId: 'team-alpha'
-    });
     expect(parseAppRoute(AppPaths.workspaceMembers('team-alpha'))).toEqual({
       kind: 'workspaceMembers',
       workspaceId: 'team-alpha'
@@ -480,7 +459,6 @@ describe('routes', () => {
       kind: 'workspaceSettings',
       workspaceId: 'team-alpha'
     });
-    expect(AppPaths.workspaceMcpRegistries('team-alpha')).toBe('/workspaces/team-alpha/settings?section=mcp-registries');
     expect(parseAppRoute(AppPaths.workspaceAuditLog('team-alpha'))).toEqual({
       kind: 'workspaceAuditLog',
       workspaceId: 'team-alpha'
@@ -488,6 +466,10 @@ describe('routes', () => {
   });
 
   it('returns notFound for unsupported subviews and unknown paths', () => {
+    expect(parseAppRoute('/workspaces/team-alpha/catalog')).toEqual({
+      kind: 'notFound',
+      path: '/workspaces/team-alpha/catalog'
+    });
     expect(parseAppRoute('/workspaces/team-alpha/services')).toEqual({
       kind: 'notFound',
       path: '/workspaces/team-alpha/services'

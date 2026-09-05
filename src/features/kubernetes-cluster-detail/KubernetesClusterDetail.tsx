@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { TargetChatView } from '@/features/targets/chat/components/TargetChatView';
 import { ClusterSettingsView } from '@/features/kubernetes-cluster-detail/components/detail/views/ClusterSettingsView';
 import { McpServersView } from '@/features/targets/admin/McpServersView';
+import { canManageMcpServerTools } from '@/features/targets/admin/McpServersView.data';
 import { NamespaceScopeDialog } from '@/features/kubernetes-cluster-detail/components/detail/views/NamespaceScopeDialog';
 import { OverviewView } from '@/features/kubernetes-cluster-detail/components/detail/views/OverviewView';
 import { ResourcesView } from '@/features/kubernetes-cluster-detail/components/detail/views/ResourcesView';
@@ -109,6 +110,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
   const canDeleteSessions = Boolean(currentWorkspacePermissions?.delete_sessions);
   const canManageAiSettings = Boolean(currentWorkspacePermissions?.manage_ai_settings);
   const canReadPodLogs = Boolean(currentWorkspacePermissions?.read_target_logs);
+  const canManageMcpTools = canManageMcpServerTools(currentWorkspacePermissions);
   const canManageTools = Boolean(currentWorkspacePermissions?.manage_tools || currentWorkspacePermissions?.manage_target_insights);
   const canManageMcp = Boolean(currentWorkspacePermissions?.manage_mcp);
   const canManageCluster = Boolean(currentWorkspacePermissions?.manage_targets);
@@ -247,7 +249,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 key={targetCacheKey}
                 subject={target}
                 canManageMcp={canManageMcp}
-                canManageTools={canManageTools}
+                canManageTools={canManageMcpTools}
                 canRequestWriteRuns={canRequestWriteRuns}
                 initialCatalog={cachedCapabilityCatalogs?.mcpServers}
                 onCatalogChange={cacheMcpServersCatalog}

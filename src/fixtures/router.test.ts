@@ -12,7 +12,7 @@ describe('frontend fixture router', () => {
     resetFixtureStore();
   });
 
-  it('serves representative workspace, Kubernetes, VM, automation, catalog, and settings reads', async () => {
+  it('serves representative workspace, Kubernetes, VM, automation, and settings reads', async () => {
     const paths = [
       '/api/v1/me',
       '/api/v1/workspaces?limit=50',
@@ -21,7 +21,6 @@ describe('frontend fixture router', () => {
       `/api/v1/workspaces/${FIXTURE_IDS.workspace}/agents`,
       `/api/v1/workspaces/${FIXTURE_IDS.workspace}/automation-templates`,
       `/api/v1/workspaces/${FIXTURE_IDS.workspace}/workflows`,
-      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/catalog/artifacts`,
       `/api/v1/workspaces/${FIXTURE_IDS.workspace}/ai-settings`
     ];
     for (const path of paths) {
@@ -258,6 +257,70 @@ describe('frontend fixture router', () => {
       expect(response.status).toBe(422);
       expect(response.body).toMatchObject({ error: { code: 'FIXTURE_MODE_UNSUPPORTED' } });
     }
+  });
+
+  it('pages target MCP catalogs and preserves inherited starter provenance', async () => {
+    getFixtureState().targetMcpServers.push({
+      id: 'platform-default:fixture-starter',
+      workspace_id: FIXTURE_IDS.workspace,
+      target_id: FIXTURE_IDS.cluster,
+      target_type: 'kubernetes',
+      server_name: 'Fixture workspace starter',
+      server_url: 'https://mcp.example.test',
+      enabled: false,
+      auth_type: 'bearer_token',
+      credential_mode: 'individual',
+      auth_header_name: 'Authorization',
+      auth_header_prefix: 'Bearer ',
+      public_headers: { 'X-Client-Version': 'fixture' },
+      credential_transitioning: false,
+      inherited: true,
+      connection_status: 'unknown',
+      last_discovery_at: null,
+      last_discovery_error: null,
+      revision: 1,
+      tools: []
+    });
+
+    const first = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.cluster}/mcp/catalog?limit=1`
+    ));
+    const firstPage = first.body as { servers: Array<{ id: string }>; nextCursor?: string };
+    expect(firstPage.servers).toHaveLength(1);
+    expect(firstPage.nextCursor).toBeTruthy();
+
+    const second = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.cluster}/mcp/catalog?limit=1&cursor=${encodeURIComponent(firstPage.nextCursor!)}`
+    ));
+    expect(second.body).toMatchObject({
+      servers: [{
+        id: 'platform-default:fixture-starter',
+        inherited: true,
+        canDelete: false,
+        canEditConnection: false,
+        canToggle: false,
+        authHeaderName: 'Authorization',
+        authHeaderPrefix: 'Bearer ',
+        publicHeaders: { 'X-Client-Version': 'fixture' }
+      }]
+    });
+  });
+
+  it('pages target MCP server tools with opaque cursors', async () => {
+    const first = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.cluster}/mcp/servers/fixture-mcp/tools?limit=1`
+    ));
+    const firstPage = first.body as { items: Array<{ name: string }>; nextCursor?: string };
+    expect(firstPage.items).toHaveLength(1);
+    expect(firstPage.nextCursor).toBeTruthy();
+
+    const second = await routeFixtureRequest(request(
+      `/api/v1/workspaces/${FIXTURE_IDS.workspace}/targets/${FIXTURE_IDS.cluster}/mcp/servers/fixture-mcp/tools?limit=1&cursor=${encodeURIComponent(firstPage.nextCursor!)}`
+    ));
+    const secondPage = second.body as { items: Array<{ name: string }>; nextCursor?: string };
+    expect(secondPage.items).toHaveLength(1);
+    expect(secondPage.items[0]?.name).not.toBe(firstPage.items[0]?.name);
+    expect(secondPage.nextCursor).toBeUndefined();
   });
 
   it('fails closed for unmatched API requests', async () => {

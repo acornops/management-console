@@ -126,14 +126,25 @@
         "preview": "The read-only capability preview compiles the current Agent and requesting actor for the requested access mode, applies exact MCP readiness, and returns bounded display-safe tool and skill metadata only. It creates no conversation, run, approval, or audit record; dispatch recompiles and pins its authoritative scope.",
         "automationBoundary": "Agent chat cannot schedule, accept triggers, coordinate or delegate to other Agents. Workflows remain the only repeatable, multi-Agent, scheduled, or externally triggered automation model."
       },
-      "catalogAuthorization": {
-        "manageSources": "manage_catalog_sources",
-        "installAgentMcp": [
-          "manage_agents",
-          "manage_mcp"
-        ],
-        "installTargetMcp": "manage_mcp",
-        "installAgentSkills": [
+      "mcpCatalogManagement": {
+        "directRegistration": {
+          "agent": [
+            "manage_agents",
+            "manage_mcp"
+          ],
+          "target": "manage_mcp"
+        },
+        "registryPlaceholder": "Add from registry remains visible but disabled and performs no navigation or API request.",
+        "registryApiBoundary": "Management Console does not call workspace catalog source or artifact APIs. Public Agent and target catalog import/reimport routes are unmounted; active MCP installations originate only from direct workspace registration or platform-managed built-in synchronization. Catalog producer storage and controllers remain available for a future Platform Admin Console integration behind a new explicit boundary.",
+        "dormantRegistryAuthorization": {
+          "manageSources": "manage_catalog_sources",
+          "installAgentMcp": [
+            "manage_agents",
+            "manage_mcp"
+          ],
+          "installTargetMcp": "manage_mcp"
+        },
+        "agentSkillImportAuthorization": [
           "manage_agents",
           "manage_skills"
         ],
@@ -169,24 +180,6 @@
         ],
         "automaticMutation": false,
         "clearAfterSuccessfulRepair": true
-      },
-      "catalogRouteState": {
-        "path": "/workspaces/:workspaceId/catalog",
-        "query": [
-          "q",
-          "source",
-          "compatibility",
-          "artifact",
-          "destination"
-        ],
-        "destinations": [
-          "agent:{agentId}",
-          "target:{targetId}"
-        ],
-        "excludedDestination": "system-owned coordination records",
-        "artifactKinds": [
-          "mcp_server"
-        ]
       },
       "webhookEventTypes": [
         "workspace.deleted.v1",
@@ -352,7 +345,7 @@
         "permissions.canEdit",
         "permissions.editableRoles",
         "mcpCatalog.{workspaceId,targetId?,targetType?,clusterId?}",
-        "servers[].{id,name,url,type,enabled,isSystem,canDelete,canEditConnection,canToggle,authType,credentialMode,provenance,inherited?,publicHeaders,connectionStatus,lastDiscoveryAt,lastDiscoveryError}",
+        "servers[].{id,name,url,type,enabled,isSystem,canDelete,canEditConnection,canToggle,authType,credentialMode,provenance,inherited?,publicHeaders,credentialTransitioning,connectionStatus,lastDiscoveryAt,lastDiscoveryError}",
         "servers[].toolCounts.{total,readOnly,writeCapable,enabledConfigured,enabledEffective,writeConfigured,writeEffective}",
         "serverTools.items[].{name,description,capability,version,source,enabledConfigured,enabledEffective,effectiveDisabledReason}",
         "targetTools.{workspaceId,targetId,targetType,permissions.{canEdit,editableRoles?}}",

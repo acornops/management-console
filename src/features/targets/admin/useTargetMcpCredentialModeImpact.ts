@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 const noScheduleImpact = async (): Promise<number> => 0;
 
 export function useTargetMcpCredentialModeImpact(
@@ -8,8 +8,8 @@ export function useTargetMcpCredentialModeImpact(
 ) {
   const [impact, setImpact] = useState<{ affectedScheduleCount: number } | null>(null);
   const [loading, setLoading] = useState(false);
-  const clear = () => setImpact(null);
-  const prepare = async (serverId: string, credentialMode: 'workspace' | 'individual') => {
+  const clear = useCallback(() => setImpact(null), []);
+  const prepare = useCallback(async (serverId: string, credentialMode: 'workspace' | 'individual') => {
     setLoading(true);
     try {
       const affectedScheduleCount = credentialMode === 'individual'
@@ -19,6 +19,6 @@ export function useTargetMcpCredentialModeImpact(
     } finally {
       setLoading(false);
     }
-  };
+  }, [scheduleCount, targetId, workspaceId]);
   return { impact, loading, clear, prepare };
 }

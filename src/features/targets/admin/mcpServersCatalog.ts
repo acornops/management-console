@@ -4,6 +4,7 @@ import type {
   TargetToolCatalogServer
 } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { formatMcpError } from '@/services/control-plane/mcpError';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import type { TargetMcpToolSummary } from '@/features/targets/targetDescriptor';
 import type { CapabilitySubject } from '@/features/capabilities/admin';
 import type { CreateTargetMcpServerInput } from '@/services/controlPlaneApi';
@@ -31,24 +32,73 @@ export const DEFAULT_SERVER_FORM: ServerFormState = {
   publicHeaders: []
 };
 
+const secretMcpEndpointQueryKeys = new Set([
+  'access_token',
+  'api_key',
+  'apikey',
+  'authorization',
+  'key',
+  'password',
+  'secret',
+  'token'
+]);
+
+export function isValidRemoteMcpEndpoint(value: string): boolean {
+  if (!/^https:\/\/[^/]/i.test(value)) return false;
+  try {
+    const endpoint = new URL(value);
+    if (endpoint.protocol !== 'https:' || !endpoint.hostname) return false;
+    if (endpoint.username || endpoint.password || endpoint.hash) return false;
+    return [...endpoint.searchParams.keys()].every(
+      (key) => !secretMcpEndpointQueryKeys.has(key.trim().toLowerCase())
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function mcpServerFormSubmission(
   form: ServerFormState,
   editingServer: TargetToolCatalogServer | null,
   translate: (key: string) => string
 ) {
+  const nextPublicHeaders = publicHeadersFromRows(form.publicHeaders) || {};
+  const previousPublicHeaders = editingServer?.publicHeaders || {};
   const authWasChanged = Boolean(editingServer && (
     form.authType !== editingServer.authType
     || form.credentialMode !== editingServer.credentialMode
     || (form.authType === 'custom_header' && form.headerName.trim() !== (editingServer.authHeaderName || ''))
   ));
-  const validationKey = validatePublicHeaderRows(form.publicHeaders);
+  const publicHeadersWereChanged = Boolean(editingServer && !recordEntriesEqual(
+    nextPublicHeaders,
+    previousPublicHeaders
+  ));
+  const connectionSettingsChanged = authWasChanged || publicHeadersWereChanged;
+  const customAuthHeaderName = form.authType === 'custom_header'
+    ? form.headerName.trim().toLowerCase()
+    : '';
+  const validationKey = validatePublicHeaderRows(form.publicHeaders)
+    || (customAuthHeaderName && Object.keys(nextPublicHeaders).some(
+      (name) => name.toLowerCase() === customAuthHeaderName
+    ) ? 'publicHeaderAuthCollision' : null);
   const publicHeadersValidationError = validationKey
     ? translate(`mcpServers.${validationKey}`)
     : null;
+  const authHeaderValidationKey = form.authType === 'custom_header' && form.headerName
+    ? validateMcpAuthHeaderName(form.headerName)
+    : null;
+  const authHeaderValidationError = authHeaderValidationKey
+    ? translate(`mcpServers.${authHeaderValidationKey}`)
+    : null;
+  const serverUrlIsValid = editingServer ? true : isValidRemoteMcpEndpoint(form.url.trim());
+  const serverUrlValidationError = !editingServer && form.url.trim() && !serverUrlIsValid
+    ? translate('mcpServers.serverUrlInvalid')
+    : null;
   const serverFormIsValid = Boolean(form.name.trim())
-    && form.url.trim().startsWith('https://')
+    && serverUrlIsValid
     && !publicHeadersValidationError
-    && (form.authType !== 'custom_header' || Boolean(form.headerName.trim()));
+    && (form.authType !== 'custom_header'
+      || Boolean(form.headerName.trim()) && !authHeaderValidationError);
   const buildAuthPayload = (): CreateTargetMcpServerInput['auth'] | undefined => {
     if (editingServer && !authWasChanged) return undefined;
     if (form.authType === 'none') return { type: 'none' };
@@ -58,21 +108,40 @@ export function mcpServerFormSubmission(
       auth.headerPrefix = 'Bearer ';
     } else if (form.authType === 'custom_header' && form.headerName.trim()) {
       auth.headerName = form.headerName.trim();
+      if (!editingServer || editingServer.authType !== 'custom_header') {
+        auth.headerPrefix = '';
+      }
     }
     return auth;
   };
   const buildPublicHeadersPayload = (
     includeEmpty = false
   ): CreateTargetMcpServerInput['publicHeaders'] | undefined => (
-    publicHeadersFromRows(form.publicHeaders) || (includeEmpty ? {} : undefined)
+    Object.keys(nextPublicHeaders).length > 0 ? nextPublicHeaders : (includeEmpty ? {} : undefined)
   );
   return {
     authWasChanged,
+    publicHeadersWereChanged,
+    connectionSettingsChanged,
+    authHeaderValidationError,
     publicHeadersValidationError,
+    serverUrlValidationError,
     serverFormIsValid,
     buildAuthPayload,
     buildPublicHeadersPayload
   };
+}
+
+function recordEntriesEqual(
+  left: Record<string, string>,
+  right: Record<string, string>
+): boolean {
+  const leftEntries = Object.entries(left).sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+  const rightEntries = Object.entries(right).sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey));
+  return leftEntries.length === rightEntries.length
+    && leftEntries.every(([key, value], index) => (
+      rightEntries[index]?.[0] === key && rightEntries[index]?.[1] === value
+    ));
 }
 
 export function createPublicHeaderRow(name = '', value = ''): ServerFormState['publicHeaders'][number] {
@@ -103,9 +172,14 @@ export type PublicHeadersValidationKey =
   | 'publicHeaderNameRequired'
   | 'publicHeaderNameInvalid'
   | 'publicHeaderDuplicate'
+  | 'publicHeaderAuthCollision'
   | 'publicHeaderReserved'
   | 'publicHeaderCredentialLike'
   | 'publicHeaderValueInvalid';
+
+export type AuthHeaderValidationKey =
+  | 'authHeaderNameInvalid'
+  | 'authHeaderReserved';
 
 const publicHeaderNamePattern = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 const reservedPublicHeaderNames = new Set([
@@ -140,6 +214,13 @@ const deniedPublicHeaderNames = new Set([
   'x-access-token'
 ]);
 const deniedPublicHeaderPatterns = ['token', 'secret', 'credential', 'api-key', 'apikey'];
+
+export function validateMcpAuthHeaderName(name: string): AuthHeaderValidationKey | null {
+  if (!name || name !== name.trim() || name.length > 128 || !publicHeaderNamePattern.test(name)) {
+    return 'authHeaderNameInvalid';
+  }
+  return reservedPublicHeaderNames.has(name.toLowerCase()) ? 'authHeaderReserved' : null;
+}
 
 export function validatePublicHeaderRows(rows: ServerFormState['publicHeaders']): PublicHeadersValidationKey | null {
   const activeRows = rows.filter((row) => row.name.trim() || row.value.length > 0);
@@ -194,7 +275,9 @@ function mapTool(tool: McpTool): TargetToolCatalogItem {
     enabledConfigured: Boolean(tool.enabledConfigured ?? tool.enabled),
     enabledEffective: Boolean(tool.enabledEffective ?? tool.enabled),
     effectiveDisabledReason:
-      tool.effectiveDisabledReason === 'server_disabled' || tool.effectiveDisabledReason === 'agent_write_disabled'
+      tool.effectiveDisabledReason === 'server_disabled'
+        || tool.effectiveDisabledReason === 'agent_disconnected'
+        || tool.effectiveDisabledReason === 'agent_write_disabled'
         ? tool.effectiveDisabledReason
         : null
   };
@@ -242,6 +325,7 @@ export function buildLocalCatalog(
       authType: 'none',
       credentialMode: 'none',
       publicHeaders: {},
+      credentialTransitioning: false,
       connectionStatus: 'unknown',
       lastDiscoveryAt: null,
       lastDiscoveryError: null,
@@ -292,12 +376,18 @@ export function getToolLabel(tool: TargetToolCatalogItem): string {
   return tool.description || `Tool ${tool.name}`;
 }
 
-export function isManagedMcpServer(server: Pick<TargetToolCatalogServer, 'type' | 'isSystem' | 'url'>): boolean {
-  return server.type === 'builtin' || server.isSystem || /\/internal\/v\d+\/mcp(?:$|[/?#])/i.test(server.url);
+export function isManagedMcpServer(server: Pick<TargetToolCatalogServer, 'type' | 'isSystem'>): boolean {
+  return server.type === 'builtin' || server.isSystem;
 }
 
 export function formatMcpMutationError(error: unknown, fallback: string): string {
   return formatMcpError(error, fallback).message;
+}
+
+export function isMcpCredentialCleanupIncomplete(error: unknown): boolean {
+  return error instanceof ControlPlaneRequestError
+    && error.status === 503
+    && error.code === 'MCP_CREDENTIAL_CLEANUP_INCOMPLETE';
 }
 
 export function formatDiscoveryTimestamp(value: string): string {

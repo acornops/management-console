@@ -18,7 +18,6 @@ export function isWorkspaceDataRoute(route: AppRoute): boolean {
     route.kind === 'workspaceKubernetesClusterDiagnostics' ||
     route.kind === 'workspaceWorkflows' ||
     route.kind === 'workspaceActivity' ||
-    route.kind === 'workspaceCatalog' ||
     route.kind === 'workspaceApprovals' ||
     route.kind === 'workspaceWebhooks' ||
     route.kind === 'workspaceAiSettings'

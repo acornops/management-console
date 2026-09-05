@@ -51,6 +51,8 @@ export const McpServerFormDialog: React.FC<{
   mutationError: string | null;
   pending: boolean;
   isValid: boolean;
+  serverUrlValidationError: string | null;
+  authHeaderValidationError: string | null;
   publicHeadersValidationError: string | null;
   reviewServer?: TargetToolCatalogServer | null;
   reviewToolsLoading?: boolean;
@@ -62,11 +64,19 @@ export const McpServerFormDialog: React.FC<{
   onSubmit: () => void;
   onToggleReviewTool?: (tool: TargetToolCatalogItem, enabled: boolean) => void | Promise<void>;
   onChangeReviewToolCapability?: (tool: TargetToolCatalogItem, capability: 'read' | 'write') => void | Promise<void>;
+  onRetryReviewTools?: () => void;
   onFinishReview?: () => void;
   credentialModeConfirmation?: {
     serverName: string;
+    destinationKind: 'agent' | 'target';
     credentialMode: 'workspace' | 'individual';
     affectedScheduleCount: number;
+    onConfirm: () => void;
+    onCancel: () => void;
+  } | null;
+  connectionSettingsConfirmation?: {
+    serverName: string;
+    credentialRequired: boolean;
     onConfirm: () => void;
     onCancel: () => void;
   } | null;
@@ -78,6 +88,8 @@ export const McpServerFormDialog: React.FC<{
   mutationError,
   pending,
   isValid,
+  serverUrlValidationError,
+  authHeaderValidationError,
   publicHeadersValidationError,
   reviewServer,
   reviewToolsLoading = false,
@@ -89,8 +101,10 @@ export const McpServerFormDialog: React.FC<{
   onSubmit,
   onToggleReviewTool,
   onChangeReviewToolCapability,
+  onRetryReviewTools,
   onFinishReview,
-  credentialModeConfirmation
+  credentialModeConfirmation,
+  connectionSettingsConfirmation
 }) => {
   const { t } = useTranslation();
   const isReviewStep = mode === 'create' && createStep === 'review';
@@ -130,8 +144,11 @@ export const McpServerFormDialog: React.FC<{
     }));
   };
   const reviewTools = reviewServer?.tools || [];
-  const reviewEnabledCount = reviewTools.filter((tool) => tool.enabledConfigured).length;
-  const reviewWriteCount = reviewTools.filter((tool) => tool.capability === 'write').length;
+  const reviewTotalCount = reviewServer?.toolCounts.total ?? reviewTools.length;
+  const reviewEnabledCount = reviewServer?.toolCounts.enabledConfigured
+    ?? reviewTools.filter((tool) => tool.enabledConfigured).length;
+  const reviewWriteCount = reviewServer?.toolCounts.writeCapable
+    ?? reviewTools.filter((tool) => tool.capability === 'write').length;
   const createFlowCopy = getMcpCreateFlowCopyKeys(form.authType);
   const createSteps = [
     { id: 'configure', label: t('mcpServers.stepConfigure') },
@@ -196,7 +213,14 @@ export const McpServerFormDialog: React.FC<{
                   <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.reviewToolsBody')}</p>
                 </div>
                 {reviewToolsError && (
-                  <div className="type-caption m-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">{reviewToolsError}</div>
+                  <div className="type-caption m-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
+                    <span>{reviewToolsError}</span>
+                    {onRetryReviewTools && (
+                      <Button type="button" variant="secondary" size="sm" onClick={onRetryReviewTools}>
+                        {t('common.retry')}
+                      </Button>
+                    )}
+                  </div>
                 )}
                 {mutationError && (
                   <div className="type-caption m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">{mutationError}</div>
@@ -223,7 +247,7 @@ export const McpServerFormDialog: React.FC<{
                   <div className="rounded-lg border border-ui-border bg-ui-bg px-4 py-3">
                     <div className="flex items-center justify-between gap-4 border-b border-ui-border py-2 first:pt-0">
                       <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
-                      <p className="type-panel-title tracking-tight text-ui-text">{reviewTools.length}</p>
+                      <p className="type-panel-title tracking-tight text-ui-text">{reviewTotalCount}</p>
                     </div>
                     <div className="flex items-center justify-between gap-4 border-b border-ui-border py-2">
                       <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
@@ -261,7 +285,8 @@ export const McpServerFormDialog: React.FC<{
                     <span className="type-label px-1">{t('mcpServers.serverUrl')}</span>
                     <TextInput
                       type="url"
-                      pattern="https://.*"
+                      aria-invalid={serverUrlValidationError ? true : undefined}
+                      aria-describedby={serverUrlValidationError ? 'mcp-server-url-error' : undefined}
                       value={form.url}
                       onChange={(event) =>
                         onFormChange((current) => ({
@@ -273,6 +298,11 @@ export const McpServerFormDialog: React.FC<{
                       disabled={urlReadOnly}
                       className={mcpServerInputClassName}
                     />
+                    {serverUrlValidationError && (
+                      <span id="mcp-server-url-error" className="type-caption block px-1 text-status-danger-text">
+                        {serverUrlValidationError}
+                      </span>
+                    )}
                   </label>
                 </div>
 
@@ -322,7 +352,8 @@ export const McpServerFormDialog: React.FC<{
                       <label className="space-y-1">
                         <span className="type-label px-1">{t('mcpServers.headerName')}</span>
                         <TextInput
-                          aria-describedby={mode === 'create' ? 'mcp-header-name-help' : undefined}
+                          aria-invalid={authHeaderValidationError ? true : undefined}
+                          aria-describedby={authHeaderValidationError ? 'mcp-header-name-error' : mode === 'create' ? 'mcp-header-name-help' : undefined}
                           value={form.headerName}
                           onChange={(event) =>
                             onFormChange((current) => ({
@@ -333,6 +364,11 @@ export const McpServerFormDialog: React.FC<{
                           placeholder={t('mcpServers.headerNamePlaceholder')}
                           className={mcpServerInputClassName}
                         />
+                        {authHeaderValidationError && (
+                          <span id="mcp-header-name-error" className="type-caption block px-1 text-status-danger-text">
+                            {authHeaderValidationError}
+                          </span>
+                        )}
                         {mode === 'create' && (
                           <span id="mcp-header-name-help" className="type-caption block px-1 text-ui-text-muted">
                             {t('mcpServers.headerNameCreateHelp')}
@@ -433,10 +469,14 @@ export const McpServerFormDialog: React.FC<{
                     description={
                       credentialModeConfirmation.credentialMode === 'individual'
                         ? credentialModeConfirmation.affectedScheduleCount > 0
-                          ? t('mcpServers.confirmWorkspaceToIndividualTargetWithSchedules', {
+                          ? t(credentialModeConfirmation.destinationKind === 'agent'
+                              ? 'mcpServers.confirmWorkspaceToIndividualWithSchedules'
+                              : 'mcpServers.confirmWorkspaceToIndividualTargetWithSchedules', {
                               count: credentialModeConfirmation.affectedScheduleCount
                             })
-                          : t('mcpServers.confirmWorkspaceToIndividualTarget')
+                          : t(credentialModeConfirmation.destinationKind === 'agent'
+                              ? 'mcpServers.confirmWorkspaceToIndividual'
+                              : 'mcpServers.confirmWorkspaceToIndividualTarget')
                         : t('mcpServers.confirmIndividualToWorkspace')
                     }
                     tone="warning"
@@ -445,6 +485,23 @@ export const McpServerFormDialog: React.FC<{
                     cancelLabel={t('common.cancel')}
                     onConfirm={credentialModeConfirmation.onConfirm}
                     onCancel={credentialModeConfirmation.onCancel}
+                  />
+                )}
+                {connectionSettingsConfirmation && (
+                  <InlineConfirmation
+                    id="target-mcp-connection-settings-confirmation"
+                    title={t('mcpServers.connectionSettingsChangeTitle', {
+                      name: connectionSettingsConfirmation.serverName
+                    })}
+                    description={t(connectionSettingsConfirmation.credentialRequired
+                      ? 'mcpServers.confirmConnectionSettingsReconnect'
+                      : 'mcpServers.confirmConnectionSettingsVerify')}
+                    tone="warning"
+                    confirmLabel={t('mcpServers.connectionSettingsChangeConfirm')}
+                    confirmDisabled={pending}
+                    cancelLabel={t('common.cancel')}
+                    onConfirm={connectionSettingsConfirmation.onConfirm}
+                    onCancel={connectionSettingsConfirmation.onCancel}
                   />
                 )}
               </div>
@@ -473,7 +530,7 @@ export const McpServerFormDialog: React.FC<{
 
         <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-6 py-4">
           {isReviewStep ? (
-            <Button onClick={onFinishReview || onClose} disabled={pending} variant="primary" size="sm">
+            <Button onClick={onFinishReview || onClose} disabled={pending || reviewToolsLoading || Boolean(reviewToolsError)} variant="primary" size="sm">
               {t('mcpServers.finish')}
             </Button>
           ) : (
@@ -481,7 +538,7 @@ export const McpServerFormDialog: React.FC<{
               <Button onClick={onClose} disabled={pending} variant="secondary" size="sm">
                 {t('app.cancel')}
               </Button>
-              <Button onClick={onSubmit} disabled={pending || !isValid || Boolean(credentialModeConfirmation)} variant="primary" size="sm">
+              <Button onClick={onSubmit} disabled={pending || !isValid || Boolean(credentialModeConfirmation) || Boolean(connectionSettingsConfirmation)} variant="primary" size="sm">
                 {pending
                   ? t(mode === 'edit' ? 'mcpServers.saving' : createFlowCopy.pending)
                   : t(mode === 'edit' ? 'mcpServers.save' : createFlowCopy.action)}

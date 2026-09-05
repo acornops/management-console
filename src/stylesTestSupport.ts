@@ -43,6 +43,9 @@ export const resourceExplorerLayout = readSource(
 export const mcpServersView = readSource(
   'src/features/targets/admin/McpServersView.tsx'
 );
+export const mcpServersCatalogState = readSource(
+  'src/features/targets/admin/McpServersCatalogState.tsx'
+);
 export const mcpServersViewHeader = readSource(
   'src/features/targets/admin/McpServersViewHeader.tsx'
 );

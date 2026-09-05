@@ -32,14 +32,6 @@ const cases = [
     boundary: '[data-master-detail-layout="true"]',
     pendingEmptyCopy: 'No workflows configured.',
     resolvedCopy: 'Production health review'
-  },
-  {
-    name: 'Catalog',
-    route: '/workspaces/fixture-workspace/catalog',
-    delayPath: '/catalog/artifacts',
-    boundary: '[data-master-detail-layout="true"]',
-    pendingEmptyCopy: 'No catalog artifacts found',
-    resolvedCopy: 'GitHub Observer'
   }
 ] as const;
 

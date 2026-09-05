@@ -6,7 +6,7 @@ import { McpOAuthDialog } from '@/features/catalog/McpOAuthDialog';
 import type {
   McpConnection,
   McpOAuthPreparation
-} from '@/services/control-plane/catalogApi';
+} from '@/services/control-plane/mcpConnectionApi';
 
 interface McpDialogInstallation {
   id: string;

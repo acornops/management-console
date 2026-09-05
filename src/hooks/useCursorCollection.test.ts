@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CursorCollectionController, type CursorCollectionOptions } from '@/hooks/useCursorCollection';
+import { CursorCollectionController, cursorCollectionStateForScope, type CursorCollectionOptions } from '@/hooks/useCursorCollection';
 import type { PagedResult } from '@/services/control-plane/types';
 import { clearSessionDataCache } from '@/hooks/sessionDataCache';
 
@@ -85,6 +85,82 @@ describe('CursorCollectionController', () => {
       nextCursor: undefined,
       phase: 'ready'
     });
+  });
+
+  it('clears visible items for an identity-scoped collection when filters change', async () => {
+    const filteredPage = deferred<PagedResult<Item>>();
+    const loadPage = vi.fn()
+      .mockResolvedValueOnce({ items: [{ id: 'one', label: 'old' }] })
+      .mockReturnValueOnce(filteredPage.promise);
+    const controller = new CursorCollectionController(options(loadPage, {
+      cacheKey: 'workspace:1:server-tools',
+      clearItemsOnScopeChange: true
+    }));
+    await controller.reset();
+
+    controller.updateOptions(options(loadPage, {
+      cacheKey: 'workspace:1:server-tools',
+      clearItemsOnScopeChange: true,
+      filters: { query: 'new-server' }
+    }));
+    const pending = controller.reset();
+
+    expect(controller.getState()).toEqual({ items: [], phase: 'loading' });
+    filteredPage.resolve({ items: [{ id: 'two', label: 'new' }] });
+    await pending;
+    expect(controller.getState()).toEqual({
+      items: [{ id: 'two', label: 'new' }],
+      nextCursor: undefined,
+      phase: 'ready'
+    });
+  });
+
+  it('hides retained rows during the render before an identity reset effect commits', () => {
+    const staleState = { items: [{ id: 'server-one-tool' }], phase: 'ready' as const };
+
+    expect(cursorCollectionStateForScope(staleState, true, 'server-one', 'server-two'))
+      .toEqual({ items: [], phase: 'loading' });
+    expect(cursorCollectionStateForScope(staleState, false, 'server-one', 'server-two'))
+      .toBe(staleState);
+  });
+
+  it('rehydrates the exact cached scope while clearing uncached identity changes', async () => {
+    const secondScope = deferred<PagedResult<Item>>();
+    const firstScopeRefresh = deferred<PagedResult<Item>>();
+    const loadPage = vi.fn()
+      .mockResolvedValueOnce({ items: [{ id: 'one', label: 'cached-one' }] })
+      .mockReturnValueOnce(secondScope.promise)
+      .mockReturnValueOnce(firstScopeRefresh.promise);
+    const controller = new CursorCollectionController(options(loadPage, {
+      cacheKey: 'workspace:1:server-tools',
+      clearItemsOnScopeChange: true
+    }));
+    await controller.reset();
+
+    controller.updateOptions(options(loadPage, {
+      cacheKey: 'workspace:1:server-tools',
+      clearItemsOnScopeChange: true,
+      filters: { query: 'server-two' }
+    }));
+    const secondPending = controller.reset();
+    expect(controller.getState()).toEqual({ items: [], phase: 'loading' });
+    secondScope.resolve({ items: [{ id: 'two', label: 'cached-two' }] });
+    await secondPending;
+
+    controller.updateOptions(options(loadPage, {
+      cacheKey: 'workspace:1:server-tools',
+      clearItemsOnScopeChange: true,
+      filters: { query: '' }
+    }));
+    const firstPending = controller.reset();
+    expect(controller.getState()).toEqual({
+      items: [{ id: 'one', label: 'cached-one' }],
+      nextCursor: undefined,
+      phase: 'refreshing'
+    });
+    firstScopeRefresh.resolve({ items: [{ id: 'one', label: 'fresh-one' }] });
+    await firstPending;
+    expect(controller.getState().items).toEqual([{ id: 'one', label: 'fresh-one' }]);
   });
 
   it('hydrates a remounted collection from session cache while revalidating', async () => {

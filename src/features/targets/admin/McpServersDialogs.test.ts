@@ -41,4 +41,20 @@ describe('MCP server form dialog layout', () => {
 
     expect(source).toContain('grid min-h-0 flex-1 gap-6 overflow-y-auto');
   });
+
+  it('associates unsafe endpoint feedback with the direct-connect URL field', () => {
+    const source = readFileSync(new URL('./McpServersDialogs.tsx', import.meta.url), 'utf8');
+
+    expect(source).toContain("aria-describedby={serverUrlValidationError ? 'mcp-server-url-error' : undefined}");
+    expect(source).toContain('id="mcp-server-url-error"');
+    expect(source).toContain('aria-invalid={serverUrlValidationError ? true : undefined}');
+  });
+
+  it('associates custom credential-header feedback with the header-name field', () => {
+    const source = readFileSync(new URL('./McpServersDialogs.tsx', import.meta.url), 'utf8');
+
+    expect(source).toContain("aria-describedby={authHeaderValidationError ? 'mcp-header-name-error'");
+    expect(source).toContain('id="mcp-header-name-error"');
+    expect(source).toContain('aria-invalid={authHeaderValidationError ? true : undefined}');
+  });
 });

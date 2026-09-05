@@ -1,6 +1,5 @@
 import { FIXTURE_IDS, getFixtureState, resetFixtureStore } from './store';
 import { routeAutomationTemplateFixtureRequest } from './automationTemplateRoutes';
-import { routeCatalogFixtureRequest } from './catalogRoutes';
 import { routeMcpParityConnection } from './mcpParity';
 import { targetSummary, targetToolCatalog, workflowOptions } from './presenters';
 import { workflowCapabilityPreview } from './workflowCapabilityPreview';
@@ -15,6 +14,7 @@ import { applyClusterPermissionFixturePatch } from './clusterPermissionRoutes';
 import { fixtureAgentVEnrollmentInstructions, fixtureAgentVRepairInstructions } from './agentVInstallInstructions';
 import { routeAgentVAccessPolicyFixtureRequest } from './agentVAccessPolicyRoutes';
 import { fixtureTargetType, routeTargetFixtureRequest, targetSkillCatalog } from './targetFixtureRoutes';
+import { fixtureCursorPage, targetMcpCatalogFixture } from './targetMcpFixtures';
 
 export interface FixtureResponse {
   status: number;
@@ -58,30 +58,6 @@ function clone<T>(value: T): T {
 
 function id(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function mcpCatalog(state: ReturnType<typeof getFixtureState>, targetId: string) {
-  const servers = state.targetMcpServers
-    .filter((server) => server.target_id === targetId)
-    .map((server) => ({
-      id: server.id,
-      name: server.server_name,
-      url: server.server_url,
-      type: server.server_url.startsWith('builtin:') ? 'builtin' : 'mcp',
-      enabled: server.enabled,
-      isSystem: server.server_url.startsWith('builtin:'),
-      canDelete: !server.server_url.startsWith('builtin:'),
-      canEditConnection: !server.server_url.startsWith('builtin:'),
-      canToggle: true,
-      authType: server.auth_type,
-      credentialMode: server.credential_mode,
-      connectionStatus: server.connection_status,
-      lastDiscoveryAt: server.last_discovery_at,
-      lastDiscoveryError: server.last_discovery_error,
-      toolCounts: { total: server.tools.length, readOnly: server.tools.filter((tool: Record<string, any>) => tool.capability === 'read').length, writeCapable: server.tools.filter((tool: Record<string, any>) => tool.capability === 'write').length, enabledConfigured: server.tools.filter((tool: Record<string, any>) => tool.enabled).length, enabledEffective: server.tools.filter((tool: Record<string, any>) => tool.enabled).length, writeConfigured: server.tools.filter((tool: Record<string, any>) => tool.capability === 'write' && tool.enabled).length, writeEffective: server.tools.filter((tool: Record<string, any>) => tool.capability === 'write' && tool.enabled).length },
-      tools: server.tools.map((tool: Record<string, any>) => ({ name: tool.name, description: tool.description, capability: tool.capability, version: tool.version, source: tool.source, enabledConfigured: tool.enabled, enabledEffective: tool.enabled, effectiveDisabledReason: null }))
-    }));
-  return { workspaceId: FIXTURE_IDS.workspace, clusterId: targetId === FIXTURE_IDS.cluster ? targetId : undefined, targetId, targetType: fixtureTargetType(state, targetId), permissions: { canEdit: true, editableRoles: ['owner', 'admin'] }, servers };
 }
 
 export async function routeFixtureRequest(request: Request): Promise<FixtureResponse> {
@@ -546,14 +522,11 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   }
   match = path.match(/^\/api\/v1\/workflow-sessions\/([^/]+)\/messages$/);
   if (match && method === 'POST') return json({ message_id: id('fixture-workflow-message'), run_id: FIXTURE_IDS.run, executionId: 'fixture-workflow-execution', status: 'completed' }, 202);
-  const catalogResponse = await routeCatalogFixtureRequest({ request, state, path, method });
-  if (catalogResponse) return catalogResponse;
-
   const targetResponse = await routeTargetFixtureRequest({ method, path, request, state });
   if (targetResponse) return targetResponse;
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/mcp\/catalog$/);
-  if (match && method === 'GET') return json(mcpCatalog(state, decode(match[2])));
+  if (match && method === 'GET') return json(targetMcpCatalogFixture(state, decode(match[2]), url));
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/tools$/);
   if (match && method === 'GET') return json(targetToolCatalog(state, decode(match[2])));
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/tools\/([^/]+)$/);
@@ -588,12 +561,12 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/mcp\/servers$/);
   if (match) {
-    if (method === 'GET') return json(clone(state.targetMcpServers));
+    if (method === 'GET') return json(clone(state.targetMcpServers.filter((server) => server.target_id === decode(match![2]))));
     if (method === 'POST') {
       const input = await bodyOf(request);
       if (input.auth?.credential || input.bearerToken || input.customHeaderValue) return fixtureError('External credentials are unavailable in frontend fixture mode.');
       const authType = input.auth?.type || input.authType || 'none';
-      const server = { id: id('fixture-mcp'), workspace_id: decode(match[1]), target_id: decode(match[2]), target_type: fixtureTargetType(state, decode(match[2])), server_name: input.name || input.serverName, server_url: input.url || input.serverUrl, enabled: input.enabled !== false, auth_type: authType, credential_mode: authType === 'none' ? 'none' : input.credentialMode || 'individual', auth_header_name: input.auth?.headerName, auth_header_prefix: input.auth?.headerPrefix, connection_status: 'unknown', last_discovery_at: null, last_discovery_error: null, revision: 1, tools: input.tools || [] };
+      const server = { id: id('fixture-mcp'), workspace_id: decode(match[1]), target_id: decode(match[2]), target_type: fixtureTargetType(state, decode(match[2])), server_name: input.name || input.serverName, server_url: input.url || input.serverUrl, enabled: input.enabled !== false, auth_type: authType, credential_mode: authType === 'none' ? 'none' : input.credentialMode || 'individual', auth_header_name: input.auth?.headerName, auth_header_prefix: input.auth?.headerPrefix, public_headers: input.publicHeaders || {}, credential_transitioning: false, inherited: false, connection_status: 'unknown', last_discovery_at: null, last_discovery_error: null, revision: 1, tools: input.tools || [] };
       state.targetMcpServers.push(server);
       return json(server, 201);
     }
@@ -603,11 +576,12 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'GET') {
     const server = state.targetMcpServers.find((candidate) => candidate.target_id === decode(match![2]) && candidate.id === decode(match![3]));
     if (!server) return notFound('Target MCP server');
-    return json({ items: server.tools.map((tool: Record<string, any>) => ({
+    const tools = server.tools.map((tool: Record<string, any>) => ({
       name: tool.name, description: tool.description, capability: tool.capability || 'read',
       version: tool.version, source: tool.source || 'mcp', enabledConfigured: tool.enabled === true,
       enabledEffective: tool.enabled === true, effectiveDisabledReason: null
-    })) });
+    }));
+    return json(fixtureCursorPage(tools, url, `target-mcp-tools:${decode(match[2])}:${decode(match[3])}`));
   }
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/targets\/([^/]+)\/issues\/summary$/);

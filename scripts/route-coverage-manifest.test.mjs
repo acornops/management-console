@@ -29,6 +29,11 @@ describe('route coverage manifest', () => {
 
   it('preserves scroll only for intentional deep-link baselines', () => {
     expect(routeCoverageManifest.filter((route) => route.preserveScroll).map((route) => route.name))
-      .toEqual(['workspace-mcp-registries']);
+      .toEqual([]);
+  });
+
+  it('does not revive the removed workspace MCP catalog route', () => {
+    expect(routeCoverageManifest.some((route) => route.name.startsWith('workspace-catalog'))).toBe(false);
+    expect(routeCoverageManifest.some((route) => /^\/workspaces\/[^/]+\/catalog(?:[/?]|$)/.test(route.path))).toBe(false);
   });
 });

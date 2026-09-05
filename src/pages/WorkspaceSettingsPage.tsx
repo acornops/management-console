@@ -8,8 +8,6 @@ import { ICONS } from '@/constants';
 import { isKnownOnlyWorkspaceOwner } from '@/app/workspaceLeave';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import type { ProjectMember, Workspace } from '@/types';
-import { WorkspaceCatalogSources } from '@/pages/WorkspaceCatalogSources';
-import { useUrlSearchState } from '@/hooks/useUrlSearchState';
 
 interface WorkspaceSettingsPageProps {
   workspace: Workspace;
@@ -59,18 +57,10 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
   embedded = false
 }) => {
   const { t } = useTranslation();
-  const urlSearch = useUrlSearchState();
   const [isConfirmingLeave, setIsConfirmingLeave] = React.useState(false);
   const [isLeaving, setIsLeaving] = React.useState(false);
   const [leaveError, setLeaveError] = React.useState('');
   const leaveBlockedByKnownOnlyOwner = isKnownOnlyWorkspaceOwner(currentUserRole, workspace.memberCount);
-
-  React.useEffect(() => {
-    if (urlSearch.get('section') !== 'mcp-registries') return;
-    window.requestAnimationFrame(() => {
-      document.getElementById('mcp-registries')?.scrollIntoView({ block: 'start' });
-    });
-  }, [urlSearch]);
 
   const handleLeaveWorkspace = async () => {
     if (!onLeaveWorkspace) return;
@@ -104,8 +94,6 @@ export const WorkspaceSettingsPage: React.FC<WorkspaceSettingsPageProps> = ({
               <SettingRow icon={ICONS.LayoutGrid} label={t('workspaceSettings.workspaceName')} description={workspace.name} />
               <SettingRow icon={ICONS.Globe} label={t('workspaceSettings.plan')} description={workspace.plan?.name || t('workspaceSettings.planUnavailable')} />
             </SettingsSection>
-
-            <WorkspaceCatalogSources workspaceId={workspace.id} canManage={Boolean(workspace.permissions?.manage_catalog_sources)} />
 
             <SettingsSection title={t('workspaceSettings.quotasTitle')} description={t('workspaceSettings.quotasBody')}>
               <SettingRow

@@ -5,7 +5,6 @@ test.describe.configure({ mode: 'serial' });
 
 const clusterRoute = '/workspaces/fixture-workspace/kubernetes-clusters';
 const workflowRoute = '/workspaces/fixture-workspace/workflows?q=geometry-no-match';
-const mcpCatalogRoute = '/workspaces/fixture-workspace/catalog';
 
 async function expectContainedControls(bar: Locator) {
   const barBox = await bar.boundingBox();
@@ -131,45 +130,5 @@ test('workflow search-only discovery keeps search dominant without overflow', as
       expect(resultBox!.x + resultBox!.width).toBeLessThanOrEqual(barBox!.x + barBox!.width);
     }
     if (width < 1440) await expectContainedControls(workflow.bar);
-  }
-});
-
-test('MCP discovery shares two visible filter columns before settling into one row', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  const catalog = await openDiscoverySurface(page, mcpCatalogRoute, 'Search catalog');
-  const source = catalog.bar.getByRole('button', { name: 'Catalog source' });
-  const compatibility = catalog.bar.getByRole('button', { name: 'Compatibility' });
-  await expectFullInnerWidth(catalog.bar, catalog.search);
-  await expectFullInnerWidth(catalog.bar, source);
-  await expectFullInnerWidth(catalog.bar, compatibility);
-
-  await page.setViewportSize({ width: 768, height: 900 });
-  const [searchBox, sourceBox, compatibilityBox] = await Promise.all([
-    catalog.search.boundingBox(),
-    source.boundingBox(),
-    compatibility.boundingBox()
-  ]);
-  await expectFullInnerWidth(catalog.bar, catalog.search);
-  expect(Math.abs(sourceBox!.width - compatibilityBox!.width)).toBeLessThanOrEqual(1);
-  expect(Math.abs(sourceBox!.y - compatibilityBox!.y)).toBeLessThanOrEqual(1);
-  expect(sourceBox!.y).toBeGreaterThanOrEqual(searchBox!.y + searchBox!.height + 11);
-
-  for (const width of [1024, 1279, 1280, 1440]) {
-    await page.setViewportSize({ width, height: 1000 });
-    const [wideSearchBox, wideSourceBox, wideCompatibilityBox, resultBox] = await Promise.all([
-      catalog.search.boundingBox(),
-      source.boundingBox(),
-      compatibility.boundingBox(),
-      catalog.result.boundingBox()
-    ]);
-    const centers = [wideSearchBox, wideSourceBox, wideCompatibilityBox, resultBox]
-      .map((box) => box!.y + (box!.height / 2));
-    expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(2);
-    expect(wideSearchBox!.width).toBeGreaterThan(wideSourceBox!.width);
-    expect(wideSourceBox!.width).toBeGreaterThanOrEqual(168);
-    expect(wideSourceBox!.width).toBeLessThanOrEqual(224);
-    expect(Math.abs(wideSourceBox!.width - wideCompatibilityBox!.width)).toBeLessThanOrEqual(1);
-    await expectRightAlignedResult(catalog.bar, catalog.result);
-    await expectContainedControls(catalog.bar);
   }
 });

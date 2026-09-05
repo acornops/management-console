@@ -14,7 +14,6 @@
     "src/pages/WorkspacesPage.tsx",
     "src/pages/WorkspaceOverviewPage.tsx",
     "src/pages/WorkspaceAgentsPage.tsx",
-    "src/pages/WorkspaceCatalogPage.tsx",
     "src/pages/WorkspaceWorkflowsPage.tsx",
     "src/pages/WorkspaceActivityPage.tsx",
     "src/pages/WorkspaceSchedulesPage.tsx",

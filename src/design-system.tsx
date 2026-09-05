@@ -54,7 +54,7 @@ import '@/styles.css';
 
 type CatalogTab = 'overview' | 'runs';
 type CatalogFilter = 'all' | 'attention';
-type CatalogSourceFilter = 'all' | 'registry' | 'community';
+type CatalogPublisherFilter = 'all' | 'official' | 'community';
 type CatalogCompatibilityFilter = 'all' | 'compatible' | 'incompatible';
 
 const catalogTabs: Array<CompactControlItem<CatalogTab>> = [
@@ -78,14 +78,14 @@ const Catalog = () => {
   const [singleFilterQuery, setSingleFilterQuery] = React.useState('');
   const [singleFilterStatus, setSingleFilterStatus] = React.useState<CatalogFilter>('attention');
   const [multiFilterQuery, setMultiFilterQuery] = React.useState('missing');
-  const [multiFilterSource, setMultiFilterSource] = React.useState<CatalogSourceFilter>('community');
+  const [multiFilterPublisher, setMultiFilterPublisher] = React.useState<CatalogPublisherFilter>('community');
   const [multiFilterCompatibility, setMultiFilterCompatibility] = React.useState<CatalogCompatibilityFilter>('incompatible');
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [destructiveDialogOpen, setDestructiveDialogOpen] = React.useState(false);
   const [inlineConfirmationOpen, setInlineConfirmationOpen] = React.useState(false);
   const [toastVisible, setToastVisible] = React.useState(false);
-  const multiFilterActive = Boolean(multiFilterQuery.trim()) || multiFilterSource !== 'all' || multiFilterCompatibility !== 'all';
+  const multiFilterActive = Boolean(multiFilterQuery.trim()) || multiFilterPublisher !== 'all' || multiFilterCompatibility !== 'all';
 
   React.useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -228,22 +228,22 @@ const Catalog = () => {
             <DiscoveryFilterBar
               idPrefix="catalog-multi-filter"
               query={multiFilterQuery}
-              queryLabel="Search MCP catalog"
-              queryPlaceholder="Search MCP servers"
+              queryLabel="Search package catalog"
+              queryPlaceholder="Search packages"
               queryClearLabel="Clear search"
-              resultSummary={multiFilterActive ? '0 of 12 servers' : '12 servers'}
+              resultSummary={multiFilterActive ? '0 of 12 packages' : '12 packages'}
               filters={[
-                createDiscoveryFilterGroup<CatalogSourceFilter>({
-                  id: 'source',
-                  value: multiFilterSource,
+                createDiscoveryFilterGroup<CatalogPublisherFilter>({
+                  id: 'publisher',
+                  value: multiFilterPublisher,
                   defaultValue: 'all',
-                  label: 'Catalog source',
+                  label: 'Publisher',
                   options: [
-                    { value: 'all', label: 'All sources', count: 12 },
-                    { value: 'registry', label: 'Registry', count: 8 },
+                    { value: 'all', label: 'All publishers', count: 12 },
+                    { value: 'official', label: 'Official', count: 8 },
                     { value: 'community', label: 'Community', count: 4 }
                   ],
-                  onChange: setMultiFilterSource
+                  onChange: setMultiFilterPublisher
                 }),
                 createDiscoveryFilterGroup<CatalogCompatibilityFilter>({
                   id: 'compatibility',
@@ -260,7 +260,7 @@ const Catalog = () => {
               ]}
               clearAllLabel="Clear all"
               onQueryChange={setMultiFilterQuery}
-              onClearAll={() => { setMultiFilterQuery(''); setMultiFilterSource('all'); setMultiFilterCompatibility('all'); }}
+              onClearAll={() => { setMultiFilterQuery(''); setMultiFilterPublisher('all'); setMultiFilterCompatibility('all'); }}
             />
           </div>
         </div>

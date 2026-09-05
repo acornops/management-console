@@ -99,7 +99,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
           <div className="min-w-0 flex-1">
             <span className="type-row-title block truncate">{skill.name}</span>
             {skill.inherited && (
-              <StatusBadge tone="neutral" className="mt-1">Platform default</StatusBadge>
+              <StatusBadge tone="neutral" className="mt-1">{t('targetSkills.workspaceStarter')}</StatusBadge>
             )}
             <span className="mt-1 block line-clamp-2 break-words type-caption leading-5 text-ui-text-muted" title={skill.description}>
               {skill.description}

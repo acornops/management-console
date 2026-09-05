@@ -21,13 +21,6 @@ export const routeCoverageManifest = [
   { name: 'workspace-overview', category: 'workspace', path: `${workspace}/overview`, ready: 'h1' },
   { name: 'workspace-kubernetes-clusters', category: 'workspace', path: `${workspace}/kubernetes-clusters`, ready: 'h1' },
   { name: 'workspace-virtual-machines', category: 'workspace', path: `${workspace}/virtual-machines`, ready: 'h1' },
-  { name: 'workspace-catalog', category: 'workspace', path: `${workspace}/catalog`, ready: 'h1' },
-  {
-    name: 'workspace-catalog-artifact-destination',
-    category: 'workspace',
-    path: `${workspace}/catalog?artifact=fixture-catalog-artifact&destination=agent%3Afixture-specialist`,
-    ready: '[data-catalog-artifact="fixture-catalog-artifact"]'
-  },
   { name: 'workspace-agents', category: 'agent', path: `${workspace}/agents`, ready: 'h1' },
   { name: 'agent-chat', category: 'agent', path: `${workspace}/agents/fixture-specialist/chat`, ready: 'h1' },
   { name: 'agent-chat-existing', category: 'agent', path: `${workspace}/agents/fixture-specialist/chat?session=fixture-agent-session`, ready: '[data-target-chat-surface="true"]' },
@@ -81,13 +74,6 @@ export const routeCoverageManifest = [
     ready: '[data-assistant-return="true"]'
   },
   { name: 'workspace-settings', category: 'settings', path: `${workspace}/settings`, ready: '[data-settings-tab="workspace"]' },
-  {
-    name: 'workspace-mcp-registries',
-    category: 'settings',
-    path: `${workspace}/settings?section=mcp-registries`,
-    ready: 'h1',
-    preserveScroll: true
-  },
   { name: 'account-settings', category: 'settings', path: '/account', ready: 'h1' },
   { name: 'cluster-overview', category: 'kubernetes', path: `${cluster}/overview`, ready: 'h1' },
   { name: 'cluster-resources', category: 'kubernetes', path: `${cluster}/resources`, ready: 'h1' },

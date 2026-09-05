@@ -2,7 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button, DialogFrame, InlineAlert, InlineConfirmation } from '@acornops/ui';
-import { WorkflowMcpCredentialDialog } from '@/pages/WorkspaceWorkflowsPage.components';
+import {
+  WorkflowMcpCredentialDialog,
+  WorkflowMcpOAuthResultBridge,
+  useWorkflowMcpOAuthFeedback
+} from '@/pages/WorkflowMcpCredentialDialog';
 import {
   WorkspaceScheduleFormFields,
   type ScheduleDraftField
@@ -46,6 +50,8 @@ interface WorkspaceScheduleDialogProps {
   workspaceId: string;
 }
 
+const noScheduleMcpRequirements: WorkflowMcpRequirementPreview[] = [];
+
 export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = ({
   capabilityPreview,
   capabilityPreviewError,
@@ -75,9 +81,17 @@ export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = (
   workspaceId
 }) => {
   const { t } = useTranslation();
+  const oauth = useWorkflowMcpOAuthFeedback({
+    workspaceId,
+    requirements: capabilityPreview?.mcpRequirements || noScheduleMcpRequirements,
+    openRequirement: credentialRequirement,
+    closeOpenRequirement: () => setCredentialRequirement(null),
+    reloadReadiness: onRetryCapabilityPreview
+  });
 
   return (
     <>
+      <WorkflowMcpOAuthResultBridge />
       <DialogFrame
         open={open}
         onClose={onClose}
@@ -109,6 +123,7 @@ export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = (
           />
         )}
         {draftError && <InlineAlert tone="danger" role="alert" aria-live="assertive">{draftError}</InlineAlert>}
+        {oauth.feedback && <InlineAlert tone={oauth.feedback.tone}>{oauth.feedback.message}</InlineAlert>}
         <WorkspaceScheduleFormFields
           capabilityPreview={capabilityPreview}
           capabilityPreviewError={capabilityPreviewError}
@@ -130,6 +145,7 @@ export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = (
         <WorkflowMcpCredentialDialog
           workspaceId={workspaceId}
           requirement={credentialRequirement}
+          oauthReturnPath={oauth.returnPath}
           onClose={() => setCredentialRequirement(null)}
           onConnected={onCredentialConnected}
         />

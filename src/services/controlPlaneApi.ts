@@ -19,7 +19,7 @@ import {
 } from './control-plane/http';
 import { controlPlaneAuthApi } from './control-plane/authApi';
 import { kubernetesClusterApi } from './control-plane/kubernetesClusterApi';
-import { catalogApi } from './control-plane/catalogApi';
+import { mcpConnectionApi } from './control-plane/mcpConnectionApi';
 import { pageQuery } from './control-plane/query';
 import {
   getTarget,
@@ -116,7 +116,6 @@ export type {
   TargetSkillSyncStatus,
   TargetMcpServerAuthInput,
   TargetMcpServerTestConnectionResult,
-  TargetMcpServerToolInput,
   UpdateTargetSkillInput,
   UpdateTargetMcpServerInput,
   UpdateTargetToolInput,
@@ -147,7 +146,7 @@ export type {
 
 export const controlPlaneApi = {
   ...controlPlaneAuthApi,
-  ...catalogApi,
+  ...mcpConnectionApi,
   ...webhookApi,
   ...autoTriageApi,
   ...targetSessionApi,

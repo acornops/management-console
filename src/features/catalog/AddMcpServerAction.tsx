@@ -7,19 +7,61 @@ import {
   Button,
   getFloatingMenuPosition,
   MenuItem,
-  MenuLink
+  StatusBadge
 } from '@acornops/ui';
 
 export const getMcpMenuPosition = getFloatingMenuPosition;
 
 interface AddMcpServerActionProps {
-  browseHref: string;
   disabled?: boolean;
   onConnectByUrl: () => void;
   size?: React.ComponentProps<typeof Button>['size'];
 }
 
-export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ browseHref, disabled = false, onConnectByUrl, size = 'md' }) => {
+export const AddMcpServerMenuItems: React.FC<{
+  close: () => void;
+  onConnectByUrl: () => void;
+}> = ({ close, onConnectByUrl }) => {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <MenuItem
+        disabled
+        aria-disabled="true"
+        className="min-h-11 items-start rounded-md py-2 sm:min-h-11"
+      >
+        <Search className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center justify-between gap-2">
+            <span className="type-body type-emphasis">{t('mcpServers.addFromRegistry')}</span>
+            <StatusBadge tone="neutral" size="compact" className="shrink-0">
+              {t('mcpServers.comingSoon')}
+            </StatusBadge>
+          </span>
+          <span className="type-caption mt-0.5 block text-ui-text-muted">
+            {t('mcpServers.registryComingSoonHelp')}
+          </span>
+        </span>
+      </MenuItem>
+      <MenuItem
+        className="min-h-11 items-start rounded-md py-2 sm:min-h-11"
+        onClick={() => {
+          close();
+          onConnectByUrl();
+        }}
+      >
+        <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
+        <span>
+          <span className="block type-body type-emphasis">{t('mcpServers.connectByUrl')}</span>
+          <span className="type-caption text-ui-text-muted">{t('mcpServers.connectByUrlHelp')}</span>
+        </span>
+      </MenuItem>
+    </>
+  );
+};
+
+export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ disabled = false, onConnectByUrl, size = 'md' }) => {
   const { t } = useTranslation();
 
   return (
@@ -38,28 +80,7 @@ export const AddMcpServerAction: React.FC<AddMcpServerActionProps> = ({ browseHr
       )}
     >
       {(close) => (
-        <>
-          <MenuLink href={browseHref} className="min-h-11 items-start rounded-md py-2 sm:min-h-11">
-            <Search className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            <span>
-              <span className="block type-body type-emphasis">{t('mcpServers.browseRegistries')}</span>
-              <span className="type-caption text-ui-text-muted">{t('mcpServers.browseRegistriesHelp')}</span>
-            </span>
-          </MenuLink>
-          <MenuItem
-            className="min-h-11 items-start rounded-md py-2 sm:min-h-11"
-            onClick={() => {
-              close();
-              onConnectByUrl();
-            }}
-          >
-            <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-ui-text-muted" aria-hidden="true" />
-            <span>
-              <span className="block type-body type-emphasis">{t('mcpServers.connectByUrl')}</span>
-              <span className="type-caption text-ui-text-muted">{t('mcpServers.connectByUrlHelp')}</span>
-            </span>
-          </MenuItem>
-        </>
+        <AddMcpServerMenuItems close={close} onConnectByUrl={onConnectByUrl} />
       )}
     </ActionMenu>
   );

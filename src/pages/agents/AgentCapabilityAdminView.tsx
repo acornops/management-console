@@ -42,9 +42,10 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
   onToolsCatalogChange
 }) => {
   const subject = React.useMemo(() => toAgentCapabilitySubject(agent), [agent]);
+  const canFullyManageAgentMcp = canManageAgents && canManageMcp;
   const mcpDataSource = React.useMemo(
-    () => createAgentMcpDataSource(agent, canManageMcp),
-    [agent, canManageMcp]
+    () => createAgentMcpDataSource(agent, canFullyManageAgentMcp),
+    [agent, canFullyManageAgentMcp]
   );
   const skillsDataSource = React.useMemo(
     () => createAgentSkillsDataSource(agent, canManageSkills),
@@ -85,11 +86,12 @@ export const AgentCapabilityAdminView: React.FC<AgentCapabilityAdminViewProps> =
     <McpServersView
       key={agent.id}
       subject={subject}
-      canManageMcp={canManageMcp}
-      canManageTools={canManageMcp}
+      canManageMcp={canFullyManageAgentMcp}
+      canRemoveMcp={canManageAgents}
+      canManageTools={canFullyManageAgentMcp}
+      canDisableTools={canManageAgents}
       dataSource={mcpDataSource}
       connectionDestination={{ kind: 'agent', id: agent.id }}
-      catalogDestination={`agent:${agent.id}`}
       scheduleCount={countAgentCredentialModeScheduleImpact}
       targetAccessSettings={{
         canEdit: canManageAgents && canManageMcp,

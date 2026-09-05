@@ -1,4 +1,4 @@
-import type { McpConnection } from '@/services/control-plane/catalogApi';
+import type { McpConnection } from '@/services/control-plane/mcpConnectionApi';
 
 export type McpConnectionAction = NonNullable<McpConnection['action']>;
 

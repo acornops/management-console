@@ -75,7 +75,7 @@ export interface KubernetesCluster {
     sourceServerUrl?: string;
     enabledConfigured?: boolean;
     enabledEffective?: boolean;
-    effectiveDisabledReason?: 'server_disabled' | 'agent_write_disabled' | null;
+    effectiveDisabledReason?: 'server_disabled' | 'agent_disconnected' | 'agent_write_disabled' | null;
   }[];
   chatSessions: ChatSession[];
   workloads: Workload[];
@@ -119,7 +119,7 @@ export interface ClusterToolCatalogItem {
   source: 'builtin' | 'mcp';
   enabledConfigured: boolean;
   enabledEffective: boolean;
-  effectiveDisabledReason: 'server_disabled' | 'agent_write_disabled' | null;
+  effectiveDisabledReason: 'server_disabled' | 'agent_disconnected' | 'agent_write_disabled' | null;
 }
 
 export interface ClusterToolCatalogServer {
@@ -137,14 +137,8 @@ export interface ClusterToolCatalogServer {
   authHeaderName?: string;
   authHeaderPrefix?: string;
   revision?: number;
-  provenance?: {
-    sourceId: string;
-    artifactName: string;
-    version: string;
-    digest: string;
-    importedAt: string;
-  };
   publicHeaders?: Record<string, string>;
+  credentialTransitioning?: boolean;
   connectionStatus: 'unknown' | 'ok' | 'error';
   lastDiscoveryAt: string | null;
   lastDiscoveryError: string | null;
@@ -171,6 +165,7 @@ export interface ClusterToolCatalog {
     editableRoles: string[];
   };
   servers: ClusterToolCatalogServer[];
+  nextCursor?: string;
 }
 
 export interface Workload {

@@ -32,8 +32,6 @@ const loadHelpPage = () => import('@/pages/HelpPage').then((module) => ({ defaul
 const loadWorkspacesPage = () => import('@/pages/WorkspacesPage').then((module) => ({ default: module.WorkspacesPage }));
 const loadVirtualMachinesPage = () => import('@/pages/VirtualMachinesPage').then((module) => ({ default: module.VirtualMachinesPage }));
 const loadWorkspaceAgentsPage = () => import('@/pages/WorkspaceAgentsPage').then((module) => ({ default: module.WorkspaceAgentsPage }));
-const loadWorkspaceCatalogPage = () =>
-  import('@/pages/WorkspaceCatalogPage').then((module) => ({ default: module.WorkspaceCatalogPage }));
 const loadWorkspaceWorkflowsPage = () =>
   import('@/pages/WorkspaceWorkflowsPage').then((module) => ({ default: module.WorkspaceWorkflowsPage }));
 
@@ -67,7 +65,6 @@ const HelpPage = React.lazy(loadHelpPage);
 const WorkspacesPage = React.lazy(loadWorkspacesPage);
 const VirtualMachinesPage = React.lazy(loadVirtualMachinesPage);
 const WorkspaceAgentsPage = React.lazy(loadWorkspaceAgentsPage);
-const WorkspaceCatalogPage = React.lazy(loadWorkspaceCatalogPage);
 const WorkspaceWorkflowsPage = React.lazy(loadWorkspaceWorkflowsPage);
 const WorkspaceActivityPage = React.lazy(loadWorkspaceActivityPage);
 const WorkspaceSchedulesPage = React.lazy(loadWorkspaceSchedulesPage);
@@ -104,9 +101,6 @@ export function preloadAppRoutePage(route: AppRoute): void {
     case 'workspaceAgents':
     case 'workspaceAgentDetail':
       void loadWorkspaceAgentsPage();
-      break;
-    case 'workspaceCatalog':
-      void loadWorkspaceCatalogPage();
       break;
     case 'workspaceWorkflows':
       if (route.section === 'all' && route.view === 'activity') void loadWorkspaceActivityPage();
@@ -469,15 +463,6 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               currentUserId={user.id}
               isDark={isDark}
               routeState={route.kind === 'workspaceAgentDetail' ? route : undefined}
-              navigate={navigate}
-            />
-          )}
-
-          {route.kind === 'workspaceCatalog' && workspaceContext && (
-            <WorkspaceCatalogPage
-              key={workspaceContext.id}
-              workspace={workspaceContext}
-              routeState={route}
               navigate={navigate}
             />
           )}

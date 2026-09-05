@@ -1,5 +1,6 @@
 import React from 'react';
 import { McpServersView } from '@/features/targets/admin/McpServersView';
+import { canManageMcpServerTools } from '@/features/targets/admin/McpServersView.data';
 import { TargetSkillsView } from '@/features/targets/admin/TargetSkillsView';
 import { TargetToolsView } from '@/features/targets/admin/TargetToolsView';
 import type { CapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
@@ -65,7 +66,7 @@ export const VirtualMachineAdminView: React.FC<VirtualMachineAdminViewProps> = (
       key={`${workspace.id}:${virtualMachine.id}`}
       subject={target}
       canManageMcp={Boolean(workspace.permissions?.manage_mcp)}
-      canManageTools={Boolean(workspace.permissions?.manage_tools || workspace.permissions?.manage_target_insights)}
+      canManageTools={canManageMcpServerTools(workspace.permissions)}
       canRequestWriteRuns={Boolean(workspace.permissions?.create_read_write_runs)}
       initialCatalog={cachedCatalogs?.mcpServers}
       onCatalogChange={cacheMcpServersCatalog}

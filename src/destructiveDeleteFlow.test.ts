@@ -32,7 +32,6 @@ describe('destructive delete flow contracts', () => {
       readSource('src/pages/WorkspaceAgentDetailPanel.tsx'),
       readSource('src/pages/workspace-members/WorkspaceMemberDetailsPanel.tsx'),
       readSource('src/pages/WorkspaceAiSettingsPage.tsx'),
-      readSource('src/pages/WorkspaceCatalogSources.tsx'),
       readSource('src/features/targets/admin/McpServersDialogs.tsx'),
       readSource('src/features/targets/admin/TargetInsightsResetDialog.tsx'),
       readSource('src/features/targets/admin/TargetSkillsView.tsx'),

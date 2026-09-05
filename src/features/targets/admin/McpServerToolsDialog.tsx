@@ -18,6 +18,7 @@ export const getBulkConfiguredOverrides = (
 export const McpServerToolsDialog: React.FC<{
   server: TargetToolCatalogServer;
   canManageTools: boolean;
+  canDisableTools?: boolean;
   pendingToolName: string | null;
   isLoadingTools?: boolean;
   isLoadingMoreTools?: boolean;
@@ -31,6 +32,7 @@ export const McpServerToolsDialog: React.FC<{
 }> = ({
   server,
   canManageTools,
+  canDisableTools = canManageTools,
   pendingToolName,
   isLoadingTools = false,
   isLoadingMoreTools = false,
@@ -87,6 +89,11 @@ export const McpServerToolsDialog: React.FC<{
     return reason && blockedTools.every((tool) => tool.effectiveDisabledReason === reason) ? reason : null;
   };
   const globalBlockReason = getSectionBlockReason(server.tools);
+  const blockReasonLabel = (reason: TargetToolCatalogItem['effectiveDisabledReason']) => {
+    if (reason === 'server_disabled') return t('mcpServers.toolBlockedServerDisabled');
+    if (reason === 'agent_disconnected') return t('mcpServers.toolBlockedAgentDisconnected');
+    return t('mcpServers.toolBlockedAgentWriteDisabled');
+  };
 
   const getGroupState = (capability: 'read' | 'write', sectionTools: TargetToolCatalogItem[]) => {
     const total = capability === 'read' ? server.toolCounts.readOnly : server.toolCounts.writeCapable;
@@ -102,8 +109,8 @@ export const McpServerToolsDialog: React.FC<{
   };
 
   const handleToggleGroup = async (capability: 'read' | 'write', sectionTools: TargetToolCatalogItem[]) => {
-    if (!canManageTools || bulkLoadingCapability || isSavingTools) return;
     const nextEnabled = !getGroupState(capability, sectionTools).allEnabled;
+    if ((nextEnabled ? !canManageTools : !canDisableTools) || bulkLoadingCapability || isSavingTools) return;
     setBulkLoadingCapability(capability);
     try {
       const completeTools = hasMoreTools && onLoadAllTools ? await onLoadAllTools() : tools;
@@ -121,7 +128,12 @@ export const McpServerToolsDialog: React.FC<{
   };
 
   const handleSaveTools = async () => {
-    if (!canManageTools || changedTools.length === 0 || isSavingTools) return;
+    const canApplyChanges = changedTools.every((tool) => (
+      (configuredOverrides[tool.name] ?? tool.enabledConfigured)
+        ? canManageTools
+        : canDisableTools
+    ));
+    if (!canApplyChanges || changedTools.length === 0 || isSavingTools) return;
     setIsSavingTools(true);
     try {
       for (const tool of changedTools) {
@@ -139,6 +151,7 @@ export const McpServerToolsDialog: React.FC<{
   const renderToolRow = (tool: TargetToolCatalogItem) => {
     const configuredEnabled = getConfiguredEnabled(tool);
     const pending = pendingToolName === tool.name || isSavingTools;
+    const canToggleTool = configuredEnabled ? canDisableTools : canManageTools;
     return (
       <div key={tool.name} className={`grid min-w-0 grid-cols-1 gap-3 border-b border-ui-border px-4 py-3 last:border-b-0 lg:grid-cols-[minmax(18rem,1fr)_8rem_auto] lg:items-center ${tool.capability === 'write' ? 'bg-status-warning-soft/35' : 'bg-ui-surface'}`}>
         <div className="min-w-0">
@@ -157,7 +170,7 @@ export const McpServerToolsDialog: React.FC<{
         </div>
         <Switch
           checked={configuredEnabled}
-          disabled={!canManageTools || pending}
+          disabled={!canToggleTool || pending}
           onCheckedChange={(enabled) => setConfiguredOverrides((current) => ({ ...current, [tool.name]: enabled }))}
           label={t(configuredEnabled ? 'mcpServers.disableToolNamed' : 'mcpServers.enableToolNamed', { name: getToolLabel(tool) })}
         />
@@ -170,6 +183,7 @@ export const McpServerToolsDialog: React.FC<{
     const isBlocked = Boolean(globalBlockReason || blockReason);
     const groupState = getGroupState(capability, sectionTools);
     const groupPending = bulkLoadingCapability !== null || isLoadingMoreTools || isSavingTools;
+    const canToggleGroup = groupState.allEnabled ? canDisableTools : canManageTools;
     const groupLabel = t(groupState.allEnabled
       ? capability === 'read' ? 'mcpServers.disableAllReadTools' : 'mcpServers.disableAllWriteTools'
       : capability === 'read' ? 'mcpServers.enableAllReadTools' : 'mcpServers.enableAllWriteTools');
@@ -184,7 +198,7 @@ export const McpServerToolsDialog: React.FC<{
             <p className="type-caption text-ui-text-muted">{subtitle}</p>
             {blockReason && (
               <p className="type-caption mt-1 text-status-warning-text">
-                {t(blockReason === 'server_disabled' ? 'mcpServers.toolBlockedServerDisabled' : 'mcpServers.toolBlockedAgentWriteDisabled')}
+                {blockReasonLabel(blockReason)}
               </p>
             )}
           </div>
@@ -195,7 +209,7 @@ export const McpServerToolsDialog: React.FC<{
             <Switch
               data-mcp-tool-group-switch={capability}
               checked={groupState.allEnabled}
-              disabled={!canManageTools || groupState.total === 0 || groupPending}
+              disabled={!canToggleGroup || groupState.total === 0 || groupPending}
               aria-busy={bulkLoadingCapability === capability}
               onCheckedChange={() => void handleToggleGroup(capability, sectionTools)}
               label={groupLabel}
@@ -240,7 +254,7 @@ export const McpServerToolsDialog: React.FC<{
           <CloseButton onClick={onClose} aria-label={t('mcpServers.closeTools')} />
         </div>
 
-        <div className="overflow-y-auto p-6 custom-scrollbar">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6 custom-scrollbar">
           <CollectionState
             phase={toolsPhase}
             itemCount={server.tools.length}
@@ -254,7 +268,7 @@ export const McpServerToolsDialog: React.FC<{
             <div className="space-y-4">
               {globalBlockReason && (
                 <div className="type-caption rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 text-status-warning-text">
-                  {t(globalBlockReason === 'server_disabled' ? 'mcpServers.toolBlockedServerDisabled' : 'mcpServers.toolBlockedAgentWriteDisabled')}
+                  {blockReasonLabel(globalBlockReason)}
                 </div>
               )}
               <section className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
@@ -299,7 +313,7 @@ export const McpServerToolsDialog: React.FC<{
             </div>
           </CollectionState>
 
-          {!canManageTools && (
+          {!canManageTools && !canDisableTools && (
             <div className="type-caption mt-5 rounded-lg border border-ui-border bg-ui-bg px-4 py-3">{t('mcpServers.manageToolsNoAccess')}</div>
           )}
         </div>
@@ -309,7 +323,9 @@ export const McpServerToolsDialog: React.FC<{
           </Button>
           <div className="flex items-center gap-3">
             <Button onClick={onClose} disabled={isSavingTools} variant="secondary" size="sm">{t('app.cancel')}</Button>
-            <Button onClick={() => void handleSaveTools()} disabled={!canManageTools || isSavingTools || changedTools.length === 0} variant="primary" size="sm">
+            <Button onClick={() => void handleSaveTools()} disabled={isSavingTools || changedTools.length === 0 || changedTools.some((tool) => (
+              (configuredOverrides[tool.name] ?? tool.enabledConfigured) ? !canManageTools : !canDisableTools
+            ))} variant="primary" size="sm">
               {isSavingTools ? t('mcpServers.saving') : t('mcpServers.saveChanges')}
             </Button>
           </div>
