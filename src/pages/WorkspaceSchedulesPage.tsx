@@ -34,6 +34,7 @@ import {
   isValidTimeZone,
   scheduleFrequencyFromCron,
   scheduleToDraft,
+  scheduleSaveFailure,
   type ScheduleFrequency,
   type ScheduleDraft
 } from '@/pages/WorkspaceSchedulesPage.helpers';
@@ -47,6 +48,7 @@ import { WorkflowTriggerToolbar } from '@/pages/workflows/WorkflowTriggerToolbar
 import { WorkspaceSchedulesPageChrome } from '@/pages/WorkspaceSchedulesPageChrome';
 import { WorkspaceScheduleDeleteDialog } from '@/pages/WorkspaceScheduleDeleteDialog';
 import { WorkspaceScheduleDialog } from '@/pages/WorkspaceScheduleDialog';
+import { useScheduleTimingPreview } from '@/pages/useScheduleTimingPreview';
 import type { ScheduleDraftField } from '@/pages/WorkspaceScheduleFormFields';
 import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
 import { updateUrlSearch, useUrlSearchState } from '@/hooks/useUrlSearchState';
@@ -256,6 +258,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
   }, [draftDirty]);
 
   const draftOwnerIsCurrentUser = Boolean(currentUser?.id && currentUser.id === draft.runsAsUserId);
+  const timingPreview = useScheduleTimingPreview(workspace.id, draft, currentUser?.id, drawerOpen);
 
   useEffect(() => {
     if (!drawerOpen || !draft.workflowId || !draftOwnerIsCurrentUser) {
@@ -304,6 +307,10 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
       setDraftError(t('schedules.form.reviewFields'));
       return;
     }
+    if (!timingPreview.valid || capabilityPreviewing || !draftCapabilityReady) {
+      setDraftError(t('schedules.form.previewRequired'));
+      return;
+    }
     setSavingSchedule(true);
     try {
       if (draft.id) {
@@ -327,8 +334,10 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
       setDrawerOpen(false);
       initialDraftRef.current = draft;
       await refreshSchedules();
-    } catch {
-      setDraftError('Schedule could not be saved. Your changes are still here. Review the highlighted fields or try again.');
+    } catch (error) {
+      const failure = scheduleSaveFailure(error, t('schedules.form.saveRetainedError'));
+      setDraftError(failure.message);
+      setDraftFieldErrors(failure.fieldErrors);
     } finally {
       setSavingSchedule(false);
     }
@@ -589,7 +598,8 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         open={drawerOpen}
         draft={draft}
         draftError={draftError}
-        draftFieldErrors={draftFieldErrors}
+        draftFieldErrors={{ ...draftFieldErrors, ...timingPreview.fieldErrors }}
+        timingPreview={timingPreview}
         discardConfirmationOpen={discardConfirmationOpen}
         saving={savingSchedule}
         workflows={workflows}

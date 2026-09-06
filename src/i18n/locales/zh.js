@@ -273,6 +273,7 @@ export const zh = {
     unknownAgent: '未知 Agent'
   },
   workflowActivity: {
+    updatesAvailable: '有新的运行动态。准备好更新当前历史记录时，请点击刷新。',
     title: '运行',
     subtitle: '{{workspace}} 中的后台、计划、Webhook 和手动工作流运行。',
     ledgerLabel: '工作流运行',
@@ -518,6 +519,14 @@ export const zh = {
       saturday: '星期六',
       sunday: '星期日',
       scheduleSummary: '{{frequency}} {{time}}（{{timezone}}）',
+      upcomingRuns: '即将运行',
+      previewTimezone: '时间以 {{timezone}} 显示。保存前会单独检查访问权限。',
+      previewLoading: '正在检查运行时间…',
+      previewError: '无法检查运行时间。请重试后再保存。',
+      previewInvalid: '请填写或修正突出显示的字段以查看运行时间。',
+      noOccurrences: '未找到下一次运行时间。请选择其他频率。',
+      previewRequired: '请等待有效的时间预览，并在保存前解决访问权限要求。',
+      saveRetainedError: '无法保存计划。您的更改已保留。请检查突出显示的字段或重试。',
       timezone: '时区',
       timezoneHelp: '搜索或输入 IANA 时区，例如 Asia/Singapore。',
       enabled: '启用',
@@ -1395,6 +1404,12 @@ export const zh = {
     entireVirtualMachine: '整台虚拟机'
   },
   issues: {
+    pagination: {
+      loaded: '已加载 {{count}} 个问题',
+      loadedOf: '已加载 {{count}} 个问题，共 {{total}} 个',
+      loadMore: '加载更多问题',
+      loadError: '无法更新问题。已加载的问题仍可查看。'
+    },
     severity: {
       critical: '严重',
       warning: '警告',

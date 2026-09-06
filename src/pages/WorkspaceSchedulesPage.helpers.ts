@@ -1,5 +1,24 @@
 import type { WorkflowSchedule } from '@/services/control-plane/workflowApi';
 import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import type { ScheduleDraftField } from '@/pages/WorkspaceScheduleFormFields';
+
+export function scheduleSaveFailure(error: unknown, fallback: string): {
+  message: string;
+  fieldErrors: Partial<Record<ScheduleDraftField, string>>;
+} {
+  if (!(error instanceof ControlPlaneRequestError) || error.status < 400 || error.status >= 500) {
+    return { message: fallback, fieldErrors: {} };
+  }
+  const message = error.message.replace(/^Control plane request failed \(\d+\):\s*/i, '').trim() || fallback;
+  const fieldsByCode: Record<string, ScheduleDraftField> = {
+    INVALID_CRON: 'cron', SCHEDULE_CRON_REQUIRED: 'cron',
+    INVALID_TIMEZONE: 'timezone', SCHEDULE_TIMEZONE_REQUIRED: 'timezone',
+    SCHEDULE_NAME_REQUIRED: 'name', WORKFLOW_REQUIRED: 'workflowId', WORKFLOW_NOT_FOUND: 'workflowId'
+  };
+  const field = fieldsByCode[error.code || ''];
+  return field ? { message: fallback, fieldErrors: { [field]: message } } : { message, fieldErrors: {} };
+}
 
 export interface ScheduleDraft {
   id?: string;
@@ -12,8 +31,6 @@ export interface ScheduleDraft {
 }
 
 export type ScheduleFrequency = 'weekdays' | 'daily' | 'weekly' | 'custom';
-
-const cronPartPattern = /^[0-9*/?,\-]+$/;
 
 export function scheduleFrequencyFromCron(cron: string): ScheduleFrequency {
   const parts = cron.trim().split(/\s+/);
@@ -48,14 +65,19 @@ export function cronFromScheduleBuilder(frequency: Exclude<ScheduleFrequency, 'c
 }
 
 export function isValidScheduleCron(cron: string): boolean {
+  if (cron.length > 256) return false;
   const parts = cron.trim().split(/\s+/);
   const limits = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 7]] as const;
   return parts.length === 5 && parts.every((part, index) => {
-    if (!cronPartPattern.test(part)) return false;
     const [minimum, maximum] = limits[index];
-    return (part.match(/\d+/g) || []).every((value) => {
-      const numericValue = Number(value);
-      return numericValue >= minimum && numericValue <= maximum;
+    return part.split(',').every((entry) => {
+      const match = /^(\*|\d+(?:-\d+)?)(?:\/(\d+))?$/.exec(entry);
+      if (!match) return false;
+      const [, base, step] = match;
+      if (step !== undefined && (!Number.isSafeInteger(Number(step)) || Number(step) <= 0)) return false;
+      if (base === '*') return true;
+      const [start, end = start] = base.split('-').map(Number);
+      return start >= minimum && end <= maximum && start <= end;
     });
   });
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bot } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, DataTableHeader, DataTableHeaderCell, IconTile, StatusBadge } from '@acornops/ui';
+import { Button, CollectionState, DataTableHeader, DataTableHeaderCell, IconTile, StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { issueSeverityTone, issueStatusTone, issueSupportingText, shouldShowIssueStatus } from '@/pages/issues/issueUi';
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary } from '@/services/controlPlaneApi';
@@ -11,6 +11,8 @@ import {
   shouldShowManualAssistantFallback
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
+import { IssuePagination } from '@/pages/issues/IssuePagination';
+import type { CursorCollectionResult } from '@/hooks/useCursorCollection';
 
 interface VirtualMachineIssuesPanelProps {
   workspaceId: string;
@@ -18,6 +20,7 @@ interface VirtualMachineIssuesPanelProps {
   issueSummary: ControlPlaneTargetIssueSummary | null;
   isLoading: boolean;
   issueLoadFailed: boolean;
+  collection?: CursorCollectionResult<ControlPlaneIssueItem>;
   onOpenIssueTriage: (issue: ControlPlaneIssueItem) => void;
 }
 
@@ -44,7 +47,7 @@ function IssueTime({ label, timestamp, visibleLabel = false }: { label: string; 
   );
 }
 
-export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps> = ({ workspaceId, issues, issueSummary, isLoading, issueLoadFailed, onOpenIssueTriage }) => {
+export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps> = ({ workspaceId, issues, issueSummary, isLoading, issueLoadFailed, collection, onOpenIssueTriage }) => {
   const { t } = useTranslation();
   const issueSectionTitleId = React.useId();
   const reportedIssues = [...(issues || [])].sort((left, right) => {
@@ -56,7 +59,7 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
   const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
   const criticalIssues = issueSummary ? issueSummary.critical : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'critical').length : 0;
   const warningIssues = issueSummary ? issueSummary.warning : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'warning').length : 0;
-  const shouldShowIssueLoadFailure = issueLoadFailed && (!issueSummary || issueSummary.total > 0);
+  const shouldShowIssueLoadFailure = issueLoadFailed;
 
   return (
     <section aria-labelledby={issueSectionTitleId} className="mb-10 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
@@ -87,7 +90,10 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
         </div>
       </div>
 
-      {isLoading ? (
+      <CollectionState
+        phase={collection?.phase ?? (isLoading ? 'loading' : issueLoadFailed ? 'error' : 'ready')}
+        itemCount={reportedIssues.length}
+        loading={(
         <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
           <div className="rounded-md border border-ui-border bg-ui-bg p-3 text-accent-strong">
             <ICONS.RefreshCw className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -95,7 +101,27 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
           <h3 className="type-row-title mt-4">{t('virtualMachines.overview.loadingIssuesTitle')}</h3>
           <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.loadingIssuesBody')}</p>
         </div>
-      ) : reportedIssues.length > 0 ? (
+        )}
+        error={(
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="alert">
+            <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
+              <ICONS.AlertTriangle className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <h3 className="type-row-title mt-4">{t('virtualMachines.overview.issueLoadFailedTitle')}</h3>
+            <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.issueLoadFailedBody')}</p>
+            {collection && <Button onClick={() => void collection.retry()} variant="secondary" size="sm" className="mt-4">{t('common.retry')}</Button>}
+          </div>
+        )}
+        empty={(
+          <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
+            <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
+              <ICONS.CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <h3 className="type-row-title mt-4">{t('virtualMachines.overview.noIssuesTitle')}</h3>
+            <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.noIssuesBody')}</p>
+          </div>
+        )}
+      >
         <>
           <div className="hidden overflow-x-auto 2xl:block">
             <DataTable caption={t('virtualMachines.overview.activeIssues')} className="w-full">
@@ -205,23 +231,8 @@ export const VirtualMachineIssuesPanel: React.FC<VirtualMachineIssuesPanelProps>
             ))}
           </div>
         </>
-      ) : shouldShowIssueLoadFailure ? (
-        <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center" role="alert">
-          <div className="rounded-md border border-status-warning/20 bg-status-warning-soft p-3 text-status-warning-text">
-            <ICONS.AlertTriangle className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <h3 className="type-row-title mt-4">{t('virtualMachines.overview.issueLoadFailedTitle')}</h3>
-          <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.issueLoadFailedBody')}</p>
-        </div>
-      ) : (
-        <div className="flex min-h-36 flex-col items-center justify-center px-6 py-10 text-center">
-          <div className="rounded-md border border-status-success/20 bg-status-success-soft p-3 text-status-success-text">
-            <ICONS.CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <h3 className="type-row-title mt-4">{t('virtualMachines.overview.noIssuesTitle')}</h3>
-          <p className="type-body mt-2 max-w-xl">{t('virtualMachines.overview.noIssuesBody')}</p>
-        </div>
-      )}
+      </CollectionState>
+      {collection && !(shouldShowIssueLoadFailure && reportedIssues.length === 0) && <IssuePagination collection={collection} total={issueSummary?.total} />}
     </section>
   );
 };

@@ -31,7 +31,6 @@ describe('overview refresh continuity', () => {
     const source = readSource('src/pages/VirtualMachinesPage.tsx');
 
     expect(source).toContain('const selectedTargetId = selected?.id || null;');
-    expect(source).toContain('listTargetIssues(workspace.id, selectedTargetId');
     expect(source).toMatch(/loadVmLogs,\s+selectedTargetId,\s+view,/);
     expect(source).not.toMatch(/loadVmLogs,\s+selected,\s+view,/);
   });

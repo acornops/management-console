@@ -42,6 +42,7 @@ const timeZoneSuggestions = [
 ];
 
 interface WorkspaceScheduleFormFieldsProps {
+  timingPreview: React.ReactNode;
   capabilityPreview: WorkflowCapabilitiesPreview | null;
   capabilityPreviewError: string;
   capabilityPreviewing: boolean;
@@ -59,6 +60,7 @@ interface WorkspaceScheduleFormFieldsProps {
 }
 
 export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsProps> = ({
+  timingPreview,
   capabilityPreview,
   capabilityPreviewError,
   capabilityPreviewing,
@@ -100,11 +102,11 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
     </label>
     <label className="block type-body type-emphasis text-ui-text">
       {t('schedules.form.name')} <span aria-hidden="true" className="text-status-danger-text">*</span>
-      <TextInput required aria-required="true" aria-invalid={Boolean(draftFieldErrors.name)} value={draft.name} onChange={(event) => {
+      <TextInput required aria-required="true" aria-invalid={Boolean(draftFieldErrors.name)} aria-describedby={draftFieldErrors.name ? 'schedule-name-error' : undefined} value={draft.name} onChange={(event) => {
         setDraft((current) => ({ ...current, name: event.target.value }));
         setDraftFieldErrors((current) => ({ ...current, name: undefined }));
       }} className={inputClassName} />
-      {draftFieldErrors.name && <span role="alert" className="type-caption mt-1 block text-status-danger-text">{draftFieldErrors.name}</span>}
+      {draftFieldErrors.name && <span id="schedule-name-error" role="alert" className="type-caption mt-1 block text-status-danger-text">{draftFieldErrors.name}</span>}
     </label>
     <div className="block type-body type-emphasis text-ui-text">
       {t('schedules.form.runsAs')} <span aria-hidden="true" className="text-status-danger-text">*</span>
@@ -127,6 +129,7 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
           ]}
           onChange={(frequency) => {
             setScheduleFrequency(frequency);
+            setDraftFieldErrors((current) => ({ ...current, cron: undefined }));
             if (frequency !== 'custom') setDraft((current) => ({ ...current, cron: cronFromScheduleBuilder(frequency, scheduleTime, scheduleWeekday) }));
           }}
           className="mt-2"
@@ -136,7 +139,7 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
       {scheduleFrequency !== 'custom' && (
         <label className="block type-body type-emphasis text-ui-text">
           {t('schedules.form.time')} <span aria-hidden="true" className="text-status-danger-text">*</span>
-          <TextInput type="time" required aria-required="true" value={scheduleTime} onChange={(event) => {
+          <TextInput type="time" required aria-required="true" aria-invalid={Boolean(draftFieldErrors.cron)} aria-describedby={draftFieldErrors.cron ? 'schedule-cron-error' : undefined} value={scheduleTime} onChange={(event) => {
             setDraft((current) => ({ ...current, cron: cronFromScheduleBuilder(scheduleFrequency, event.target.value, scheduleWeekday) }));
             setDraftFieldErrors((current) => ({ ...current, cron: undefined }));
           }} className={inputClassName} />
@@ -157,7 +160,10 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
             { value: '6', label: t('schedules.form.saturday') },
             { value: '0', label: t('schedules.form.sunday') }
           ]}
-          onChange={(weekday) => setDraft((current) => ({ ...current, cron: cronFromScheduleBuilder('weekly', scheduleTime, weekday) }))}
+          onChange={(weekday) => {
+            setDraft((current) => ({ ...current, cron: cronFromScheduleBuilder('weekly', scheduleTime, weekday) }));
+            setDraftFieldErrors((current) => ({ ...current, cron: undefined }));
+          }}
           className="mt-2"
           ariaLabel={t('schedules.form.weekday')}
         />
@@ -166,14 +172,14 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
     {scheduleFrequency === 'custom' && (
       <label className="block type-body type-emphasis text-ui-text">
         {t('schedules.form.cron')} <span aria-hidden="true" className="text-status-danger-text">*</span>
-        <TextInput required aria-required="true" aria-invalid={Boolean(draftFieldErrors.cron)} value={draft.cron} onChange={(event) => {
+        <TextInput required aria-required="true" aria-invalid={Boolean(draftFieldErrors.cron)} aria-describedby={draftFieldErrors.cron ? 'schedule-cron-error' : undefined} value={draft.cron} onChange={(event) => {
           setDraft((current) => ({ ...current, cron: event.target.value }));
           setDraftFieldErrors((current) => ({ ...current, cron: undefined }));
         }} className={inputClassName} />
         <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.cronHelp')}</span>
-        {draftFieldErrors.cron && <span role="alert" className="type-caption mt-1 block text-status-danger-text">{draftFieldErrors.cron}</span>}
       </label>
     )}
+    {draftFieldErrors.cron && <p id="schedule-cron-error" role="alert" className="type-caption text-status-danger-text">{draftFieldErrors.cron}</p>}
     {scheduleFrequency !== 'custom' && (
       <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption text-ui-text-muted">
         {t('schedules.form.scheduleSummary', { frequency: t(`schedules.form.frequency${scheduleFrequency[0].toUpperCase()}${scheduleFrequency.slice(1)}`), time: scheduleTime, timezone: draft.timezone })}
@@ -181,7 +187,7 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
     )}
     <label className="block type-body type-emphasis text-ui-text">
       {t('schedules.form.timezone')} <span aria-hidden="true" className="text-status-danger-text">*</span>
-      <TextInput list="schedule-timezone-options" required aria-required="true" aria-invalid={Boolean(draftFieldErrors.timezone)} value={draft.timezone} onChange={(event) => {
+      <TextInput list="schedule-timezone-options" required aria-required="true" aria-invalid={Boolean(draftFieldErrors.timezone)} aria-describedby={draftFieldErrors.timezone ? 'schedule-timezone-error' : undefined} value={draft.timezone} onChange={(event) => {
         setDraft((current) => ({ ...current, timezone: event.target.value }));
         setDraftFieldErrors((current) => ({ ...current, timezone: undefined }));
       }} className={inputClassName} />
@@ -189,8 +195,9 @@ export const WorkspaceScheduleFormFields: React.FC<WorkspaceScheduleFormFieldsPr
         {Array.from(new Set([draft.timezone, ...timeZoneSuggestions])).filter(Boolean).map((timezone) => <option key={timezone} value={timezone} />)}
       </datalist>
       <span className="type-caption mt-1 block text-ui-text-muted">{t('schedules.form.timezoneHelp')}</span>
-      {draftFieldErrors.timezone && <span role="alert" className="type-caption mt-1 block text-status-danger-text">{draftFieldErrors.timezone}</span>}
+      {draftFieldErrors.timezone && <span id="schedule-timezone-error" role="alert" className="type-caption mt-1 block text-status-danger-text">{draftFieldErrors.timezone}</span>}
     </label>
+    {timingPreview}
     <label className="flex items-center gap-3 type-body type-emphasis text-ui-text">
       <Checkbox checked={draft.enabled} onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))} />
       {t('schedules.form.enabled')}

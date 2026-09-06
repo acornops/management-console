@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 
 import {
   cronFromScheduleBuilder,
@@ -6,10 +7,17 @@ import {
   isValidTimeZone,
   scheduleFrequencyFromCron,
   scheduleTimeFromCron,
-  scheduleWeekdayFromCron
+  scheduleWeekdayFromCron,
+  scheduleSaveFailure
 } from '@/pages/WorkspaceSchedulesPage.helpers';
 
 describe('workspace schedule editor helpers', () => {
+  it('preserves actionable cadence failures and associates them with the cron field', () => {
+    expect(scheduleSaveFailure(new ControlPlaneRequestError('Control plane request failed (400): Choose a date that exists.', 400, 'INVALID_CRON'), 'Draft retained.')).toEqual({
+      message: 'Draft retained.', fieldErrors: { cron: 'Choose a date that exists.' }
+    });
+    expect(scheduleSaveFailure(new Error('Network internals'), 'Draft retained.')).toEqual({ message: 'Draft retained.', fieldErrors: {} });
+  });
   it('round-trips guided weekday, daily, and weekly cadences', () => {
     expect(cronFromScheduleBuilder('weekdays', '08:30')).toBe('30 8 * * 1-5');
     expect(scheduleFrequencyFromCron('30 8 * * 1-5')).toBe('weekdays');
@@ -35,6 +43,17 @@ describe('workspace schedule editor helpers', () => {
     expect(isValidScheduleCron('0 24 * * 1-5')).toBe(false);
     expect(isValidScheduleCron('0 9 * 13 1-5')).toBe(false);
     expect(isValidScheduleCron('not a cron')).toBe(false);
+    expect(isValidScheduleCron('*/0 * * * *')).toBe(false);
+    expect(isValidScheduleCron('5-1 * * * *')).toBe(false);
+    expect(isValidScheduleCron('? * * * *')).toBe(false);
+    expect(isValidScheduleCron('1,,2 * * * *')).toBe(false);
+    expect(isValidScheduleCron('0 0 */2 * *')).toBe(true);
+    expect(isValidScheduleCron('0 0 * */12 *')).toBe(true);
+    expect(isValidScheduleCron('0 0 */100 * *')).toBe(true);
+  });
+
+  it('rejects overlong cron text before attempting a preview', () => {
+    expect(isValidScheduleCron(`${'0,'.repeat(125)}0 * * * *`)).toBe(false);
   });
 
   it('validates IANA time zones', () => {

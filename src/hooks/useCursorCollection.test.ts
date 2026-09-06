@@ -33,6 +33,70 @@ function options(
 describe('CursorCollectionController', () => {
   beforeEach(() => clearSessionDataCache());
 
+  it('keeps the pending request when refreshed objects produce the same target filters', async () => {
+    const pendingPage = deferred<PagedResult<Item>>();
+    const loadPage = () => pendingPage.promise;
+    const controller = new CursorCollectionController(options(loadPage, {
+      cacheKey: 'target-issues', filters: { query: 'vm-1' }, clearItemsOnScopeChange: true
+    }));
+    const pending = controller.reset();
+    controller.updateOptions(options(loadPage, {
+      cacheKey: 'target-issues', filters: { query: 'vm-1' }, clearItemsOnScopeChange: true
+    }));
+    pendingPage.resolve({ items: [{ id: 'issue-1' }], nextCursor: 'next' });
+    await pending;
+    expect(controller.getState()).toEqual({ items: [{ id: 'issue-1' }], nextCursor: 'next', phase: 'ready' });
+  });
+
+  it('rejects a stale target response as soon as options change, before the next reset', async () => {
+    const oldTarget = deferred<PagedResult<Item>>();
+    const controller = new CursorCollectionController(options(() => oldTarget.promise, { cacheKey: 'issues', clearItemsOnScopeChange: true }));
+    const pending = controller.reset();
+    controller.updateOptions(options(async () => ({ items: [{ id: 'new-target' }] }), {
+      cacheKey: 'issues', clearItemsOnScopeChange: true, filters: { query: 'new-target' }
+    }));
+    oldTarget.resolve({ items: [{ id: 'old-target' }] });
+    await pending;
+    expect(controller.getState().items).toEqual([]);
+    await controller.reset();
+    expect(controller.getState().items).toEqual([{ id: 'new-target' }]);
+  });
+
+  it('refreshes only the loaded pages and retains history and its cursor on failure', async () => {
+    let fail = false;
+    const requests: Array<string | undefined> = [];
+    const controller = new CursorCollectionController(options(async ({ cursor }) => {
+      requests.push(cursor);
+      if (fail && cursor === 'page-2') throw new Error('Offline');
+      return { items: Array.from({ length: 50 }, (_, i) => ({ id: `${cursor || 'page-1'}-${i}` })), nextCursor: cursor ? 'page-3' : 'page-2' };
+    }, { refreshLoadedPages: true }));
+    await controller.reset();
+    await controller.loadMore();
+    fail = true;
+    await controller.refresh();
+    expect(controller.getState().items).toHaveLength(100);
+    expect(controller.getState().nextCursor).toBe('page-3');
+    expect(controller.getState().phase).toBe('error');
+    fail = false;
+    await controller.retry();
+    expect(controller.getState().items).toHaveLength(100);
+    expect(controller.getState().nextCursor).toBe('page-3');
+    expect(requests).toEqual([undefined, 'page-2', undefined, 'page-2', undefined, 'page-2']);
+  });
+
+  it('does not interrupt pagination with a background refresh', async () => {
+    const appended = deferred<PagedResult<Item>>();
+    const loader = vi.fn().mockResolvedValueOnce({ items: [{ id: 'one' }], nextCursor: 'next' }).mockReturnValueOnce(appended.promise);
+    const controller = new CursorCollectionController(options(loader, { refreshLoadedPages: true }));
+    await controller.reset();
+    const pending = controller.loadMore();
+    await controller.refresh();
+    appended.resolve({ items: [{ id: 'two' }] });
+    await pending;
+    expect(controller.getState().items.map((item) => item.id)).toEqual(['one', 'two']);
+    expect(loader).toHaveBeenCalledTimes(2);
+  });
+
   it('loads the initial page into ready state', async () => {
     const loadPage = vi.fn(async (): Promise<PagedResult<Item>> => ({ items: [{ id: 'one' }], nextCursor: 'next' }));
     const controller = new CursorCollectionController(options(loadPage));

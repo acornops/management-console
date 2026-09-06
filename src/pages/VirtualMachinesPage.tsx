@@ -27,6 +27,7 @@ import { AddVirtualMachineModal } from '@/pages/virtual-machines/AddVirtualMachi
 import { VirtualMachineAdminView } from '@/pages/virtual-machines/VirtualMachineAdminView';
 import { VirtualMachineChatView } from '@/pages/virtual-machines/VirtualMachineChatView';
 import { VirtualMachineIssuesPanel } from '@/pages/virtual-machines/VirtualMachineIssuesPanel';
+import { useTargetIssues } from '@/pages/issues/useTargetIssues';
 import { VirtualMachinesListView } from '@/pages/virtual-machines/VirtualMachinesListView';
 import { VirtualMachineResourcesView, VmResourceCategory } from '@/pages/virtual-machines/VirtualMachineResourcesView';
 import { VirtualMachineSettingsView } from '@/pages/virtual-machines/VirtualMachineSettingsView';
@@ -95,13 +96,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
   const vmDetailCachePrefix = `workspace:${workspace.id}:virtual-machine:${selectedId || 'none'}:`;
   const inventoryCacheKey = `${vmDetailCachePrefix}inventory`;
-  const issueCacheKey = `${vmDetailCachePrefix}issues`;
   const logsCacheKey = `${vmDetailCachePrefix}logs`;
   const metricHistoryCacheKey = `${vmDetailCachePrefix}metric-history`;
   const [inventory, setInventory] = useSessionCachedState<Record<string, unknown>[]>(inventoryCacheKey, []);
-  const [issues, setIssues] = useSessionCachedState<ControlPlaneIssueItem[] | null>(issueCacheKey, null);
-  const [isLoadingIssueEvidence, setIsLoadingIssueEvidence] = React.useState(false);
-  const [issueLoadFailed, setIssueLoadFailed] = React.useState(false);
   const [logs, setLogs] = useSessionCachedState<Record<string, unknown>[]>(logsCacheKey, []);
   const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'idle');
   const [resourceError, setResourceError] = React.useState<string | null>(null);
@@ -125,17 +122,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
   const selectedTargetId = selected?.id || null;
   const capabilityCatalogCache = useCapabilityCatalogCache(selectedId ? `${workspace.id}:${selectedId}` : '');
-  const refreshVisibleVmIssues = React.useCallback(async () => {
-    if (!selectedTargetId || view !== 'overview') return;
-    try {
-      const page = await controlPlaneApi.listTargetIssues(workspace.id, selectedTargetId, { limit: 50 });
-      setIssues(page.items || []);
-      setIssueLoadFailed(false);
-    } catch (error) {
-      console.error('Failed refreshing virtual machine issues', error);
-    }
-  }, [selectedTargetId, view, workspace.id]);
-  useVisibilityAwareRefresh(refreshVisibleVmIssues, { enabled: Boolean(selectedTargetId && view === 'overview') });
+  const issueCollection = useTargetIssues(workspace.id, view === 'overview' ? selectedTargetId : null);
   const selectedTargetPrompt = getSelectedVmTargetPrompt(pendingTargetPrompt, workspace.id, selectedId);
   const activeResourceCategory = isVmResourceSubview(view)
     ? vmSubviewToResourceCategory(view)
@@ -281,9 +268,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 
   React.useEffect(() => {
     if (!selectedTargetId) {
-      setIssues(null);
-      setIsLoadingIssueEvidence(false);
-      setIssueLoadFailed(false);
       return;
     }
     if (isVmResourceSubview(view)) {
@@ -294,22 +278,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     }
     if (view === 'overview') {
       let isCurrent = true;
-      setIssueLoadFailed(false);
-      setIsLoadingIssueEvidence(!hasSessionDataCacheValue(issueCacheKey));
-      void controlPlaneApi.listTargetIssues(workspace.id, selectedTargetId, { limit: 50 })
-        .then((page) => {
-          if (!isCurrent) return;
-          setIssues(page.items || []);
-        })
-        .catch((error) => {
-          console.error('Failed loading virtual machine issues', error);
-          if (!isCurrent) return;
-          setIssueLoadFailed(true);
-        })
-        .finally(() => {
-          if (!isCurrent) return;
-          setIsLoadingIssueEvidence(false);
-        });
       if (!hasSessionDataCacheValue(metricHistoryCacheKey)) setMetricHistoryStatus('loading');
       void controlPlaneApi.getVirtualMachineMetricsHistory(workspace.id, selectedTargetId)
         .then((payload) => {
@@ -326,10 +294,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         isCurrent = false;
       };
     }
-    setIsLoadingIssueEvidence(false);
-    setIssueLoadFailed(false);
   }, [
-    issueCacheKey,
     loadVmInventory,
     loadVmLogs,
     selectedTargetId,
@@ -526,10 +491,11 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 
         <VirtualMachineIssuesPanel
           workspaceId={workspace.id}
-          issues={issues}
+          issues={issueCollection.phase === 'loading' ? null : issueCollection.items}
           issueSummary={issueSummary || null}
-          isLoading={isLoadingIssueEvidence}
-          issueLoadFailed={issueLoadFailed}
+          isLoading={issueCollection.phase === 'loading'}
+          issueLoadFailed={issueCollection.phase === 'error'}
+          collection={issueCollection}
           onOpenIssueTriage={openVmIssueTriage}
         />
 

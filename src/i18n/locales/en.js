@@ -273,6 +273,7 @@ export const en = {
     unknownAgent: 'Unknown Agent'
   },
   workflowActivity: {
+    updatesAvailable: 'New activity is available. Refresh when you are ready to update this history.',
     title: 'Runs',
     subtitle: 'Background, scheduled, webhook, and manual workflow runs across {{workspace}}.',
     ledgerLabel: 'Workflow runs',
@@ -518,6 +519,14 @@ export const en = {
       saturday: 'Saturday',
       sunday: 'Sunday',
       scheduleSummary: '{{frequency}} at {{time}} ({{timezone}})',
+      upcomingRuns: 'Upcoming runs',
+      previewTimezone: 'Times shown in {{timezone}}. Access is checked separately before saving.',
+      previewLoading: 'Checking upcoming run times…',
+      previewError: 'Run times could not be checked. Retry before saving.',
+      previewInvalid: 'Complete the highlighted fields to see upcoming runs.',
+      noOccurrences: 'No upcoming run was found. Choose a different cadence.',
+      previewRequired: 'Wait for a valid timing preview and resolve any access requirements before saving.',
+      saveRetainedError: 'Schedule could not be saved. Your changes are still here. Review the highlighted fields or try again.',
       timezone: 'Timezone',
       timezoneHelp: 'Search or enter an IANA timezone, for example Asia/Singapore.',
       enabled: 'Enabled',
@@ -1395,6 +1404,12 @@ export const en = {
     entireVirtualMachine: 'Entire VM'
   },
   issues: {
+    pagination: {
+      loaded: '{{count}} issues loaded',
+      loadedOf: '{{count}} of {{total}} issues loaded',
+      loadMore: 'Load more issues',
+      loadError: 'Issues could not be updated. Loaded issues are still available.'
+    },
     severity: {
       critical: 'Critical',
       warning: 'Warning',

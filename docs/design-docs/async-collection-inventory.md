@@ -6,7 +6,7 @@ limited to bounded overview aggregates and selectors.
 
 | Surface or endpoint | Consumer | Strategy | Status or exception |
 | --- | --- | --- | --- |
-| Workflow execution ledger | `WorkspaceActivityPage`, `WorkspaceWorkflowActivityContext` | manual cursor plus bounded polling | Activity owns cursor pagination; the shell fetches one bounded summary page every two seconds while visible and on focus. |
+| Workflow execution ledger | `WorkspaceActivityPage`, `WorkspaceWorkflowActivityContext` | manual cursor plus bounded summary polling | Incoming activity announces updates without replacing loaded history. Explicit refresh revalidates only loaded pages; the shell polls one bounded summary page. |
 | Workflow schedules | `WorkspaceSchedulesPage` | not paginated | `ResourcePhase` owns loading and retained refresh state; compact cards use `CollectionState` while the desktop table keeps its headings mounted through every state. |
 | Incoming workflow webhooks | `WorkspaceIncomingWebhooksPage` | not paginated | The Workflows section retains the collection through refresh and supports status, workflow, and search controls; desktop headings remain mounted through every state. |
 | Outbound webhooks | `WorkspaceWebhooksPage` | not paginated | Workspace-fenced state retains items during refresh. Discovery is omitted only for a confirmed empty, unfiltered collection. |
@@ -20,7 +20,8 @@ limited to bounded overview aggregates and selectors.
 | Kubernetes clusters | `KubernetesClustersPage` | sentinel | Migrated to `useCursorCollection`; deleted-item suppression and parent synchronization remain feature-owned. |
 | Kubernetes resources | `ResourcesView`, `WorkloadsExplorer` | sentinel, page size 100 | Migrated to `useCursorCollection`; the dense explorer layout and keyboard Load more fallback are preserved. |
 | Virtual machines | `useVirtualMachineListRefresh` | drain | Migrated bounded workspace refresh aggregate; focus and interval refresh retain current items. |
-| Workspace, Kubernetes, and VM issues | overview and issue panels | drain | Issue collections refresh through their target-owned polling lifecycle. |
+| Workspace issues | workspace overview | existing overview aggregate | Workspace overview retains its separate collection lifecycle. |
+| Kubernetes and VM issues | `useTargetIssues`, target overview panels | manual cursor, page size 50 | Explicit Load more issues, loaded counts (and total when available), and retry use the existing page scroll. Target refresh revalidates loaded pages without draining unseen pages. |
 | MCP server catalog | `McpServersView` | not paginated | Migrated visible lifecycle to one mounted `CollectionState`, retaining descriptor fallback servers during refresh. |
 | MCP server tools | `McpServersView`, `McpServerToolsDialog` | sentinel | Migrated to `useCursorCollection`; active server tools remain visible during refresh and append. |
 | Target tools | `TargetToolsView` | descriptor collection | Migrated visible table precedence to `DataTableStateRow`; descriptor refresh remains target-owned. |

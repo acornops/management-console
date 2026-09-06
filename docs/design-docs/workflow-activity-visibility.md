@@ -101,12 +101,32 @@ fields may insert plain-text `@target[Target name]` mentions through autocomplet
 webhook creation use compact, medium-width modal forms above their parent detail
 tab so operators retain the selected workflow as context.
 
+## Schedule preview
+
+The schedule editor requests a debounced control-plane cadence preview and
+shows upcoming occurrences in the selected timezone. Changed inputs invalidate
+older responses immediately. Save waits for a valid preview with a future run;
+preview failures provide retry and do not discard the draft. Calendar validation
+stays on the server; local checks reject malformed numeric five-field syntax.
+Server field errors remain associated with the relevant control after save fails.
+
+Timing preview uses the authenticated user and `enabled:false` to avoid claiming
+credential readiness for another schedule owner. Existing credential connection
+controls remain separate. Saving and dispatching validate the actual stored
+creator's authorization and credentials on the control plane.
+
 ## Refresh and Accessibility
 
 One workspace activity store fetches navigation counts on workspace entry,
 polls every two seconds while the document is visible, and refreshes on window
 focus or visibility restoration. A failed refresh preserves the last successful
 counts and exposes a persistent warning on Activity.
+
+New activity does not replace the Runs ledger while an operator reads history.
+It shows an updates-available notice. Explicit Refresh revalidates only the
+number of cursor pages already loaded and replaces them together on success;
+it does not drain the full history. Failure keeps loaded rows and the cursor
+available for retry. Filter or workspace changes invalidate outstanding reads.
 
 The polite live region announces newly discovered runs and increases in
 attention-required work. Routine refreshes are silent. Status always combines

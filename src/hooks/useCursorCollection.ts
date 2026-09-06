@@ -8,6 +8,8 @@ export type CursorCollectionStrategy = 'manual' | 'sentinel' | 'drain';
 export interface CursorCollectionOptions<T, TFilters> {
   cacheKey?: string;
   clearItemsOnScopeChange?: boolean;
+  /** Revalidate only pages the operator has already loaded, without truncating history. */
+  refreshLoadedPages?: boolean;
   filters: TFilters;
   getKey: (item: T) => string;
   loadPage: (request: {
@@ -83,15 +85,19 @@ export class CursorCollectionController<T, TFilters> {
   private requestVersion = 0;
   private requestedCursors = new Set<string>();
   private failedMode: RequestMode = 'initial';
+  private loadedPageCount = 1;
 
   constructor(options: CursorCollectionOptions<T, TFilters>) {
     this.options = options;
     this.scopeKey = this.getScopeKey();
     this.state = this.readCachedState() ?? { items: [], phase: 'loading' };
+    this.loadedPageCount = this.readCachedPageCount();
   }
 
   updateOptions(options: CursorCollectionOptions<T, TFilters>): void {
+    const previousFiltersKey = stableFilterKey(this.options.filters);
     this.options = options;
+    if (previousFiltersKey !== stableFilterKey(options.filters)) this.abort();
   }
 
   getState(): CursorCollectionState<T> {
@@ -110,6 +116,7 @@ export class CursorCollectionController<T, TFilters> {
     const scopeChanged = nextScopeKey !== this.scopeKey;
     this.scopeKey = nextScopeKey;
     const cachedState = this.readCachedState();
+    if (scopeChanged || cachedState) this.loadedPageCount = this.readCachedPageCount();
     const hasVisibleItems = this.state.items.length > 0;
     if (scopeChanged && this.options.clearItemsOnScopeChange && !cachedState) {
       this.setState({ items: [], phase: 'loading' });
@@ -124,11 +131,12 @@ export class CursorCollectionController<T, TFilters> {
   }
 
   refresh(): Promise<void> {
+    if (this.options.refreshLoadedPages && this.abortController) return Promise.resolve();
     return this.request('refresh');
   }
 
   loadMore(): Promise<void> {
-    if (!this.state.nextCursor || this.state.phase === 'loadingMore') return Promise.resolve();
+    if (!this.state.nextCursor || this.abortController) return Promise.resolve();
     return this.request('append');
   }
 
@@ -167,6 +175,7 @@ export class CursorCollectionController<T, TFilters> {
         nextCursor: state.nextCursor,
         phase: 'ready' as const
       });
+      if (this.options.refreshLoadedPages) writeSessionDataCache(`${this.scopeKey}:page-count`, this.loadedPageCount);
     }
     this.listeners.forEach((listener) => listener(state));
   }
@@ -187,12 +196,17 @@ export class CursorCollectionController<T, TFilters> {
     return readSessionDataCache<CursorCollectionState<T>>(this.scopeKey)?.value;
   }
 
+  private readCachedPageCount(): number {
+    return this.options.cacheKey ? readSessionDataCache<number>(`${this.scopeKey}:page-count`)?.value ?? 1 : 1;
+  }
+
   private async request(mode: RequestMode, preserveCachedEmpty = false, drainRemaining = false): Promise<void> {
     this.abort();
     const version = this.requestVersion;
     const controller = new AbortController();
     this.abortController = controller;
     const retainedItems = mode === 'initial' ? [] : this.state.items;
+    const retainedCursor = this.state.nextCursor;
     const phase: CursorCollectionPhase = mode === 'append'
       ? 'loadingMore'
       : preserveCachedEmpty && retainedItems.length === 0
@@ -202,7 +216,7 @@ export class CursorCollectionController<T, TFilters> {
         : 'loading';
     this.setState({
       items: retainedItems,
-      nextCursor: mode === 'append' ? this.state.nextCursor : undefined,
+      nextCursor: mode === 'append' || this.options.refreshLoadedPages ? retainedCursor : undefined,
       phase
     });
 
@@ -212,10 +226,12 @@ export class CursorCollectionController<T, TFilters> {
       let loadedItems: T[] = [];
       let nextCursor: string | undefined;
       const operationCursors = new Set<string>();
+      const pagesToRefresh = mode === 'refresh' && this.options.refreshLoadedPages ? this.loadedPageCount : 1;
+      let pagesLoaded = 0;
 
       do {
         if (cursor) {
-          if (this.requestedCursors.has(cursor) || operationCursors.has(cursor)) {
+          if ((mode === 'append' && this.requestedCursors.has(cursor)) || operationCursors.has(cursor)) {
             throw new Error('The collection returned a repeated cursor. Refresh to retry pagination.');
           }
           operationCursors.add(cursor);
@@ -228,15 +244,17 @@ export class CursorCollectionController<T, TFilters> {
         });
         if (controller.signal.aborted || version !== this.requestVersion) return;
         loadedItems = deduplicate([...loadedItems, ...page.items], this.options.getKey);
+        pagesLoaded += 1;
         nextCursor = page.nextCursor;
         if (nextCursor && (nextCursor === cursor || operationCursors.has(nextCursor))) {
           throw new Error('The collection returned a repeated cursor. Refresh to retry pagination.');
         }
-        cursor = shouldDrain ? nextCursor : undefined;
-      } while (shouldDrain && cursor);
+        cursor = shouldDrain || pagesLoaded < pagesToRefresh ? nextCursor : undefined;
+      } while (cursor);
 
       if (mode === 'append') operationCursors.forEach((value) => this.requestedCursors.add(value));
-      else this.requestedCursors.clear();
+      else this.requestedCursors = operationCursors;
+      this.loadedPageCount = mode === 'append' ? this.loadedPageCount + pagesLoaded : pagesLoaded;
       const items = deduplicate(
         mode === 'append' ? [...retainedItems, ...loadedItems] : loadedItems,
         this.options.getKey
@@ -248,7 +266,7 @@ export class CursorCollectionController<T, TFilters> {
       this.failedMode = repeatedCursor ? 'refresh' : mode;
       this.setState({
         items: retainedItems,
-        nextCursor: mode === 'append' ? this.state.nextCursor : undefined,
+        nextCursor: mode === 'append' || this.options.refreshLoadedPages ? retainedCursor : undefined,
         phase: 'error',
         error: errorMessage(error)
       });

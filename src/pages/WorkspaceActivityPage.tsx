@@ -29,7 +29,8 @@ import {
   type WorkflowActivityStateFilter
 } from '@/utils/routes';
 import { WorkflowSections } from '@/pages/workflows/WorkflowSections';
-import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { useSessionCachedState } from '@/hooks/sessionDataCache';
+import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { ICONS } from '@/constants';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ProjectMember } from '@/types';
@@ -64,65 +65,47 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const workspaceActivity = useWorkspaceWorkflowActivity();
-  const activityScope = `${routeState.q || ''}:${routeState.state || 'open'}:${routeState.origin || 'all'}:${routeState.workflowId || 'all'}`;
+  const deferredQuery = React.useDeferredValue(routeState.q || '');
+  const activityScope = `${deferredQuery}:${routeState.state || 'all'}:${routeState.origin || 'all'}:${routeState.workflowId || 'all'}`;
   const activityCacheKey = `workspace:${workspace.id}:workflow-activity:${activityScope}`;
   const activityPageCacheKey = `${activityCacheKey}:page`;
   const [page, setPage] = useSessionCachedState<WorkflowExecutionPage | null>(activityPageCacheKey, null);
-  const [items, setItems] = useSessionCachedState<WorkflowExecutionSummary[]>(`${activityCacheKey}:items`, []);
   const [workflows, setWorkflows] = useSessionCachedState<WorkflowApiDefinition[]>(`workspace:${workspace.id}:workflow-activity:workflows`, []);
   const [activityMembers, setActivityMembers] = useSessionCachedState<ProjectMember[]>(
     `workspace:${workspace.id}:workflow-activity:members`,
     workspace.members || []
   );
-  const [phase, setPhase] = React.useState<'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(activityPageCacheKey) ? 'ready' : 'loading');
-  const [error, setError] = React.useState('');
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const loadRequestRef = React.useRef(0);
-  const retainedPageRef = React.useRef(page);
-  retainedPageRef.current = page;
-  const deferredQuery = React.useDeferredValue(routeState.q || '');
 
   const replaceState = React.useCallback((patch: Partial<WorkflowActivityRouteState>, options?: { replace?: boolean }) => {
     navigate(AppPaths.workspaceActivity(workspace.id, { ...routeState, ...patch }), options);
   }, [navigate, routeState, workspace.id]);
 
-  const load = React.useCallback(async (cursor?: string) => {
-    const requestId = ++loadRequestRef.current;
-    if (!cursor && retainedPageRef.current === null) setPhase('loading');
-    else setLoadingMore(true);
-    setError('');
-    try {
-      const next = await listWorkspaceWorkflowExecutions(workspace.id, {
-        search: deferredQuery,
-        state: routeState.state || 'all',
-        origin: routeState.origin,
-        workflowId: routeState.workflowId,
-        limit: 50,
-        cursor
-      });
-      if (requestId !== loadRequestRef.current) return;
-      setPage(next);
-      setItems((current) => cursor ? [...current, ...next.items] : next.items);
-      setPhase('ready');
-    } catch (loadError) {
-      if (requestId !== loadRequestRef.current) return;
-      setError(loadError instanceof Error ? loadError.message : t('workflowActivity.loadError'));
-      setPhase(cursor || retainedPageRef.current !== null ? 'ready' : 'error');
-    } finally {
-      if (requestId === loadRequestRef.current) setLoadingMore(false);
-    }
-  }, [
-    deferredQuery,
-    routeState.origin,
-    routeState.state,
-    routeState.workflowId,
-    t,
-    workspace.id
-  ]);
+  const collection = useCursorCollection({
+    cacheKey: 'workflow-activity',
+    clearItemsOnScopeChange: true,
+    refreshLoadedPages: true,
+    filters: { workspaceId: workspace.id, search: deferredQuery, state: routeState.state || 'all', origin: routeState.origin, workflowId: routeState.workflowId },
+    getKey: (execution: WorkflowExecutionSummary) => execution.id,
+    loadPage: async ({ cursor, limit, filters, signal }) => {
+      const next = await listWorkspaceWorkflowExecutions(filters.workspaceId, { ...filters, cursor, limit });
+      if (!signal.aborted) setPage(next);
+      return { items: next.items, nextCursor: next.nextCursor || undefined };
+    },
+    pageSize: 50,
+    strategy: 'manual'
+  });
+  const { items, error } = collection;
+  const loadingMore = collection.phase === 'loadingMore' || collection.phase === 'refreshing';
+  const phase = collection.phase === 'loading' ? 'loading' : collection.phase === 'error' && items.length === 0 ? 'error' : 'ready';
+  const [acknowledgedRevision, setAcknowledgedRevision] = React.useState(workspaceActivity.revision);
 
   React.useEffect(() => {
-    void load();
-  }, [load, workspaceActivity.revision]);
+    setAcknowledgedRevision(workspaceActivity.revision);
+  }, [activityCacheKey]);
+  const refreshActivity = () => {
+    setAcknowledgedRevision(workspaceActivity.revision);
+    void collection.refresh();
+  };
 
   React.useEffect(() => {
     let cancelled = false;
@@ -172,7 +155,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
         title={t('workflowActivity.title')}
         description={t('workflowActivity.subtitle', { workspace: workspace.name })}
         actions={(
-          <Button size="md" variant="secondary" onClick={() => void load()} disabled={phase === 'loading'}>
+          <Button size="md" variant="secondary" onClick={refreshActivity} disabled={phase === 'loading' || loadingMore}>
             <RefreshCw className={`h-4 w-4 ${phase === 'loading' ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
             {t('common.refresh')}
           </Button>
@@ -240,7 +223,13 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
         {workspaceActivity.error && (
           <InlineAlert tone="warning" className="mb-4 shrink-0">{t('workflowActivity.refreshError')}</InlineAlert>
         )}
-        {error && phase === 'ready' && <InlineAlert tone="warning" className="mb-4 shrink-0">{error}</InlineAlert>}
+        {workspaceActivity.revision !== acknowledgedRevision && phase !== 'loading' && (
+          <InlineAlert tone="neutral" className="mb-4 shrink-0">
+            <span>{t('workflowActivity.updatesAvailable')}</span>
+            <Button variant="secondary" size="sm" className="ml-3" onClick={refreshActivity} disabled={loadingMore}>{t('common.refresh')}</Button>
+          </InlineAlert>
+        )}
+        {error && phase === 'ready' && <InlineAlert tone="warning" className="mb-4 shrink-0">{error} <Button variant="secondary" size="sm" onClick={() => void collection.retry()}>{t('common.retry')}</Button></InlineAlert>}
 
         <section
           aria-label={t('workflowActivity.ledgerLabel')}
@@ -268,7 +257,7 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
               icon={<RefreshCw />}
               title={t('workflowActivity.loadErrorTitle')}
               description={error}
-              actions={<Button variant="secondary" size="sm" onClick={() => void load()}>{t('common.retry')}</Button>}
+              actions={<Button variant="secondary" size="sm" onClick={() => void collection.retry()}>{t('common.retry')}</Button>}
             />
           ) : items.length === 0 ? (
             <EmptyState
@@ -291,9 +280,9 @@ export const WorkspaceActivityPage: React.FC<WorkspaceActivityPageProps> = ({
                   navigate={navigate}
                 />
               ))}
-              {page?.nextCursor && (
+              {collection.nextCursor && (
                 <div className="flex justify-center px-4 py-4">
-                  <Button variant="secondary" size="sm" onClick={() => void load(page.nextCursor || undefined)} disabled={loadingMore}>
+                  <Button variant="secondary" size="sm" onClick={() => void collection.loadMore()} disabled={loadingMore || Boolean(error)}>
                     {loadingMore ? t('common.loading') : t('common.loadMore')}
                   </Button>
                 </div>

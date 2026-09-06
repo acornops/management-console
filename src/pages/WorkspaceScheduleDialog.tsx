@@ -1,4 +1,6 @@
 import React from 'react';
+import { WorkspaceScheduleTimingPreview } from '@/pages/WorkspaceScheduleTimingPreview';
+import type { ScheduleTimingPreview } from '@/pages/useScheduleTimingPreview';
 import { useTranslation } from 'react-i18next';
 
 import { Button, DialogFrame, InlineAlert, InlineConfirmation } from '@acornops/ui';
@@ -22,6 +24,7 @@ import type {
 } from '@/pages/WorkspaceSchedulesPage.helpers';
 
 interface WorkspaceScheduleDialogProps {
+  timingPreview: ScheduleTimingPreview;
   capabilityPreview: WorkflowCapabilitiesPreview | null;
   capabilityPreviewError: string;
   capabilityPreviewing: boolean;
@@ -53,6 +56,7 @@ interface WorkspaceScheduleDialogProps {
 const noScheduleMcpRequirements: WorkflowMcpRequirementPreview[] = [];
 
 export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = ({
+  timingPreview,
   capabilityPreview,
   capabilityPreviewError,
   capabilityPreviewing,
@@ -105,7 +109,7 @@ export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = (
         bodyClassName="space-y-4"
         footer={<>
           <Button size="sm" variant="tertiary" onClick={onClose}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
-          <Button size="sm" variant="primary" onClick={onSave} disabled={saving || capabilityPreviewing || !draftCapabilityReady}>
+          <Button size="sm" variant="primary" onClick={onSave} disabled={saving || capabilityPreviewing || !draftCapabilityReady || !timingPreview.valid}>
             {saving ? t('schedules.form.saving') : t('schedules.form.save')}
           </Button>
         </>}
@@ -125,6 +129,7 @@ export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = (
         {draftError && <InlineAlert tone="danger" role="alert" aria-live="assertive">{draftError}</InlineAlert>}
         {oauth.feedback && <InlineAlert tone={oauth.feedback.tone}>{oauth.feedback.message}</InlineAlert>}
         <WorkspaceScheduleFormFields
+          timingPreview={<WorkspaceScheduleTimingPreview preview={timingPreview} timezone={draft.timezone} />}
           capabilityPreview={capabilityPreview}
           capabilityPreviewError={capabilityPreviewError}
           capabilityPreviewing={capabilityPreviewing}

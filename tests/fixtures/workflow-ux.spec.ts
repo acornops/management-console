@@ -745,7 +745,7 @@ test('workflow schedule tab creates a schedule in a bounded dialog', async ({ pa
   await page.getByRole('option', { name: 'Custom' }).click();
   const cron = dialog.getByLabel(/Cron expression/);
   await cron.fill('60 24 * * 1-5');
-  await dialog.getByRole('button', { name: 'Save schedule' }).click();
+  await expect(dialog.getByRole('button', { name: 'Save schedule' })).toBeDisabled();
   await expect(dialog.getByText('Enter a valid five-part cron expression.')).toBeVisible();
 
   await dialog.getByRole('button', { name: 'Cancel' }).click();

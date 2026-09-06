@@ -22,7 +22,8 @@ import {
   AutomaticInvestigationActivity,
   shouldShowManualAssistantFallback
 } from '@/features/auto-triage/AutomaticInvestigationActivity';
-import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
+import { useTargetIssues } from '@/pages/issues/useTargetIssues';
+import { IssuePagination } from '@/pages/issues/IssuePagination';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 
@@ -86,7 +87,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const telemetryLabel = getTelemetryFreshnessLabel(telemetryFreshness);
   const clusterCachePrefix = `workspace:${cluster.workspaceId}:cluster:${cluster.id}:overview:`;
   const metricHistoryCacheKey = `${clusterCachePrefix}metric-history`;
-  const issueCacheKey = `${clusterCachePrefix}issues`;
   const [metricHistory, setMetricHistory] = useSessionCachedState<ClusterMetricHistoryPoint[]>(metricHistoryCacheKey, cluster.metricHistory || []);
   const [metricHistoryStatus, setMetricHistoryStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'idle');
   const [metricHistoryRequestVersion, setMetricHistoryRequestVersion] = useState(0);
@@ -114,13 +114,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   );
   const hasMetricSamples = cpuSeries.length > 0 || memorySeries.length > 0;
 
-  const [clusterIssues, setClusterIssues] = useSessionCachedState<ControlPlaneIssueItem[] | null>(issueCacheKey, null);
-  const [issueLoadStatus, setIssueLoadStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'idle');
-  const [issueRequestVersion, setIssueRequestVersion] = useState(0);
+  const issueCollection = useTargetIssues(cluster.workspaceId, cluster.id);
+  const clusterIssues = issueCollection.phase === 'loading' ? null : issueCollection.items;
+  const issueLoadStatus = issueCollection.phase;
   const issueSectionTitleId = React.useId();
-  useVisibilityAwareRefresh(() => {
-    setIssueRequestVersion((value) => value + 1);
-  });
   useEffect(() => {
     let isCurrent = true;
 
@@ -155,28 +152,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
     };
   }, [cluster.id, cluster.workspaceId, cluster.agentConnectionState, metricHistoryCacheKey, metricHistoryRequestVersion]);
 
-  useEffect(() => {
-    let isCurrent = true;
-    if (!hasSessionDataCacheValue(issueCacheKey)) setIssueLoadStatus('loading');
-
-    void controlPlaneApi
-      .listTargetIssues(cluster.workspaceId, cluster.id, { limit: 50 })
-      .then((page) => {
-        if (!isCurrent) return;
-        setClusterIssues(page.items);
-        setIssueLoadStatus('ready');
-      })
-      .catch((error) => {
-        console.error('Failed loading cluster issues', error);
-        if (!isCurrent) return;
-        setIssueLoadStatus(hasSessionDataCacheValue(issueCacheKey) ? 'ready' : 'error');
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [cluster.id, cluster.workspaceId, issueCacheKey, issueRequestVersion]);
-
   const reportedIssues = useMemo(
     () =>
       [...(clusterIssues || [])].sort((left, right) => {
@@ -192,7 +167,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
   const issueCount = issueSummary?.total ?? (hasIssueRows ? reportedIssues.length : 0);
   const criticalIssues = issueSummary ? issueSummary.critical : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'critical').length : 0;
   const warningIssues = issueSummary ? issueSummary.warning : hasIssueRows ? reportedIssues.filter((issue) => issue.severity === 'warning').length : 0;
-  const shouldShowIssueLoadFailure = issueLoadStatus === 'error' && (!issueSummary || issueSummary.total > 0);
+  const shouldShowIssueLoadFailure = issueLoadStatus === 'error';
   const scopedResourceCount =
     cluster.resourceSummary?.resourceCount ??
     cluster.workloads.length + cluster.services.length + cluster.ingresses.length + cluster.pvcs.length + cluster.nodes.length + cluster.namespaces.length;
@@ -239,7 +214,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
     onOpenCopilot?.(prompt);
   };
   const retryMetricHistory = () => setMetricHistoryRequestVersion((version) => version + 1);
-  const retryIssues = () => setIssueRequestVersion((version) => version + 1);
 
   return (
     <PageShell>
@@ -422,7 +396,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
             </div>
             <h3 className="type-row-title mt-4">{t('clusterOverview.issueLoadFailedTitle')}</h3>
             <p className="type-body mt-2 max-w-xl">{t(issueSummary ? 'clusterOverview.issueLoadFailedBody' : 'clusterOverview.issueLoadFailedWithoutSummaryBody')}</p>
-            <Button onClick={retryIssues} variant="secondary" size="sm" className="mt-4">
+            <Button onClick={() => void issueCollection.retry()} variant="secondary" size="sm" className="mt-4">
               {t('common.retry')}
             </Button>
           </div>
@@ -435,6 +409,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ cluster, issueSummar
             <p className="type-body mt-2 max-w-xl">{t('clusterOverview.noIssuesBody')}</p>
           </div>
         )}
+        {!(shouldShowIssueLoadFailure && reportedIssues.length === 0) && <IssuePagination collection={issueCollection} total={issueSummary?.total} />}
       </section>
 
       {metricHistoryStatus === 'error' && (
