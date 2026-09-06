@@ -6,6 +6,24 @@
   ],
   "counterparts": {
     "control-plane": {
+      "workspaceAccessState": {
+        "list": "GET /api/v1/workspaces?view=access-state",
+        "detail": "GET /api/v1/workspaces/{workspaceId}/access-state",
+        "fields": [
+          "id",
+          "name",
+          "accessState=active|suspended",
+          "publicReason?",
+          "suspendedAt?"
+        ],
+        "authorization": "Current-user membership only; no workload permissions are implied",
+        "signals": [
+          "HTTP403 WORKSPACE_SUSPENDED",
+          "SSE workspace_suspended"
+        ],
+        "idleRevalidationSeconds": 15,
+        "restoration": "Explicit fresh overview navigation; never replay actions"
+      },
       "authContract": {
         "config": "GET /api/v1/auth/config returns effective workspace-user OIDC and password capability flags plus optional effective helpLinks destinations without exposing admission policy. Missing or invalid helpLinks fields retain the built-in documentation and support destinations during rolling upgrades.",
         "logout": "POST /api/v1/auth/logout returns {status=ok,mode=oidc|local,redirectPath}; redirectPath is an AcornOps path and never a provider URL.",

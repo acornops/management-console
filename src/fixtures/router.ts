@@ -100,7 +100,14 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (path.startsWith('/api/v1/auth/password/')) return fixtureError('Password authentication is unavailable in frontend fixture mode.');
   if (path === '/api/v1/me' && method === 'GET') return json(clone(state.user));
 
-  if (path === '/api/v1/workspaces' && method === 'GET') return json({ items: clone(state.workspaces) });
+  const fixtureSuspendedId = globalThis.localStorage?.getItem?.('acornops-fixture-suspended-workspace');
+  const accessState = (workspace: typeof state.workspaces[number]) => ({ id: workspace.id, name: workspace.name, accessState: workspace.id === fixtureSuspendedId ? 'suspended' : 'active', ...(workspace.id === fixtureSuspendedId ? { publicReason: 'Workspace access is temporarily suspended.' } : {}) });
+  const accessMatch = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/access-state$/);
+  if (accessMatch && method === 'GET') {
+    const workspace = state.workspaces.find(item => item.id === decode(accessMatch[1]));
+    return workspace ? json(accessState(workspace)) : notFound('Workspace');
+  }
+  if (path === '/api/v1/workspaces' && method === 'GET') return json({ items: url.searchParams.get('view') === 'access-state' ? state.workspaces.map(accessState) : clone(state.workspaces.filter(item => item.id !== fixtureSuspendedId)) });
   if (path === '/api/v1/workspaces' && method === 'POST') {
     const input = await bodyOf(request);
     const workspace = { ...clone(state.workspaces[0]), id: id('fixture-workspace'), name: String(input.name || 'Untitled fixture workspace'), clusterCount: 0, memberCount: 1 };

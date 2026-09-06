@@ -566,7 +566,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           isSelected ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                         }`}
                       >
-                        <span className="block truncate type-emphasis">{workspace.name}</span>
+                        <span className="block truncate type-emphasis">{workspace.name}{workspace.accessState === 'suspended' ? ' · Suspended' : ''}</span>
                         <span className="type-micro-label">{t('app.clustersCount', { count })}</span>
                       </Button>
                     );

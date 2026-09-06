@@ -300,6 +300,9 @@ export interface Alert {
 }
 
 export interface Workspace {
+  accessState?: 'active' | 'suspended';
+  publicReason?: string;
+  suspendedAt?: string;
   id: string;
   name: string;
   description: string;

@@ -1,3 +1,4 @@
+import { workspaceAccessApi } from './control-plane/workspaceAccessApi';
 import {
   ChatAssistantReference,
   ChatRuntimeSelection,
@@ -157,12 +158,16 @@ export const controlPlaneApi = {
     }));
   },
 
+  ...workspaceAccessApi,
   async getWorkspaces(_currentUser: User): Promise<Workspace[]> {
+    const accessStates = await controlPlaneApi.getWorkspaceAccessStates();
     const page = await requestJson<PagedResult<ControlPlaneWorkspace>>('/api/v1/workspaces?limit=50');
-    return page.items.map((workspace) => mapWorkspace(workspace, []));
+    return [...page.items.filter(workspace => accessStates.find(state => state.id === workspace.id)?.accessState !== 'suspended').map((workspace) => mapWorkspace(workspace, [])), ...accessStates.filter(state => state.accessState === 'suspended').map(state => ({ ...state, description: '', members: [], clusterIds: [] }))];
   },
 
   async getWorkspace(workspaceId: string, _currentUser?: User): Promise<Workspace> {
+    const state = await controlPlaneApi.getWorkspaceAccessState(workspaceId);
+    if (state.accessState === 'suspended') return { ...state, description: '', members: [], clusterIds: [] };
     const workspace = await requestJson<ControlPlaneWorkspace>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}`
     );

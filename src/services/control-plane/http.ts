@@ -1,3 +1,4 @@
+import { requestWorkspaceId, hasWorkspaceAccessDiscovery, isWorkspaceSuspended, notifyWorkspaceSuspended, readWorkspaceAccessState, recordWorkspaceAccessState, trackWorkspaceRequest, workspaceIdFromPath, type WorkspaceAccessState } from './workspaceAccessState';
 import { ControlPlaneRunEvent } from './types';
 import { emitSessionExpired } from './sessionLifecycle';
 
@@ -5,6 +6,7 @@ const CSRF_COOKIE_NAME = 'acornops_cp_csrf';
 const CSRF_HEADER_NAME = 'x-csrf-token';
 let csrfTokenRequest: Promise<string> | null = null;
 let cachedCsrfToken = '';
+const responseWorkspaceIds = new WeakMap<Response, string>();
 
 function isHtmlErrorDocument(body: string, contentType: string | null): boolean {
   return contentType?.toLowerCase().includes('text/html') === true
@@ -139,6 +141,7 @@ async function throwControlPlaneResponseError(
       // Keep the raw body for non-JSON responses.
     }
   }
+  if (response.status === 403 && code === 'WORKSPACE_SUSPENDED') notifyWorkspaceSuspended(responseWorkspaceIds.get(response) ?? workspaceIdFromPath(new URL(response.url || '/', 'http://localhost').pathname));
   throw new ControlPlaneRequestError(
     `Control plane request failed (${response.status}): ${message || response.statusText}`,
     response.status,
@@ -149,6 +152,45 @@ async function throwControlPlaneResponseError(
       : undefined,
     requestId
   );
+}
+
+/** Prevent background hooks and stale callbacks from issuing workload requests after a hold. */
+async function fetchWorkspaceRequest(path: string, init: RequestInit): Promise<Response> {
+  const workspaceId = requestWorkspaceId(path);
+  if (!workspaceId || /\/access-state(?:[?]|$)/.test(path)) return fetch(`${getControlPlaneBaseUrl()}${path}`, init);
+  if (hasWorkspaceAccessDiscovery() && !readWorkspaceAccessState(workspaceId)) {
+    const state = await requestJson<WorkspaceAccessState>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/access-state`);
+    recordWorkspaceAccessState(state);
+  }
+  const denied = () => new ControlPlaneRequestError('Workspace access is suspended', 403, 'WORKSPACE_SUSPENDED');
+  if (isWorkspaceSuspended(workspaceId)) throw denied();
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  init.signal?.addEventListener('abort', abort, { once: true });
+  if (init.signal?.aborted) controller.abort();
+  const untrackRequest = trackWorkspaceRequest(controller, workspaceId);
+  const untrack = () => { untrackRequest(); init.signal?.removeEventListener('abort', abort); };
+  try {
+    const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, { ...init, signal: controller.signal });
+    if (isWorkspaceSuspended(workspaceId)) throw denied();
+    if (!response.body) { untrack(); return response; }
+    const reader = response.body.getReader();
+    const body = new ReadableStream<Uint8Array>({
+      async pull(stream) {
+        try {
+          const { done, value } = await reader.read();
+          if (done) { untrack(); stream.close(); }
+          else if (isWorkspaceSuspended(workspaceId)) { untrack(); await reader.cancel(); stream.error(denied()); }
+          else stream.enqueue(value);
+        } catch (error) { untrack(); stream.error(error); }
+      },
+      async cancel() { controller.abort(); untrack(); await reader.cancel(); }
+    });
+    const wrapped = new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
+    Object.defineProperty(wrapped, 'url', { value: response.url });
+    responseWorkspaceIds.set(wrapped, workspaceId);
+    return wrapped;
+  } catch (error) { untrack(); throw error; }
 }
 
 export type ControlPlaneRequestInit = RequestInit & { sessionExpiry?: SessionExpiryBehavior };
@@ -169,7 +211,7 @@ export async function requestJson<T>(path: string, init?: ControlPlaneRequestIni
   if ((method === 'GET' || method === 'HEAD') && requestInit.cache === undefined) {
     requestInit.cache = 'no-store';
   }
-  const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, requestInit);
+  const response = await fetchWorkspaceRequest(path, requestInit);
 
   if (!response.ok) {
     return throwControlPlaneResponseError(response, sessionExpiry);
@@ -184,7 +226,7 @@ export async function requestJson<T>(path: string, init?: ControlPlaneRequestIni
 
 /** Fetch a bounded redacted artifact as JSON or text using the user session. */
 export async function requestArtifact(path: string): Promise<unknown> {
-  const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, {
+  const response = await fetchWorkspaceRequest(path, {
     credentials: 'include',
     cache: 'no-store'
   });
@@ -216,7 +258,7 @@ export async function requestEventStream<T>(
   }
 ): Promise<void> {
   try {
-    const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, {
+    const response = await fetchWorkspaceRequest(path, {
       method: 'GET',
       credentials: 'include',
       cache: 'no-store',
@@ -249,6 +291,7 @@ export async function readJsonEventStream<T>(
   const decoder = new TextDecoder();
   let buffer = '';
   let dataLines: string[] = [];
+  let eventName = '';
 
   const emitDataLines = () => {
     if (dataLines.length === 0) return;
@@ -256,6 +299,12 @@ export async function readJsonEventStream<T>(
     dataLines = [];
     try {
       const parsed = JSON.parse(payload) as T;
+      const event = parsed as { type?: string; event?: string; workspaceId?: string };
+      if (event.type === 'workspace_suspended' || event.event === 'workspace_suspended' || eventName === 'workspace_suspended') {
+        notifyWorkspaceSuspended(event.workspaceId ?? responseWorkspaceIds.get(response));
+        void reader.cancel();
+        return;
+      }
       onEvent?.(parsed);
     } catch {
       // Ignore malformed frames.
@@ -276,9 +325,11 @@ export async function readJsonEventStream<T>(
 
       if (line.length === 0) {
         emitDataLines();
+        eventName = '';
         continue;
       }
       if (line.startsWith(':')) continue;
+      if (line.startsWith('event:')) eventName = line.slice(6).trim();
       if (line.startsWith('data:')) {
         dataLines.push(line.slice('data:'.length).trimStart());
       }

@@ -94,3 +94,5 @@ tag-driven image release does not publish the npm package.
 
 The workflow grants write access only to repository contents, pull requests,
 and packages. It uses no repository-stored npm credential.
+
+Workspace suspension requires the member access-state control-plane endpoints before console rollout. A suspended workspace remains in the directory with a safe public explanation. Idle tabs recheck every 15 seconds; HTTP and stream suspension responses trigger immediate revalidation. Refresh access starts a fresh overview after restoration without replaying old actions.

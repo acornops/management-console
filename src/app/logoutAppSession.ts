@@ -1,3 +1,4 @@
+import { clearWorkspaceAccessStates } from '@/services/control-plane/workspaceAccessState';
 import { clearChatComposerRuntimesForUser } from '@/features/targets/chat/lib/chatComposerRuntimeStorage';
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { getControlPlaneUrl } from '@/services/control-plane/http';
@@ -51,6 +52,7 @@ export async function logoutAppSession({
   closeAccountMenu();
   if (userId) clearChatComposerRuntimesForUser(userId);
   clearSessionForLogout();
+  clearWorkspaceAccessStates();
   if (redirectUrl) {
     window.location.assign(redirectUrl);
     return;

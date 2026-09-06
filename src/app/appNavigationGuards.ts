@@ -3,6 +3,7 @@ import { Workspace } from '@/types';
 import { AppPaths, AppRoute } from '@/utils/routes';
 
 export function workspaceLandingPath(workspace: Workspace): string {
+  if (workspace.accessState === 'suspended') return AppPaths.workspaceOverview(workspace.id);
   if (canReadWorkspaceData(workspace)) return AppPaths.workspaceOverview(workspace.id);
   if (canReadWorkspaceAuditLog(workspace)) return AppPaths.workspaceAuditLog(workspace.id);
   if (canReadWorkspaceMembers(workspace)) return AppPaths.workspaceMembers(workspace.id);

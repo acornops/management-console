@@ -7,6 +7,7 @@ interface CacheRecord<T> {
 
 const cache = new Map<string, CacheRecord<unknown>>();
 const MAX_SESSION_CACHE_ENTRIES = 250;
+let cacheGeneration = 0;
 let cacheOwnerId: string | null = null;
 
 function resolveInitialValue<T>(initialValue: T | (() => T)): T {
@@ -22,6 +23,7 @@ export function setSessionDataCacheOwner(ownerId: string | null): void {
 }
 
 export function clearSessionDataCache(): void {
+  cacheGeneration += 1;
   cache.clear();
 }
 
@@ -62,6 +64,7 @@ export function useSessionCachedState<T>(
   key: string,
   initialValue: T | (() => T)
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const generationAtMountRef = React.useRef(cacheGeneration);
   const ownerAtMountRef = React.useRef(cacheOwnerId);
   const initialValueRef = React.useRef(initialValue);
   initialValueRef.current = initialValue;
@@ -85,7 +88,7 @@ export function useSessionCachedState<T>(
   }, [key, readValue, snapshot.key]);
 
   const setValue = React.useCallback<React.Dispatch<React.SetStateAction<T>>>((update) => {
-    if (ownerAtMountRef.current !== cacheOwnerId) return;
+    if (ownerAtMountRef.current !== cacheOwnerId || generationAtMountRef.current !== cacheGeneration) return;
     const currentValue = valueRef.current.key === key ? valueRef.current.value : readValue();
     const nextValue = typeof update === 'function'
       ? (update as (previous: T) => T)(currentValue)

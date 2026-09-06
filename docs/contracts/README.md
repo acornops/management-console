@@ -225,3 +225,7 @@ When changing a console API call, mapper, or screen contract:
 2. Update `docs/contracts/manifest.json` if the consumed control-plane surface changed.
 3. Keep this README focused on durable browser-client invariants only; do not paste endpoint lists here.
 4. Run `npm run contracts:check`.
+
+## Workspace Suspension Discovery
+
+Member-only `GET /api/v1/workspaces?view=access-state` and `GET /api/v1/workspaces/{workspaceId}/access-state` expose only id, name, accessState, publicReason and suspendedAt. This discovery runs before workload bootstrap. Suspended selector entries have no inferred permissions. HTTP 403 WORKSPACE_SUSPENDED and SSE workspace_suspended trigger safe-state refresh; a 15-second idle recheck catches missed stream events. The blocking page replaces workload content, aborts tracked requests/streams and clears current workspace caches. Restored access requires explicit refresh into a fresh overview; old actions are never replayed.

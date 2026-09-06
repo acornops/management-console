@@ -266,7 +266,7 @@ export const AppDesktopSidebar: React.FC<AppDesktopSidebarProps> = ({
                                 }`}
                               >
                                 <ICONS.LayoutGrid data-workspace-menu-icon="true" className={`w-4 h-4 shrink-0 ${isSelected ? 'text-accent-strong' : 'opacity-50'}`} />
-                                <span className="min-w-0 flex-1 whitespace-normal break-words text-left leading-snug">{workspace.name || initials}</span>
+                                <span className="min-w-0 flex-1 whitespace-normal break-words text-left leading-snug">{workspace.name || initials}{workspace.accessState === 'suspended' ? ' · Suspended' : ''}</span>
                               </MotionButton>
                             </div>
                           );

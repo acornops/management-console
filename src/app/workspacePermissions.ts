@@ -6,7 +6,7 @@ export function hasWorkspacePermission(
   workspace: Workspace | undefined,
   permission: WorkspacePermission
 ): boolean {
-  if (!workspace) return false;
+  if (!workspace || workspace.accessState === 'suspended') return false;
   const serverPermission = workspace.permissions?.[permission];
   if (typeof serverPermission === 'boolean') return serverPermission;
   return workspace.currentUserRoleTemplate?.capabilities.includes(permission) ?? false;

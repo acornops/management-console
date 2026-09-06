@@ -1,3 +1,6 @@
+import { setAccessWorkspaceContext } from '@/services/control-plane/workspaceAccessState';
+import { WorkspaceSuspendedScreen } from '@/app/WorkspaceSuspendedScreen';
+import { useWorkspaceAccessMonitor } from '@/app/useWorkspaceAccessMonitor';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppRouter } from '@/hooks/useAppRouter';
@@ -35,11 +38,6 @@ const App: React.FC = () => {
   const { t, i18n } = useTranslation();
   const logoSrc = `${import.meta.env.BASE_URL}logo.svg`;
   const { route, navigate } = useAppRouter();
-  useEffect(() => {
-    if (route.kind === 'workspaceRedirect') {
-      navigate(route.target, { replace: true });
-    }
-  }, [navigate, route]);
   const [user, setUser] = useState<User | null>(null);
   setSessionDataCacheOwner(user?.id ?? null);
   const [kubernetesClusters, setKubernetesClusters] = useState<KubernetesCluster[]>([]);
@@ -66,6 +64,7 @@ const App: React.FC = () => {
   const isDark = resolvedTheme === 'dark';
   const routeWorkspaceId = getWorkspaceRouteId(route);
   const workspaceContextId = routeWorkspaceId || selectedWorkspaceId;
+  setAccessWorkspaceContext(workspaceContextId);
   const clusterContextId = getClusterRouteId(route);
   const workspaceById = useMemo(() => new Map(workspaces.map((workspace) => [workspace.id, workspace])), [workspaces]);
   const kubernetesClusterById = useMemo(() => new Map(kubernetesClusters.map((app) => [app.id, app])), [kubernetesClusters]);
@@ -232,7 +231,7 @@ const App: React.FC = () => {
       return;
     }
     const routeWorkspace = workspaceById.get(routeWorkspaceId);
-    if (!routeWorkspace || canReadWorkspaceData(routeWorkspace)) {
+    if (!routeWorkspace || routeWorkspace.accessState === 'suspended' || canReadWorkspaceData(routeWorkspace)) {
       return;
     }
     navigate(workspaceLandingPath(routeWorkspace), { replace: true });
@@ -327,7 +326,6 @@ const App: React.FC = () => {
     }
     return;
   }, [route.kind, route.kind === 'kubernetesClusters' ? route.q : undefined, route.kind === 'kubernetesClusters' ? route.status : undefined, selectedWorkspaceId, workspaceById, workspaces, navigate]);
-
   useEffect(() => {
     if (route.kind !== 'kubernetesClusterDiagnostics') {
       return;
@@ -396,7 +394,6 @@ const App: React.FC = () => {
     }
     return;
   }, [route.kind, route.kind === 'kubernetesClusterDiagnostics' ? route.clusterId : undefined, route.kind === 'kubernetesClusterDiagnostics' ? route.tab : undefined, route.kind === 'kubernetesClusterDiagnostics' ? route.catalogState?.q : undefined, route.kind === 'kubernetesClusterDiagnostics' ? route.catalogState?.status : undefined, kubernetesClusterById, selectedWorkspaceId, workspaceById, workspaces, navigate]);
-
   useEffect(() => {
     setIsMobileNavOpen(false);
     setIsSidebarWorkspaceMenuOpen(false);
@@ -428,7 +425,6 @@ const App: React.FC = () => {
     virtualMachinesInWorkspaceContext: virtualMachineCache.virtualMachinesInWorkspaceContext,
     workspaceById
   });
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') {
@@ -446,7 +442,11 @@ const App: React.FC = () => {
   }, [openClusterCopilot, selectedSidebarCluster]);
   const { getCurrentUserRoleForWorkspace, getWorkspacePermission } = useAppWorkspacePermissions(workspaceById, user?.email);
   const handleLogout = useAppLogout(user?.id, clearSessionForLogout, navigate, setIsAccountMenuOpen);
+  const contentGeneration = useWorkspaceAccessMonitor(user?.id, workspaceContextId, setWorkspaces, setKubernetesClusters, virtualMachineCache.resetVirtualMachineCache, setIsClusterCopilotOpen);
   usePostLogoutInvitationRestore(!user && sessionBootstrapState !== 'restoring' && route.kind === 'home', navigate);
+  if (user && workspaceContext?.accessState === 'suspended' && route.kind !== 'workspaces') {
+    return <WorkspaceSuspendedScreen workspace={workspaceContext} workspaces={workspaces} navigate={navigate} onLogout={handleLogout} />;
+  }
   if (!user && sessionBootstrapState === 'restoring') {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
   }
@@ -486,7 +486,7 @@ const App: React.FC = () => {
   const installAgentCluster = installAgentClusterId ? kubernetesClusterById.get(installAgentClusterId) || null : null;
   const installAgentWorkspace = installAgentCluster ? workspaceById.get(installAgentCluster.workspaceId) : undefined;
   return (
-    <AppShell
+    <AppShell key={contentGeneration}
       acceptWorkspaceInvitation={acceptWorkspaceInvitation}
       activeAgentSubview={activeAgentSubview}
       activeClusterSubview={activeClusterSubview}

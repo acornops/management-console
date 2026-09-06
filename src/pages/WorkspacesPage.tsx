@@ -46,18 +46,18 @@ export const WorkspacesPage: React.FC<WorkspacesPageProps> = ({
                 </IconTile>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="type-row-title break-words">{workspace.name}</h3>
+                    <h3 className="type-row-title break-words">{workspace.name}{workspace.accessState === 'suspended' ? ' · Suspended' : ''}</h3>
                     {workspace.currentUserRole && (
                       <StatusBadge tone="neutral">{workspace.currentUserRoleTemplate?.displayName || workspace.currentUserRole}</StatusBadge>
                     )}
                   </div>
                   <p className="mt-1 max-w-3xl type-body text-ui-text-muted">
-                    {workspace.description || t('app.workspaceDescriptionUnavailable')}
+                    {workspace.accessState === 'suspended' ? workspace.publicReason || 'Workspace access is temporarily suspended.' : workspace.description || t('app.workspaceDescriptionUnavailable')}
                   </p>
-                  <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 type-caption text-ui-text-muted">
+                  {workspace.accessState !== 'suspended' && <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 type-caption text-ui-text-muted">
                     <span>{t('app.workspaceMemberCount', { count: workspace.memberCount ?? workspace.members.length })}</span>
                     <span>{t('app.workspaceClusterCount', { count: workspace.clusterCount ?? 0 })}</span>
-                  </p>
+                  </p>}
                 </div>
               </div>
               <Button type="button" variant="secondary" size="md" className="w-full justify-center sm:w-auto" onClick={() => onOpenWorkspace(workspace)}>

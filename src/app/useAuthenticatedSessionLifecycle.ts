@@ -1,3 +1,4 @@
+import { clearWorkspaceAccessStates } from '@/services/control-plane/workspaceAccessState';
 import { useCallback, useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { SessionBootstrapState } from '@/app/useAppBootstrap';
@@ -24,6 +25,7 @@ export function useAuthenticatedSessionLifecycle(args: {
 }) {
   const [sessionExpired, setSessionExpired] = useState(false);
   const clearApplicationState = useCallback(() => {
+    clearWorkspaceAccessStates();
     args.closeNavigation();
     args.setUser(null);
     args.setKubernetesClusters([]);

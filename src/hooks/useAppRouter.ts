@@ -80,6 +80,9 @@ export function useAppRouter(): {
   );
 
   const route = useMemo(() => parseAppRoute(appPath), [appPath]);
+  useEffect(() => {
+    if (route.kind === 'workspaceRedirect') navigate(route.target, { replace: true });
+  }, [navigate, route]);
 
   return {
     appPath,
