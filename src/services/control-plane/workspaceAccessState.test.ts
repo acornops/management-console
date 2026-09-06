@@ -35,4 +35,19 @@ describe('suspended workspace request boundary', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('does not reconstruct responses whose status forbids a body', async () => {
+    const response = {
+      ok: true,
+      status: 204,
+      statusText: 'No Content',
+      headers: new Headers(),
+      body: new ReadableStream<Uint8Array>({ start: (stream) => stream.close() }),
+      url: 'http://localhost/api/v1/workspaces/ws/connection'
+    } as Response;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
+    recordWorkspaceAccessState({ id: 'ws', name: 'Workspace', accessState: 'active' });
+
+    await expect(requestJson<void>('/api/v1/workspaces/ws/connection')).resolves.toBeUndefined();
+  });
+
 });

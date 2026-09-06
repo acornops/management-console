@@ -173,7 +173,10 @@ async function fetchWorkspaceRequest(path: string, init: RequestInit): Promise<R
   try {
     const response = await fetch(`${getControlPlaneBaseUrl()}${path}`, { ...init, signal: controller.signal });
     if (isWorkspaceSuspended(workspaceId)) throw denied();
-    if (!response.body) { untrack(); return response; }
+    if (!response.body || response.status === 204 || response.status === 205 || response.status === 304) {
+      untrack();
+      return response;
+    }
     const reader = response.body.getReader();
     const body = new ReadableStream<Uint8Array>({
       async pull(stream) {
