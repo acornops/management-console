@@ -51,7 +51,7 @@ interface VirtualMachinesPageProps {
   canManageTargets: boolean;
   canManageAgentKeys: boolean;
   canCreateReadWriteRuns: boolean;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
   navigate: (path: string, options?: NavigateOptions) => void;
   onUpdateWorkspace: (workspaceId: string, updates: Partial<Workspace>) => void;
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
@@ -104,6 +104,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const [resourceError, setResourceError] = React.useState<string | null>(null);
   const [logsStatus, setLogsStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'idle');
   const [logsError, setLogsError] = React.useState<string | null>(null);
+  const logsRequestSeqRef = React.useRef(0);
   const [metricHistory, setMetricHistory] = useSessionCachedState<ControlPlaneVirtualMachineMetricHistoryPoint[]>(metricHistoryCacheKey, []);
   const [metricHistoryByVmId, setMetricHistoryByVmId] = useSessionCachedState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>(`workspace:${workspace.id}:virtual-machine-card-metrics`, {});
   const [metricLoadStateByVmId, setMetricLoadStateByVmId] = useSessionCachedState<Record<string, VmMetricLoadState>>(`workspace:${workspace.id}:virtual-machine-card-metric-states`, {});
@@ -119,6 +120,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   };
   const metricHistoryRequestSeqRef = React.useRef(0);
   const view = route.kind === 'workspaceVirtualMachineDetail' ? activeSubview : 'overview';
+  React.useEffect(() => () => {
+    logsRequestSeqRef.current += 1;
+  }, [logsCacheKey, view]);
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
   const selectedTargetId = selected?.id || null;
   const capabilityCatalogCache = useCapabilityCatalogCache(selectedId ? `${workspace.id}:${selectedId}` : '');
@@ -253,13 +257,16 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     }
   }, [inventoryCacheKey, t, workspace.id]);
   const loadVmLogs = React.useCallback(async (vmId: string) => {
-    if (!hasSessionDataCacheValue(logsCacheKey)) setLogsStatus('loading');
+    const requestSeq = ++logsRequestSeqRef.current;
+    setLogsStatus('loading');
     setLogsError(null);
     try {
       const payload = await controlPlaneApi.getVirtualMachineLogs(workspace.id, vmId);
+      if (requestSeq !== logsRequestSeqRef.current) return;
       setLogs(payload.entries || []);
       setLogsStatus('ready');
     } catch (error) {
+      if (requestSeq !== logsRequestSeqRef.current) return;
       console.error('Failed loading virtual machine logs', error);
       setLogsError(formatControlPlaneError(error, t('virtualMachines.resources.logsLoadFailed'), { area: 'virtualMachines' }));
       setLogsStatus(hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'error');
@@ -594,13 +601,13 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
               permissionModeOverride: permissionMode
             });
             onUpsertWorkspaceVirtualMachine(workspace.id, updated);
-            showToast(t('virtualMachines.settings.permissionModeUpdated'));
+            showToast(t('virtualMachines.settings.permissionModeUpdated'), { tone: 'success' });
           } catch (error) {
             showToast(formatControlPlaneError(
               error,
               t('virtualMachines.settings.permissionModeUpdateFailed'),
               { area: 'virtualMachines' }
-            ));
+            ), { tone: 'error' });
           }
         } : undefined}
         canManageTargets={canManageTargets}

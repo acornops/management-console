@@ -1,5 +1,22 @@
 import { expect, test } from '@playwright/test';
 
+test('workspace and workflow schedule lists share cadence and recovery without preview reads', async ({ page }) => {
+  let previewReads = 0;
+  page.on('request', (request) => { if (request.url().includes('/workflow-schedules/preview')) previewReads += 1; });
+  for (const route of ['/workspaces/fixture-workspace/workflows/schedules', '/workspaces/fixture-workspace/workflows?workflow=fixture-workflow&tab=schedules']) {
+    await page.goto(route);
+    const row = page.locator('tr:visible').filter({ hasText: 'MCP recovery review' });
+    await expect(row.getByText('Weekdays at 09:15 · Asia/Singapore')).toBeVisible();
+    await expect(row.getByText('Paused — no next run')).toBeVisible();
+    await expect(row.getByText('No execution was created')).toBeVisible();
+    await expect(row.getByText('Next step', { exact: true })).toBeVisible();
+    await expect(row.getByRole('link', { name: 'Review workflow access' })).toHaveAttribute('href', /mcp|capabilities/);
+    await row.getByText('Cron expression', { exact: true }).click();
+    await expect(row.locator('details code').filter({ hasText: '15 9 * * 1-5' })).toBeVisible();
+  }
+  expect(previewReads).toBe(0);
+});
+
 test('workflow library identifies assigned agents by name', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/workflows', { waitUntil: 'domcontentloaded' });
 
@@ -508,6 +525,7 @@ test('workflow launch uses the saved prompt without runtime template inputs', as
 
   const drawer = page.getByRole('dialog', { name: 'Run workflow' });
   await expect(drawer).toBeVisible();
+  await expect(drawer.getByLabel('Launch review').getByText('Direct-executor preview scope', { exact: true })).toBeVisible();
   await expect(drawer.getByText('Review production health and produce a concise operational summary.', { exact: true })).toBeVisible();
   await expect(drawer.getByRole('combobox')).toHaveCount(0);
   await expect(drawer.getByRole('listbox')).toHaveCount(0);
@@ -766,8 +784,13 @@ test('workflow webhook management stays scoped in a table-first detail tab and c
   await expect(webhooksPanel).toBeVisible();
   await expect(page).toHaveURL(/tab=webhooks/);
   await expect(webhooksPanel.getByRole('table', { name: 'Inbound workflow webhooks' })).toBeVisible();
-  await expect(webhooksPanel.getByRole('columnheader', { name: 'Status' })).toBeVisible();
-  await expect(webhooksPanel.getByRole('columnheader', { name: 'Last dispatch' })).toBeVisible();
+  await expect(webhooksPanel.getByRole('columnheader', { name: 'Execution evidence' })).toBeVisible();
+  const failureRow = webhooksPanel.getByRole('row').filter({ hasText: 'External production review' });
+  await expect(failureRow.getByText('Configuration', { exact: true })).toBeVisible();
+  await expect(failureRow.getByText('Last dispatch', { exact: true })).toBeVisible();
+  await expect(failureRow.getByText('No execution was created', { exact: true })).toBeVisible();
+  await expect(failureRow.getByText('Cause', { exact: true })).toBeVisible();
+  await expect(failureRow.getByText('Next step', { exact: true })).toBeVisible();
   await expect(webhooksPanel.getByRole('rowheader', { name: 'External production review' })).toBeVisible();
 
   await webhooksPanel.getByRole('button', { name: 'Create webhook' }).click();

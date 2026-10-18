@@ -4,6 +4,7 @@ import { CheckCircle2, ShieldCheck, XCircle } from 'lucide-react';
 import { Button, IconTile, StatusBadge } from '@acornops/ui';
 import { PendingApproval } from '@/types';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
+import { formatApprovalArguments } from '@/utils/approvalArguments';
 
 interface ApprovalCheckpointProps {
   approval: PendingApproval;
@@ -18,15 +19,6 @@ function cleanText(value: unknown): string {
     .replace(/[\p{Cc}\p{Cf}]+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function formatApprovalArguments(value: Record<string, unknown>): string {
-  return JSON.stringify(value, null, 2).replace(/\p{Cf}/gu, (character) =>
-    character
-      .split('')
-      .map((unit) => `\\u${unit.charCodeAt(0).toString(16).padStart(4, '0')}`)
-      .join('')
-  );
 }
 
 function targetLabel(t: TFunction, argumentsValue: Record<string, unknown> | undefined, defaultKind?: string): string {

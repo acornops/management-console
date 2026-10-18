@@ -379,7 +379,7 @@ export const TargetAutoTriageSettingsSection: React.FC<{
                 aria-describedby={
                   `auto-triage-instructions-description-${targetId} auto-triage-instructions-help-${targetId}`
                 }
-                placeholder={t('autoTriage.instructionsPlaceholder')}
+                placeholder={t(targetType === 'virtual_machine' ? 'autoTriage.vmInstructionsPlaceholder' : 'autoTriage.instructionsPlaceholder')}
                 className={autoTriageTextareaClassName}
                 onChange={(event) => {
                   const next = [...event.target.value].slice(0, 4000).join('');

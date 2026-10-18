@@ -96,7 +96,7 @@ describe('virtual machine connection filters', () => {
 
     expect(vmNeedsAttention(vm, noIssues)).toBe(false);
     expect(vmMatchesConnectionFilter(vm, 'healthy', noIssues)).toBe(true);
-    expect(getVmCatalogStatusLabel(vm, noIssues, (key) => key)).toBe('dashboard.healthy');
+    expect(getVmCatalogStatusLabel(vm, noIssues, (key) => key)).toBe('virtualMachines.list.agentConnected');
     expect(getVmCatalogStatusTone(vm, noIssues)).toBe('success');
   });
 
@@ -121,5 +121,16 @@ describe('virtual machine connection filters', () => {
     const now = Date.parse('2026-01-01T00:00:05Z');
     expect(formatSnapshotTime(vmWithStatus('online'), now)).toBe('Just now');
     expect(formatSnapshotTime({ ...vmWithStatus('online'), latestSnapshot: undefined, updatedAt: '' }, now)).toBe('Waiting for agent');
+  });
+
+  it('labels connectivity independently of warning issues and old or missing samples', () => {
+    const vm = vmWithStatus('online');
+    const warnings = issueSummary({ total: 1, warning: 1, active: 1 });
+    const t = (key: string) => key;
+    expect(getVmStatusLabel(vm.status, t)).toBe('virtualMachines.list.agentConnected');
+    expect(getVmCatalogStatusLabel(vm, warnings, t)).toBe('dashboard.warningStatus');
+    expect(getVmCatalogStatusTone(vm, warnings)).toBe('warning');
+    expect(formatSnapshotTime(vm, Date.parse('2026-01-03T00:00:00Z'))).toBe('2 days ago');
+    expect(getVmStatusLabel({ ...vm, updatedAt: '' }.status, t)).toBe('virtualMachines.list.agentConnected');
   });
 });

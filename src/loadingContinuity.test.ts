@@ -53,7 +53,7 @@ describe('initial collection loading continuity', () => {
     expect(readSource('src/features/targets/admin/McpServerToolsDialog.tsx')).toContain('<CollectionLoadingSkeleton');
     expect(readSource('src/pages/WorkspaceOverviewPage.tsx')).toContain('<CollectionLoadingSkeleton');
     expect(readSource('src/pages/virtual-machines/VirtualMachineResourcesView.tsx')).toContain('<CollectionLoadingSkeleton');
-    expect(readSource('src/pages/WorkspaceWebhookDrawerTable.tsx')).toContain('<TableLoadingRows columns={5}');
+    expect(readSource('src/pages/WorkspaceWebhookDrawerTable.tsx')).toContain('<TableLoadingRows columns={4}');
     expect(readSource('src/pages/WorkspaceScheduleDrawerTable.tsx')).toContain('<TableLoadingRows columns={5}');
     expect(readSource('src/features/kubernetes-cluster-detail/components/workloads/WorkloadsExplorer.tsx')).toContain(
       'shouldShowInitialCollectionLoading'

@@ -41,7 +41,7 @@ export function useWorkspaceClusterActions(args: {
   kubernetesClusters: KubernetesCluster[];
   navigate: (path: string, options?: { replace?: boolean }) => void;
   route: AppRoute;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
   t: TFunction;
   user: User | null;
   workspaces: Workspace[];
@@ -150,7 +150,7 @@ export function useWorkspaceClusterActions(args: {
       })
       .catch((error) => {
         if (requestId === rbacAdditionsRequestId.current) {
-          showToast(formatControlPlaneError(error, t('clusterSetup.rbacAdditionsLoadFailed'), { area: 'cluster' }));
+          showToast(formatControlPlaneError(error, t('clusterSetup.rbacAdditionsLoadFailed'), { area: 'cluster' }), { tone: 'error' });
         }
       })
       .finally(() => {
@@ -200,7 +200,7 @@ export function useWorkspaceClusterActions(args: {
       setClusterCreationStep('instructions');
     } catch (err) {
       console.error('Failed registering cluster in control plane', err);
-      showToast(formatControlPlaneError(err, t('app.failedRegisterCluster'), { area: 'cluster' }));
+      showToast(formatControlPlaneError(err, t('app.failedRegisterCluster'), { area: 'cluster' }), { tone: 'error' });
     } finally {
       setIsCreatingCluster(false);
     }
@@ -213,12 +213,12 @@ export function useWorkspaceClusterActions(args: {
       const refreshed = await controlPlaneApi.getCluster(targetWorkspaceIdForClusterAdd, registeredClusterId);
       setKubernetesClusters((prev) => [refreshed, ...prev.filter((cluster) => cluster.id !== refreshed.id)]);
       if (getAgentConnectionState(refreshed) !== 'connected') {
-        showToast(t('clusterSetup.agentNotConnected'));
+        showToast(t('clusterSetup.agentNotConnected'), { tone: 'warning' });
         return;
       }
       resetClusterCreationState();
     } catch (err) {
-      showToast(formatControlPlaneError(err, t('clusterSetup.connectionCheckFailed'), { area: 'cluster' }));
+      showToast(formatControlPlaneError(err, t('clusterSetup.connectionCheckFailed'), { area: 'cluster' }), { tone: 'error' });
     } finally {
       setIsCreatingCluster(false);
     }
@@ -258,7 +258,7 @@ export function useWorkspaceClusterActions(args: {
     setWorkspaces((prev) => prev.filter((workspace) => workspace.id !== workspaceId));
     setUser(await controlPlaneApi.getCurrentUser());
     setInstallAgentClusterId((current) => (current && clusterIdsToRemove.has(current) ? null : current));
-    showToast(t('app.deletedWorkspace', { name: workspaceName }));
+    showToast(t('app.deletedWorkspace', { name: workspaceName }), { tone: 'success' });
 
     const nextPath = getPostWorkspaceDeleteNavigationPath({
       kubernetesClusters,
@@ -294,7 +294,7 @@ export function useWorkspaceClusterActions(args: {
       console.warn('Failed refreshing workspace summary after deleting cluster', err);
     }
     setInstallAgentClusterId((current) => (current === cluster.id ? null : current));
-    showToast(t('app.deletedCluster', { name: clusterName }));
+    showToast(t('app.deletedCluster', { name: clusterName }), { tone: 'success' });
 
     if (route.kind === 'workspaceKubernetesClusterDiagnostics' && route.clusterId === cluster.id) {
       navigate(AppPaths.workspaceKubernetesClusters(cluster.workspaceId, route.catalogState), { replace: true });

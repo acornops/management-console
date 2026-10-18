@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, BookOpen, Loader2, SlidersHorizontal, Wrench } from 'lucide-react';
@@ -7,7 +8,7 @@ import type {
   ControlPlaneTargetAssistantCapabilitySkillPreviewItem,
   ControlPlaneTargetAssistantCapabilityToolPreviewItem
 } from '@/services/control-plane/types';
-import { Button } from '@acornops/ui';
+import { Button, getFloatingMenuPosition } from '@acornops/ui';
 import { IconTile } from '@acornops/ui';
 
 interface AssistantCapabilityPreviewControlProps {
@@ -69,6 +70,9 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = React.useState<{ host: HTMLElement; style: React.CSSProperties } | null>(null);
   const controlId = React.useId();
   const buttonId = `${controlId}-button`;
   const panelId = `${controlId}-panel`;
@@ -98,30 +102,67 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
 
     const handlePointerDown = (event: MouseEvent) => {
       const targetElement = event.target instanceof Node ? event.target : null;
-      if (targetElement && rootRef.current?.contains(targetElement)) return;
-      setIsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
+      if (targetElement && (rootRef.current?.contains(targetElement) || panelRef.current?.contains(targetElement))) return;
       setIsOpen(false);
     };
 
     document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
+
+  React.useLayoutEffect(() => {
+    if (!isOpen) return;
+    const update = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const host = trigger.closest('[role="dialog"], [data-docked-assistant="true"]')?.querySelector<HTMLElement>('[data-floating-layer]') || document.body;
+      const boundary = host === document.body
+        ? { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight }
+        : host.getBoundingClientRect();
+      const width = Math.min(288, boundary.width - 16);
+      const maxHeight = Math.max(0, boundary.height - 16);
+      const position = getFloatingMenuPosition({ boundary, trigger: trigger.getBoundingClientRect(), menuWidth: width, menuHeight: Math.min(panelRef.current?.offsetHeight || 356, maxHeight), gap: 12 });
+      setPlacement({ host, style: { position: host === document.body ? 'fixed' : 'absolute', left: position.left, top: position.top, width, maxHeight } });
+    };
+    update();
+    const frame = requestAnimationFrame(update);
+    const observer = new ResizeObserver(update);
+    if (panelRef.current) observer.observe(panelRef.current);
+    window.addEventListener('resize', update);
+    document.addEventListener('scroll', update, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+      document.removeEventListener('scroll', update, true);
+    };
+  }, [isOpen, isLoading, preview]);
 
   React.useEffect(() => {
     if (!canChat) setIsOpen(false);
   }, [canChat]);
 
   return (
-    <div ref={rootRef} className={isPanel ? 'static' : 'relative'}>
+    <div
+      ref={rootRef}
+      className={isPanel ? 'static' : 'relative'}
+      onBlur={(event) => {
+        const next = event.relatedTarget;
+        if (next instanceof Node && (rootRef.current?.contains(next) || panelRef.current?.contains(next))) return;
+        setIsOpen(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || !isOpen) return;
+        event.preventDefault();
+        event.stopPropagation();
+        setIsOpen(false);
+        triggerRef.current?.focus({ preventScroll: true });
+      }}
+    >
       <Button
+        ref={triggerRef}
         type="button"
         variant="tertiary"
         id={buttonId}
@@ -145,16 +186,19 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
         )}
         <span className="truncate">{chipLabel}</span>
       </Button>
-      <AnimatePresence>
+      {placement && createPortal(<AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={panelRef}
+            style={placement.style}
             initial={{ opacity: 0, y: 6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
             id={panelId}
-            className="absolute bottom-full right-0 z-50 mb-3 w-72 rounded-2xl border border-ui-border bg-ui-surface-strong p-3 type-body shadow-xl shadow-ui-text/10"
+            className="pointer-events-auto z-[140] overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-3 type-body shadow-xl shadow-ui-text/10 custom-scrollbar"
             role="region"
+            tabIndex={0}
             aria-labelledby={buttonId}
           >
             <div className="flex items-start gap-2">
@@ -182,6 +226,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
               <>
                 {showToolPolicyNote && (
                   <div className="mt-3 rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption leading-5 text-ui-text-muted">
+                    <p className="mb-1">{t('chat.capabilityPreviewReadMeaning')}</p>
                     {preview.confirmationRequiredForWrite && preview.toolSummary.writeAllowed > 0
                       ? t('chat.capabilityPreviewApprovalRequired')
                       : t('chat.capabilityPreviewApprovalNotRequired')}
@@ -193,7 +238,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                     )}
                   </div>
                 )}
-                <div className="mt-3 max-h-56 overflow-y-auto pr-1">
+                <div className="mt-3 pr-1">
                   {toolItems.length === 0 && skillItems.length === 0 ? (
                     <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption text-ui-text-muted">{t('chat.capabilityPreviewEmpty')}</p>
                   ) : (
@@ -218,7 +263,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                                     <Wrench className="h-3.5 w-3.5 shrink-0 text-ui-text-muted" aria-hidden="true" />
                                     <span className="truncate type-caption type-emphasis text-ui-text">{tool.label || tool.name}</span>
                                   </span>
-                                  <span className={`shrink-0 rounded-full px-2 py-0.5 type-micro-label ${capabilityBadgeClassName(tool.capability)}`}>{tool.capability}</span>
+                                  <span title={tool.capability === 'read' ? t('chat.capabilityPreviewReadMeaning') : undefined} className={`shrink-0 rounded-full px-2 py-0.5 type-micro-label ${capabilityBadgeClassName(tool.capability)}`}>{tool.capability}</span>
                                 </div>
                               </div>
                             ))}
@@ -255,7 +300,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
             )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, placement.host)}
     </div>
   );
 };

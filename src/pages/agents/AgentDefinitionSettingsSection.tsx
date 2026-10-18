@@ -1,9 +1,11 @@
 import React from 'react';
-import { Button, Select, type SelectOption, Textarea, TextInput } from '@acornops/ui';
+import { useTranslation } from 'react-i18next';
+import { Button, CollectionState, Select, type SelectOption, Textarea, TextInput } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { AgentEmojiPicker } from '@/pages/agents/AgentAvatar';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { statusOptions, type AgentEditDraft } from '@/pages/WorkspaceAgentsPage.helpers';
+import type { useAgentOwnerOptions } from './useAgentOwnerOptions';
 
 interface AgentDefinitionSettingsSectionProps {
   agent: AgentDefinition;
@@ -11,6 +13,9 @@ interface AgentDefinitionSettingsSectionProps {
   draft: AgentEditDraft;
   setDraft: React.Dispatch<React.SetStateAction<AgentEditDraft | null>>;
   ownerSelectOptions: Array<SelectOption<string>>;
+  ownerOptions: ReturnType<typeof useAgentOwnerOptions>;
+  canReadMembers: boolean;
+  onOwnerChange: (userId: string) => void;
   changeSummary: string[];
   saving: boolean;
   onReset: () => void;
@@ -23,19 +28,25 @@ export const AgentDefinitionSettingsSection: React.FC<AgentDefinitionSettingsSec
   draft,
   setDraft,
   ownerSelectOptions,
+  ownerOptions,
+  canReadMembers,
+  onOwnerChange,
   changeSummary,
   saving,
   onReset,
   onSave
 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = React.useState(true);
+  const [appearanceExpanded, setAppearanceExpanded] = React.useState(false);
+  const appearanceId = React.useId();
   const titleId = React.useId();
   const descriptionId = React.useId();
   const contentId = React.useId();
   const updateDraft = (update: Partial<AgentEditDraft>) => {
     setDraft((current) => current ? { ...current, ...update } : current);
   };
-  const saveDisabled = saving || !canManageAgents || !draft.name.trim() || !draft.description.trim() || changeSummary.length === 0;
+  const saveDisabled = saving || !canManageAgents || (!canReadMembers && draft.ownerUserId !== agent.ownerUserId) || !draft.name.trim() || !draft.description.trim() || changeSummary.length === 0;
 
   return (
     <section className="mb-10" aria-labelledby={titleId} data-agent-definition-settings="true">
@@ -68,12 +79,23 @@ export const AgentDefinitionSettingsSection: React.FC<AgentDefinitionSettingsSec
       <div id={contentId} hidden={!expanded} className="overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-sm">
         <form onSubmit={(event) => { event.preventDefault(); onSave(); }}>
           <div className="space-y-6 p-6">
-            <AgentEmojiPicker
-              value={draft.avatarEmoji}
-              onChange={(avatarEmoji) => updateDraft({ avatarEmoji })}
-              description="This visual identity appears anywhere the Agent is presented."
-              disabled={!canManageAgents || saving}
-            />
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="type-caption text-ui-text-muted">{t('agentAppearance.selected', { emoji: draft.avatarEmoji })}</p>
+                <Button type="button" variant="tertiary" size="sm" aria-expanded={appearanceExpanded} aria-controls={appearanceId} onClick={() => setAppearanceExpanded((current) => !current)}>
+                  {t('agentAppearance.title')}
+                  {appearanceExpanded ? <ICONS.ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ICONS.ChevronDown className="h-4 w-4" aria-hidden="true" />}
+                </Button>
+              </div>
+              <div id={appearanceId} hidden={!appearanceExpanded} className="mt-3">
+                {appearanceExpanded && <AgentEmojiPicker
+                  value={draft.avatarEmoji}
+                  onChange={(avatarEmoji) => updateDraft({ avatarEmoji })}
+                  description="This visual identity appears anywhere the Agent is presented."
+                  disabled={!canManageAgents || saving}
+                />}
+              </div>
+            </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="block">
@@ -101,20 +123,36 @@ export const AgentDefinitionSettingsSection: React.FC<AgentDefinitionSettingsSec
           </div>
 
           <div className="border-t border-ui-border p-6">
+            {canReadMembers && <label className="mb-4 block sm:max-w-md">
+              <span className="type-micro-label">Search owner members</span>
+              <TextInput type="search" value={ownerOptions.query} onChange={(event) => ownerOptions.setQuery(event.target.value)} disabled={!canManageAgents || saving} placeholder="Search members by name or email" className="mt-2" />
+            </label>}
             <label className="block">
               <span className="type-micro-label">Agent owner</span>
               <Select<string>
                 value={draft.ownerUserId}
                 options={ownerSelectOptions}
-                onChange={(ownerUserId) => updateDraft({ ownerUserId })}
-                disabled={!canManageAgents || saving}
+                placeholder="Keep current owner"
+                onChange={onOwnerChange}
+                disabled={!canManageAgents || !canReadMembers || saving}
                 className="mt-2 sm:max-w-md"
                 ariaLabel="Agent owner"
               />
             </label>
             <p className="type-caption mt-2 text-ui-text-muted">
-              {ownerSelectOptions.length > 1 ? 'Only loaded workspace members are available for owner transfer.' : `Current owner: ${agent.owner}`}
+              {canReadMembers ? 'Search workspace members or load more to choose an owner. Your selection is kept when the search changes.' : `Current owner: ${agent.owner}. Read-members permission is required to choose another owner.`}
             </p>
+            {canReadMembers && <div className="mt-3 space-y-3">
+              <CollectionState phase={ownerOptions.phase} itemCount={ownerOptions.items.length}
+                loading={<p role="status" className="type-caption text-ui-text-muted">Loading members...</p>}
+                empty={<p role="status" className="type-caption text-ui-text-muted">No members match this search.</p>}
+                error={null}>
+                <p role="status" className="type-caption text-ui-text-muted">{ownerOptions.items.length} {ownerOptions.items.length === 1 ? 'member' : 'members'} loaded</p>
+              </CollectionState>
+              {ownerOptions.error && <p role="alert" className="type-caption text-status-danger-text">{ownerOptions.items.length ? 'Unable to load more owner choices. Previously loaded members are still available.' : 'Unable to load owner choices. Keep the current owner or retry.'}</p>}
+              {ownerOptions.error ? <Button type="button" variant="secondary" size="sm" onClick={() => void ownerOptions.retry()} disabled={saving}>Retry member loading</Button>
+                : ownerOptions.nextCursor && <Button type="button" variant="secondary" size="sm" onClick={() => void ownerOptions.loadMore()} disabled={saving || ownerOptions.phase === 'loadingMore'}>{ownerOptions.phase === 'loadingMore' ? 'Loading members...' : 'Load more members'}</Button>}
+            </div>}
           </div>
 
           <div className="border-t border-ui-border p-6">

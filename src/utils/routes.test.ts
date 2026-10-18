@@ -63,6 +63,10 @@ describe('routes', () => {
     });
   });
 
+  it('keeps the retired workspace MCP catalog URL unmatched', () => {
+    expect(parseAppRoute('/workspaces/team-alpha/catalog')).toEqual({ kind: 'notFound', path: '/workspaces/team-alpha/catalog' });
+  });
+
   it('round-trips workspace cluster diagnostics routes with encoded params', () => {
     const path = AppPaths.workspaceKubernetesClusterDiagnostics('workspace/a', 'cluster one', 'chat');
 

@@ -17,8 +17,20 @@ import {
   type SkillEditorStep
 } from '@/features/targets/admin/targetSkillsViewModel';
 import { TextInput, Textarea } from '@acornops/ui';
+import { useTranslation } from 'react-i18next';
 
 const skillNameInputClassName = formInputClassName('px-4 type-ui');
+
+export function TargetSkillSourceDetails({ source }: { source: ControlPlaneTargetSkillDetail['source'] }) {
+  const { t } = useTranslation();
+  if (!source.repoUrl) return null;
+  const value = [source.repoUrl, source.ref, source.subpath, source.commitSha].filter(Boolean).join('\n');
+  return <details className="mt-2 min-w-0 type-caption text-ui-text-muted">
+    <summary className="cursor-pointer">{t('targetSkills.sourceDetails')}</summary>
+    <p className="mt-2">{t('targetSkills.sourceCopyHelp')}</p>
+    <Textarea readOnly aria-label={t('targetSkills.sourceDetails')} value={value} rows={4} className="mt-1 w-full break-all font-mono type-caption" />
+  </details>;
+}
 
 interface TargetSkillEditorDialogProps {
   mode: SkillEditorMode;
@@ -67,6 +79,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
   onSubmit,
   onReimport
 }) => {
+  const { t } = useTranslation();
   const pendingDiscardActionRef = React.useRef<(() => void) | null>(null);
   const [showDiscardDialog, setShowDiscardDialog] = React.useState(false);
   const folderStateKey = `${mode}:${detail?.id || 'new'}:${step}:${resetVersion}`;
@@ -191,7 +204,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                         <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">{sourceLabel(detail)}</span>
                       )}
                       <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">
-                        {detail.bundleStats.fileCount} files, {summarizeBytes(detail.bundleStats.totalBytes)}
+                        {t('targetSkills.fileCount', { count: detail.bundleStats.fileCount })}, {summarizeBytes(detail.bundleStats.totalBytes)}
                       </span>
                       {detail.source.repoUrl && (
                         <span className="rounded-full border border-ui-border px-2 py-1 text-ui-text-muted">
@@ -201,6 +214,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                       )}
                     </div>
                   )}
+                  {detail && <TargetSkillSourceDetails source={detail.source} />}
                 </div>
               </div>
               {error && (

@@ -48,11 +48,6 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
         if (urlSearch.get('workflow') !== routeWorkflow.id) {
           updateUrlSearch({ workflow: routeWorkflow.id }, { replace: true });
         }
-      } else {
-        const fallbackWorkflowId = options.workflows[0]?.id || '';
-        options.setSelectedWorkflowId(fallbackWorkflowId);
-        options.setActiveView('overview');
-        updateUrlSearch({ workflow: fallbackWorkflowId || null, tab: null }, { replace: true });
       }
       return;
     }
@@ -62,6 +57,7 @@ export function useWorkspaceWorkflowsUrlState(options: WorkflowUrlStateOptions) 
   }, [options.createPanelOpen]);
   return {
     hasExplicitWorkflowSelection: Boolean(routeSelection),
+    routeWorkflow,
     selectWorkflow(workflowId: string, updateOptions: { replace?: boolean } = {}) {
       options.setSelectedWorkflowId(workflowId);
       options.setActiveView('overview');

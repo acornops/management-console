@@ -9,9 +9,10 @@ import type { ProjectMember, Workspace, WorkspaceInvitation } from '@/types';
 import { WorkspaceAiSettingsPage } from '@/pages/WorkspaceAiSettingsPage';
 import { WorkspaceMembersPage } from '@/pages/WorkspaceMembersPage';
 import { WorkspaceSettingsPage } from '@/pages/WorkspaceSettingsPage';
-import { ActiveTabIndicator } from '@acornops/ui';
+import { ActiveTabIndicator, segmentedTabButtonClassName } from '@acornops/ui';
 import { PageBackLink, PageHeader, PageShell } from '@acornops/ui';
-import { Button } from '@acornops/ui';
+import { AppPaths } from '@/utils/routes';
+import { appHref, handleAppLinkClick } from '@/app/workspaceNavigation';
 
 export type SettingsTab = 'workspace' | 'members' | 'ai';
 
@@ -49,7 +50,7 @@ interface SettingsPageProps {
   onSelectTab?: (tab: SettingsTab) => void;
   returnTo?: string;
   onReturnToAssistant?: (returnTo: string) => void;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -139,40 +140,35 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       <PageHeader title={t('settingsPage.title')} description={t('settingsPage.subtitle')} />
 
       <LayoutGroup id={settingsTabsLayoutGroupId}>
-        <div className="mb-8 flex max-w-4xl flex-wrap gap-2 border-b border-ui-border">
+        <nav aria-label={t('settingsPage.title')} className="mb-8 flex max-w-4xl flex-wrap gap-2 border-b border-ui-border">
           {tabs.map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
-            const unavailableReason = getTabUnavailableReason({
-              tab: id,
-              hasWorkspace,
-              canReadWorkspaceData,
-              canReadMembers,
-              t
-            });
+            const reason = getTabUnavailableReason({ tab: id, hasWorkspace, canReadWorkspaceData, canReadMembers, t });
+            const path = !workspace ? ''
+              : id === 'members' ? AppPaths.workspaceMembers(workspace.id)
+              : id === 'ai' ? AppPaths.workspaceAiSettings(workspace.id)
+              : AppPaths.workspaceSettings(workspace.id);
             return (
-              <Tooltip key={id} content={unavailableReason || label} disabled={!unavailableReason}>
-                <Button
-                  type="button"
-                  variant="tertiary"
-                  onClick={() => handleSelectTab(id)}
-                  aria-disabled={Boolean(unavailableReason)}
-                  aria-pressed={isActive}
-                  className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 py-2 type-ui transition-colors ${
-                    isActive
-                      ? 'border-transparent text-ui-text'
-                      : unavailableReason
-                      ? 'border-transparent text-ui-text-muted/60'
-                      : 'border-transparent text-ui-text-muted hover:border-ui-border hover:text-ui-text'
-                  } ${unavailableReason ? 'cursor-not-allowed' : ''}`}
+              <Tooltip key={id} content={reason || label} disabled={!reason}>
+                <a
+                  href={reason ? undefined : appHref(path)}
+                  role={reason ? 'link' : undefined}
+                  aria-disabled={Boolean(reason)}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={(event) => {
+                    if (reason) event.preventDefault();
+                    else handleAppLinkClick(event, path, () => handleSelectTab(id));
+                  }}
+                  className={segmentedTabButtonClassName({ isActive, className: reason ? 'cursor-not-allowed text-ui-text-muted/60' : undefined })}
                 >
                   <Icon className={`h-4 w-4 ${isActive ? 'text-accent-strong' : ''}`} aria-hidden="true" />
                   {label}
                   {isActive && <ActiveTabIndicator />}
-                </Button>
+                </a>
               </Tooltip>
             );
           })}
-        </div>
+        </nav>
       </LayoutGroup>
 
       {!workspace && <EmptyState className="max-w-4xl" icon={<ICONS.LayoutGrid />} title={t('settingsPage.noWorkspaceTitle')} description={t('settingsPage.noWorkspaceBody')} />}

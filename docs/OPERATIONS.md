@@ -52,6 +52,48 @@ Centralized browser error reporting is deliberately deferred. Incidents exist
 only in the affected browser console, so support depends on user-provided IDs;
 this remains an operational risk until a privacy-reviewed reporting path exists.
 
+## MCP tool filtering and Agent appearance
+
+Manage Tools searches tool names and displayed labels, with capability and
+configured-enabled filters. Starting a filter completes the existing paged
+discovered-tool read before reporting complete results. Failed reads retain known
+tools, label results incomplete and offer Retry. Unfiltered browsing stays paged.
+Enabled-state filters include unsaved edits; they do not describe effective
+runtime access. The existing Enabled tools summary remains the server-reported
+effective count, not an unsaved-draft count. Group switches apply to every tool
+in their capability group, including tools hidden by a filter, and show the full
+group count.
+
+Clear filters keeps edits. Reset changes clears only edits, not discovered tools
+or filters. A failed save retains the remaining draft for another Save changes
+attempt. Agent appearance is optional and collapsed by default in Agent
+definition settings; the selected emoji remains visible while its picker is
+collapsed. Ownership, capabilities and save permissions are unchanged.
+
+## Bounded log investigation
+
+Kubernetes pod logs retain their container, previous-container, tail and polling
+Follow controls. Find highlights only the loaded output and preserves the log
+viewport; Paused stops polling, not the workload. Fetched time includes the
+user's timezone and is distinct from timestamps reported inside log entries.
+
+VM Logs are bounded snapshots, not a live stream. Find filters only loaded
+entries. Entry timestamps use the user's timezone; missing timestamps and
+unavailable collection times remain explicitly unknown. Refresh failures retain
+previously loaded output with stale feedback in both viewers.
+
+Copy loaded logs and Download loaded logs export the entire loaded output, not
+only find matches or additional history. Exports include source and scope context,
+use the same authorized fields shown in the viewer, and make no extra log read.
+Logs can contain sensitive application output: review before sharing. The console
+does not persist these exports or send their contents to analytics. Clipboard
+permission failures are shown inline and downloading remains a deliberate action.
+
+Historical range queries, retention controls and cross-source search are outside
+these viewers. A future history feature needs a separately reviewed producer
+contract for authorization, time bounds, result limits and redaction; this UI does
+not infer history support from the existing diagnostic reads.
+
 ## Required Validation
 
 Before release or deployment chart changes:

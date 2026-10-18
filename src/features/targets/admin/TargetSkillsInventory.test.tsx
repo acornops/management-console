@@ -8,6 +8,19 @@ beforeAll(async () => {
 });
 
 describe('TargetSkillsInventory', () => {
+  it.each([[0, '0 files'], [1, '1 file'], [3, '3 files']] as const)('renders the localized file count for %i files', (count, label) => {
+    const markup = renderToStaticMarkup(<TargetSkillsInventory
+      skills={[{
+        id: 'skill-count', workspaceId: 'workspace-1', name: 'Counted skill', description: '',
+        enabled: true, validationStatus: 'valid', validationErrors: [],
+        bundleStats: { fileCount: count, totalBytes: 66 }, source: { type: 'manual', syncStatus: 'not_applicable' },
+        createdAt: '2026-08-10T00:00:00Z', updatedAt: '2026-08-10T00:00:00Z'
+      }]}
+      canEditSkills={false} pendingToggleSkillId={null} onEditSkill={vi.fn()} onDeleteSkill={vi.fn()} onToggleSkill={vi.fn()}
+    />);
+    expect(markup).toContain(`${label}, 66 B`);
+    if (count === 1) expect(markup).not.toContain('1 files');
+  });
   it('hides discovery controls for a true empty inventory', () => {
     const markup = renderToStaticMarkup(
       <TargetSkillsInventory

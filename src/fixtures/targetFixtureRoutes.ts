@@ -1,7 +1,6 @@
 import { FIXTURE_IDS, getFixtureState } from './store';
 
 type FixtureState = ReturnType<typeof getFixtureState>;
-const NOW = new Date().toISOString();
 
 export function fixtureTargetType(state: FixtureState, targetId: string) {
   return state.virtualMachines.some((target) => target.id === targetId)
@@ -28,7 +27,7 @@ export function targetSkillCatalog(state: FixtureState, targetId: string) {
       bundleStats: { fileCount: skill.files.length, totalBytes: skill.files.reduce((total: number, file: Record<string, any>) => total + file.content.length, 0) },
       source: { ...skill.source, type: skill.source.type === 'git' ? 'git_import' : 'manual', syncStatus: 'not_applicable' },
       createdAt: '2026-07-15T07:45:00.000Z',
-      updatedAt: NOW,
+      updatedAt: state.clock,
       files: skill.files.map((file: Record<string, any>) => ({ ...file, sizeBytes: file.content.length }))
     }))
   };

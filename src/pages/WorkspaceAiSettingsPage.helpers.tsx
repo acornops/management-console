@@ -7,7 +7,7 @@ export interface WorkspaceAiSettingsPageProps {
   workspace: Workspace;
   canManageAiSettings: boolean;
   aiSettingsResource: WorkspaceAiSettingsResource;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
   returnTo?: string; onReturnToAssistant?: (returnTo: string) => void;
   embedded?: boolean;
 }

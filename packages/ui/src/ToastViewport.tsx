@@ -1,16 +1,24 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, CircleAlert, Info, TriangleAlert } from 'lucide-react';
 
 import { CloseButton } from './CloseButton';
 
 export interface AppToast {
   id: string;
   message: string;
+  tone?: 'success' | 'error' | 'warning' | 'info';
 }
 
 export const TOAST_DURATION_MS = 3800;
+
+const toastAppearance = {
+  success: { Icon: CheckCircle2, className: 'bg-status-success-soft text-status-success-text' },
+  error: { Icon: CircleAlert, className: 'bg-status-danger-soft text-status-danger-text' },
+  warning: { Icon: TriangleAlert, className: 'bg-status-warning-soft text-status-warning-text' },
+  info: { Icon: Info, className: 'bg-ui-bg text-ui-text-muted' }
+};
 
 export interface ToastViewportProps {
   toasts: AppToast[];
@@ -32,10 +40,12 @@ export const ToastViewport: React.FC<ToastViewportProps> = ({
   }
 
   return createPortal(
-    <div className="fixed inset-x-0 bottom-6 z-[100] flex justify-center px-4 pointer-events-none">
+    <div className="toast-viewport fixed inset-x-0 bottom-6 z-[100] flex justify-center px-4 pointer-events-none">
       <div className="w-full max-w-[22rem]">
         <AnimatePresence initial={false}>
-          {toasts.map((toast) => (
+          {toasts.map((toast) => {
+            const { Icon, className } = toastAppearance[toast.tone || 'info'];
+            return (
             <motion.div
               key={toast.id}
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -43,14 +53,14 @@ export const ToastViewport: React.FC<ToastViewportProps> = ({
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className="pointer-events-auto relative mb-3 w-full overflow-hidden rounded-xl border border-ui-border bg-ui-surface shadow-lg"
-              role="status"
-              aria-live="polite"
+              role={toast.tone === 'error' ? 'alert' : 'status'}
+              aria-live={toast.tone === 'error' ? 'assertive' : 'polite'}
             >
               <div className="flex items-center gap-3 py-2 pl-4 pr-2">
                 <div
-                  className="flex h-5 w-5 items-center justify-center rounded-full bg-status-success-soft text-status-success-text"
+                  className={`flex h-5 w-5 items-center justify-center rounded-full ${className}`}
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                 </div>
                 <p className="type-ui flex-1 text-ui-text">
                   {toast.message}
@@ -69,7 +79,8 @@ export const ToastViewport: React.FC<ToastViewportProps> = ({
                 className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-accent motion-reduce:hidden"
               />
             </motion.div>
-          ))}
+            );
+          })}
         </AnimatePresence>
       </div>
     </div>,

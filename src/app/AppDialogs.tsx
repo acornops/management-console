@@ -55,7 +55,7 @@ interface AppDialogsProps {
   onProceedToClusterInstructions: (agentAccessMode: AgentAccessMode) => void;
   onSelectedRbacAdditionKeysChange: (keys: string[]) => void;
   onSetDeletingWorkspace: (value: boolean) => void;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
 }
 
 export const AppDialogs: React.FC<AppDialogsProps> = ({
@@ -188,7 +188,8 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
                         showToast(
                           t('app.failedDeleteWorkspace', {
                             name: deleteTargetWorkspace.name
-                          })
+                          }),
+                          { tone: 'error' }
                         );
                       } finally {
                         onSetDeletingWorkspace(false);

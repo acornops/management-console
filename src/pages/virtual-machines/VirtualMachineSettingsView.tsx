@@ -178,6 +178,7 @@ export const VirtualMachineSettingsView: React.FC<{
           {!requiresInitialEnrollment && (
             <div className="space-y-4 border-t border-ui-border p-4 sm:p-6">
               <VirtualMachineAgentAccessSelector
+                context="settings"
                 value={draftAccessMode}
                 restartServices={draftRestartServices}
                 disabled={!canManageTargets || !onUpdateAgentAccessPolicy || policyBusy}

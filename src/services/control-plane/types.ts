@@ -606,10 +606,15 @@ export interface ControlPlaneRunEvent {
   payload: Record<string, unknown>;
 }
 
-export interface ControlPlaneRunToolApproval extends ControlPlaneTargetScope {
+export interface ControlPlaneRunToolApproval {
   id: string;
   runId: string;
   workspaceId: string;
+  targetId?: string;
+  targetType?: TargetType;
+  clusterId?: string;
+  /** Present for workflow approvals; interactive tool approvals omit this field. */
+  approvalKind?: 'pre_step' | 'tool_write';
   toolCallId: string;
   toolName: string;
   summary?: string;
@@ -617,6 +622,11 @@ export interface ControlPlaneRunToolApproval extends ControlPlaneTargetScope {
   status: 'pending' | 'approved' | 'rejected' | 'expired';
   executionStatus?: 'not_started' | 'executing' | 'succeeded' | 'failed' | 'unknown';
   expiresAt: string;
+  requestedBy?: string;
+  createdAt?: string;
+  decision?: 'approved' | 'rejected';
+  decidedBy?: string;
+  decidedAt?: string;
   sessionId?: string;
   sessionOrigin?: 'manual' | 'auto_triage';
   sessionTitle?: string;

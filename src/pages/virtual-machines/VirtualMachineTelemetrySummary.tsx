@@ -2,6 +2,7 @@ import React from 'react';
 import { Activity, Gauge, HardDrive } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { IconTile } from '@acornops/ui';
+import { formatUserDateTime } from '@/utils/dateTime';
 import {
   formatVmBytes,
   formatVmLoad,
@@ -61,6 +62,11 @@ export const VirtualMachineTelemetrySummary: React.FC<VirtualMachineTelemetrySum
       className={`grid w-full grid-cols-1 gap-4 md:grid-cols-2 ${mode === 'all' ? 'xl:grid-cols-4' : ''}`}
       data-vm-telemetry-facts={mode}
     >
+      <p className="type-caption text-ui-text-muted md:col-span-2 xl:col-span-full">
+        {t('virtualMachines.overview.latestSample')}: {latestTelemetryPoint
+          ? <time dateTime={new Date(latestTelemetryPoint.timestamp).toISOString()}>{formatUserDateTime(latestTelemetryPoint.timestamp)}</time>
+          : t('common.unknown')}
+      </p>
       {cards.map(({ label, value, detail, icon: Icon }) => (
         <div key={label} className="rounded-lg border border-ui-border bg-ui-surface p-4 shadow-sm">
           <div className="flex items-center gap-3">

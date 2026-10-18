@@ -596,17 +596,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       setIsModelSubmenuOpen(false);
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      setIsModelMenuOpen(false);
-      setIsModelSubmenuOpen(false);
-    };
-
     document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isModelMenuOpen]);
 

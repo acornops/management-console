@@ -68,7 +68,7 @@ export function useAppSupport(args: {
   acceptWorkspaceInvitation: (token: string) => Promise<void>;
   refreshWorkspaceInvitations: (workspaceId: string) => Promise<void>;
   refreshWorkspaceMembers: (workspaceId: string) => Promise<void>;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: AppToast['tone'] }) => void;
   toWorkspaceInvitation: (invitation: ControlPlaneWorkspaceInvitation) => WorkspaceInvitation;
   toasts: AppToast[];
   updateKubernetesCluster: (clusterId: string, updates: Partial<KubernetesCluster>) => void;
@@ -144,9 +144,9 @@ export function useAppSupport(args: {
     };
   }, [isMobileNavOpen, setIsMobileNavOpen]);
 
-  const showToast = (message: string) => {
+  const showToast = (message: string, options?: { tone: AppToast['tone'] }) => {
     const id = globalThis.crypto?.randomUUID?.() || `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setToasts((prev) => [...prev, { id, message }]);
+    setToasts((prev) => [...prev, { id, message, tone: options?.tone }]);
     window.setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, TOAST_DURATION_MS);
@@ -227,7 +227,7 @@ export function useAppSupport(args: {
     setWorkspaces(attachClusterIds(fetchedWorkspaces, fetchedClusters));
     setSelectedWorkspaceId(result.workspaceId);
     navigate(acceptedWorkspace ? workspaceLandingPath(acceptedWorkspace) : AppPaths.workspaceSettings(result.workspaceId), { replace: true });
-    showToast(t('app.invitationAccepted'));
+    showToast(t('app.invitationAccepted'), { tone: 'success' });
   }, [navigate, setKubernetesClusters, setSelectedWorkspaceId, setUser, setWorkspaces, t]);
 
   const handleLogin = async () => {
@@ -238,7 +238,7 @@ export function useAppSupport(args: {
       });
     } catch (err) {
       console.error('Login failed', err);
-      showToast(formatControlPlaneError(err, 'Login failed.', { area: 'auth' }));
+      showToast(formatControlPlaneError(err, 'Login failed.', { area: 'auth' }), { tone: 'error' });
     } finally {
       setIsAuthLoading(false);
     }

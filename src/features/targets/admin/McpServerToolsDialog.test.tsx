@@ -1,6 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { initializeI18n } from '@/i18n';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import { en } from '@/i18n/locales/en.js';
+import { zh } from '@/i18n/locales/zh.js';
 import {
   getBulkConfiguredOverrides,
   McpServerToolsDialog
@@ -63,6 +67,34 @@ const server: TargetToolCatalogServer = {
 };
 
 describe('McpServerToolsDialog group controls', () => {
+  it.each([
+    ['en', 'Approval depends on run permissions', 'Approval required', 'Saved effective'],
+    ['zh', '是否审批取决于运行权限', '需要审批', '已保存的生效值']
+  ])('qualifies write approval and saved-effective counts locally in %s', async (language, approval, unconditional, saved) => {
+    const i18n = createInstance();
+    await i18n.init({ lng: language, resources: { en: { translation: en }, zh: { translation: zh } } });
+    const markup = renderToStaticMarkup(
+      <I18nextProvider i18n={i18n}>
+        <McpServerToolsDialog server={{ ...server, toolCounts: { ...server.toolCounts, enabledEffective: 200 } }} canManageTools pendingToolName={null} onClose={vi.fn()} onToggleTool={vi.fn()} />
+      </I18nextProvider>
+    );
+    expect(markup).toContain(approval);
+    expect(markup).not.toContain(`>${unconditional}<`);
+    expect(markup).toMatch(new RegExp(`${saved}[\\s\\S]*?>200<`));
+  });
+
+  it('labels search, capability and draft-enabled filters without replacing group-wide controls', () => {
+    const markup = renderToStaticMarkup(
+      <McpServerToolsDialog server={server} canManageTools pendingToolName={null} onClose={vi.fn()} onToggleTool={vi.fn()} />
+    );
+    expect(markup).toContain('type="search"');
+    expect(markup).toContain('Search tools');
+    expect(markup).toContain('aria-label="Tool capability"');
+    expect(markup).toContain('aria-label="Configured tool state"');
+    expect(markup).toContain('All 2 tools');
+    expect(markup).toContain('All 1 tool');
+  });
+
   it('keeps large tool collections inside a bounded scroll region', () => {
     const markup = renderToStaticMarkup(
       <McpServerToolsDialog

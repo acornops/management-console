@@ -129,7 +129,7 @@ export const WorkspaceScheduleDialog: React.FC<WorkspaceScheduleDialogProps> = (
         {draftError && <InlineAlert tone="danger" role="alert" aria-live="assertive">{draftError}</InlineAlert>}
         {oauth.feedback && <InlineAlert tone={oauth.feedback.tone}>{oauth.feedback.message}</InlineAlert>}
         <WorkspaceScheduleFormFields
-          timingPreview={<WorkspaceScheduleTimingPreview preview={timingPreview} timezone={draft.timezone} />}
+          timingPreview={<WorkspaceScheduleTimingPreview preview={timingPreview} timezone={draft.timezone} cron={draft.cron} />}
           capabilityPreview={capabilityPreview}
           capabilityPreviewError={capabilityPreviewError}
           capabilityPreviewing={capabilityPreviewing}

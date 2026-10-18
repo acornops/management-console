@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
+import { CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, StatusBadge } from '@acornops/ui';
+import { Button, InlineAlert, StatusBadge } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
@@ -17,7 +17,9 @@ import {
   WorkloadExplorerItem
 } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
 import { WorkloadsExplorerProps } from '@/features/kubernetes-cluster-detail/components/workloads/workloadExplorerParts';
-import { formatUserTime } from '@/utils/dateTime';
+import { formatUserDateTime, parseDateTime } from '@/utils/dateTime';
+import { HighlightedLogText, LoadedLogTools } from '@/components/common/LoadedLogTools';
+import { findLoadedLogMatches } from '@/components/common/loadedLogContent';
 import { captureLogViewport, resolveRestoredLogScrollTop, type LogViewportSnapshot } from '@/features/kubernetes-cluster-detail/components/workloads/podLogViewport';
 
 const FOLLOW_LOGS_INTERVAL_MS = 7000;
@@ -40,9 +42,11 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
   const [logContainer, setLogContainer] = useState('');
   const [logTailLines, setLogTailLines] = useState(200);
   const [logPrevious, setLogPrevious] = useState(false);
+  const [logQuery, setLogQuery] = useState('');
   const logsRequestIdRef = useRef(0);
   const followFailuresRef = useRef(0);
   const followInFlightRef = useRef(false);
+  const manualInFlightRef = useRef(false);
   const logViewportRef = useRef<HTMLPreElement>(null);
   const pendingLogViewportRef = useRef<LogViewportSnapshot | null>(null);
 
@@ -63,13 +67,15 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
   const loadPodLogs = useCallback(
     async (mode: 'manual' | 'follow' = 'manual') => {
       if (!selectedWorkload || selectedWorkload.type !== 'Pod' || !onLoadPodLogs) return;
-      if (mode === 'follow' && followInFlightRef.current) return;
+      if (mode === 'follow' && (followInFlightRef.current || manualInFlightRef.current)) return;
 
       const requestId = logsRequestIdRef.current + 1;
       logsRequestIdRef.current = requestId;
       if (mode === 'follow') {
         followInFlightRef.current = true;
       } else {
+        followInFlightRef.current = false;
+        manualInFlightRef.current = true;
         setIsPodLogsLoading(true);
       }
       setPodLogsError(null);
@@ -96,9 +102,11 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
           }
         }
       } finally {
+        if (logsRequestIdRef.current !== requestId) return;
         if (mode === 'follow') {
           followInFlightRef.current = false;
         } else {
+          manualInFlightRef.current = false;
           setIsPodLogsLoading(false);
         }
       }
@@ -112,7 +120,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
     pendingLogViewportRef.current = null;
     if (!viewport || !snapshot) return;
     viewport.scrollTop = resolveRestoredLogScrollTop(snapshot, viewport);
-  }, [podLogs]);
+  }, [podLogs, logQuery]);
 
   useEffect(() => {
     setActiveDetailTab('details');
@@ -130,11 +138,20 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
   useEffect(() => {
     setPodLogs(null);
     setPodLogsError(null);
+    setLogQuery('');
+    setIsPodLogsLoading(false);
     followFailuresRef.current = 0;
+    followInFlightRef.current = false;
+    manualInFlightRef.current = false;
     pendingLogViewportRef.current = null;
     if (activeDetailTab === 'logs' && canShowLogs) {
       void loadPodLogs('manual');
     }
+    return () => {
+      logsRequestIdRef.current += 1;
+      followInFlightRef.current = false;
+      manualInFlightRef.current = false;
+    };
   }, [activeDetailTab, canShowLogs, loadPodLogs, logContainer, logPrevious, logTailLines]);
 
   useEffect(() => {
@@ -146,9 +163,18 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
   }, [activeDetailTab, canShowLogs, isFollowingLogs, loadPodLogs]);
 
   const closeDrawer = () => {
+    logsRequestIdRef.current += 1;
     setIsFollowingLogs(false);
     onClose();
   };
+  const sourcePath = [selectedWorkload?.clusterName, podLogs?.namespace || selectedWorkload?.namespace,
+    podLogs?.name || selectedWorkload?.name, podLogs?.container || logContainer].filter(Boolean).join('/');
+  const loadedSource = t('loadedLogs.source', { source: sourcePath })
+    + ` (${t((podLogs?.previous ?? logPrevious) ? 'loadedLogs.previous' : 'loadedLogs.current')})`;
+  const fetchedLabel = podLogs
+    ? parseDateTime(podLogs.fetchedAt) ? t('workloads.fetchedAt', { time: formatUserDateTime(podLogs.fetchedAt) }) : t('loadedLogs.unknownFetchTime')
+    : t('workloads.notLoaded');
+  const loadedScope = t('loadedLogs.podScope', { count: podLogs?.tailLines ?? logTailLines });
 
   return (
     <SidePanel isOpen={Boolean(selectedWorkload)} onClose={closeDrawer} title={t('workloads.drawerTitle', { name: selectedWorkload?.name || '' })}>
@@ -323,6 +349,10 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                         onClick={() => {
                           followFailuresRef.current = 0;
                           setIsFollowingLogs((value) => !value);
+                          if (isFollowingLogs && followInFlightRef.current) {
+                            logsRequestIdRef.current += 1;
+                            followInFlightRef.current = false;
+                          }
                           if (!isFollowingLogs) void loadPodLogs('follow');
                         }}
                         className="type-ui"
@@ -335,34 +365,48 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                 </div>
 
                 {podLogsError && (
-                  <div className="flex gap-3 border-y border-status-danger/25 bg-status-danger-soft px-4 py-3 type-body type-emphasis leading-6 text-status-danger-text">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{podLogsError}</span>
-                  </div>
+                  <InlineAlert tone="danger" className="rounded-none border-x-0 type-body type-emphasis leading-6">
+                    <span>{podLogsError}{podLogs && <span className="block">{t('loadedLogs.stale')}</span>}</span>
+                  </InlineAlert>
                 )}
 
+                <LoadedLogTools
+                  key={`${selectedWorkload.id}/${logContainer}/${logPrevious}/${logTailLines}`}
+                  query={logQuery}
+                  onQueryChange={(query) => {
+                    pendingLogViewportRef.current = logViewportRef.current ? captureLogViewport(logViewportRef.current, false) : null;
+                    setLogQuery(query);
+                  }}
+                  matchCount={findLoadedLogMatches(podLogs?.logs || '', logQuery).length}
+                  content={podLogs?.logs || ''}
+                  source={`${loadedSource}\n${fetchedLabel}${podLogsError ? `\n${t('loadedLogs.stale')}` : ''}`}
+                  scope={loadedScope}
+                  disabled={!podLogs}
+                />
+                <p className="type-caption break-words text-ui-text-muted">{loadedSource}</p>
+
                 <div className="overflow-hidden rounded-xl border border-ui-border bg-code-bg shadow-sm">
-                  <div className="flex items-center justify-between gap-3 border-b border-code-text/10 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-code-text/10 px-4 py-3">
                     <div className="inline-flex min-w-0 items-center gap-2 type-label text-code-text">
                       <FileText className="h-4 w-4 text-accent-strong" />
                       <span className="truncate">{selectedWorkload.name}</span>
                     </div>
                     <div className="inline-flex items-center gap-2 type-caption type-emphasis text-code-text/70">
                       {isFollowingLogs && <CheckCircle2 className="h-3.5 w-3.5 text-status-success-text" />}
-                      {podLogs?.fetchedAt
-                        ? t('workloads.fetchedAt', {
-                            time: formatUserTime(podLogs.fetchedAt, {
-                              includeTimeZone: true
-                            })
-                          })
-                        : t('workloads.notLoaded')}
+                      <span>{isFollowingLogs ? t('workloads.following') : t('loadedLogs.paused')}</span>
+                      <span>{fetchedLabel}</span>
                     </div>
                   </div>
                   <pre
                     ref={logViewportRef}
+                    role="region"
+                    aria-label={t('loadedLogs.title')}
+                    tabIndex={0}
                     className="max-h-[420px] min-h-[220px] overflow-auto whitespace-pre-wrap break-words p-4 font-mono type-caption leading-5 text-code-text custom-scrollbar"
                   >
-                    {isPodLogsLoading && !podLogs ? t('workloads.loadingLogs') : podLogs?.logs?.trim() ? podLogs.logs : t('workloads.noLogs')}
+                    {isPodLogsLoading && !podLogs ? t('workloads.loadingLogs') : podLogs?.logs?.trim()
+                      ? <HighlightedLogText content={podLogs.logs} query={logQuery} />
+                      : podLogs ? t('workloads.noLogs') : t('workloads.notLoaded')}
                   </pre>
                 </div>
               </>

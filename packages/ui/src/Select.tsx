@@ -17,6 +17,7 @@ export interface SelectProps<T extends string | number> {
   onChange: (value: T) => void;
   id?: string;
   ariaLabel?: string;
+  ariaDescribedBy?: string;
   disabled?: boolean;
   placeholder?: React.ReactNode;
   size?: 'sm' | 'md';
@@ -51,7 +52,7 @@ export const getNextEnabledOptionIndex = <T extends string | number>(options: Ar
   return -1;
 };
 
-export const Select = <T extends string | number>({ value, options, onChange, id, ariaLabel, disabled = false, placeholder, size = 'md', className }: SelectProps<T>) => {
+export const Select = <T extends string | number>({ value, options, onChange, id, ariaLabel, ariaDescribedBy, disabled = false, placeholder, size = 'md', className }: SelectProps<T>) => {
   const reactId = useId();
   const baseId = id || `select-${reactId}`;
   const listboxId = `${baseId}-listbox`;
@@ -175,6 +176,7 @@ export const Select = <T extends string | number>({ value, options, onChange, id
       selectOption(activeIndex);
     } else if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation();
       closeMenu();
     } else if (event.key === 'Tab') {
       closeMenu();
@@ -198,7 +200,8 @@ export const Select = <T extends string | number>({ value, options, onChange, id
               aria-selected={isSelected}
               aria-disabled={option.disabled}
               disabled={option.disabled}
-              onMouseEnter={() => {
+              onMouseMove={() => {
+                // Scrolling can fire mouseenter without actual pointer movement.
                 if (!option.disabled) setActiveIndex(index);
               }}
               onClick={() => selectOption(index)}
@@ -226,6 +229,7 @@ export const Select = <T extends string | number>({ value, options, onChange, id
         id={id}
         type="button"
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={isOpen ? listboxId : undefined}

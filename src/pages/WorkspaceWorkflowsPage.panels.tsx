@@ -25,6 +25,7 @@ import type { AgentDefinition } from '@/pages/agents/agentModel';
 import { AgentAvatar } from '@/pages/agents/AgentAvatar';
 import type { useWorkspaceWorkflowActions } from '@/pages/workflows/useWorkspaceWorkflowActions';
 import { getWorkflowExecution, type WorkflowCoordinationChild, type WorkflowRunApproval, type WorkflowRunEvent, type WorkflowOptionsCatalog } from '@/services/control-plane/workflowApi';
+import { ApprovalReviewDialog } from '@/features/approvals/ApprovalReviewDialog';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
 type WorkflowActions = ReturnType<typeof useWorkspaceWorkflowActions>;
@@ -191,8 +192,8 @@ export const WorkflowRunsPanel: React.FC<{
   expandedRunLogId: string;
   runEventsByRunId: Record<string, WorkflowRunEvent[]>;
   cancelRunAction: string;
-  workflowActions: Pick<WorkflowActions, 'stopWorkflowRun' | 'decideApproval' | 'toggleRunLogs'>;
-  approvalAction: string;
+  workflowActions: Pick<WorkflowActions, 'stopWorkflowRun' | 'refreshApprovalRecords' | 'toggleRunLogs'>;
+  canDecideApprovals?: boolean;
   setExpandedRunLogId: React.Dispatch<React.SetStateAction<string>>;
   showHeader?: boolean;
 }> = ({
@@ -205,11 +206,12 @@ export const WorkflowRunsPanel: React.FC<{
   runEventsByRunId,
   cancelRunAction,
   workflowActions,
-  approvalAction,
+  canDecideApprovals = false,
   setExpandedRunLogId,
   showHeader
 }) => {
   const { t } = useTranslation();
+  const [reviewSelection, setReviewSelection] = React.useState<{ workspaceId: string; workflowId: string; runId: string; approvalId: string }>();
   const [stopArmedRunId, setStopArmedRunId] = React.useState('');
   const [coordinationByExecutionId, setCoordinationByExecutionId] = React.useState<Record<string, { status: string; children: WorkflowCoordinationChild[] }>>({});
   const [coordinationLoadingId, setCoordinationLoadingId] = React.useState('');
@@ -313,12 +315,9 @@ export const WorkflowRunsPanel: React.FC<{
                     <span className="type-body type-emphasis text-ui-text">{approval.summary || approval.toolName}</span>
                     <StatusBadge tone={approval.status === 'approved' ? 'success' : approval.status === 'pending' ? 'warning' : 'neutral'}>{approval.status}</StatusBadge>
                   </div>
-                  {approval.status === 'pending' && (
-                    <div className="mt-3 flex justify-end gap-2">
-                      <Button size="sm" variant="secondary" onClick={() => void workflowActions.decideApproval(approval.runId, approval.id, 'approved')} disabled={approvalAction.startsWith(`${approval.runId}:${approval.id}`)}>Approve</Button>
-                      <Button size="sm" variant="danger" onClick={() => void workflowActions.decideApproval(approval.runId, approval.id, 'rejected')} disabled={approvalAction.startsWith(`${approval.runId}:${approval.id}`)}>Reject</Button>
-                    </div>
-                  )}
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => setReviewSelection({ workspaceId: workflow.workspaceId, workflowId: workflow.id, runId: effectiveRunId, approvalId: approval.id })}>{t('approvals.review.action')}</Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -375,6 +374,11 @@ export const WorkflowRunsPanel: React.FC<{
         />
       </DataSurface>
     )}
+    {reviewSelection?.workspaceId === workflow.workspaceId && reviewSelection.workflowId === workflow.id && <ApprovalReviewDialog
+      workspaceId={workflow.workspaceId} runId={reviewSelection.runId} approvalId={reviewSelection.approvalId}
+      canDecide={canDecideApprovals} onClose={() => setReviewSelection(undefined)}
+      onDecisionApplied={() => { void workflowActions.refreshApprovalRecords(reviewSelection.runId); }}
+    />}
   </WorkflowPanel>
   );
 };

@@ -14,7 +14,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { Workspace, WorkspaceAuditCategory, WorkspaceAuditEvent } from '@/types';
-import { formatUserDateTime } from '@/utils/dateTime';
+import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 interface WorkspaceAuditLogPageProps {
@@ -426,6 +426,7 @@ export const WorkspaceAuditLogPage: React.FC<WorkspaceAuditLogPageProps> = ({ wo
           )}
           {isCustomRangeOpen && (
             <div id="audit-custom-range-controls" className="mt-3 grid gap-3 rounded-lg border border-ui-border bg-ui-bg/70 p-3 sm:grid-cols-2 lg:w-[34rem] lg:max-w-full">
+              <p className="type-caption text-ui-text-muted sm:col-span-2">{t('auditLog.rangeHelp', { timezone: getUserTimeZone() })}</p>
               <div className="grid gap-2">
                 <span className="type-caption">{t('auditLog.filterFrom')}</span>
                 <DateTimePicker

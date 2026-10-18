@@ -10,6 +10,7 @@ interface VirtualMachineAgentAccessSelectorProps {
   onChange: (value: AgentVAccessMode, restartServices: string[]) => void;
   disabled?: boolean;
   idPrefix?: string;
+  context?: 'onboarding' | 'settings';
 }
 
 export const VirtualMachineAgentAccessSelector: React.FC<VirtualMachineAgentAccessSelectorProps> = ({
@@ -17,7 +18,8 @@ export const VirtualMachineAgentAccessSelector: React.FC<VirtualMachineAgentAcce
   restartServices,
   onChange,
   disabled = false,
-  idPrefix = 'agentv-access'
+  idPrefix = 'agentv-access',
+  context = 'onboarding'
 }) => {
   const { t } = useTranslation();
   const [serviceInput, setServiceInput] = React.useState('');
@@ -136,7 +138,7 @@ export const VirtualMachineAgentAccessSelector: React.FC<VirtualMachineAgentAcce
               ))}
             </ul>
           )}
-          <p className="mt-3 type-caption leading-5 text-ui-text-muted">{t('virtualMachines.list.restartApprovalRequired')}</p>
+          <p className="mt-3 type-caption leading-5 text-ui-text-muted">{t(context === 'settings' ? 'virtualMachines.list.restartApprovalSettings' : 'virtualMachines.list.restartApprovalRequired')}</p>
         </div>
       )}
     </fieldset>

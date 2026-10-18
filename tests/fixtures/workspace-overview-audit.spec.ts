@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { FIXTURE_CLOCK } from '../../src/fixtures/store';
 
 const overviewPath = '/workspaces/fixture-workspace/overview';
 
 test('workspace overview exposes real links with a coherent heading structure', async ({ page }) => {
+  await page.clock.setFixedTime(FIXTURE_CLOCK);
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { level: 1, name: 'Workspace Overview' })).toBeVisible();
@@ -27,7 +29,7 @@ test('workspace overview exposes real links with a coherent heading structure', 
   await expect(warningIssue.getByText('Payments VM', { exact: true })).toHaveCSS('font-weight', '500');
   await expect(warningIssue.getByText('Last seen', { exact: true })).toHaveCount(0);
   const warningIssueObservedAt = warningIssue.locator('time');
-  await expect(warningIssue.getByText(/^(Just now|(?:[5-9]|[1-5]\d)s ago)$/)).toBeVisible();
+  await expect(warningIssue.getByText(/^(just now|(?:[5-9]|[1-5]\d)s ago)$/)).toBeVisible();
   await expect(warningIssueObservedAt).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T/);
   await expect(warningIssueObservedAt).toHaveAttribute('title', /\S/);
   await expect(warningIssueTargetIdentity.locator('[data-target-type-icon="true"]')).toHaveAttribute('title', 'Virtual machine');
@@ -156,6 +158,7 @@ test('desktop assistant keeps the capability preview within the dock', async ({ 
   if (!capabilityPreviewId) throw new Error('The capability preview trigger must identify its popover');
   const capabilityPreview = page.locator(`#${capabilityPreviewId}`);
   await expect(capabilityPreview).toBeVisible();
+  await expect(assistant.locator('[data-floating-layer]').locator(`[id="${capabilityPreviewId}"]`)).toBeVisible();
   const capabilityPreviewBox = await capabilityPreview.boundingBox();
   const assistantBox = await assistant.boundingBox();
   expect(capabilityPreviewBox).not.toBeNull();
@@ -165,6 +168,14 @@ test('desktop assistant keeps the capability preview within the dock', async ({ 
   }
   expect(capabilityPreviewBox.x).toBeGreaterThanOrEqual(assistantBox.x);
   expect(capabilityPreviewBox.x + capabilityPreviewBox.width).toBeLessThanOrEqual(assistantBox.x + assistantBox.width);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(capabilityPreview).toBeVisible();
+  await expect.poll(async () => {
+    const [previewBox, dockBox] = await Promise.all([capabilityPreview.boundingBox(), assistant.boundingBox()]);
+    return Boolean(previewBox && dockBox
+      && previewBox.x >= dockBox.x
+      && previewBox.x + previewBox.width <= dockBox.x + dockBox.width);
+  }).toBe(true);
 });
 
 test('workspace overview remains usable in a narrow dark viewport', async ({ browser }) => {

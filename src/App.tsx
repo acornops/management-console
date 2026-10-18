@@ -547,7 +547,7 @@ const App: React.FC = () => {
       newClusterName={newClusterName}
       openClusterCopilot={openClusterCopilot}
       onConversationDeleted={(sessionName, targetName) => {
-        showToast(t('app.deletedConversation', { sessionName, targetName }));
+        showToast(t('app.deletedConversation', { sessionName, targetName }), { tone: 'success' });
       }}
       refreshWorkspaceInvitations={refreshWorkspaceInvitations}
       refreshWorkspaceMembers={refreshWorkspaceMembers}

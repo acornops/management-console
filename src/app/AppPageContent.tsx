@@ -340,7 +340,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
     const nextWorkspace = remainingWorkspaces[0];
     onLeaveWorkspaceSuccess(workspaceContext.id);
     navigate(nextWorkspace ? workspaceLandingPath(nextWorkspace) : AppPaths.workspaces(), { replace: true });
-    showToast(t('workspaceSettings.leaveSuccess', { workspace: workspaceContext.name }));
+    showToast(t('workspaceSettings.leaveSuccess', { workspace: workspaceContext.name }), { tone: 'success' });
   };
 
   return (
@@ -592,7 +592,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                 if (!cluster) return;
                 const updatedName = await controlPlaneApi.updateClusterName(cluster.workspaceId, cluster.id, name);
                 onUpdateKubernetesCluster(clusterId, updatedName);
-                showToast(t('clusterSettings.clusterNameUpdated'));
+                showToast(t('clusterSettings.clusterNameUpdated'), { tone: 'success' });
               }}
               onUpdateClusterNamespaceScope={async (clusterId, scope) => {
                 const cluster = kubernetesClusters.find((item) => item.id === clusterId);
@@ -602,7 +602,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                   namespaceExclude: scope.exclude
                 });
                 onUpdateKubernetesCluster(clusterId, updatedScope);
-                showToast(t('clusterSetup.namespaceScopeUpdated'));
+                showToast(t('clusterSetup.namespaceScopeUpdated'), { tone: 'success' });
               }}
               onUpdateClusterPermissionMode={async (clusterId, permissionMode) => {
                 const cluster = kubernetesClusters.find((item) => item.id === clusterId);
@@ -613,7 +613,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
                   permissionMode
                 );
                 onUpdateKubernetesCluster(clusterId, permissionPolicy);
-                showToast(t('clusterSettings.permissionModeUpdated'));
+                showToast(t('clusterSettings.permissionModeUpdated'), { tone: 'success' });
               }}
               onDeleteCluster={onDeleteCluster}
               onOpenAiSettings={(workspaceId) => navigate(AppPaths.workspaceAiSettings(workspaceId, getCurrentAppPath()))}

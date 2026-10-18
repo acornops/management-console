@@ -57,10 +57,10 @@ describe('focused application motion source contracts', () => {
     expect(kubernetesClusterDetail).toContain("{activeView === 'resources' && <ResourcesView");
   });
 
-  it('keeps Settings tab state intact while adding a scoped shared indicator', () => {
+  it('keeps Settings route state and its scoped shared indicator', () => {
     expect(settingsPage).toContain('<LayoutGroup id={settingsTabsLayoutGroupId}>');
     expect(settingsPage).toContain('{isActive && <ActiveTabIndicator />}');
-    expect(settingsPage).toContain('aria-pressed={isActive}');
+    expect(settingsPage).toContain("aria-current={isActive ? 'page' : undefined}");
     expect(settingsPage).toContain('onSelectTab?.(tab);');
   });
 });

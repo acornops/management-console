@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon, Loader2, Plus, Square, X } from 'lucide-react';
-import { Button } from '@acornops/ui';
+import { Button, Radio } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { AssistantCapabilityPreviewControl } from '@/features/targets/chat/components/AssistantCapabilityPreviewControl';
 import { TargetChatReferenceChips, TargetChatReferenceMenu } from '@/features/targets/chat/components/TargetChatReferencePicker';
@@ -302,7 +302,18 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 requestedToolAccessMode={requestedToolAccessMode}
               />
               <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
-              <div ref={modelMenuRef} className={`${isPanel ? 'static' : 'relative'} min-w-0 flex-1`}>
+              <div ref={modelMenuRef} className={`${isPanel ? 'static' : 'relative'} min-w-0 flex-1`} onBlur={(event) => {
+                if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
+                setIsModelMenuOpen(false);
+                setIsModelSubmenuOpen(false);
+              }} onKeyDown={(event) => {
+                if (event.key !== 'Escape' || !isModelMenuOpen) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (isModelSubmenuOpen) setIsModelSubmenuOpen(false);
+                else setIsModelMenuOpen(false);
+                document.getElementById(isModelSubmenuOpen ? modelSubmenuButtonId : modelSelectorId)?.focus({ preventScroll: true });
+              }}>
                 <Button
                   type="button"
                   variant="tertiary"
@@ -337,23 +348,29 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                       role="group"
                       aria-labelledby={modelSelectorId}
                     >
-                      <p className="px-3 pb-1.5 pt-2 type-label">{t('chat.effortSelector')}</p>
+                      <fieldset role="radiogroup" aria-label={t('chat.effortSelector')} onKeyDown={(event) => {
+                        if (event.key !== 'Home' && event.key !== 'End') return;
+                        event.preventDefault();
+                        const radios = event.currentTarget.querySelectorAll<HTMLInputElement>('input');
+                        const radio = event.key === 'Home' ? radios[0] : radios[radios.length - 1];
+                        radio?.click();
+                        radio?.focus();
+                      }}>
+                      <legend className="px-3 pb-1.5 pt-2 type-label">{t('chat.effortSelector')}</legend>
                       {allowedReasoningOptions.map((option) => {
                         const isSelected = option.value === selectedEffort;
                         return (
-                          <Button
-                            key={option.value}
-                            type="button"
-                            variant="tertiary"
-                            onClick={() => handleModelAndEffortChange(option.value as ReasoningEffort)}
-                            className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left type-ui text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
-                            aria-pressed={isSelected}
-                          >
+                          <label key={option.value} className="control-target relative flex h-10 w-full cursor-pointer items-center justify-between rounded-xl px-3 text-left type-ui text-ui-text transition-colors hover:bg-ui-bg has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/20">
+                            <Radio className="sr-only" name={`${modelMenuPanelId}-effort`} value={option.value} checked={isSelected} onChange={() => {
+                              handleModelAndEffortChange(option.value as ReasoningEffort);
+                              setIsModelMenuOpen(true);
+                            }} />
                             <span>{t(option.labelKey)}</span>
-                            {isSelected && <Check className="h-4 w-4 text-accent-strong" />}
-                          </Button>
+                            {isSelected && <Check className="h-4 w-4 text-accent-strong" aria-hidden="true" />}
+                          </label>
                         );
                       })}
+                      </fieldset>
                       <div className="my-2 border-t border-ui-border" />
                       <div className={isPanel ? 'contents' : 'relative'} onMouseEnter={() => setIsModelSubmenuOpen(true)}>
                         <Button

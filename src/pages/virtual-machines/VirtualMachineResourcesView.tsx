@@ -9,13 +9,16 @@ import {
   DataTableHeader,
   DataTableHeaderCell,
   CollectionLoadingSkeleton,
+  CollectionState,
   EmptyState,
   PageHeader,
   PageShell,
   formInputClassName
 } from '@acornops/ui';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { formatUserDateTime } from '@/utils/dateTime';
+import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
+import { LoadedLogTools } from '@/components/common/LoadedLogTools';
+import { formatVmLoadedLogs } from './virtualMachineLogContent';
 import { TextInput } from '@acornops/ui';
 import { DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -141,7 +144,8 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
 }) => {
   const { t } = useTranslation();
   const [resourceSearchTerm, setResourceSearchTerm] = React.useState('');
-  const hasResourceSearch = resourceSearchTerm.trim().length > 0;
+  const [logQuery, setLogQuery] = React.useState('');
+  const hasResourceSearch = (activeCategory === 'logs' ? logQuery : resourceSearchTerm).trim().length > 0;
   const filteredInventory = React.useMemo(
     () =>
       sortInventoryAttentionFirst(
@@ -166,14 +170,17 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
   const filteredLogs = React.useMemo(
     () =>
       logs.filter((entry) =>
-        matchesSearch(resourceSearchTerm, [
+        matchesSearch(logQuery, [
           entry.entryId,
           entry.timestamp,
+          formatUserDateTime(String(entry.timestamp || ''), { fallback: t('loadedLogs.unknownTime') }),
           entry.source,
+          entry.source || t('loadedLogs.unknownSource'),
+          entry.unit,
           entry.message
         ])
       ),
-    [logs, resourceSearchTerm]
+    [logs, logQuery, t]
   );
   const counts = React.useMemo(
     () => ({
@@ -204,7 +211,17 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           data-vm-resource-search-filter-bar="true"
           className="grid min-w-0 w-full max-w-full gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm"
         >
-          <div className="relative min-w-0">
+          {activeCategory === 'logs' ? <>
+            <LoadedLogTools query={logQuery} onQueryChange={setLogQuery} matchCount={filteredLogs.length}
+              content={formatVmLoadedLogs(logs, t('loadedLogs.unknownTime'), t('loadedLogs.unknownSource'))}
+              source={`${t('loadedLogs.source', { source: vmName })}${logsError ? `\n${t('loadedLogs.stale')}` : ''}`}
+              scope={t('loadedLogs.vmScope', { count: logs.length, timezone: getUserTimeZone() })}
+              disabled={isLogsLoading}
+            />
+            <Button type="button" variant="secondary" size="sm" onClick={onRetry} disabled={isLogsLoading} className="justify-self-start">
+              <RefreshCw className="h-4 w-4" />{t('loadedLogs.refresh')}
+            </Button>
+          </> : <div className="relative min-w-0">
             <label htmlFor="vm-resource-search" className="sr-only">{t('virtualMachines.resources.search')}</label>
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
             <TextInput
@@ -215,34 +232,40 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
               placeholder={t('virtualMachines.resources.search')}
               className={vmResourceSearchInputClassName}
             />
-          </div>
+          </div>}
         </div>
       </div>
 
       <section id="vm-resource-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-resource-category-${activeCategory}-tab`} className="min-h-[14rem] overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
         {activeCategory === 'logs' ? (
           <div className="max-h-[calc(100vh-22rem)] overflow-auto">
-            {logsError ? (
+            {logsError && (
               <div className="flex flex-col items-start gap-3 px-4 py-5">
                 <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
                   {logsError}
+                  {logs.length > 0 && <span className="block">{t('loadedLogs.stale')}</span>}
                 </p>
                 <Button onClick={onRetry} variant="secondary" size="sm">
                   <RefreshCw className="h-4 w-4" />
                   {t('common.retry')}
                 </Button>
               </div>
-            ) : isLogsLoading ? (
-              <CollectionLoadingSkeleton label={t('virtualMachines.resources.loadingLogs')} />
-            ) : filteredLogs.length === 0 ? (
-              <EmptyState
-                embedded
-                headingLevel={3}
-                icon={<Search />}
-                title={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResults' : 'virtualMachines.resources.noLogs')}
-                description={t(hasResourceSearch ? 'virtualMachines.resources.noSearchResultsHelp' : 'virtualMachines.resources.emptyHelp')}
-              />
-            ) : (
+            )}
+            <CollectionState
+              phase={isLogsLoading ? (logs.length > 0 ? 'refreshing' : 'loading') : logsError && logs.length === 0 ? 'error' : 'ready'}
+              itemCount={filteredLogs.length}
+              loading={<CollectionLoadingSkeleton label={t('virtualMachines.resources.loadingLogs')} />}
+              error={null}
+              empty={(
+                <EmptyState
+                  embedded
+                  headingLevel={3}
+                  icon={<Search />}
+                  title={t(hasResourceSearch ? 'loadedLogs.noMatches' : 'virtualMachines.resources.noLogs')}
+                  description={t(hasResourceSearch ? 'loadedLogs.findHelp' : 'virtualMachines.resources.emptyHelp')}
+                />
+              )}
+            >
               <div>
                 <DataTableGridHeader showAt="md" className={virtualMachineLogGridClass}>
                   <DataTableGridHeaderCell>{t('virtualMachines.resources.logTime')}</DataTableGridHeaderCell>
@@ -251,13 +274,13 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 </DataTableGridHeader>
                 {filteredLogs.map((entry, index) => (
                   <article key={String(entry.entryId || index)} className={`grid gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 lg:px-8 lg:py-6 ${virtualMachineLogGridClass}`}>
-                    <span className="type-code text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: String(entry.timestamp || '') })}</span>
-                    <span className="type-row-title truncate">{String(entry.source || t('virtualMachines.resources.host'))}</span>
-                    <span className="type-body min-w-0 break-words">{String(entry.message || '')}</span>
+                    <span className="type-code text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: t('loadedLogs.unknownTime') })}</span>
+                    <span className="type-row-title min-w-0 break-words">{[entry.source, entry.unit].filter(Boolean).map(String).join(' / ') || t('loadedLogs.unknownSource')}</span>
+                    <span className="type-body min-w-0 whitespace-pre-wrap break-words">{String(entry.message || '')}</span>
                   </article>
                 ))}
               </div>
-            )}
+            </CollectionState>
           </div>
         ) : (
           <>

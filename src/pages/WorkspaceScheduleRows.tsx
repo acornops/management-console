@@ -8,7 +8,8 @@ import { ICONS } from '@/constants';
 import { WorkspaceScheduleExecutionFacts } from '@/pages/WorkspaceScheduleExecutionFacts';
 import { agentMcpConfigurationPath } from '@/services/control-plane/mcpReadinessRecovery';
 import type { WorkflowApiDefinition, WorkflowSchedule } from '@/services/control-plane/workflowApi';
-import { formatUserDateTime } from '@/utils/dateTime';
+import { formatScheduleNextRun } from './WorkspaceSchedulesPage.helpers';
+import { WorkspaceScheduleCadence } from './WorkspaceScheduleCadence';
 import { AppPaths } from '@/utils/routes';
 import { DataTableCell, DataTableRow } from '@acornops/ui';
 
@@ -41,7 +42,7 @@ export function isMcpAutoPause(schedule: WorkflowSchedule): boolean {
     && /\bMCP\b|credential connection|approved MCP tool|remote MCP|installation unavailable/i.test(schedule.lastError || '');
 }
 
-function scheduleMcpRecoveryPath(
+export function scheduleMcpRecoveryPath(
   workspaceId: string,
   workflows: WorkflowApiDefinition[] | ReadonlyMap<string, WorkflowApiDefinition>,
   workflowId: string,
@@ -126,9 +127,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
   const { t } = useTranslation();
   const { schedule, workflows, workspaceId } = props;
   const mcpAutoPaused = isMcpAutoPause(schedule);
-  const nextRun = formatUserDateTime(schedule.nextRunAt, {
-    fallback: schedule.nextRunAt || t('schedules.nextRunUnavailable')
-  });
+  const nextRun = formatScheduleNextRun(schedule, t);
 
   return (
     <article className="p-[var(--ao-surface-padding)]">
@@ -139,7 +138,7 @@ export const WorkspaceScheduleMobileCard: React.FC<WorkspaceScheduleRowProps> = 
       <dl className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.cadence')}</dt>
-          <dd className="type-caption mt-1 text-ui-text"><code>{schedule.cron}</code> · {schedule.timezone}</dd>
+          <dd className="mt-1"><WorkspaceScheduleCadence cron={schedule.cron} timezone={schedule.timezone} /></dd>
         </div>
         <div>
           <dt className="type-micro-label text-ui-text-muted">{t('schedules.table.nextRun')}</dt>
@@ -177,15 +176,13 @@ export const WorkspaceScheduleTableRow: React.FC<WorkspaceScheduleRowProps> = (p
   const { t } = useTranslation();
   const { schedule, workflows, workspaceId } = props;
   const mcpAutoPaused = isMcpAutoPause(schedule);
-  const nextRun = formatUserDateTime(schedule.nextRunAt, {
-    fallback: schedule.nextRunAt || t('schedules.nextRunUnavailable')
-  });
+  const nextRun = formatScheduleNextRun(schedule, t);
 
   return (
     <DataTableRow className="bg-ui-surface type-body">
       <DataTableCell as="th" scope="row" density="dense" className="type-emphasis text-ui-text">{schedule.name}</DataTableCell>
       <DataTableCell density="dense" className="type-ui text-ui-text">{scheduleWorkflowName(workflows, schedule.workflowId)}</DataTableCell>
-      <DataTableCell density="dense" className="text-ui-text-muted"><code>{schedule.cron}</code> · {schedule.timezone}</DataTableCell>
+      <DataTableCell density="dense"><WorkspaceScheduleCadence cron={schedule.cron} timezone={schedule.timezone} /></DataTableCell>
       <DataTableCell density="dense" className="type-emphasis text-ui-text">{nextRun}</DataTableCell>
       <DataTableCell density="dense" className="text-ui-text-muted">
         <span className="block">{t('schedules.accessInherited')}</span>

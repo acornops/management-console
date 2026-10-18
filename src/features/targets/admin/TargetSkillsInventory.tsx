@@ -123,7 +123,7 @@ const TargetSkillRow: React.FC<TargetSkillRowProps> = ({ skill, canEditSkills, p
         />
       </DataTableCell>
       <DataTableCell className="hidden px-4 py-6 type-caption text-ui-text-muted sm:px-6 md:table-cell lg:px-8">
-        {skill.bundleStats.fileCount} files, {summarizeBytes(skill.bundleStats.totalBytes)}
+        {t('targetSkills.fileCount', { count: skill.bundleStats.fileCount })}, {summarizeBytes(skill.bundleStats.totalBytes)}
       </DataTableCell>
       <DataTableCell className="px-4 py-6 text-right sm:px-6 lg:px-8">
         {actionMenu}
@@ -166,7 +166,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
         skill.enabled ? 'enabled' : 'disabled',
         skill.source.type === 'git_import' ? sourceLabel(skill) : '',
         syncLabel(skill) || '',
-        `${skill.bundleStats.fileCount} files`,
+        t('targetSkills.fileCount', { count: skill.bundleStats.fileCount }),
         summarizeBytes(skill.bundleStats.totalBytes)
       ]
         .join(' ')
@@ -180,7 +180,7 @@ export const TargetSkillsInventory: React.FC<TargetSkillsInventoryProps> = ({ sk
         (skillFilter === 'invalid' && skill.validationStatus !== 'valid');
       return matchesSearch && matchesFilter;
     });
-  }, [skillFilter, skillSearch, skills]);
+  }, [skillFilter, skillSearch, skills, t]);
   const hasActiveFilters = Boolean(skillSearch.trim()) || skillFilter !== 'all';
 
   return (

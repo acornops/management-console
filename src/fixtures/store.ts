@@ -1,4 +1,5 @@
 import type { ControlPlaneResourcePageItem } from '@/services/controlPlaneApi';
+import { completeFixtureResourceInventory } from './resourceFixtures';
 
 export const FIXTURE_IDS = {
   user: 'fixture-user',
@@ -17,14 +18,10 @@ export const FIXTURE_IDS = {
   run: 'fixture-run'
 } as const;
 
-const fixtureTime = (offsetMs = 0) => new Date(Date.now() + offsetMs).toISOString();
-const fixtureMinutesAgo = (minutes: number, secondsAfter = 0) => (
-  fixtureTime((-minutes * 60_000) + (secondsAfter * 1_000))
-);
-const NOW = fixtureTime();
-const EARLIER = fixtureMinutesAgo(45);
+export const FIXTURE_CLOCK = '2026-07-15T08:30:00.000Z';
 
 export interface FixtureState {
+  clock: string;
   user: Record<string, unknown>;
   workspaces: Array<Record<string, unknown>>;
   members: Array<Record<string, unknown>>;
@@ -45,6 +42,7 @@ export interface FixtureState {
   messages: Record<string, Array<Record<string, any>>>;
   runs: Record<string, Record<string, any>>;
   resources: ControlPlaneResourcePageItem[];
+  virtualMachineResources: Array<Record<string, any>>;
   targetTools: Array<Record<string, any>>;
   targetToolSettings: Record<string, boolean>;
   targetSkills: Array<Record<string, any>>;
@@ -79,7 +77,10 @@ const allPermissions = {
   delete_sessions: true
 };
 
-function clusterSnapshot() {
+function clusterSnapshot(clock: string) {
+  const fixtureTime = (offsetMs = 0) => new Date(Date.parse(clock) + offsetMs).toISOString();
+  const NOW = fixtureTime();
+  const EARLIER = fixtureTime(-45 * 60_000);
   return {
     clusterId: FIXTURE_IDS.cluster,
     workspaceId: FIXTURE_IDS.workspace,
@@ -132,7 +133,11 @@ function clusterSnapshot() {
   };
 }
 
-export function createFixtureState(): FixtureState {
+export function createFixtureState(clock = FIXTURE_CLOCK): FixtureState {
+  const NOW = new Date(clock).toISOString();
+  const fixtureTime = (offsetMs = 0) => new Date(Date.parse(NOW) + offsetMs).toISOString();
+  const fixtureMinutesAgo = (minutes: number, secondsAfter = 0) => fixtureTime((-minutes * 60_000) + (secondsAfter * 1_000));
+  const EARLIER = fixtureMinutesAgo(45);
   const workspace = {
     id: FIXTURE_IDS.workspace,
     name: 'AcornOps Fixture Lab',
@@ -166,7 +171,7 @@ export function createFixtureState(): FixtureState {
       resourceFamilyCounts: { workloads: 7, network: 3, storage: 1, cluster: 2 },
       resourceKindCounts: { Pod: 3, Deployment: 2, Service: 1, Ingress: 1, PersistentVolumeClaim: 1, Node: 1, Namespace: 2 }
     },
-    latestSnapshot: clusterSnapshot()
+    latestSnapshot: clusterSnapshot(NOW)
   };
   const virtualMachine = {
     id: FIXTURE_IDS.virtualMachine,
@@ -183,7 +188,7 @@ export function createFixtureState(): FixtureState {
     permissionModeSource: 'deployment_default' as const,
     allowedLogSources: ['system', 'app', 'security'],
     status: 'online',
-    summary: { inventoryCount: 8, findingCount: 1, criticalFindingCount: 0, serviceCount: 4, processCount: 24, listenerCount: 6, logCount: 150 },
+    summary: { inventoryCount: 2, findingCount: 1, criticalFindingCount: 0, serviceCount: 1, processCount: 1, listenerCount: 0, logCount: 150 },
     createdAt: EARLIER,
     updatedAt: NOW,
     latestSnapshot: { targetId: FIXTURE_IDS.virtualMachine, workspaceId: FIXTURE_IDS.workspace, timestamp: NOW }
@@ -476,7 +481,8 @@ export function createFixtureState(): FixtureState {
       reopenedCount: 0, cleanSnapshotCount: 0, latestEvidence: { responseTimeMs: 890 }, createdAt: EARLIER, updatedAt: NOW
     }
   ];
-  return {
+  const state: FixtureState = {
+    clock: NOW,
     user: { id: FIXTURE_IDS.user, email: 'test-user@fixture.acornops.dev', displayName: 'Test User', quota: { workspaceMemberships: { used: 1, limit: 10 } } },
     workspaces: [workspace],
     members: [
@@ -593,6 +599,10 @@ export function createFixtureState(): FixtureState {
         }
       }
     ],
+    virtualMachineResources: [
+      { id: 'fixture-vm-service', targetId: FIXTURE_IDS.virtualMachine, category: 'services', kind: 'systemd_service', name: 'payments-api.service', status: 'active', item: { unit: 'payments-api.service', active_state: 'active', sub_state: 'running', enabled: true } },
+      { id: 'fixture-vm-process', targetId: FIXTURE_IDS.virtualMachine, category: 'processes', kind: 'process', name: 'payments-worker', status: null, item: { pid: 1842, name: 'payments-worker', cpu_percent: 4.2, memory_percent: 8.1 } }
+    ],
     targetTools,
     targetToolSettings: {
       web_search: true,
@@ -613,6 +623,8 @@ export function createFixtureState(): FixtureState {
     agentMcpServers: [{ ...agentTargetsMcpServer, agentId: FIXTURE_IDS.kubernetesAgent }],
     mcpConnections: {}
   };
+  completeFixtureResourceInventory(state);
+  return state;
 }
 
 let fixtureState = createFixtureState();
@@ -621,7 +633,7 @@ export function getFixtureState(): FixtureState {
   return fixtureState;
 }
 
-export function resetFixtureStore(): FixtureState {
-  fixtureState = createFixtureState();
+export function resetFixtureStore(clock = FIXTURE_CLOCK): FixtureState {
+  fixtureState = createFixtureState(clock);
   return fixtureState;
 }

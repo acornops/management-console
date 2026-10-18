@@ -7,6 +7,7 @@ import { CloseButton } from '@acornops/ui';
 import { Switch } from '@acornops/ui';
 import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
+import { CollectionResultSummary, Select, TextInput } from '@acornops/ui';
 import type { TargetToolCatalogItem, TargetToolCatalogServer } from '@/features/targets/admin/targetMcpCatalogTypes';
 import { getToolLabel, isManagedMcpServer } from '@/features/targets/admin/mcpServersCatalog';
 
@@ -49,6 +50,15 @@ export const McpServerToolsDialog: React.FC<{
   const [bulkLoadedTools, setBulkLoadedTools] = React.useState<TargetToolCatalogItem[]>([]);
   const [bulkLoadingCapability, setBulkLoadingCapability] = React.useState<'read' | 'write' | null>(null);
   const [isSavingTools, setIsSavingTools] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [capabilityFilter, setCapabilityFilter] = React.useState<'all' | 'read' | 'write'>('all');
+  const [enabledFilter, setEnabledFilter] = React.useState<'all' | 'enabled' | 'disabled'>('all');
+  const [isLoadingFilterTools, setIsLoadingFilterTools] = React.useState(false);
+  const [filterLoadFailed, setFilterLoadFailed] = React.useState(false);
+  const filterRequestScope = React.useRef(0);
+  const searchRef = React.useRef<HTMLInputElement>(null);
+  const searchId = React.useId();
+  const hasActiveFilters = Boolean(query.trim()) || capabilityFilter !== 'all' || enabledFilter !== 'all';
   const isManagedServer = isManagedMcpServer(server);
   const serverSubtitle = isManagedServer ? t('common.providedByAcornOps') : server.url;
   const toolsPhase = isLoadingTools
@@ -63,7 +73,26 @@ export const McpServerToolsDialog: React.FC<{
     setConfiguredOverrides({});
     setBulkLoadedTools([]);
     setBulkLoadingCapability(null);
+    setQuery('');
+    setCapabilityFilter('all');
+    setEnabledFilter('all');
+    setIsLoadingFilterTools(false);
+    setFilterLoadFailed(false);
+    return () => { filterRequestScope.current += 1; };
   }, [server.id]);
+
+  React.useEffect(() => {
+    if (!hasActiveFilters || !hasMoreTools || !onLoadAllTools || isLoadingTools || isLoadingMoreTools || isLoadingFilterTools || filterLoadFailed || bulkLoadingCapability) return;
+    const scope = filterRequestScope.current;
+    setIsLoadingFilterTools(true);
+    void onLoadAllTools().then((completeTools) => {
+      if (scope === filterRequestScope.current) setBulkLoadedTools(completeTools);
+    }).catch(() => {
+      if (scope === filterRequestScope.current) setFilterLoadFailed(true);
+    }).finally(() => {
+      if (scope === filterRequestScope.current) setIsLoadingFilterTools(false);
+    });
+  }, [hasActiveFilters, hasMoreTools, onLoadAllTools, isLoadingTools, isLoadingMoreTools, isLoadingFilterTools, filterLoadFailed, bulkLoadingCapability]);
 
   const tools = React.useMemo(() => {
     const toolsByName = new Map(server.tools.map((tool) => [tool.name, tool]));
@@ -79,8 +108,19 @@ export const McpServerToolsDialog: React.FC<{
     tools.filter((tool) => configuredOverrides[tool.name] !== undefined && configuredOverrides[tool.name] !== tool.enabledConfigured)
   ), [configuredOverrides, tools]);
 
-  const readTools = tools.filter((tool) => tool.capability === 'read');
-  const writeTools = tools.filter((tool) => tool.capability === 'write');
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredTools = tools.filter((tool) => (
+    (!normalizedQuery || `${tool.name} ${getToolLabel(tool)}`.toLowerCase().includes(normalizedQuery)) &&
+    (capabilityFilter === 'all' || tool.capability === capabilityFilter) &&
+    (enabledFilter === 'all' || getConfiguredEnabled(tool) === (enabledFilter === 'enabled'))
+  ));
+  const filtersIncomplete = hasActiveFilters && hasMoreTools;
+  const clearFilters = () => {
+    setQuery('');
+    setCapabilityFilter('all');
+    setEnabledFilter('all');
+    searchRef.current?.focus();
+  };
   const getSectionBlockReason = (tools: TargetToolCatalogItem[]) => {
     const configuredTools = tools.filter((tool) => getConfiguredEnabled(tool));
     const blockedTools = configuredTools.filter((tool) => tool.effectiveDisabledReason);
@@ -165,7 +205,7 @@ export const McpServerToolsDialog: React.FC<{
             {configuredEnabled ? t('mcpServers.enabled') : t('mcpServers.disabled')}
           </span>
           {tool.capability === 'write' && configuredEnabled && (
-            <p className="type-caption mt-0.5 text-status-warning-text">{t('mcpServers.approvalRequired')}</p>
+            <p className="type-caption mt-0.5 text-status-warning-text">{t('mcpServers.approvalPolicyDependent')}</p>
           )}
         </div>
         <Switch
@@ -182,11 +222,12 @@ export const McpServerToolsDialog: React.FC<{
     const blockReason = globalBlockReason ? null : getSectionBlockReason(sectionTools);
     const isBlocked = Boolean(globalBlockReason || blockReason);
     const groupState = getGroupState(capability, sectionTools);
-    const groupPending = bulkLoadingCapability !== null || isLoadingMoreTools || isSavingTools;
+    const groupPending = bulkLoadingCapability !== null || isLoadingMoreTools || isLoadingFilterTools || isSavingTools;
     const canToggleGroup = groupState.allEnabled ? canDisableTools : canManageTools;
     const groupLabel = t(groupState.allEnabled
       ? capability === 'read' ? 'mcpServers.disableAllReadTools' : 'mcpServers.disableAllWriteTools'
       : capability === 'read' ? 'mcpServers.enableAllReadTools' : 'mcpServers.enableAllWriteTools');
+    const visibleTools = filteredTools.filter((tool) => tool.capability === capability);
     return (
       <section data-mcp-tool-capability={capability} className={`overflow-hidden rounded-lg border border-ui-border bg-ui-surface ${isBlocked ? 'opacity-70' : ''}`}>
         <div className="flex items-center justify-between gap-3 border-b border-ui-border bg-ui-bg px-4 py-3">
@@ -204,7 +245,7 @@ export const McpServerToolsDialog: React.FC<{
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="type-caption text-ui-text-muted">
-              {bulkLoadingCapability === capability ? t('mcpServers.loadingAllTools') : t('mcpServers.allToolsInSection')}
+              {bulkLoadingCapability === capability ? t('mcpServers.loadingAllTools') : t('mcpServers.allToolsCount', { count: groupState.total })}
             </span>
             <Switch
               data-mcp-tool-group-switch={capability}
@@ -216,9 +257,8 @@ export const McpServerToolsDialog: React.FC<{
             />
           </div>
         </div>
-        {sectionTools.length > 0 ? sectionTools.map(renderToolRow) : (
-          <p className="type-caption px-4 py-4 text-ui-text-muted">{t('mcpServers.noToolsInSection')}</p>
-        )}
+        {visibleTools.map(renderToolRow)}
+        {visibleTools.length === 0 && !hasActiveFilters && <p className="type-caption px-4 py-4 text-ui-text-muted">{t('mcpServers.noToolsInSection')}</p>}
       </section>
     );
   };
@@ -272,27 +312,27 @@ export const McpServerToolsDialog: React.FC<{
                 </div>
               )}
               <section className="overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-                <div className="grid grid-cols-1 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
-                  <div className="px-5 py-3.5">
+                <div className="grid grid-cols-2 divide-y divide-ui-border md:grid-cols-[minmax(15rem,1.35fr)_repeat(4,minmax(7rem,1fr))] md:divide-x md:divide-y-0">
+                  <div className="col-span-2 px-4 py-3 md:col-span-1 md:px-5 md:py-3.5">
                     <h3 className="type-row-title">{t('mcpServers.toolAccessSummaryTitle')}</h3>
                     <p className="type-caption mt-1 text-ui-text-muted">{t('mcpServers.toolAccessSummaryBody')}</p>
                   </div>
-                  <div className="px-5 py-3.5">
+                  <div className="px-4 py-2 md:px-5 md:py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.totalTools')}</p>
                     <p className="type-data mt-0.5">{server.toolCounts.total}</p>
                   </div>
-                  <div className="px-5 py-3.5">
-                    <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
+                  <div className="px-4 py-2 md:px-5 md:py-3.5">
+                    <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')} ({t('mcpServers.savedEffective')})</p>
                     <p className="type-data mt-0.5">{server.toolCounts.enabledEffective}</p>
                   </div>
-                  <div className="px-5 py-3.5">
+                  <div className="px-4 py-2 md:px-5 md:py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.readOnlyTools')}</p>
                     <p data-mcp-read-only-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
                       {server.toolCounts.readOnly}
                       <span className="h-2 w-2 rounded-full bg-status-success" />
                     </p>
                   </div>
-                  <div className="px-5 py-3.5">
+                  <div className="px-4 py-2 md:px-5 md:py-3.5">
                     <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
                     <p data-mcp-write-capable-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
                       {server.toolCounts.writeCapable}
@@ -301,10 +341,43 @@ export const McpServerToolsDialog: React.FC<{
                   </div>
                 </div>
               </section>
-              {renderToolSection('read', t('mcpServers.readOnlySection'), t('mcpServers.readOnlySectionHelp'), readTools)}
-              {renderToolSection('write', t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), writeTools)}
-              <div ref={loadMoreSentinelRef}>
-                {hasMoreTools && (
+              <div className="space-y-3">
+                <label className="block" htmlFor={searchId}>
+                  <span className="type-caption type-emphasis">{t('mcpServers.searchTools')}</span>
+                  <TextInput ref={searchRef} id={searchId} type="search" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Escape' && query) { event.stopPropagation(); setQuery(''); } }} className="mt-1" />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="min-w-0">
+                    <span className="type-caption type-emphasis">{t('mcpServers.toolCapabilityFilter')}</span>
+                    <Select<typeof capabilityFilter> value={capabilityFilter} onChange={setCapabilityFilter} ariaLabel={t('mcpServers.toolCapabilityFilter')} className="mt-1" options={[
+                      { value: 'all', label: t('mcpServers.filterAllTools') },
+                      { value: 'read', label: t('mcpServers.readOnlySection') },
+                      { value: 'write', label: t('mcpServers.writeSection') }
+                    ]} />
+                  </label>
+                  <label className="min-w-0">
+                    <span className="type-caption type-emphasis">{t('mcpServers.toolStateFilter')}</span>
+                    <Select<typeof enabledFilter> value={enabledFilter} onChange={setEnabledFilter} ariaLabel={t('mcpServers.toolStateFilter')} className="mt-1" options={[
+                      { value: 'all', label: t('mcpServers.filterAllTools') },
+                      { value: 'enabled', label: t('mcpServers.enabled') },
+                      { value: 'disabled', label: t('mcpServers.disabled') }
+                    ]} />
+                  </label>
+                </div>
+                <p className="type-caption text-ui-text-muted">{t('mcpServers.toolFilterScope')}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CollectionResultSummary>{filtersIncomplete
+                    ? t(filterLoadFailed || !onLoadAllTools ? 'mcpServers.toolFilterIncomplete' : 'mcpServers.loadingToolsForFilters')
+                    : t('mcpServers.showingTools', { count: filteredTools.length, total: server.toolCounts.total })}</CollectionResultSummary>
+                  {hasActiveFilters && <Button type="button" variant="tertiary" size="sm" onClick={clearFilters}>{t('mcpServers.clearToolFilters')}</Button>}
+                  {filtersIncomplete && filterLoadFailed && <Button type="button" variant="secondary" size="sm" onClick={() => setFilterLoadFailed(false)}>{t('mcpServers.retryToolFilters')}</Button>}
+                </div>
+              </div>
+              {hasActiveFilters && !filtersIncomplete && filteredTools.length === 0 && <p role="status" className="type-caption py-3 text-ui-text-muted">{t('mcpServers.noToolMatches')}</p>}
+              {(capabilityFilter === 'all' || capabilityFilter === 'read') && renderToolSection('read', t('mcpServers.readOnlySection'), t('mcpServers.readOnlySectionHelp'), tools.filter((tool) => tool.capability === 'read'))}
+              {(capabilityFilter === 'all' || capabilityFilter === 'write') && renderToolSection('write', t('mcpServers.writeSection'), t('mcpServers.writeSectionHelp'), tools.filter((tool) => tool.capability === 'write'))}
+              <div ref={hasActiveFilters ? undefined : loadMoreSentinelRef}>
+                {hasMoreTools && !hasActiveFilters && (
                   <Button type="button" variant="secondary" size="sm" onClick={onLoadMoreTools} disabled={isLoadingMoreTools} className="w-full">
                     {isLoadingMoreTools ? t('mcpServers.loadingTools') : t('common.loadMore')}
                   </Button>

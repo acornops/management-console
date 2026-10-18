@@ -166,7 +166,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                 key={agent.id}
                 cardAttribute={{ 'data-agent-card': 'true', 'data-agent-id': agent.id }}
                 actionAttribute={{ 'data-agent-card-primary-action': 'true' }}
-                actionLabel={t('agentsWorkflows.agents.openDetailsLabel', { name: agent.name })}
+                actionLabel={t('agentsWorkflows.agents.openAgentLabel', { name: agent.name })}
                 onActivate={() => onOpenManagement(agent)}
               >
                 <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
@@ -177,7 +177,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
                       {readinessBlocked && <StatusBadge tone="warning">{readinessLabel}</StatusBadge>}
                     </div>
                     <span aria-hidden="true" className="type-caption type-emphasis mt-1 inline-flex items-center gap-1 text-ui-text-muted transition-colors group-hover:text-accent-strong group-focus-within:text-accent-strong">
-                      {t('agentsWorkflows.agents.viewDetails')} <ICONS.ChevronRight className="h-3.5 w-3.5" />
+                      {t('agentsWorkflows.agents.openAgent')} <ICONS.ChevronRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
                   <div className="pointer-events-auto relative z-20 flex shrink-0 items-center gap-1">

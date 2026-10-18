@@ -1,11 +1,27 @@
 import { expect, test, type Page } from '@playwright/test';
+import type { AgentSkillApi } from '../../src/services/control-plane/agentApi';
 
 const clusterRoute = '/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster';
 const virtualMachineRoute = '/workspaces/fixture-workspace/virtual-machines/fixture-vm';
 const agentRoute = '/workspaces/fixture-workspace/agents/fixture-specialist';
 
-async function delayCapabilityRefreshes(page: Page) {
-  await page.addInitScript(() => {
+const agentCacheSkill: AgentSkillApi = {
+  id: 'fixture-agent-cache-skill',
+  name: 'Agent cache sentinel',
+  description: 'Agent-owned instructions for populated catalog cache coverage.',
+  enabled: true,
+  revision: 1,
+  contentDigest: 'sha256:fixture-agent-cache-skill',
+  source: { type: 'manual' },
+  files: [{
+    path: 'SKILL.md',
+    content: '# Agent cache sentinel\nInspect only this Agent-owned instruction bundle.',
+    contentDigest: 'sha256:fixture-agent-cache-skill-file'
+  }]
+};
+
+async function delayCapabilityRefreshes(page: Page, agentSkill?: AgentSkillApi) {
+  await page.addInitScript((agentSkill) => {
     const originalFetch = window.fetch.bind(window);
     const requestCounts = new Map<string, number>();
     const capabilityCatalogPath = /\/(?:targets\/[^/]+\/(?:mcp\/catalog|skills|tools)|agents\/[^/]+\/(?:mcp\/servers|skills)|catalog\/native-tools)$/;
@@ -20,9 +36,16 @@ async function delayCapabilityRefreshes(page: Page) {
           await new Promise((resolve) => window.setTimeout(resolve, 3_000));
         }
       }
+      const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+      if (agentSkill && method === 'GET' && path === '/api/v1/workspaces/fixture-workspace/agents/fixture-specialist/skills') {
+        return new Response(JSON.stringify({ items: [agentSkill] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
       return originalFetch(input, init);
     };
-  });
+  }, agentSkill || null);
 }
 
 test('cluster capability catalogs remain visible during revisit refreshes', async ({ page }) => {
@@ -79,13 +102,14 @@ test('virtual machine capability catalogs remain visible during revisit refreshe
 });
 
 test('Agent capability catalogs remain visible during revisit refreshes', async ({ page }) => {
-  await delayCapabilityRefreshes(page);
+  await delayCapabilityRefreshes(page, agentCacheSkill);
 
   await page.goto(`${agentRoute}/tools`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('No built-in tools are available.')).toBeVisible();
 
   await page.getByRole('link', { name: 'Skills', exact: true }).click();
-  await expect(page.getByText('Kubernetes triage')).toBeVisible();
+  await expect(page.getByText('Agent cache sentinel', { exact: true })).toBeVisible();
+  await expect(page.getByText('Kubernetes triage', { exact: true })).toHaveCount(0);
 
   await page.getByRole('link', { name: 'MCP Servers', exact: true }).click();
   await expect(page.getByText('No MCP servers have been registered.')).toBeVisible();
@@ -96,7 +120,8 @@ test('Agent capability catalogs remain visible during revisit refreshes', async 
 
   await page.getByRole('link', { name: 'Skills', exact: true }).click();
   await expect(page.getByText('Loading skills')).toHaveCount(0);
-  await expect(page.getByText('Kubernetes triage')).toBeVisible({ timeout: 750 });
+  await expect(page.getByText('Agent cache sentinel', { exact: true })).toBeVisible({ timeout: 750 });
+  await expect(page.getByText('Kubernetes triage', { exact: true })).toHaveCount(0);
 
   await page.getByRole('link', { name: 'MCP Servers', exact: true }).click();
   await expect(page.getByText('Loading MCP server catalog...')).toHaveCount(0);

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mapClusterResourcePageItems } from '@/services/control-plane/clusterMappers';
 import { FIXTURE_IDS, getFixtureState, resetFixtureStore } from './store';
 import { routeFixtureRequest } from './router';
+import { completeFixtureResourceInventory } from './resourceFixtures';
 
 function request(path: string, init?: RequestInit): Request {
   return new Request(`http://localhost:8081${path}`, init);
@@ -38,6 +39,97 @@ describe('frontend fixture router', () => {
       expect.objectContaining({ name: 'payments-worker-7c5b9f-demo', status: 'CrashLoopBackOff' }),
       expect.objectContaining({ name: 'checkout-api-6f8c7d9d4c-rollout', status: 'Pending' })
     ]));
+  });
+
+  it('filters Kubernetes resource families and reports matching category counts', async () => {
+    const root = `/api/v1/workspaces/${FIXTURE_IDS.workspace}/kubernetes-clusters/${FIXTURE_IDS.cluster}`;
+    const detail = await routeFixtureRequest(request(root));
+    const all = await routeFixtureRequest(request(`${root}/resources`));
+    const rows = (all.body as { items: Array<{ family: string }> }).items;
+    expect((detail.body as { summary: { resourceCount: number } }).summary.resourceCount).toBe(rows.length);
+    for (const family of ['workloads', 'network', 'storage', 'cluster']) {
+      const response = await routeFixtureRequest(request(`${root}/resources?family=${family}`));
+      const items = (response.body as { items: Array<{ family: string }> }).items;
+      expect(items.every((item) => item.family === family)).toBe(true);
+      expect(items.length).toBe((detail.body as { summary: { resourceFamilyCounts: Record<string, number> } }).summary.resourceFamilyCounts[family] || 0);
+    }
+    const filtered = await routeFixtureRequest(request(`${root}/resources?kind=Pod&q=payments&namespace=production`));
+    expect((filtered.body as { items: Array<{ name: string }> }).items.map((item) => item.name)).toEqual(['payments-worker-7c5b9f-demo']);
+  });
+
+  it('returns VM resources in their requested category, not Kubernetes family fields', async () => {
+    const response = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/virtual-machines/${FIXTURE_IDS.virtualMachine}/resources?category=services`));
+    expect(response.body).toMatchObject({ items: [{ category: 'services', name: 'payments-api.service' }] });
+    expect((response.body as { items: unknown[] }).items).toHaveLength(1);
+    const processes = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/virtual-machines/${FIXTURE_IDS.virtualMachine}/resources?category=processes`));
+    expect(processes.body).toMatchObject({ items: [{ category: 'processes', name: 'payments-worker' }] });
+    expect((processes.body as { items: unknown[] }).items).toHaveLength(1);
+  });
+
+  it('puts the partially ready Deployment in attention, not healthy, consistently with its rendered state', async () => {
+    const root = `/api/v1/workspaces/${FIXTURE_IDS.workspace}/kubernetes-clusters/${FIXTURE_IDS.cluster}/resources`;
+    const attention = await routeFixtureRequest(request(`${root}?kind=Deployment&health=attention`));
+    const attentionItems = (attention.body as { items: ReturnType<typeof getFixtureState>['resources'] }).items;
+    expect(attentionItems.map(({ name, status }) => ({ name, status }))).toEqual([
+      { name: 'payments-worker', status: 'Unknown' }
+    ]);
+    expect(mapClusterResourcePageItems(attentionItems).workloads[0].status).toBe('Pending');
+    const healthy = await routeFixtureRequest(request(`${root}?kind=Deployment&health=healthy`));
+    expect((healthy.body as { items: Array<{ name: string; status: string }> }).items.map(({ name, status }) => ({ name, status }))).toEqual([
+      { name: 'checkout-api', status: 'Running' }
+    ]);
+  });
+
+  it('filters producer attention statuses instead of relying on fixture-only health aliases', async () => {
+    const state = getFixtureState();
+    const row = state.resources[0];
+    const statuses = ['Unknown', 'Failed', 'CrashLoopBackOff', 'NotReady', 'Pending', 'ImagePullBackOff', 'ErrImagePull', 'OOMKilled', 'CreateContainerConfigError', 'unknown', 'Running', 'Ready', 'Bound', 'Active', 'Critical', 'Warning'];
+    state.resources = statuses.map((status) => ({ ...row, id: status, name: status, status }));
+    const root = `/api/v1/workspaces/${FIXTURE_IDS.workspace}/kubernetes-clusters/${FIXTURE_IDS.cluster}/resources`;
+    const attention = await routeFixtureRequest(request(`${root}?health=attention`));
+    expect((attention.body as { items: Array<{ status: string }> }).items.map((item) => item.status)).toEqual([
+      'Unknown', 'Failed', 'CrashLoopBackOff', 'NotReady', 'Pending', 'ImagePullBackOff', 'ErrImagePull', 'OOMKilled', 'CreateContainerConfigError', 'unknown'
+    ]);
+    const healthy = await routeFixtureRequest(request(`${root}?health=healthy`));
+    expect((healthy.body as { items: Array<{ status: string }> }).items.map((item) => item.status)).toEqual([
+      'Running', 'Ready', 'Bound', 'Active', 'Critical', 'Warning'
+    ]);
+  });
+
+  it('derives snapshot statuses while preserving the richer unhealthy Pod payload', () => {
+    const state = getFixtureState();
+    const pod = state.resources.find((row) => row.name === 'payments-worker-7c5b9f-demo')!;
+    const originalPayload = structuredClone(pod.item);
+    const snapshot = state.clusters[0].latestSnapshot.data.resources;
+    snapshot.deployments[0].readyReplicas = 0;
+    snapshot.nodes[0].status.conditions[0].status = 'False';
+    snapshot.namespaces[0].status = '';
+    completeFixtureResourceInventory(state);
+    expect(pod.item).toEqual(originalPayload);
+    expect(pod.status).toBe('CrashLoopBackOff');
+    for (const [kind, name, status] of [
+      ['Deployment', 'checkout-api', 'Failed'], ['Deployment', 'payments-worker', 'Unknown'],
+      ['Node', 'fixture-control-plane', 'NotReady'], ['Namespace', 'default', 'Unknown'],
+      ['PersistentVolumeClaim', 'checkout-cache', 'Bound'], ['Service', 'checkout-api', 'Unknown']
+    ]) {
+      expect(state.resources.find((row) => row.kind === kind && row.name === name)?.status, `${kind}/${name}`).toBe(status);
+    }
+    expect(state.clusters[0].summary.resourceCount).toBe(11);
+  });
+
+  it('does not leak target skills into Agent skill installations', async () => {
+    const agent = getFixtureState().agents.find((item) => item.id === FIXTURE_IDS.specialistAgent)!;
+    agent.skillInstallations = [{ id: 'agent-owned-skill', name: 'Agent skill', description: '', enabled: true, revision: 1, contentDigest: 'sha256:agent-skill', source: { type: 'manual' }, files: [] }];
+    const owned = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/agents/${agent.id}/skills`));
+    expect(owned.body).toEqual({ items: agent.skillInstallations });
+    const empty = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/agents/${FIXTURE_IDS.virtualMachineAgent}/skills`));
+    expect(empty.body).toEqual({ items: [] });
+  });
+
+  it('supports a successful RBAC profile read for cluster onboarding', async () => {
+    const response = await routeFixtureRequest(request(`/api/v1/workspaces/${FIXTURE_IDS.workspace}/kubernetes-rbac-additions`));
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ version: expect.any(Number), items: expect.any(Array) });
   });
 
   it('keeps dynamically registered VMs on virtual-machine capability contracts', async () => {

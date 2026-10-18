@@ -3,7 +3,7 @@ import {
   cancelWorkflowRun,
   createWorkflow,
   createWorkflowSession,
-  decideWorkflowRunApproval,
+  listWorkflowRunApprovals,
   deleteWorkflow,
   listWorkflowRunEvents,
   postWorkflowSessionMessage,
@@ -21,16 +21,18 @@ import {
 } from './workflowPageHelpers';
 import { resolveMcpReadinessRecovery } from '@/services/control-plane/mcpReadinessRecovery';
 import { isServerWorkflowRunId } from './workflowRunIdentity';
+import { useTranslation } from 'react-i18next';
 
 type WorkflowActionsContext = Record<string, any>;
 
 export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
+  const { t } = useTranslation();
   const {
     workspace, workflows, setWorkflows,
     selectedWorkflow, selectedWorkflowEditDraft,
     setLaunchDrawerWorkflowId,
     setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setActiveView, setApprovalRecords, setApprovalError,
-    setPendingWorkflowRuns, setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
+    setPendingWorkflowRuns, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setCancelRunError, setCancelRunAction,
     setNewWorkflowTag,
     newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
@@ -154,20 +156,17 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     }
   }
 
-  async function decideApproval(runId: string, approvalId: string, decision: 'approved' | 'rejected'): Promise<void> {
+  async function refreshApprovalRecords(runId: string): Promise<void> {
     if (!isServerWorkflowRunId(runId)) return;
     setApprovalError('');
-    setApprovalAction(`${runId}:${approvalId}:${decision}`);
     try {
-      const approval = await decideWorkflowRunApproval(runId, approvalId, decision);
+      const approvals = await listWorkflowRunApprovals(runId);
       setApprovalRecords((current) => ({
         ...current,
-        [runId]: (current[runId] || []).map((item) => item.id === approval.id ? approval : item)
+        [runId]: approvals
       }));
     } catch {
-      setApprovalError('The approval decision could not be saved. No decision was recorded; try again.');
-    } finally {
-      setApprovalAction('');
+      setApprovalError(t('approvals.review.refreshError'));
     }
   }
 
@@ -464,7 +463,7 @@ export function useWorkspaceWorkflowActions(ctx: WorkflowActionsContext) {
     cancelEditingWorkflow,
     closeCreateWorkflowPanel,
     createNewWorkflow,
-    decideApproval,
+    refreshApprovalRecords,
     deleteSelectedWorkflow,
     launchSelectedWorkflow,
     removeWorkflowTag,

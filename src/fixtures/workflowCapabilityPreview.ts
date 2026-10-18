@@ -1,6 +1,16 @@
 import { getFixtureState } from './store';
 
-const NOW = '2026-07-15T08:30:00.000Z';
+// Illustrative weekday 09:00 Asia/Singapore occurrences, not a cron engine.
+export function fixtureScheduleOccurrences(clock: string): string[] {
+  const candidate = new Date(clock);
+  candidate.setUTCHours(1, 0, 0, 0);
+  const times: string[] = [];
+  while (times.length < 2) {
+    if (candidate.getTime() > Date.parse(clock) && candidate.getUTCDay() !== 0 && candidate.getUTCDay() !== 6) times.push(candidate.toISOString());
+    candidate.setUTCDate(candidate.getUTCDate() + 1);
+  }
+  return times;
+}
 
 export function workflowCapabilityPreview(
   state: ReturnType<typeof getFixtureState>,
@@ -15,7 +25,7 @@ export function workflowCapabilityPreview(
     workflowId,
     mode: assignedAgents.some((agent) => agent.permissionMode !== 'read_only') ? 'read_write' : 'read_only',
     semanticCapabilityIds,
-    checkedAt: NOW,
+    checkedAt: state.clock,
     status: 'ready',
     reasonCodes: [],
     tools: { read: tools, write: [] },

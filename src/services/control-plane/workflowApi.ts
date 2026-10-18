@@ -561,6 +561,26 @@ export function listWorkflowRunApprovals(runId: string): Promise<WorkflowRunAppr
   return requestJson<WorkflowRunApproval[]>(`/api/v1/runs/${encodeURIComponent(runId)}/approvals`);
 }
 
+/** Fail closed when browser detail is missing, ambiguous, or outside the selected scope. */
+export function selectWorkflowApprovalReview(
+  records: unknown,
+  workspaceId: string,
+  runId: string,
+  approvalId: string
+): WorkflowRunApproval {
+  const matches = Array.isArray(records) ? records.filter((record) => record?.id === approvalId) : [];
+  const approval = matches[0];
+  if (matches.length !== 1 || approval.workspaceId !== workspaceId || approval.runId !== runId
+    || typeof approval.toolName !== 'string' || !approval.toolName.trim()
+    || typeof approval.toolCallId !== 'string' || !approval.toolCallId
+    || !approval.arguments || typeof approval.arguments !== 'object' || Array.isArray(approval.arguments)
+    || !['pending', 'approved', 'rejected', 'expired'].includes(approval.status)
+    || (approval.approvalKind !== undefined && !['pre_step', 'tool_write'].includes(approval.approvalKind))) {
+    throw new Error('Approval review context is not available for this selection.');
+  }
+  return approval as WorkflowRunApproval;
+}
+
 export function listWorkflowRunEvents(runId: string): Promise<WorkflowRunEvent[]> {
   return requestJson<WorkflowRunEvent[]>(`/api/v1/runs/${encodeURIComponent(runId)}/events`);
 }

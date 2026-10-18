@@ -22,7 +22,7 @@ test('default and custom Agents use the same compact resource treatment and inli
   await expect(defaultCard.getByText('AcornOps Fixture Lab · No capabilities configured')).toBeVisible();
   await expect(customCard.getByText('Test User · 1 skill')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Open details for Workflow Analyst' }).click();
+  await page.getByRole('button', { name: 'Open Agent Workflow Analyst' }).click();
   const defaultHeader = page.getByRole('heading', { level: 1, name: 'Agent chat' }).locator('..');
   await expect(defaultHeader.getByText('Provided by AcornOps')).toHaveCount(0);
   await page.getByRole('link', { name: 'Agent Settings' }).click();

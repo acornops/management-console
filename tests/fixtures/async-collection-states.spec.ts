@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { FIXTURE_CLOCK } from '../../src/fixtures/store';
+
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(FIXTURE_CLOCK); });
 
 const cases = [
   {

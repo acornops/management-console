@@ -54,6 +54,6 @@ export interface AppPageContentProps {
   onLogout: () => void;
   onSwitchInvitationAccount: (token: string) => void;
   onSetLanguage: (language: AppLanguageCode) => void;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
   toWorkspaceInvitation: (invitation: Awaited<ReturnType<typeof controlPlaneApi.createWorkspaceInvitation>>) => WorkspaceInvitation;
 }

@@ -30,6 +30,20 @@ The management console is the browser client for the control-plane API. Keep thi
   built-in AcornOps destinations during rolling upgrades.
 - Paginated list responses use `{ items, nextCursor? }`.
 - The workspace approval inbox additionally exposes `pendingCount`, the total pending approvals across target-tool and workflow-gate sources before pagination and independently of the list filter. The console treats a missing or invalid count from an older producer as unavailable.
+- Inbox and workflow-run approval decisions share an on-demand review of the
+  existing `GET /api/v1/runs/{runId}/approvals` browser response. The selected
+  approval must match its exact ID, run and workspace and include tool identity
+  and executable arguments. Workflow records retain producer `approvalKind`
+  values `pre_step` and `tool_write`; interactive records omit this field and
+  target scope is optional. Missing context is never replaced by empty arguments.
+  The browser displays only action context and decision/execution metadata,
+  redacts sensitive argument fields, and never renders continuations, credentials
+  or tool results. The external-integration projection remains bounded and is
+  not an executable review DTO. Review is read-only until the operator chooses
+  Approve or Reject with current write permission, pending state and a known,
+  future expiry. Conflicting decisions refresh authoritative detail without
+  reporting success. A run-scoped approvals link uses the established route
+  builder; no workflow/execution identity is guessed when it is absent.
 - Cluster registration returns `{ cluster, agentKey, installInstructions }`.
 - Agent-key rotation returns `{ clusterId, agentKey, keyVersion, installInstructions }`.
 - VM registration and credential replacement return structured

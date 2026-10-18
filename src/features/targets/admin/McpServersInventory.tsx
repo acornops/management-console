@@ -112,20 +112,20 @@ export const McpServersInventory: React.FC<McpServersInventoryProps> = ({
   return (
     <>
       {servers.length > 0 && <section data-mcp-server-access-summary="true" className="mb-6 overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm">
-        <div className="grid sm:grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
-          <div className="border-b border-ui-border px-5 py-3.5 sm:col-span-3 xl:col-span-1 xl:border-b-0 xl:border-r">
+        <div className="grid grid-cols-3 xl:grid-cols-[minmax(18rem,1.5fr)_repeat(3,minmax(9rem,1fr))]">
+          <div className="col-span-3 border-b border-ui-border px-5 py-3.5 xl:col-span-1 xl:border-b-0 xl:border-r">
             <h2 className="type-row-title">{t('mcpServers.serverInventoryTitle')}</h2>
             <p className="type-caption mt-1 min-h-10 text-ui-text-muted">{t('mcpServers.serverInventoryBody')}</p>
           </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r xl:col-span-1">
+          <div className="border-r border-ui-border px-3 py-2 sm:px-5 sm:py-3.5 xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.serversMetric')}</p>
             <p className="type-data mt-0.5">{toolAccessSummary.serverCount}</p>
           </div>
-          <div className="border-b border-ui-border px-5 py-3.5 sm:border-b-0 sm:border-r xl:col-span-1">
+          <div className="border-r border-ui-border px-3 py-2 sm:px-5 sm:py-3.5 xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.enabledToolsMetric')}</p>
             <p className="type-data mt-0.5">{toolAccessSummary.enabledTools}<span className="type-caption text-ui-text-muted"> / {toolAccessSummary.totalTools}</span></p>
           </div>
-          <div className="px-5 py-3.5 xl:col-span-1">
+          <div className="px-3 py-2 sm:px-5 sm:py-3.5 xl:col-span-1">
             <p className="type-caption text-ui-text-muted">{t('mcpServers.writeCapableTools')}</p>
             <p data-mcp-write-capable-count="true" className="type-data mt-0.5 inline-flex items-center gap-2">
               {toolAccessSummary.writeCapableTools}

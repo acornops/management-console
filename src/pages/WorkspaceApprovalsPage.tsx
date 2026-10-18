@@ -16,7 +16,6 @@ import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { Workspace } from '@/types';
 import {
-  decideWorkflowRunApproval,
   listWorkspaceApprovalInbox,
   type WorkspaceApprovalInboxRow
 } from '@/services/control-plane/workflowApi';
@@ -27,6 +26,7 @@ import { formatControlPlaneError } from '@/services/control-plane/errorFormattin
 import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
+import { ApprovalReviewDialog } from '@/features/approvals/ApprovalReviewDialog';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
@@ -82,7 +82,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
   const [pendingApprovalCount, setPendingApprovalCount] = useSessionCachedState<number | undefined>(`${approvalCachePrefix}pending-count`, undefined);
   const [approvalPhase, setApprovalPhase] = useState<CursorCollectionPhase>(() => hasSessionDataCacheValue(approvalRowsCacheKey) ? 'ready' : 'loading');
   const [approvalError, setApprovalError] = useState('');
-  const [decisionState, setDecisionState] = useState<Record<string, 'approved' | 'rejected' | 'loading'>>({});
+  const [reviewSelection, setReviewSelection] = useState<{ workspaceId: string; runId: string; approvalId: string; scopeKey: string }>();
   const approvalRequestSequence = useRef(0);
   const [stateScopeKey, setStateScopeKey] = useState(scopeKey);
   const currentScopeKey = useRef(scopeKey);
@@ -141,7 +141,7 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
     approvalRequestSequence.current += 1;
     setStateScopeKey(scopeKey);
     setApprovalError('');
-    setDecisionState({});
+    setReviewSelection(undefined);
     void loadApprovals(true);
   }, [loadApprovals]);
 
@@ -174,28 +174,13 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
     };
   }, [visibleApprovalsByFilter, visiblePendingApprovalCount]);
 
-  const decideApproval = async (approval: WorkspaceApprovalInboxRow, decision: 'approved' | 'rejected') => {
-    if (!canDecideApprovals || approval.status !== 'pending') return;
+  const refreshAfterDecision = async () => {
     const decisionScopeKey = scopeKey;
-    setDecisionState((current) => ({ ...current, [approval.approvalId]: 'loading' }));
-    setApprovalError('');
-    try {
-      await decideWorkflowRunApproval(approval.runId, approval.approvalId, decision);
-      if (currentScopeKey.current !== decisionScopeKey) return;
-      setDecisionState((current) => ({ ...current, [approval.approvalId]: decision }));
-      await onApprovalDecision?.();
-      if (currentScopeKey.current !== decisionScopeKey) return;
-      await loadApprovals();
-    } catch (err) {
-      if (currentScopeKey.current !== decisionScopeKey) return;
-      setApprovalError(formatControlPlaneError(err, t('approvals.decisionError')));
-      setDecisionState((current) => {
-        const next = { ...current };
-        delete next[approval.approvalId];
-        return next;
-      });
-    }
+    await loadApprovals();
+    if (currentScopeKey.current !== decisionScopeKey) return;
+    await onApprovalDecision?.();
   };
+  const reviewApproval = (approval: WorkspaceApprovalInboxRow) => setReviewSelection({ workspaceId: workspace.id, runId: approval.runId, approvalId: approval.approvalId, scopeKey });
 
   return (
     <PageShell>
@@ -246,14 +231,14 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
         announcement={visibleApprovalPhase === 'ready' ? `${summary.waiting} ${t('approvals.filters.pending')}` : undefined}
       >
         <section aria-label={t('approvals.summaryLabel')} className="mb-5 overflow-hidden rounded-lg border border-ui-border bg-ui-surface">
-        <div className="grid divide-y divide-ui-border sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4">
           {[
             { labelKey: 'approvals.summary.waiting', value: String(summary.waiting) },
             { labelKey: 'approvals.summary.expiringSoon', value: String(summary.expiringSoon) },
             { labelKey: 'approvals.summary.approvedToday', value: String(summary.approved) },
             { labelKey: 'approvals.summary.rejectedToday', value: String(summary.rejected) }
           ].map((metric) => (
-            <div key={metric.labelKey} className="px-4 py-3">
+            <div key={metric.labelKey} className="border-ui-border px-4 py-3 odd:border-r [&:nth-child(n+3)]:border-t sm:border-r sm:last:border-r-0 sm:[&:nth-child(n+3)]:border-t-0">
               <div className="type-micro-label text-ui-text-muted">{t(metric.labelKey)}</div>
               <div className="mt-1 type-row-title">{metric.value}</div>
             </div>
@@ -296,10 +281,8 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
           />
         ) : (
           <>
-          <ul data-approval-layout="mobile" className="divide-y divide-ui-border md:hidden">
+          <ul data-approval-layout="mobile" className="divide-y divide-ui-border min-[1536px]:hidden">
             {approvals.map((approval) => {
-              const decision = decisionState[approval.approvalId];
-              const pending = approval.status === 'pending';
               const isFocusedApproval = Boolean(
                 (approvalId && approval.approvalId === approvalId) ||
                 (!approvalId && runId && approval.runId === runId)
@@ -340,19 +323,16 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                       <dd className="mt-1 break-words type-body text-ui-text">{formatDateTime(approval.expiresAt, t('approvals.none'))}</dd>
                     </div>
                   </dl>
-                  <div className="mt-4 grid grid-cols-2 gap-2" aria-label={t('approvals.table.decision')}>
-                    <Button size="md" variant="secondary" className="w-full" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
-                      {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}
-                    </Button>
-                    <Button size="md" variant="danger" className="w-full" onClick={() => void decideApproval(approval, 'rejected')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
-                      {t('approvals.actions.reject')}
+                  <div className="mt-4 flex gap-2" aria-label={t('approvals.table.decision')}>
+                    <Button size="md" variant="secondary" className="w-full" onClick={() => reviewApproval(approval)}>
+                      {t('approvals.review.action')}
                     </Button>
                   </div>
                 </li>
               );
             })}
           </ul>
-          <div data-approval-layout="desktop" className="hidden overflow-x-auto md:block">
+          <div data-approval-layout="desktop" className="hidden overflow-x-auto min-[1536px]:block">
             <DataTable caption={t('approvals.queueTitle')} className="min-w-[72rem] w-full border-collapse text-left">
               <DataTableHeader>
                 <DataTableRow>
@@ -367,8 +347,6 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
               </DataTableHeader>
               <DataTableBody className="divide-y divide-ui-border">
                 {approvals.map((approval) => {
-                  const decision = decisionState[approval.approvalId];
-                  const pending = approval.status === 'pending';
                   const isFocusedApproval = Boolean(
                     (approvalId && approval.approvalId === approvalId) ||
                     (!approvalId && runId && approval.runId === runId)
@@ -388,11 +366,8 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                       <DataTableCell density="dense"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
                       <DataTableCell density="dense">
                         <div className="flex gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => void decideApproval(approval, 'approved')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
-                            {decision === 'loading' ? t('approvals.actions.deciding') : t('approvals.actions.approve')}
-                          </Button>
-                          <Button size="sm" variant="danger" onClick={() => void decideApproval(approval, 'rejected')} disabled={!canDecideApprovals || !pending || decision === 'loading'}>
-                            {t('approvals.actions.reject')}
+                          <Button size="sm" variant="secondary" onClick={() => reviewApproval(approval)}>
+                            {t('approvals.review.action')}
                           </Button>
                         </div>
                       </DataTableCell>
@@ -406,6 +381,11 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
         )}
         </section>
       </CollectionState>
+      {reviewSelection?.scopeKey === scopeKey && <ApprovalReviewDialog
+        workspaceId={workspace.id} runId={reviewSelection.runId} approvalId={reviewSelection.approvalId}
+        canDecide={canDecideApprovals} onClose={() => setReviewSelection(undefined)}
+        onDecisionApplied={() => { void refreshAfterDecision(); }}
+      />}
     </PageShell>
   );
 };

@@ -24,6 +24,16 @@
 
 - Prefer additive UI mapping for evolving payloads.
 - Show explicit degraded states instead of hiding failures.
+- Explicit workflow URLs retain their requested identity when unavailable; they
+  never expose another workflow's Edit/Launch actions while resolving or after
+  failure. Legacy name and ID links remain supported, with deliberate library
+  navigation as recovery.
+- External integrations distinguish initial loading, successful empty results,
+  and load errors. Failed refreshes retain prior rows and local grant drafts with
+  stale feedback. Shared toast feedback defaults to neutral information; callers
+  classify completed successes and failures explicitly.
+- An open shared Select consumes Escape when it closes its own menu, leaving
+  the parent dialog's close or draft-discard policy for a subsequent Escape.
 - Route-level control-plane reads use session-scoped, in-memory data continuity:
   a previously loaded snapshot remains visible across route unmounts while the
   route revalidates in the background. Only a first visit without a usable

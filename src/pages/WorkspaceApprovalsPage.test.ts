@@ -27,15 +27,15 @@ describe('WorkspaceApprovalsPage asynchronous isolation', () => {
     expect(page.match(/<DataSurface aria-label=\{t\('approvals\.queueTitle'\)\}>/g)).toHaveLength(3);
   });
 
-  it('uses labeled stacked decisions on mobile and retains the dense desktop ledger', () => {
+  it('uses labeled stacked decisions below wide desktop and retains the dense ledger', () => {
     expect(page).toContain('data-approval-layout="mobile"');
-    expect(page).toContain('className="divide-y divide-ui-border md:hidden"');
+    expect(page).toContain('className="divide-y divide-ui-border min-[1536px]:hidden"');
     expect(page).toContain('data-approval-layout="desktop"');
-    expect(page).toContain('className="hidden overflow-x-auto md:block"');
+    expect(page).toContain('className="hidden overflow-x-auto min-[1536px]:block"');
     expect(page).toContain("<dt className=\"type-micro-label text-ui-text-muted\">{t('approvals.table.activity')}</dt>");
     expect(page).toContain("<dt className=\"type-micro-label text-ui-text-muted\">{t('approvals.table.requestedBy')}</dt>");
     expect(page).toContain("<dt className=\"type-micro-label text-ui-text-muted\">{t('approvals.table.source')}</dt>");
     expect(page).toContain("<dt className=\"type-micro-label text-ui-text-muted\">{t('approvals.table.expires')}</dt>");
-    expect(page).toContain('className="mt-4 grid grid-cols-2 gap-2"');
+    expect(page).toContain('className="mt-4 flex gap-2"');
   });
 });

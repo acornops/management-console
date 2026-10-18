@@ -104,7 +104,7 @@ export interface AppShellProps {
   setNewClusterName: React.Dispatch<React.SetStateAction<string>>;
   setSelectedRbacAdditionKeys: React.Dispatch<React.SetStateAction<string[]>>;
   setWorkspaces: React.Dispatch<React.SetStateAction<Workspace[]>>;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
   sidebarAccountMenuRef: React.RefObject<HTMLDivElement | null>;
   sidebarWorkspaceMenuRef: React.RefObject<HTMLDivElement | null>;
   themePreference: ThemePreference;

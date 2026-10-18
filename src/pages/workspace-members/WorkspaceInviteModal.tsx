@@ -27,9 +27,8 @@ function isValidInviteEmail(value: string): boolean {
 
 export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canManageOwners, roleTemplates, workspaceId, onClose, onAddMember, onCreateInvitation }) => {
   const { t } = useTranslation();
-  const defaultRole = roleTemplates.find((role) => !role.protected)?.key || roleTemplates[0]?.key || '';
   const [identityValue, setIdentityValue] = useState('');
-  const [inviteRole, setInviteRole] = useState<ProjectMember['role']>(defaultRole);
+  const [inviteRole, setInviteRole] = useState<ProjectMember['role']>('');
   const [selectedCandidate, setSelectedCandidate] = useState<WorkspaceMemberCandidate | null>(null);
   const [matchedCandidate, setMatchedCandidate] = useState<WorkspaceMemberCandidate | null>(null);
   const [addedMember, setAddedMember] = useState<ProjectMember | null>(null);
@@ -47,14 +46,13 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
   const resolvedCandidate = selectedCandidate || matchedCandidate;
   const isComplete = Boolean(addedMember || createdInvite);
   const candidateBlocksSubmission = resolvedCandidate?.status === 'member' || resolvedCandidate?.status === 'invited';
+  const roleIsAllowed = Boolean(selectedInviteRoleTemplate && (!selectedInviteRoleTemplate.protected || canManageOwners));
+  const identityIsValid = Boolean(resolvedCandidate) || isValidInviteEmail(identityValue.trim());
+  const hasAllowedRoles = roleOptions.some((role) => !role.disabled);
 
   useEffect(() => {
-    if (roleTemplates.some((role) => role.key === inviteRole)) return;
-    const nextRole = roleTemplates.find((role) => !role.protected)?.key || roleTemplates[0]?.key;
-    if (nextRole) {
-      setInviteRole(nextRole);
-    }
-  }, [inviteRole, roleTemplates]);
+    if (inviteRole && !roleIsAllowed) setInviteRole('');
+  }, [inviteRole, roleIsAllowed]);
 
   const setCandidateMatch = useCallback((candidate: WorkspaceMemberCandidate | null) => {
     setMatchedCandidate(candidate);
@@ -64,7 +62,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
     event.preventDefault();
     const selectedRole = roleTemplates.find((role) => role.key === inviteRole);
     if (!selectedRole) {
-      setInviteErrorMessage(t('members.createInviteFailed'));
+      setInviteErrorMessage(t('members.selectRole'));
       return;
     }
     if (selectedRole.protected && !canManageOwners) {
@@ -180,8 +178,9 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
             </div>
 
             <div className="space-y-2">
-              <label className="block type-label">{t('members.role')}</label>
-              <Select<ProjectMember['role']> value={inviteRole} options={roleOptions} onChange={setInviteRole} disabled={isComplete || isCreatingInvite} />
+              <label htmlFor="workspace-invite-role" className="block type-label">{t('members.role')}</label>
+              <Select<ProjectMember['role']> id="workspace-invite-role" ariaLabel={t('members.role')} ariaDescribedBy={isComplete ? undefined : 'workspace-invite-role-help'} value={inviteRole} placeholder={t('members.selectRole')} options={roleOptions} onChange={setInviteRole} disabled={isComplete || isCreatingInvite || !hasAllowedRoles} />
+              {!isComplete && <p id="workspace-invite-role-help" className="type-caption leading-5 text-ui-text-muted">{t(hasAllowedRoles ? 'members.explicitAccessHint' : 'members.noAssignableRoles')}</p>}
             </div>
           </div>
 
@@ -244,7 +243,7 @@ export const WorkspaceInviteModal: React.FC<WorkspaceInviteModalProps> = ({ canM
           {!isComplete && (
             <Button
               type="submit"
-              disabled={isCreatingInvite || candidateBlocksSubmission || !roleTemplates.some((role) => role.key === inviteRole)}
+              disabled={isCreatingInvite || candidateBlocksSubmission || !identityIsValid || !roleIsAllowed}
               variant="primary"
               size="sm"
               className="w-full type-ui sm:w-auto sm:min-w-40"

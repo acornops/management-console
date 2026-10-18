@@ -195,6 +195,14 @@ export function useModalIsolation({
 
     const token = stackToken.current;
     const restoreTarget = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Keep a surviving focusable ancestor (for example the directory landmark)
+    // when a refresh removes the initiating row while its panel is open.
+    const restoreTargets: HTMLElement[] = [];
+    let ancestor = restoreTarget;
+    while (ancestor) {
+      restoreTargets.push(ancestor);
+      ancestor = ancestor.parentElement?.closest<HTMLElement>('[tabindex], button, a[href]') ?? null;
+    }
     modalStack.push(token);
     const restoreBackground = applyModalBackgroundInert(
       getModalBackgroundTargets(containerRef.current, document.body)
@@ -211,9 +219,9 @@ export function useModalIsolation({
       if (stackIndex >= 0) modalStack.splice(stackIndex, 1);
       restoreBackground();
       restoreScroll();
-      if (restoreTarget && document.contains(restoreTarget)) {
-        restoreTarget.focus({ preventScroll: true });
-      }
+      const target = restoreTargets.find((element) => document.contains(element)
+        && !element.closest('[inert]') && !element.matches(':disabled') && element.getClientRects().length > 0);
+      target?.focus({ preventScroll: true });
     };
   }, [containerRef, initialFocusRef, open, panelRef]);
 

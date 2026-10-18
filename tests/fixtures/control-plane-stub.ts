@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 
-import { routeFixtureRequest } from '../../src/fixtures/router';
+import { createFixtureScenarioRouter } from '../../src/fixtures/handlers';
 
 const port = Number(process.env.MCP_PARITY_API_PORT || 4190);
 const appPort = Number(process.env.MCP_PARITY_APP_PORT || 4187);
@@ -11,6 +11,8 @@ for (const [name, value] of [['MCP_PARITY_API_PORT', port], ['MCP_PARITY_APP_POR
   }
 }
 const allowedOrigin = `http://127.0.0.1:${appPort}`;
+// Explicit per-process opt-in; the ordinary MCP parity stub remains small.
+const routeScenario = createFixtureScenarioRouter(new URLSearchParams(process.env.UI_POLISH_FIXTURE_QUERY || ''));
 
 createServer(async (request, response) => {
   response.setHeader('Access-Control-Allow-Origin', allowedOrigin);
@@ -33,7 +35,7 @@ createServer(async (request, response) => {
   }
   headers.set('x-acornops-fixture-mode', 'mcp-parity');
   const body = Buffer.concat(chunks);
-  const fixtureResponse = await routeFixtureRequest(new Request(
+  const fixtureResponse = await routeScenario(new Request(
     `http://127.0.0.1:${port}${request.url || '/'}`,
     {
       method: request.method,

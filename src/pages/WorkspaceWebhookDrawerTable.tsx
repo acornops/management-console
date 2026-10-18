@@ -14,14 +14,13 @@ import {
   DataTableRow,
   EmptyState,
   InlineConfirmation,
-  TableLoadingRows,
-  StatusBadge
+  TableLoadingRows
 } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkspaceWebhookActionMenu, WorkspaceWebhookCard } from '@/pages/WorkspaceWebhookCard';
 import type { CursorCollectionPhase } from '@/hooks/resourceLifecycle';
 import type { WorkflowWebhook } from '@/services/control-plane/workflowWebhookApi';
-import { formatIdentifierLabel } from '@/utils/textFormatting';
+import { WorkspaceWebhookExecutionFacts } from './WorkspaceWebhookExecutionFacts';
 
 interface WorkspaceWebhookDrawerTableProps {
   actionButtonRefs: React.MutableRefObject<Map<string, HTMLButtonElement>>;
@@ -99,8 +98,7 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
               <DataTableRow>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.columns.trigger')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense">{t('eventTriggers.secret.endpoint')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense">{t('common.status')}</DataTableHeaderCell>
-                <DataTableHeaderCell density="dense">{t('eventTriggers.lastDispatch', { defaultValue: 'Last dispatch' })}</DataTableHeaderCell>
+                <DataTableHeaderCell density="dense">{t('workflowActivity.executionEvidence')}</DataTableHeaderCell>
                 <DataTableHeaderCell density="dense" numeric>{t('eventTriggers.columns.actions')}</DataTableHeaderCell>
               </DataTableRow>
             </DataTableHeader>
@@ -112,12 +110,8 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
                     <code className="block truncate type-caption text-ui-text-muted" title={trigger.endpointUrl}>{trigger.endpointUrl || '—'}</code>
                   </DataTableCell>
                   <DataTableCell density="dense" className="py-3">
-                    <StatusBadge tone={trigger.status === 'enabled' ? 'success' : 'neutral'}>
-                      {trigger.status === 'enabled' ? t('eventTriggers.status.enabled') : t('eventTriggers.status.paused')}
-                    </StatusBadge>
-                  </DataTableCell>
-                  <DataTableCell density="dense" className="py-3 type-caption text-ui-text-muted">
-                    {trigger.lastStatus ? formatIdentifierLabel(trigger.lastStatus) : t('eventTriggers.emptyDescription')}
+                    <WorkspaceWebhookExecutionFacts trigger={trigger} ledger />
+                    {trigger.lastError && canManage && <Button size="sm" variant="secondary" className="mt-3" disabled={mutatingId === trigger.id} onClick={() => onEdit(trigger)}>{t('workflowActivity.actions.reviewFailure')}</Button>}
                   </DataTableCell>
                   <DataTableCell density="dense" className="py-3">
                     <div className="flex justify-end">
@@ -140,10 +134,10 @@ export const WorkspaceWebhookDrawerTable: React.FC<WorkspaceWebhookDrawerTablePr
                   </DataTableCell>
                 </DataTableRow>
               )) : phase === 'loading' || phase === 'refreshing' || phase === 'loadingMore' ? (
-                <TableLoadingRows columns={5} label={t('eventTriggers.loading')} showAvatarInFirstColumn />
+                <TableLoadingRows columns={4} label={t('eventTriggers.loading')} showAvatarInFirstColumn />
               ) : (
                 <DataTableRow>
-                  <DataTableCell colSpan={5} density="dense" className="p-0">
+                  <DataTableCell colSpan={4} density="dense" className="p-0">
                     <CollectionState
                       phase={phase}
                       itemCount={0}

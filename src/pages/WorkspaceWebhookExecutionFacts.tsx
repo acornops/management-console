@@ -76,7 +76,7 @@ export function WorkspaceWebhookExecutionFacts({
         <OperationalFailureDetails
           tone={trigger.lastStatus === 'auto_paused' ? 'warning' : 'danger'}
           cause={operationalFailureCause(trigger.lastError, t('eventTriggers.failure.cause'))}
-          impact={t(trigger.lastStatus === 'rejected'
+          impact={t(trigger.latestExecution ? 'workflowActivity.failureExecutionExists' : trigger.lastStatus === 'rejected'
             ? 'eventTriggers.failure.rejectedImpact'
             : trigger.lastStatus === 'auto_paused'
               ? 'eventTriggers.failure.autoPausedImpact'

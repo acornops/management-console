@@ -41,6 +41,30 @@ test('catalog controls meet responsive target minimums', async ({ page }, testIn
   }
 });
 
+test('shared Select preserves genuine mouse activation and keyboard selection', async ({ page }) => {
+  await page.goto('/design-system.html');
+  const select = page.getByRole('button', { name: 'Inventory filter', exact: true });
+  await select.click();
+  const healthy = page.getByRole('option', { name: 'Healthy', exact: true });
+  await healthy.hover();
+  await expect(select).toHaveAttribute('aria-activedescendant', (await healthy.getAttribute('id'))!);
+  await select.press('Home');
+  const first = page.getByRole('option', { name: 'All targets', exact: true });
+  await expect(select).toHaveAttribute('aria-activedescendant', (await first.getAttribute('id'))!);
+
+  const attention = page.getByRole('option', { name: 'Needs attention', exact: true });
+  await attention.hover();
+  await expect(select).toHaveAttribute('aria-activedescendant', (await attention.getAttribute('id'))!);
+  await select.press('Enter');
+  await expect(select).toContainText('Needs attention');
+  await expect(select).toBeFocused();
+
+  await select.click();
+  await page.getByRole('option', { name: 'Healthy', exact: true }).click();
+  await expect(select).toContainText('Healthy');
+  await expect(select).toBeFocused();
+});
+
 test('action menus navigate, dismiss, restore focus, and stay in the nearest dialog layer', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' });
   await page.goto('/design-system.html');

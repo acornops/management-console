@@ -3,6 +3,136 @@ import { expect, test } from '@playwright/test';
 const agentDetailPath = (tab = 'chat') =>
   `/workspaces/fixture-workspace/agents/fixture-specialist/${tab}`;
 
+test('owner loaded counts distinguish empty, singular and plural search results', async ({ page }) => {
+  await page.goto(`${agentDetailPath('settings')}?fixtureMembers=125&fixtureMemberNames=duplicate-long`);
+  const search = page.getByRole('searchbox', { name: 'Search owner members', exact: true });
+  for (const [query, label] of [['no-matching-person', 'No members match this search.'], ['member-125', '1 member loaded'], ['Alex', '2 members loaded']]) {
+    await search.fill(query);
+    await expect(page.getByText(label, { exact: true })).toBeVisible();
+  }
+});
+
+for (const width of [1440, 390]) {
+test(`Open Agent and Chat labels identify the full route and quick-chat drawer at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 1000 });
+  await page.goto('/workspaces/fixture-workspace/agents');
+  const card = page.locator('[data-agent-id="fixture-specialist"]');
+  await expect(card.getByText('Open Agent', { exact: true })).toBeVisible();
+  await card.getByRole('button', { name: 'Open Agent Kubernetes Specialist', exact: true }).click();
+  await expect(page).toHaveURL(/agents\/fixture-specialist\/chat$/);
+  await page.goBack();
+  await card.getByRole('button', { name: 'Chat with Kubernetes Specialist', exact: true }).click();
+  await expect(page.getByRole(width === 390 ? 'dialog' : 'complementary', { name: 'Chat with Kubernetes Specialist', exact: true })).toBeVisible();
+  await expect(page).not.toHaveURL(/fixture-specialist\/chat/);
+  if (width === 1440) {
+    await expect(card.getByText('Open Agent', { exact: true })).toBeVisible();
+    await card.getByRole('button', { name: 'Open Agent Kubernetes Specialist', exact: true }).click();
+    await expect(page).toHaveURL(/agents\/fixture-specialist\/chat$/);
+  }
+});
+}
+
+for (const width of [1440, 390]) {
+  test(`owner keyboard transfer keeps member 125 with the pointer stationary inside the menu at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(`${agentDetailPath('settings')}?fixtureMembers=125`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('50 members loaded', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Load more members', exact: true }).click();
+    await expect(page.getByText('100 members loaded', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Load more members', exact: true }).click();
+    await expect(page.getByText('125 members loaded', { exact: true })).toBeVisible();
+
+    const owner = page.getByRole('button', { name: 'Agent owner', exact: true });
+    await owner.click();
+    const options = page.getByRole('option');
+    await expect(options.last()).toContainText('member-125@fixture.acornops.dev');
+    const expectedActiveId = await options.last().getAttribute('id');
+    await options.first().hover();
+    // Keep the pointer over the scrolling menu throughout the keyboard handoff.
+    await owner.press('End');
+    await expect(owner).toHaveAttribute('aria-activedescendant', expectedActiveId!);
+    await owner.press('ArrowUp');
+    await owner.press('ArrowDown');
+    await expect(owner).toHaveAttribute('aria-activedescendant', expectedActiveId!);
+    await owner.press('Enter');
+    await expect(owner).toContainText('member-125@fixture.acornops.dev');
+
+    const mutation = page.waitForRequest((request) => request.method() === 'PATCH' && new URL(request.url()).pathname.endsWith('/agents/fixture-specialist'));
+    await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+    expect((await mutation).postDataJSON().ownerUserId).toBe('fixture-scale-member-125');
+    await expect(page.getByText('Agent updated. Review affected workflows before the next run.')).toBeVisible();
+  });
+}
+
+for (const width of [1440, 390]) {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`owner transfer reaches member 125 and preserves selection across searches at ${width}px ${theme}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.emulateMedia({ colorScheme: theme });
+      await page.addInitScript((value) => localStorage.setItem('acornops_active_theme_preference', value), theme);
+      await page.goto(`${agentDetailPath('settings')}?fixtureMembers=125&fixtureMemberNames=duplicate-long`, { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark).*$/);
+      await expect(page.getByRole('heading', { name: 'Agent definition', exact: true })).toBeVisible();
+      const search = page.getByRole('searchbox', { name: 'Search owner members' });
+      await expect(search).toBeVisible({ timeout: 3000 });
+      const owner = page.getByRole('button', { name: 'Agent owner', exact: true });
+      await expect(page.getByText('50 members loaded', { exact: true })).toBeVisible();
+      await owner.click();
+      await expect(page.getByRole('option', { name: /member-125@/ })).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await page.getByRole('button', { name: 'Load more members', exact: true }).click();
+      await expect(page.getByText('100 members loaded', { exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Load more members', exact: true }).click();
+      await expect(page.getByText('125 members loaded', { exact: true })).toBeVisible();
+      await page.mouse.move(0, 0);
+      await owner.focus(); await owner.press('ArrowDown');
+      const targetIndex = (await page.getByRole('option').allTextContents()).findIndex((label) => label.includes('member-125@fixture.acornops.dev'));
+      expect(targetIndex).toBeGreaterThanOrEqual(0);
+      await owner.press('Home');
+      for (let index = 0; index < targetIndex; index += 1) await owner.press('ArrowDown');
+      await owner.press('Enter');
+      await expect(owner).toContainText('member-125@fixture.acornops.dev');
+      await search.fill('Alex');
+      await expect(page.getByText('2 members loaded', { exact: true })).toBeVisible();
+      await expect(owner).toContainText('member-125@fixture.acornops.dev');
+      await owner.click();
+      await expect(page.getByRole('option', { name: /Alex Chen.*member-1@/ })).toBeVisible();
+      await expect(page.getByRole('option', { name: /Alex Chen.*member-2@/ })).toBeVisible();
+      // Re-selecting the retained option must not discard its identity merely
+      // because it is absent from the current query's page.
+      await page.getByRole('option', { name: /Fixture member 125.*member-125@/ }).click();
+      await expect(owner).toContainText('member-125@fixture.acornops.dev');
+      await search.fill('no-matching-person');
+      await expect(page.getByText('No members match this search.', { exact: true })).toBeVisible();
+      await expect(owner).toContainText('member-125@fixture.acornops.dev');
+      await page.screenshot({ path: `/tmp/acornops-phase03-mc-owner-${width}-${theme}.png`, fullPage: true });
+      const mutation = page.waitForRequest((request) => request.method() === 'PATCH' && new URL(request.url()).pathname.endsWith('/agents/fixture-specialist'));
+      await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+      expect((await mutation).postDataJSON().ownerUserId).toBe('fixture-scale-member-125');
+      await expect(page.getByText('Agent updated. Review affected workflows before the next run.')).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    });
+  }
+}
+
+test('owner member pagination retains rows and retries the failed cursor', async ({ page }) => {
+  // Development StrictMode issues two initial reads; fail the first appended page.
+  await page.goto(`${agentDetailPath('settings')}?fixtureMembers=125&fixtureFailurePath=/members&fixtureFailureOn=3`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('50 members loaded', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Load more members', exact: true }).click();
+  await expect(page.getByText('Unable to load more owner choices. Previously loaded members are still available.')).toBeVisible();
+  await expect(page.getByText('50 members loaded', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Retry member loading', exact: true }).click();
+  await expect(page.getByText('100 members loaded', { exact: true })).toBeVisible();
+});
+
+test('read-only Agent settings never enable owner transfer', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('acornops-fixture-role', 'viewer'));
+  await page.goto(agentDetailPath('settings'), { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('button', { name: 'Agent owner', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled();
+});
+
 const renderedResourceCardColumns = (element: Element) => {
   const rows = new Map<number, number>();
   for (const item of Array.from(element.children)) {
@@ -202,6 +332,7 @@ test('Agent cards open route-backed Chat and can maximize to full Chat', async (
   const main = page.getByRole('main');
   const panel = page.getByRole('complementary', { name: 'Chat with Kubernetes Specialist' });
   await expect(panel).toBeVisible();
+  await expect(panel).toHaveCSS('transform', 'none');
   await expect(panel.locator('header [data-agent-avatar="true"]')).toHaveText('☸️');
   await expect(panel.getByRole('heading', { name: 'Chat with Kubernetes Specialist' })).toBeVisible();
   await expect(panel.getByRole('separator', { name: 'Resize chat panel' })).toBeVisible();

@@ -2,7 +2,7 @@ import { FIXTURE_IDS, getFixtureState, resetFixtureStore } from './store';
 import { routeAutomationTemplateFixtureRequest } from './automationTemplateRoutes';
 import { routeMcpParityConnection } from './mcpParity';
 import { targetSummary, targetToolCatalog, workflowOptions } from './presenters';
-import { workflowCapabilityPreview } from './workflowCapabilityPreview';
+import { fixtureScheduleOccurrences, workflowCapabilityPreview } from './workflowCapabilityPreview';
 import { routeWebhookFixtureRequest } from './webhookRoutes';
 import { routeWorkflowWebhookFixtureRequest } from './workflowWebhookRoutes';
 import { routeWorkflowActivityFixtureRequest } from './workflowActivityRoutes';
@@ -15,13 +15,13 @@ import { fixtureAgentVEnrollmentInstructions, fixtureAgentVRepairInstructions } 
 import { routeAgentVAccessPolicyFixtureRequest } from './agentVAccessPolicyRoutes';
 import { fixtureTargetType, routeTargetFixtureRequest, targetSkillCatalog } from './targetFixtureRoutes';
 import { fixtureCursorPage, targetMcpCatalogFixture } from './targetMcpFixtures';
+import { isFixtureResourceAttentionStatus } from './resourceFixtures';
 
 export interface FixtureResponse {
   status: number;
   body?: unknown;
   headers?: Record<string, string>;
 }
-const NOW = new Date().toISOString();
 
 function json(body: unknown, status = 200): FixtureResponse {
   return { status, body, headers: { 'content-type': 'application/json' } };
@@ -62,6 +62,8 @@ function id(prefix: string): string {
 
 export async function routeFixtureRequest(request: Request): Promise<FixtureResponse> {
   const state = getFixtureState();
+  const NOW = state.clock;
+  const metricTime = new Date(Date.parse(NOW) - 30 * 60_000).toISOString();
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/$/, '') || '/';
   const method = request.method.toUpperCase();
@@ -139,7 +141,12 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/members$/);
   if (match) {
-    if (method === 'GET') return json({ items: clone(state.members) });
+    if (method === 'GET') {
+      const query = (url.searchParams.get('q') || '').toLowerCase();
+      const members = state.members.filter((member) => member.workspaceId === decode(match![1]))
+        .filter((member) => !query || `${member.displayName} ${member.email}`.toLowerCase().includes(query));
+      return json(clone(fixtureCursorPage(members, url, `members:${decode(match[1])}`)));
+    }
     if (method === 'POST') {
       const input = await bodyOf(request);
       const member = { workspaceId: decode(match[1]), userId: id('fixture-member'), email: String(input.email || 'member@fixture.acornops.dev'), displayName: String(input.displayName || input.email || 'Fixture member'), role: String(input.role || 'viewer'), source: 'internal' };
@@ -225,10 +232,15 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     return target ? json(targetSummary(target)) : notFound('Target');
   }
 
+  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-rbac-additions$/);
+  if (match && method === 'GET') return json({ version: 1, items: [
+    { key: 'example-monitoring', name: 'Example monitoring resources', description: 'Offline fixture profile for onboarding selection.' }
+  ] });
+
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/metrics\/history$/);
   if (match && method === 'GET') {
     const workspaceId = decode(match[1]);
-    const points = [{ timestamp: '2026-07-15T08:00:00.000Z', cpuCores: 0.25, memoryBytes: 734003200 }, { timestamp: NOW, cpuCores: 0.325, memoryBytes: 805306368 }];
+    const points = [{ timestamp: metricTime, cpuCores: 0.25, memoryBytes: 734003200 }, { timestamp: NOW, cpuCores: 0.325, memoryBytes: 805306368 }];
     return json({ workspaceId, windowMs: 21600000, items: state.clusters.filter((cluster) => cluster.workspaceId === workspaceId).map((cluster) => ({ clusterId: cluster.id, points })) });
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters$/);
@@ -242,9 +254,17 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     }
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/resources$/);
-  if (match && method === 'GET') return json({ items: clone(state.resources) });
+  if (match && method === 'GET') {
+    if (!state.clusters.some((target) => target.id === decode(match![2]) && target.workspaceId === decode(match![1]))) return notFound('Kubernetes cluster');
+    const query = (url.searchParams.get('q') || '').toLowerCase();
+    const resources = state.resources.filter((row) => row.clusterId === decode(match![2]))
+      .filter((row) => ['family', 'kind', 'namespace'].every((key) => !url.searchParams.get(key) || row[key] === url.searchParams.get(key)))
+      .filter((row) => !query || [row.name, row.kind, row.namespace, row.clusterName, row.status].join(' ').toLowerCase().includes(query))
+      .filter((row) => !['attention', 'healthy'].includes(url.searchParams.get('health') || '') || (url.searchParams.get('health') === 'attention') === isFixtureResourceAttentionStatus(row.status));
+    return json(clone(fixtureCursorPage(resources, url, `resources:${decode(match[2])}`)));
+  }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/metrics\/history$/);
-  if (match && method === 'GET') return json({ workspaceId: decode(match[1]), clusterId: decode(match[2]), windowMs: 21600000, points: [{ timestamp: '2026-07-15T08:00:00.000Z', cpuCores: 0.25, memoryBytes: 734003200 }, { timestamp: NOW, cpuCores: 0.325, memoryBytes: 805306368 }] });
+  if (match && method === 'GET') return json({ workspaceId: decode(match[1]), clusterId: decode(match[2]), windowMs: 21600000, points: [{ timestamp: metricTime, cpuCores: 0.25, memoryBytes: 734003200 }, { timestamp: NOW, cpuCores: 0.325, memoryBytes: 805306368 }] });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/pods\/([^/]+)\/([^/]+)\/logs$/);
   if (match && method === 'GET') return json({ name: decode(match[4]), namespace: decode(match[3]), container: url.searchParams.get('container') || 'worker', logs: '2026-07-15T08:29:58Z starting payments worker\n2026-07-15T08:29:59Z missing PAYMENT_QUEUE_URL\n2026-07-15T08:29:59Z exiting with status 1', tailLines: Number(url.searchParams.get('tailLines') || 100), previous: url.searchParams.get('previous') === 'true', fetchedAt: NOW });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/rotate-agent-key$/);
@@ -280,12 +300,16 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     }
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/resources$/);
-  if (match && method === 'GET') return json({ items: [
-    { id: 'fixture-vm-service', targetId: decode(match[2]), family: 'services', kind: 'service', name: 'payments-api.service', status: 'running', item: { activeState: 'active', subState: 'running', enabled: true } },
-    { id: 'fixture-vm-process', targetId: decode(match[2]), family: 'processes', kind: 'process', name: 'payments-worker', status: 'running', item: { pid: 1842, cpuPercent: 4.2, memoryPercent: 8.1 } }
-  ] });
+  if (match && method === 'GET') {
+    if (!state.virtualMachines.some((target) => target.id === decode(match![2]) && target.workspaceId === decode(match![1]))) return notFound('Virtual machine');
+    const query = (url.searchParams.get('q') || '').toLowerCase();
+    const resources = state.virtualMachineResources.filter((row) => row.targetId === decode(match![2]))
+      .filter((row) => ['category', 'kind'].every((key) => !url.searchParams.get(key) || row[key] === url.searchParams.get(key)))
+      .filter((row) => !query || [row.name, row.kind, row.category, row.status].join(' ').toLowerCase().includes(query));
+    return json(clone(fixtureCursorPage(resources, url, `vm-resources:${decode(match[2])}`)));
+  }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/metrics\/history$/);
-  if (match && method === 'GET') return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), windowMs: 21600000, points: [{ timestamp: '2026-07-15T08:00:00.000Z', loadAverage1m: 0.8, loadAverage5m: 0.7, loadAverage15m: 0.6, cpuUsagePercent: 31, memoryUsedBytes: 3221225472, memoryTotalBytes: 8589934592, memoryFreeBytes: 5368709120, memoryUsedPercent: 37.5, swapUsedBytes: 0, swapTotalBytes: 2147483648, swapUsedPercent: 0, rootDiskUsedBytes: 32212254720, rootDiskTotalBytes: 107374182400, rootDiskUsedPercent: 30 }] });
+  if (match && method === 'GET') return json({ workspaceId: decode(match[1]), targetId: decode(match[2]), windowMs: 21600000, points: [{ timestamp: metricTime, loadAverage1m: 0.8, loadAverage5m: 0.7, loadAverage15m: 0.6, cpuUsagePercent: 31, memoryUsedBytes: 3221225472, memoryTotalBytes: 8589934592, memoryFreeBytes: 5368709120, memoryUsedPercent: 37.5, swapUsedBytes: 0, swapTotalBytes: 2147483648, swapUsedPercent: 0, rootDiskUsedBytes: 32212254720, rootDiskTotalBytes: 107374182400, rootDiskUsedPercent: 30 }] });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/logs$/);
   if (match && method === 'GET') return json({ entries: [{ id: 'fixture-log', timestamp: NOW, source: 'system', severity: 'warning', message: 'payments-worker restarted after configuration reload', unit: 'payments-worker.service' }] });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines\/([^/]+)\/agent-enrollments$/);
@@ -446,7 +470,10 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   const agentTargetAccessResponse = await routeAgentTargetAccessFixtureRequest({ method, path, request, state });
   if (agentTargetAccessResponse) return agentTargetAccessResponse;
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/agents\/([^/]+)\/skills$/);
-  if (match && method === 'GET') return json({ items: clone(state.targetSkills) });
+  if (match && method === 'GET') {
+    const agent = state.agents.find((item) => item.id === decode(match![2]) && item.workspaceId === decode(match![1]));
+    return agent ? json({ items: clone(agent.skillInstallations || []) }) : notFound('Agent');
+  }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/service-identities$/);
   if (match && method === 'GET') return json({ items: [] });
   const automationTemplateResponse = routeAutomationTemplateFixtureRequest({ method, path, state });
@@ -500,7 +527,7 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
     }
   }
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/workflow-schedules\/preview$/);
-  if (match && method === 'POST') return json({ valid: true, summary: 'Runs on the configured fixture schedule.', nextRunTimes: ['2026-07-17T01:00:00.000Z', '2026-07-20T01:00:00.000Z'], errors: [] });
+  if (match && method === 'POST') return json({ valid: true, summary: 'Runs on the configured fixture schedule.', nextRunTimes: fixtureScheduleOccurrences(NOW), errors: [] });
   match = path.match(/^\/api\/v1\/workflow-schedules\/([^/]+)$/);
   if (match) {
     const scheduleId = decode(match[1]);

@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import { FIXTURE_CLOCK } from '../../src/fixtures/store';
+import { fixtureScheduleOccurrences } from '../../src/fixtures/workflowCapabilityPreview';
+
+const previewTimes = fixtureScheduleOccurrences(FIXTURE_CLOCK);
 
 async function openSchedule(page: Page, scenario = '') {
   await page.goto('/workspaces/fixture-workspace/workflows?workflow=fixture-workflow&tab=schedules');
@@ -8,7 +12,8 @@ async function openSchedule(page: Page, scenario = '') {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.clock.setFixedTime(FIXTURE_CLOCK);
+  await page.addInitScript((nextRunTimes) => {
     const original = window.fetch.bind(window);
     let previewRequests = 0;
     window.fetch = async (input, init) => {
@@ -35,7 +40,7 @@ test.beforeEach(async ({ page }) => {
           ? [{ field: 'cron', message: 'February has no 31st day. Choose another date.' }]
           : [];
         return new Response(JSON.stringify({ valid: !errors.length, summary: 'Checked cadence',
-          nextRunTimes: errors.length || scenario === 'empty' ? [] : ['2026-09-08T01:00:00.000Z', '2026-09-09T01:00:00.000Z'], errors
+          nextRunTimes: errors.length || scenario === 'empty' ? [] : scenario === 'dst' ? ['2026-11-01T05:30:00.000Z', '2026-11-01T06:30:00.000Z'] : nextRunTimes, errors
         }), { headers: { 'content-type': 'application/json' } });
       }
       if (url.endsWith('/workflow-schedules') && init?.method === 'POST') {
@@ -45,7 +50,18 @@ test.beforeEach(async ({ page }) => {
       }
       return original(input, init);
     };
-  });
+  }, previewTimes);
+});
+
+test('server DST occurrences retain distinct instants and zone offsets', async ({ page }) => {
+  const dialog = await openSchedule(page, 'dst');
+  await dialog.getByLabel(/^Timezone/).fill('America/New_York');
+  const times = dialog.getByRole('region', { name: 'Upcoming runs' }).locator('time');
+  await expect(times).toHaveCount(2);
+  await expect(times.nth(0)).toHaveAttribute('datetime', '2026-11-01T05:30:00.000Z');
+  await expect(times.nth(1)).toHaveAttribute('datetime', '2026-11-01T06:30:00.000Z');
+  await expect(times.nth(0)).toContainText('EDT');
+  await expect(times.nth(1)).toContainText('EST');
 });
 
 test('transport failure is retryable and keeps Save disabled until a usable preview returns', async ({ page }) => {
@@ -104,7 +120,8 @@ test('schedule preview renders server occurrences in the selected timezone', asy
   const preview = dialog.getByRole('region', { name: /Upcoming runs/ });
   await expect(preview).toBeVisible({ timeout: 3_000 });
   await expect(preview.locator('time')).toHaveCount(2);
-  await expect(preview.locator('time').first()).toHaveAttribute('datetime', '2026-09-08T01:00:00.000Z');
+  await expect(preview.locator('time').first()).toHaveAttribute('datetime', '2026-07-16T01:00:00.000Z');
+  expect(previewTimes.every((time) => Date.parse(time) > Date.parse(FIXTURE_CLOCK))).toBe(true);
   await expect(preview.locator('time').first()).toContainText(/9:00|09:00/);
 });
 

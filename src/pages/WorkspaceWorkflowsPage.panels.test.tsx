@@ -265,10 +265,9 @@ function renderRunsPanel(workflow: WorkflowDefinition, expandedRunLogId = ''): s
       cancelRunAction=""
       workflowActions={{
         stopWorkflowRun: vi.fn(),
-        decideApproval: vi.fn(),
+        refreshApprovalRecords: vi.fn(),
         toggleRunLogs: vi.fn()
       }}
-      approvalAction=""
       setExpandedRunLogId={vi.fn()}
     />
   );

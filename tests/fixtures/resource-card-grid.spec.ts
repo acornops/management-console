@@ -124,29 +124,24 @@ async function expectTwoBoundedCardTracks(page: Page, route: string) {
   expect(geometry.cardWidths[0] + geometry.cardWidths[1] + geometry.gap).toBeCloseTo(geometry.gridWidth, 0);
 }
 
-test('resource catalogs respond to usable container width', async ({ page }) => {
-  await page.setViewportSize({ width: 1600, height: 1000 });
-
-  for (const route of resourceCatalogRoutes) {
+for (const route of resourceCatalogRoutes) {
+  test(`resource catalogs respond to usable container width (${route.split('/').at(-1)})`, async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 1000 });
     await expectResourceGridColumns(page, route, 2);
     await expectTwoBoundedCardTracks(page, route);
-  }
 
-  const sidebar = page.locator('.management-console-desktop-sidebar');
-  await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'expanded');
-  await page.setViewportSize({ width: 1800, height: 1000 });
+    const sidebar = page.locator('.management-console-desktop-sidebar');
+    await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'expanded');
+    await page.setViewportSize({ width: 1800, height: 1000 });
 
-  for (const route of resourceCatalogRoutes) {
     await expectResourceGridColumns(page, route, 3);
     await expectDistributedCardTracksInFullWidthCatalog(page, route);
-  }
-  await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'expanded');
+    await expect(sidebar).toHaveAttribute('data-desktop-sidebar-mode', 'expanded');
 
-  await page.setViewportSize({ width: 3600, height: 1000 });
-  for (const route of resourceCatalogRoutes) {
+    await page.setViewportSize({ width: 3600, height: 1000 });
     await expectUltrawideCatalogExpansion(page, route);
-  }
-});
+  });
+}
 
 test('three real cluster cards fit the supplied window at 110% effective scale', async ({ browser }, testInfo) => {
   const targetPhysicalViewport = { width: 1853, height: 964 };

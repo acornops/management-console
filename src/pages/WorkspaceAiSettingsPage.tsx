@@ -240,7 +240,7 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       if (!isCurrentWorkspaceRequest()) return;
       aiSettingsResource.update(updated);
       setBehaviorDraft(behaviorDraftFromSettings(updated));
-      showToast(t('workspaceAiSettings.settingsSaved'));
+      showToast(t('workspaceAiSettings.settingsSaved'), { tone: 'success' });
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;
       setBehaviorError(
@@ -283,7 +283,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       showToast(
         t(wasConfigured ? 'workspaceAiSettings.keyRotated' : 'workspaceAiSettings.keyAdded', {
           provider: providerLabel(provider)
-        })
+        }),
+        { tone: 'success' }
       );
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;
@@ -310,7 +311,8 @@ export const WorkspaceAiSettingsPage: React.FC<WorkspaceAiSettingsPageProps> = (
       showToast(
         t('workspaceAiSettings.keyDeleted', {
           provider: providerLabel(provider)
-        })
+        }),
+        { tone: 'success' }
       );
     } catch (error) {
       if (!isCurrentWorkspaceRequest()) return;

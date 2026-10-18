@@ -1,4 +1,71 @@
-import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExternalIntegrationSettingsPanel } from './ExternalIntegrationSettingsPanel';
+import { controlPlaneApi } from '@/services/controlPlaneApi';
+
+const hooks = vi.hoisted(() => ({ values: [] as any[], index: 0, effects: [] as Array<() => void>, links: null as any }));
+vi.mock('react', async (original) => {
+  const actual = await original<typeof import('react')>();
+  const overrides = {
+    useState: (initial: any) => {
+      const index = hooks.index++;
+      if (!(index in hooks.values)) hooks.values[index] = typeof initial === 'function' ? initial() : initial;
+      return [hooks.values[index], (value: any) => { hooks.values[index] = typeof value === 'function' ? value(hooks.values[index]) : value; }];
+    },
+    useRef: (value: unknown) => ({ current: value }),
+    useCallback: (callback: unknown) => callback,
+    useEffect: (effect: () => void) => { hooks.effects.push(effect); }
+  };
+  return { ...actual, ...overrides, default: { ...actual, ...overrides } };
+});
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('@/hooks/sessionDataCache', () => ({ useSessionCachedState: () => [hooks.links, (value: any) => { hooks.links = typeof value === 'function' ? value(hooks.links) : value; }] }));
+vi.mock('@/services/controlPlaneApi', () => ({ controlPlaneApi: { listExternalIntegrationLinks: vi.fn() } }));
+
+function panel() {
+  hooks.index = 0; hooks.effects = [];
+  const tree = ExternalIntegrationSettingsPanel({}) as React.ReactElement<any>;
+  return { markup: renderToStaticMarkup(tree), tree };
+}
+
+describe('integration collection states', () => {
+  beforeEach(() => { hooks.values = []; hooks.links = null; vi.mocked(controlPlaneApi.listExternalIntegrationLinks).mockReset(); });
+  it('never claims an empty collection after a first-load failure and clears the error on retry', async () => {
+    vi.mocked(controlPlaneApi.listExternalIntegrationLinks).mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce([]);
+    expect(panel().markup).toContain('settings.externalIntegrationsLoading');
+    await hooks.effects[0](); await Promise.resolve();
+    const failed = panel();
+    expect(failed.markup).toContain('settings.externalIntegrationsRetry');
+    expect(failed.markup).not.toContain('settings.externalIntegrationsEmpty');
+    await failed.tree.props.children[0].props.action.props.onClick(); await Promise.resolve();
+    const retried = panel().markup;
+    expect(retried).toContain('settings.externalIntegrationsEmpty');
+    expect(retried).not.toContain('settings.externalIntegrationsRetry');
+  });
+  it('retains prior links and authored grants on a failed refresh', async () => {
+    hooks.links = [{ id: 'link-1', clientDisplayName: 'Fixture chat', provider: 'fixture', externalUserId: 'safe-user', grantableWorkspaces: [] }];
+    panel();
+    hooks.values[0] = { 'link-1': { 'workspace-1': ['read_workspace_data', 'create_sessions'] } };
+    vi.mocked(controlPlaneApi.listExternalIntegrationLinks).mockRejectedValueOnce(new Error('network'));
+    await hooks.effects[0](); await Promise.resolve();
+    const failed = panel();
+    expect(failed.markup).toContain('Fixture chat');
+    expect(failed.markup).toContain('settings.externalIntegrationsStale');
+    expect(hooks.values[0]).toEqual({ 'link-1': { 'workspace-1': ['read_workspace_data', 'create_sessions'] } });
+    vi.mocked(controlPlaneApi.listExternalIntegrationLinks).mockResolvedValueOnce(hooks.links);
+    await failed.tree.props.children[0].props.action.props.onClick(); await Promise.resolve();
+    expect(panel().markup).not.toContain('settings.externalIntegrationsStale');
+  });
+  it('clears prior mutation feedback after a successful explicit refresh', async () => {
+    hooks.links = [];
+    panel();
+    hooks.values[1] = 'Mutation failed';
+    vi.mocked(controlPlaneApi.listExternalIntegrationLinks).mockResolvedValueOnce([]);
+    await hooks.effects[0](); await Promise.resolve();
+    expect(panel().markup).not.toContain('Mutation failed');
+  });
+});
 
 import {
   buildExternalIntegrationWorkspaceGrants,

@@ -79,7 +79,7 @@ export function WorkspaceScheduleExecutionFacts({
       {!mcpAutoPaused && schedule.lastError && (
         <OperationalFailureDetails
           cause={operationalFailureCause(schedule.lastError, t('workflowActivity.scheduleFailureCause'))}
-          impact={t('workflowActivity.scheduleFailureImpact')}
+          impact={t(schedule.latestExecution ? 'workflowActivity.failureExecutionExists' : 'workflowActivity.scheduleFailureImpact')}
           nextStep={t('workflowActivity.scheduleFailureNextStep')}
           technicalDetail={schedule.lastError}
           action={canReview && onReview ? (

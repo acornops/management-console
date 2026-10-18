@@ -58,6 +58,21 @@ export function scheduleWeekdayFromCron(cron: string): string {
   return /^[0-6]$/.test(weekday || '') ? weekday : '1';
 }
 
+export function formatScheduleCadence(cron: string, t: (key: string, options?: Record<string, unknown>) => string): string {
+  const frequency = scheduleFrequencyFromCron(cron);
+  if (frequency === 'custom') return t('schedules.form.frequencyCustom');
+  const weekdayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const cadence = frequency === 'weekly'
+    ? t(`schedules.form.${weekdayKeys[Number(scheduleWeekdayFromCron(cron))]}`)
+    : t(`schedules.form.${frequency === 'daily' ? 'frequencyDaily' : 'frequencyWeekdays'}`);
+  return t('schedules.cadenceAt', { cadence, time: scheduleTimeFromCron(cron) });
+}
+
+export function formatScheduleNextRun(schedule: Pick<WorkflowSchedule, 'status' | 'timezone' | 'nextRunAt'>, t: (key: string) => string): string {
+  if (schedule.status === 'paused') return t('schedules.nextRunPaused');
+  return formatUserDateTime(schedule.nextRunAt, { timeZone: schedule.timezone, fallback: t('schedules.nextRunUnavailable') });
+}
+
 export function cronFromScheduleBuilder(frequency: Exclude<ScheduleFrequency, 'custom'>, time: string, weekday = '1'): string {
   const [hour = '9', minute = '0'] = time.split(':');
   const dayOfWeek = frequency === 'weekdays' ? '1-5' : frequency === 'weekly' ? weekday : '*';

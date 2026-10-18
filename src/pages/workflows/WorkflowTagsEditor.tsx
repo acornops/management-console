@@ -29,7 +29,7 @@ export const WorkflowTagsEditor: React.FC<WorkflowTagsEditorProps> = ({ tags, ta
     </div>
     {!readOnly && (
       <div className="mt-3 flex gap-2">
-        <TextInput value={tagDraft} onChange={(event) => onTagDraftChange(event.target.value)} placeholder="Add tag" disabled={pending} className="min-h-10 flex-1" />
+        <TextInput aria-label="Add tag" value={tagDraft} onChange={(event) => onTagDraftChange(event.target.value)} placeholder="Add tag" disabled={pending} className="min-h-10 flex-1" />
         <Button variant="secondary" size="sm" onClick={onAdd} disabled={pending || !tagDraft.trim()}>
           {pending ? 'Saving...' : 'Add tag'}
         </Button>

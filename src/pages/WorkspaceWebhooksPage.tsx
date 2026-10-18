@@ -20,7 +20,7 @@ import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/session
 interface WorkspaceWebhooksPageProps {
   workspace: Workspace;
   canManageWebhooks: boolean;
-  showToast: (message: string) => void;
+  showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
   navigate: (path: string) => void;
 }
 
@@ -150,12 +150,12 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
       if (editingId) {
         await controlPlaneApi.updateWebhook(requestedWorkspaceId, editingId, input);
         if (!isCurrentRequest()) return;
-        showToast(t('workspaceWebhooks.updated'));
+        showToast(t('workspaceWebhooks.updated'), { tone: 'success' });
       } else {
         const created = await controlPlaneApi.createWebhook(requestedWorkspaceId, input);
         if (!isCurrentRequest()) return;
         setCreatedSecret({ name: created.name, secret: created.secret });
-        showToast(t('workspaceWebhooks.created'));
+        showToast(t('workspaceWebhooks.created'), { tone: 'success' });
       }
       resetForm();
       setEditorOpen(false);
@@ -188,7 +188,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
         resetForm();
         setEditorOpen(false);
       }
-      showToast(t('workspaceWebhooks.deleted'));
+      showToast(t('workspaceWebhooks.deleted'), { tone: 'success' });
       await loadWebhooks();
       return true;
     } catch (deleteFailure) {
@@ -227,7 +227,7 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
     if (!createdSecret) return;
     try {
       await navigator.clipboard.writeText(createdSecret.secret);
-      showToast(t('workspaceWebhooks.secretCopied'));
+      showToast(t('workspaceWebhooks.secretCopied'), { tone: 'success' });
     } catch {
       setMutationError(t('workspaceWebhooks.copyFailed'));
     }

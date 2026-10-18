@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { SelectOption } from '@acornops/ui';
-import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
 import { WorkspaceAgentsCatalog, WorkspaceAgentsRouteHeader, defaultAgentCatalogFilters, type AgentCatalogFilters } from '@/pages/WorkspaceAgentsCatalog';
 import { PageShell } from '@acornops/ui';
@@ -26,15 +25,16 @@ import { UnsavedChangesDialog } from '@/features/capabilities/UnsavedChangesDial
 import { useAgentDrawerDiscardGuard } from '@/pages/agents/useAgentDrawerDiscardGuard';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { AgentDefinitionSettingsSection } from '@/pages/agents/AgentDefinitionSettingsSection';
+import { useAgentOwnerOptions } from '@/pages/agents/useAgentOwnerOptions';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace, currentUserId, isDark, routeState, navigate }) => {
   const urlSearch = useUrlSearchState();
   const initialUrlSearch = React.useMemo(() => new URLSearchParams(window.location.search), []);
   const agentCatalogCacheKey = `workspace:${workspace.id}:agents`;
-  const ownerCatalogCacheKey = `workspace:${workspace.id}:agent-owner-options`;
   const [agents, setAgents] = useSessionCachedState<AgentDefinition[]>(agentCatalogCacheKey, []);
   const agentCatalogWorkspaceIdRef = React.useRef(workspace.id);
-  const [ownerUserOptions, setOwnerUserOptions] = useSessionCachedState<ProjectMember[]>(ownerCatalogCacheKey, workspace.members || []);
+  const ownerOptions = useAgentOwnerOptions(workspace.id, workspace.permissions?.read_members === true);
+  const [selectedOwner, setSelectedOwner] = useState<ProjectMember | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState(routeState?.agentId || initialUrlSearch.get('agent') || '');
   const [query, setQuery] = useState(initialUrlSearch.get('q') || '');
   const initialFocus = initialUrlSearch.get('focus');
@@ -43,9 +43,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   });
   const [agentLoadError, setAgentLoadError] = useState('');
   const [agentCatalogReady, setAgentCatalogReady] = useState(() => hasSessionDataCacheValue(agentCatalogCacheKey));
-  const [ownerUserLoadError, setOwnerUserLoadError] = useState('');
   const [agentCatalogReloadKey, setAgentCatalogReloadKey] = useState(0);
-  const [ownerUsersReloadKey, setOwnerUsersReloadKey] = useState(0);
   const [createPanelOpen, setCreatePanelOpen] = useState(initialUrlSearch.get('panel') === 'create');
   const initialAgentTab = initialUrlSearch.get('agentTab');
   const [agentTab, setAgentTab] = useState<AgentProfileTab>(routeState?.tab || (agentProfileTabs.includes(initialAgentTab as AgentProfileTab) ? initialAgentTab as AgentProfileTab : 'chat'));
@@ -86,10 +84,13 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     }
   }, [navigate, routeState, urlSearch, workspace.id]);
   const ownerLabelsByUserId = useMemo(() => new Map(
-    ownerUserOptions
+    [...(workspace.members || []), ...ownerOptions.items, ...(selectedOwner ? [selectedOwner] : [])]
       .filter((member) => member.userId)
       .map((member) => [member.userId as string, member.name || member.email])
-  ), [ownerUserOptions]);
+  ), [workspace.members, ownerOptions.items, selectedOwner]);
+  const ownerLabelsRef = React.useRef(ownerLabelsByUserId);
+  ownerLabelsRef.current = ownerLabelsByUserId;
+  React.useEffect(() => { setSelectedOwner(null); }, [workspace.id, selectedAgentId]);
   React.useEffect(() => {
     let mounted = true;
     if (agentCatalogWorkspaceIdRef.current !== workspace.id) {
@@ -102,7 +103,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     listWorkspaceAgents(workspace.id, { includeInactive: true })
       .then((items) => {
         if (!mounted) return;
-        const mapped = items.map((item) => mapApiAgent(item, workspace.name, ownerLabelsByUserId));
+        const mapped = items.map((item) => mapApiAgent(item, workspace.name, ownerLabelsRef.current));
         const firstCatalogAgent = mapped.find(isWorkspaceCatalogAgent);
         setAgents(mapped);
         setSelectedAgentId((current) => mapped.some((agent) => agent.id === current && isWorkspaceCatalogAgent(agent)) ? current : firstCatalogAgent?.id || '');
@@ -124,28 +125,11 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     return () => {
       mounted = false;
     };
-  }, [agentCatalogReloadKey, navigate, ownerLabelsByUserId, routeState, workspace.id, workspace.name]);
-  React.useEffect(() => {
-    let mounted = true;
-    setOwnerUserOptions((current) => current.length > 0 ? current : workspace.members || []);
-    setOwnerUserLoadError('');
-    if (workspace.permissions?.read_members !== true) {
-      return () => {
-        mounted = false;
-      };
-    }
-    controlPlaneApi.listWorkspaceMembers(workspace.id, { limit: 50 })
-      .then((page) => {
-        if (mounted) setOwnerUserOptions(page.items);
-      })
-      .catch((error) => {
-        if (mounted) setOwnerUserLoadError(error instanceof Error ? error.message : 'Unable to load workspace members');
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [ownerUsersReloadKey, workspace.id, workspace.members, workspace.permissions?.read_members]);
-  const workspaceCatalogAgents = useMemo(() => agents.filter(isWorkspaceCatalogAgent), [agents]);
+  }, [agentCatalogReloadKey, navigate, routeState, workspace.id, workspace.name]);
+  const workspaceCatalogAgents = useMemo(() => agents.filter(isWorkspaceCatalogAgent).map((agent) => {
+    const owner = agent.ownerUserId ? ownerLabelsByUserId.get(agent.ownerUserId) : undefined;
+    return owner ? { ...agent, owner } : agent;
+  }), [agents, ownerLabelsByUserId]);
   const visibleAgents = useMemo(() => filterVisibleAgents(workspaceCatalogAgents, query, catalogFilters), [workspaceCatalogAgents, query, catalogFilters]);
   const selectedAgent = workspaceCatalogAgents.find((agent) => agent.id === selectedAgentId);
   const activeAgentTab = routeState?.tab || agentTab;
@@ -153,6 +137,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const [quickChatLayoutReserved, setQuickChatLayoutReserved] = useState(quickChatOpen);
   const editingAgent = activeAgentTab === 'settings' ? selectedAgent : undefined;
   const editChangeSummary = editingAgent && editDraft ? getAgentEditChangeSummary(editingAgent, editDraft) : [];
+  React.useEffect(() => {
+    const member = ownerOptions.items.find((item) => item.userId === editDraft?.ownerUserId);
+    if (member) setSelectedOwner(member);
+  }, [ownerOptions.items, editDraft?.ownerUserId]);
   const createDirty = Boolean(createDraft.name || createDraft.description || createDraft.instructions || createDraft.avatarEmoji !== DEFAULT_AGENT_EMOJI);
   const editDirty = editChangeSummary.length > 0;
   const resetCreateAgentDraft = () => {
@@ -200,12 +188,18 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       return nextDraft;
     });
   }, [activeAgentTab, agentCatalogReady, editingAgent, routeState]);
-  const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => [
-    { value: '', label: 'Keep current owner' },
-    ...ownerUserOptions
+  const ownerSelectOptions = useMemo<Array<SelectOption<string>>>(() => {
+    const options = ownerOptions.items
       .filter((member) => Boolean(member.userId))
-      .map((member) => ({ value: member.userId as string, label: `${member.name || member.email} (${member.role})` }))
-  ], [ownerUserOptions]);
+      .map((member) => ({ value: member.userId as string, label: `${member.name || member.email} (${member.email})` }));
+    if (selectedOwner?.userId && selectedOwner.userId === editDraft?.ownerUserId && !options.some((option) => option.value === selectedOwner.userId)) {
+      options.unshift({ value: selectedOwner.userId, label: `${selectedOwner.name || selectedOwner.email} (${selectedOwner.email})` });
+    }
+    if (editingAgent?.ownerUserId && !options.some((option) => option.value === editingAgent.ownerUserId)) {
+      options.unshift({ value: editingAgent.ownerUserId, label: editingAgent.owner });
+    }
+    return options;
+  }, [ownerOptions.items, selectedOwner, editDraft?.ownerUserId, editingAgent]);
   const updateSelectedAgent = (agentId: string, updater: (agent: AgentDefinition) => AgentDefinition) => {
     setAgents((current) => current.map((agent) => agent.id === agentId ? updater(agent) : agent));
   };
@@ -329,6 +323,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   };
   const saveAgentEdits = async () => {
     if (!editingAgent || !editDraft || !editDraft.name.trim() || !editDraft.description.trim()) return;
+    if (!canManageAgents || (editDraft.ownerUserId !== editingAgent.ownerUserId && workspace.permissions?.read_members !== true)) return;
     setUpdatingAgentId(editingAgent.id);
     setLocalNotice(null);
     try {
@@ -343,7 +338,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
         trustPolicy: { level: 'restricted', allowExternalData: editDraft.allowExternalData }
       };
       const updated = await updateWorkspaceAgent(workspace.id, editingAgent.id, input);
-      const mappedOwner = ownerUserOptions.find((member) => member.userId === editDraft.ownerUserId.trim());
+      const mappedOwner = selectedOwner?.userId === editDraft.ownerUserId.trim() ? selectedOwner : ownerOptions.items.find((member) => member.userId === editDraft.ownerUserId.trim());
       const mappedBase = mapApiAgent(updated, workspace.name, ownerLabelsByUserId);
       const mapped = { ...mappedBase, owner: mappedOwner?.name || mappedOwner?.email || mappedBase.owner };
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
@@ -375,9 +370,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   };
   const feedback = (
     <>
-      {(agentLoadError || ownerUserLoadError) && (
-        <Notice title="Some live data is unavailable" actionLabel="Retry all" onAction={() => { setAgentCatalogReloadKey((value) => value + 1); setOwnerUsersReloadKey((value) => value + 1); }}>
-          <details><summary className="cursor-pointer">Fallback data keeps the catalog available. Show details</summary><ul className="mt-2 list-disc pl-5">{agentLoadError && <li>Agent definitions may be stale.</li>}{ownerUserLoadError && <li>Owner choices are limited to cached members.</li>}</ul></details>
+      {agentLoadError && (
+        <Notice title="Some live data is unavailable" actionLabel="Retry all" onAction={() => { setAgentCatalogReloadKey((value) => value + 1); }}>
+          <details><summary className="cursor-pointer">Fallback data keeps the catalog available. Show details</summary><ul className="mt-2 list-disc pl-5"><li>Agent definitions may be stale.</li></ul></details>
         </Notice>
       )}
       {!canManageAgents && (
@@ -450,6 +445,12 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
           draft={editDraft}
           setDraft={setEditDraft}
           ownerSelectOptions={ownerSelectOptions}
+          ownerOptions={ownerOptions}
+          canReadMembers={workspace.permissions?.read_members === true}
+          onOwnerChange={(ownerUserId) => {
+            setSelectedOwner((current) => ownerOptions.items.find((member) => member.userId === ownerUserId) || (current?.userId === ownerUserId ? current : null));
+            setEditDraft((current) => current ? { ...current, ownerUserId } : current);
+          }}
           changeSummary={editChangeSummary}
           saving={updatingAgentId === editingAgent.id}
           onReset={requestCloseEdit}

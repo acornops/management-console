@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, CloseButton, InlineAlert } from '@acornops/ui';
-import { PageShell } from '@acornops/ui';
+import { EmptyState, PageShell } from '@acornops/ui';
 import { MasterDetailLayout, MasterDetailPaneBody, MasterDetailPaneHeader } from '@acornops/ui';
 import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
@@ -34,10 +35,12 @@ import { useWorkflowLaunchShortcut, useWorkflowSearchShortcut } from '@/pages/wo
 import { WorkflowTriggerPanel } from '@/pages/WorkflowTriggerPanel';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { WorkflowMcpOAuthResultBridge } from '@/pages/WorkflowMcpCredentialDialog';
+import { hasWorkspacePermission } from '@/app/workspacePermissions';
 export const WorkspaceWorkflowsPage: React.FC<{
   workspace: Workspace;
   navigate: (path: string) => void;
 }> = ({ workspace, navigate }) => {
+  const { t } = useTranslation();
   const initialWorkflowQuery = useMemo(() => getWorkflowRouteQuery(window.location.search), []);
   const initialWorkflowSelection = useMemo(() => getWorkflowRouteSelection(window.location.search), []);
   const workflowUrlSearch = useUrlSearchState();
@@ -88,7 +91,6 @@ export const WorkspaceWorkflowsPage: React.FC<{
   const pendingWorkflowRunsRef = React.useRef(pendingWorkflowRuns);
   const workflowRowRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const [approvalRecords, setApprovalRecords] = useSessionCachedState<Record<string, WorkflowRunApproval[]>>(`${workflowCachePrefix}run-approvals`, {});
-  const [approvalAction, setApprovalAction] = useState('');
   const [approvalError, setApprovalError] = useState('');
   const [runEventsByRunId, setRunEventsByRunId] = useSessionCachedState<Record<string, WorkflowRunEvent[]>>(`${workflowCachePrefix}run-events`, {});
   const [expandedRunLogId, setExpandedRunLogId] = useState('');
@@ -121,11 +123,11 @@ export const WorkspaceWorkflowsPage: React.FC<{
     pendingWorkflowRunsRef.current = next;
     setPendingWorkflowRunsState(next);
   }
-  const { clearWorkflowSelection, hasExplicitWorkflowSelection, selectWorkflow, selectWorkflowView } = useWorkspaceWorkflowsUrlState({
+  const { clearWorkflowSelection, hasExplicitWorkflowSelection, routeWorkflow, selectWorkflow, selectWorkflowView } = useWorkspaceWorkflowsUrlState({
     workflows, routeHydrated: workflowCatalogReady && !workflowLoadError, selectedWorkflowId, activeView, createPanelOpen, setSelectedWorkflowId,
     setActiveView, setQuery, setCreatePanelOpen
   });
-  const selectedWorkflow = (hasExplicitWorkflowSelection ? workflows : visibleWorkflows).find((workflow) => workflow.id === selectedWorkflowId) || visibleWorkflows[0] || (!query.trim() ? workflows[0] : undefined);
+  const selectedWorkflow = hasExplicitWorkflowSelection ? routeWorkflow : visibleWorkflows.find((workflow) => workflow.id === selectedWorkflowId) || visibleWorkflows[0] || (!query.trim() ? workflows[0] : undefined);
   React.useEffect(() => {
     let mounted = true;
     setWorkflowOwnerMembers((current) => current.length > 0 ? current : workspace.members || []);
@@ -341,7 +343,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
     setLaunchDrawerWorkflowId,
     setLaunchError, setLaunchRecovery, setLaunchingWorkflowId, setActiveView: (view: WorkflowView) => selectWorkflowView(view, selectedWorkflow?.id), setApprovalRecords, setApprovalError,
     setPendingWorkflowRuns,
-    setApprovalAction, expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
+    expandedRunLogId, setExpandedRunLogId, runEventsByRunId, setRunEventsByRunId,
     setRunLogError, setCancelRunError, setCancelRunAction,
      setNewWorkflowTag, newWorkflowTag, setWorkflowEditDrafts, setWorkflowUpdateError, setWorkflowUpdateResult, setDeleteWorkflowError,
      workflowUndoCheckpoint, setWorkflowUndoCheckpoint,
@@ -528,11 +530,12 @@ export const WorkspaceWorkflowsPage: React.FC<{
 
               {activeView === 'runs' && (
                 <WorkflowRunsPanel
+                  canDecideApprovals={hasWorkspacePermission(workspace, 'create_read_write_runs')}
                   showHeader={false}
                   workflow={selectedWorkflow}
                   approvalError={approvalError} runLogError={runLogError} cancelRunError={cancelRunError}
                   approvalRecords={approvalRecords} expandedRunLogId={expandedRunLogId} runEventsByRunId={runEventsByRunId}
-                  cancelRunAction={cancelRunAction} workflowActions={workflowActions} approvalAction={approvalAction}
+                  cancelRunAction={cancelRunAction} workflowActions={workflowActions}
                   setExpandedRunLogId={setExpandedRunLogId}
                 />
               )}
@@ -562,6 +565,11 @@ export const WorkspaceWorkflowsPage: React.FC<{
               )}
             </MasterDetailPaneBody>
           </section>
+        ) : hasExplicitWorkflowSelection && workflowCatalogReady && !workflowLoadError ? (
+          <div className="p-6">
+            <EmptyState icon={<ICONS.GitBranch className="h-4 w-4" aria-hidden="true" />} title={t('workflowCatalog.unavailableTitle')} description={t('workflowCatalog.unavailableDescription')} />
+            <Button variant="secondary" className="mt-4" onClick={clearWorkflowSelection}>{t('workflowCatalog.backToLibrary')}</Button>
+          </div>
         ) : null}
         />
       </div>

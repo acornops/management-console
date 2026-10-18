@@ -9,15 +9,17 @@ import {
   DataTableHeaderCell,
   DataTableRow,
   CollectionLoadingSkeleton,
-  StatusBadge,
   TableLoadingRows
 } from '@acornops/ui';
 import {
   isMcpAutoPause,
+  scheduleMcpRecoveryPath,
   WorkspaceScheduleActionMenu,
   WorkspaceScheduleMobileCard
 } from '@/pages/WorkspaceScheduleRows';
-import { formatScheduleDateTime } from '@/pages/WorkspaceSchedulesPage.helpers';
+import { formatScheduleNextRun } from '@/pages/WorkspaceSchedulesPage.helpers';
+import { WorkspaceScheduleCadence } from './WorkspaceScheduleCadence';
+import { WorkspaceScheduleExecutionFacts } from './WorkspaceScheduleExecutionFacts';
 import type {
   WorkflowApiDefinition,
   WorkflowSchedule
@@ -87,7 +89,7 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
             <DataTableHeaderCell density="dense">{t('schedules.table.schedule')}</DataTableHeaderCell>
             <DataTableHeaderCell density="dense">{t('schedules.table.cadence')}</DataTableHeaderCell>
             <DataTableHeaderCell density="dense">{t('schedules.table.nextRun')}</DataTableHeaderCell>
-            <DataTableHeaderCell density="dense">{t('common.status')}</DataTableHeaderCell>
+            <DataTableHeaderCell density="dense">{t('workflowActivity.executionEvidence')}</DataTableHeaderCell>
             <DataTableHeaderCell density="dense" numeric>{t('schedules.table.actions')}</DataTableHeaderCell>
           </DataTableRow>
         </DataTableHeader>
@@ -95,12 +97,10 @@ export const WorkspaceScheduleDrawerTable: React.FC<WorkspaceScheduleDrawerTable
           {schedules.length > 0 ? schedules.map((schedule) => (
             <DataTableRow key={schedule.id}>
               <DataTableCell as="th" scope="row" density="dense" className="py-3 type-emphasis text-ui-text">{schedule.name}</DataTableCell>
-              <DataTableCell density="dense" className="py-3 text-ui-text-muted"><code>{schedule.cron}</code><span className="mt-1 block type-caption">{schedule.timezone}</span></DataTableCell>
-              <DataTableCell density="dense" className="py-3 text-ui-text">{formatScheduleDateTime(schedule.nextRunAt, t('schedules.nextRunUnavailable'))}</DataTableCell>
+              <DataTableCell density="dense" className="py-3"><WorkspaceScheduleCadence cron={schedule.cron} timezone={schedule.timezone} /></DataTableCell>
+              <DataTableCell density="dense" className="py-3 text-ui-text">{formatScheduleNextRun(schedule, t)}</DataTableCell>
               <DataTableCell density="dense" className="py-3">
-                <StatusBadge tone={schedule.status === 'enabled' ? 'success' : 'neutral'}>
-                  {schedule.status === 'enabled' ? t('schedules.status.active') : t('schedules.status.paused')}
-                </StatusBadge>
+                <WorkspaceScheduleExecutionFacts schedule={schedule} mcpAutoPaused={isMcpAutoPause(schedule)} recoveryPath={scheduleMcpRecoveryPath(workspaceId, workflows, schedule.workflowId, schedule.lastError)} canReview={canManage && updatingId !== schedule.id} onReview={() => onEdit(schedule)} />
               </DataTableCell>
               <DataTableCell density="dense" className="py-3">
                 <div className="flex justify-end">

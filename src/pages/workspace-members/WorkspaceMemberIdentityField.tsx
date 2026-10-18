@@ -121,9 +121,9 @@ export const WorkspaceMemberIdentityField: React.FC<WorkspaceMemberIdentityField
   };
 
   const helper = selectedCandidate
-    ? t('members.existingUserSelected', { name: selectedCandidate.name })
+    ? t('members.existingUserSelected', { name: `${selectedCandidate.name} (${selectedCandidate.email})` })
     : exactCandidate?.status === 'available'
-    ? t('members.existingUserSelected', { name: exactCandidate.name })
+    ? t('members.existingUserSelected', { name: `${exactCandidate.name} (${exactCandidate.email})` })
     : exactCandidate?.status === 'member'
     ? t('members.alreadyMember')
     : exactCandidate?.status === 'invited'

@@ -1,8 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { routeCoverageManifest } from '../../scripts/route-coverage-manifest.mjs';
+import { FIXTURE_CLOCK } from '../../src/fixtures/store';
 
-const FIXED_NOW = '2026-07-19T08:30:00.000Z';
+const FIXED_NOW = FIXTURE_CLOCK;
 const requestedRouteNames = new Set(
   (process.env.DESIGN_ROUTE_NAMES || '').split(',').filter(Boolean)
 );
@@ -28,6 +29,12 @@ async function prepareRoute(
   theme: 'dark' | 'light',
   route: (typeof routeCoverageManifest)[number]
 ) {
+  const activitySummary = route.name === 'workspace-activity'
+    ? page.waitForResponse(response => {
+      const url = new URL(response.url());
+      return url.pathname.endsWith('/workflow-executions') && url.searchParams.get('limit') === '1' && response.ok();
+    })
+    : null;
   await page.goto(route.path, { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => {
     document.documentElement.style.fontSize = '';
@@ -58,6 +65,22 @@ async function prepareRoute(
   }
   await expect(page.locator(route.ready).first()).toBeVisible({ timeout: 45_000 });
   await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark).*$/);
+  if (activitySummary) {
+    // Acknowledge the initial summary revision through the normal control, not a captured timing notice.
+    await activitySummary;
+    const refresh = page.getByRole('button', { name: 'Refresh', exact: true }).first();
+    await expect(refresh).toBeEnabled();
+    await Promise.all([
+      page.waitForResponse(response => {
+        const url = new URL(response.url());
+        return url.pathname.endsWith('/workflow-executions') && url.searchParams.get('limit') === '50' && response.ok();
+      }),
+      refresh.click()
+    ]);
+    await expect(refresh).toBeEnabled();
+    await expect(page.getByRole('region', { name: 'Workflow runs', exact: true }).getByRole('link').first()).toBeVisible();
+    await expect(page.getByText('New activity is available. Refresh when you are ready to update this history.', { exact: true })).toHaveCount(0);
+  }
   const targetChatSurface = page.locator('[data-target-chat-surface="true"]');
   if (await targetChatSurface.isVisible().catch(() => false)) {
     await expect(targetChatSurface.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 45_000 });
@@ -175,6 +198,16 @@ async function assertRouteHeaderGeometry(page: Page, routeName: string) {
   return true;
 }
 
+test('workspace activity preparation settles initial summary and loaded rows', async ({ page }) => {
+  await page.clock.setFixedTime(FIXTURE_CLOCK);
+  await page.addInitScript(() => {
+    localStorage.setItem('app_theme', 'light');
+    localStorage.setItem('acornops_active_theme_preference', 'light');
+  });
+  const route = routeCoverageManifest.find(route => route.name === 'workspace-activity')!;
+  await prepareRoute(page, 'light', route);
+});
+
 test('all canonical routes satisfy the design contract', async ({ page }, testInfo) => {
   test.setTimeout(15 * 60_000);
   const theme = isDarkProject(testInfo) ? 'dark' : 'light';
@@ -265,11 +298,16 @@ test('mobile approvals and Assistant controls remain complete at supported narro
   const mobileApprovals = page.locator('[data-approval-layout="mobile"]');
   await expect(mobileApprovals).toBeVisible();
   await expect(page.locator('[data-approval-layout="desktop"]')).toBeHidden();
-  const approveButton = mobileApprovals.getByRole('button', { name: /Approve/i }).first();
-  await expect(approveButton).toBeVisible();
-  await expect(mobileApprovals.getByRole('button', { name: /Reject/i }).first()).toBeVisible();
-  await approveButton.focus();
-  await expect(approveButton).toBeFocused();
+  const reviewButton = mobileApprovals.getByRole('button', { name: 'Review', exact: true }).first();
+  await expect(reviewButton).toBeVisible();
+  await reviewButton.focus();
+  await expect(reviewButton).toBeFocused();
+  await page.keyboard.press('Enter');
+  const reviewDialog = page.getByRole('dialog', { name: 'Review approval', exact: true });
+  await expect(reviewDialog.getByRole('button', { name: 'Approve', exact: true })).toBeVisible();
+  await expect(reviewDialog.getByRole('button', { name: 'Reject', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(reviewButton).toBeFocused();
   const approvalsGeometry = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
     scrollWidth: document.documentElement.scrollWidth

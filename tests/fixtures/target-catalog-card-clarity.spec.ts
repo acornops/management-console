@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { FIXTURE_CLOCK } from '../../src/fixtures/store';
+
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(FIXTURE_CLOCK); });
 
 test('VM catalog mirrors the cluster card hierarchy', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/virtual-machines', { waitUntil: 'domcontentloaded' });

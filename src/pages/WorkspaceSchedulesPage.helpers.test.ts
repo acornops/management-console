@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
+import i18next from 'i18next';
+import { en } from '@/i18n/locales/en';
 
 import {
   cronFromScheduleBuilder,
@@ -10,8 +12,20 @@ import {
   scheduleWeekdayFromCron,
   scheduleSaveFailure
 } from '@/pages/WorkspaceSchedulesPage.helpers';
+import { formatScheduleCadence, formatScheduleNextRun } from '@/pages/WorkspaceSchedulesPage.helpers';
 
 describe('workspace schedule editor helpers', () => {
+  it('uses guided cadence vocabulary and honest custom fallback without evaluating occurrences', async () => {
+    const i18n = i18next.createInstance();
+    await i18n.init({ lng: 'en', resources: { en: { translation: en } } });
+    expect(formatScheduleCadence('30 8 * * 1-5', i18n.t)).toBe('Weekdays at 08:30');
+    expect(formatScheduleCadence('5 14 * * *', i18n.t)).toBe('Every day at 14:05');
+    expect(formatScheduleCadence('0 9 * * 4', i18n.t)).toBe('Thursday at 09:00');
+    expect(formatScheduleCadence('*/15 8-18 * * 1-5', i18n.t)).toBe('Custom cron');
+    expect(formatScheduleNextRun({ status: 'paused', timezone: 'UTC', nextRunAt: '2026-03-08T07:30:00Z' }, i18n.t)).toBe('Paused — no next run');
+    expect(formatScheduleNextRun({ status: 'enabled', timezone: 'UTC' }, i18n.t)).toBe('No upcoming run');
+    expect(formatScheduleNextRun({ status: 'enabled', timezone: 'America/New_York', nextRunAt: '2026-03-08T07:30:00Z' }, i18n.t)).toMatch(/3:30.*EDT/);
+  });
   it('preserves actionable cadence failures and associates them with the cron field', () => {
     expect(scheduleSaveFailure(new ControlPlaneRequestError('Control plane request failed (400): Choose a date that exists.', 400, 'INVALID_CRON'), 'Draft retained.')).toEqual({
       message: 'Draft retained.', fieldErrors: { cron: 'Choose a date that exists.' }

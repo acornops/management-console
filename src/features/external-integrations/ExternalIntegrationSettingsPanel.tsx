@@ -155,6 +155,7 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
   const [links, setLinks] = useSessionCachedState<ControlPlaneExternalIntegrationLinkSummary[] | null>('user:external-integration-links', null);
   const [drafts, setDrafts] = React.useState<Record<string, Record<string, ControlPlaneWorkspaceCapability[]>>>(() => draftFromLinks(links || []));
   const [error, setError] = React.useState<string | null>(null);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [savingLinkId, setSavingLinkId] = React.useState<string | null>(null);
   const [unlinkingLinkId, setUnlinkingLinkId] = React.useState<string | null>(null);
@@ -168,9 +169,10 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
       const nextLinks = await controlPlaneApi.listExternalIntegrationLinks();
       setLinks(nextLinks);
       setDrafts(draftFromLinks(nextLinks));
+      setLoadError(null);
       setError(null);
     } catch (refreshError) {
-      setError(formatControlPlaneError(
+      setLoadError(formatControlPlaneError(
         refreshError,
         translationRef.current('settings.externalIntegrationsLoadFailed'),
         { area: 'auth' }
@@ -245,13 +247,18 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
     }
   };
 
-  if (links === null && !error) {
+  if (links === null && !loadError) {
     return <div className="p-6 type-body text-ui-text-muted" role="status">{t('settings.externalIntegrationsLoading')}</div>;
   }
   const mutationInFlight = Boolean(savingLinkId || unlinkingLinkId);
 
   return (
     <>
+      {loadError && (
+        <InlineAlert tone={links === null ? 'danger' : 'warning'} className="rounded-none border-x-0 border-t-0 px-6 type-body" action={<Button size="sm" variant="tertiary" disabled={mutationInFlight} onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>}>
+          {links !== null && <span>{t('settings.externalIntegrationsStale')} </span>}{loadError}
+        </InlineAlert>
+      )}
       {error && (
         <InlineAlert tone="danger" className="rounded-none border-x-0 border-t-0 px-6 type-body" action={<Button size="sm" variant="tertiary" disabled={mutationInFlight} onClick={() => void refresh()}>{t('settings.externalIntegrationsRetry')}</Button>}>
           {error}
@@ -291,9 +298,9 @@ export const ExternalIntegrationSettingsPanel: React.FC = () => {
           onCancelUnlink={() => setPendingUnlinkLinkId(null)}
           onConfirmUnlink={() => void unlink(link)}
         />
-      )) : (
+      )) : links !== null ? (
         <div className="p-6 type-body text-ui-text-muted">{t('settings.externalIntegrationsEmpty')}</div>
-      )}
+      ) : null}
     </>
   );
 };

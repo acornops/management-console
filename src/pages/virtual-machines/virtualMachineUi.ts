@@ -22,7 +22,7 @@ export function getVmStatusLabel(
   status: ControlPlaneVirtualMachine['status'],
   t: (key: string) => string
 ): string {
-  if (status === 'online') return t('dashboard.healthy');
+  if (status === 'online') return t('virtualMachines.list.agentConnected');
   if (status === 'degraded') return t('virtualMachines.list.degraded');
   if (status === 'offline') return t('virtualMachines.list.offline');
   return t('dashboard.notConnected');

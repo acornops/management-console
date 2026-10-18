@@ -14,7 +14,7 @@ function route(path: string, method = 'GET') {
 }
 
 describe('workflow activity fixture routes', () => {
-  beforeEach(resetFixtureStore);
+  beforeEach(() => { resetFixtureStore(); });
 
   it('provides deterministic scheduled, approval, review, terminal, and deleted-webhook states', () => {
     const response = route('/api/v1/workspaces/fixture-workspace/workflow-executions');
