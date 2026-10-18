@@ -1,5 +1,8 @@
 # Destructive Confirmation Hardening
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Scope
 
 - Harden destructive confirmation UX for workspace, Kubernetes cluster, MCP server, chat session, Agent, Agent capability, member-access, external-integration, target-skill, target-Insights, and workspace AI credential actions.

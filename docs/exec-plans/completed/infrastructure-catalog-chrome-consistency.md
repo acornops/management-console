@@ -1,5 +1,8 @@
 # Infrastructure Catalog Chrome Consistency
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Make the Kubernetes Clusters and Virtual Machines catalog routes use the same

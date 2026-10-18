@@ -1,5 +1,8 @@
 # Resource Catalog Exception-Only Status
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Remove routine positive status pills from resource catalog cards so card titles

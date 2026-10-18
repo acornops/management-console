@@ -1,5 +1,8 @@
 # CI Runtime Optimization
 
+> Archive review — 2026-10-18: Implementation landed in 2ca4b92, with a recorded successful 6m00s run. A below-10-minute median still needs two representative runs; this measurement follow-up is retained in ../tech-debt-tracker.md.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Reduce full management-console GitHub Actions feedback from the observed

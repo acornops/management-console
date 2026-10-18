@@ -1,5 +1,8 @@
 # Hosted console integration
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 Approved parent plan: docs/oss-hosted-readiness-plan.md.
 
 1. Align safe access-state and administrative policy contracts.

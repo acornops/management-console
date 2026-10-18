@@ -1,5 +1,8 @@
 # Design-System Adoption Completion
 
+> Status review — 2026-10-18: Final route-matrix validation and publishing evidence remain incomplete; the design-system score stays suspended.
+> Existing validation entries are historical; no new live acceptance was performed in this review.
+
 ## Goal
 
 Finish design-system adoption across the production Management Console and

@@ -1,5 +1,8 @@
 # Relative-Time Capitalization Standardization
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Make relative-time capitalization predictable across the management console and

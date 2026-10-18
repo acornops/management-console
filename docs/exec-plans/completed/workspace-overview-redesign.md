@@ -1,5 +1,8 @@
 # Workspace Overview Redesign
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Implement the workspace homepage redesign so `Overview` becomes the main operational landing page for a workspace and the standalone `Investigations` route/tab is removed.

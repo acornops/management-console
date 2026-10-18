@@ -1,5 +1,8 @@
 # Impeccable 40/40 and Audit 20/20 Closure
 
+> Status review — 2026-10-18: Only phases 0–2 have closure evidence. Remaining phases, state/locale coverage, fresh scores, and final validation are not established.
+> Existing validation entries are historical; no new live acceptance was performed in this review.
+
 ## Goal
 
 Resolve the full-app critique baseline phase by phase and reach a fresh,

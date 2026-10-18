@@ -1,5 +1,8 @@
 # Workflow workspace information space
 
+> Archive review — 2026-10-18: Implementation landed. Remaining independent whole-app critique/audit acceptance is tracked in ../active/impeccable-40-audit-20-closure.md; no new audit score is claimed.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Give the Workflows route family enough room for workflow definitions, runs,

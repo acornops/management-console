@@ -1,5 +1,8 @@
 # Agent Contextual Navigation and Quick Chat
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Make Agent discovery and inspection follow the same predictable resource-detail

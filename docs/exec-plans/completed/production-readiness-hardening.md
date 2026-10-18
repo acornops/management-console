@@ -1,5 +1,8 @@
 # Management console production-readiness hardening
 
+> Archive review — 2026-10-18: Implementation landed in 48ad022. The three-repeat browser policy was superseded by the CI optimization and current Operations policy. The exact original Node 22 clean-install/nginx gate is not evidenced here; later platform-release-hardening.md records validation on Node 24.2.0, not Node 22.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Close release blockers around reproducible source, fail-safe authorization and

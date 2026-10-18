@@ -1,5 +1,8 @@
 # Design system 20/20 hardening
 
+> Archive review — 2026-10-18: Implementation landed; unfinished scoring and full-route acceptance belong to ../active/design-system-adoption-completion.md. No unproven final-validation checkbox or numeric score is being marked complete.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Close the remaining design-system quality gaps with executable evidence, then

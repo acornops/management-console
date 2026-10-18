@@ -1,5 +1,8 @@
 # Short-Viewport Sidebar Breathing Room
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Keep desktop workspace navigation calm and readable on short laptop viewports

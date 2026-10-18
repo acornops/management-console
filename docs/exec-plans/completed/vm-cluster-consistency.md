@@ -1,5 +1,8 @@
 # VM and Cluster Detail Consistency
 
+> Archive review — 2026-10-18: Implementation has landed on main. This plan is retained as delivery history, not active implementation work.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Objective
 
 Polish virtual machine pages so their navigation, detail views, assistant, settings, resources, metrics, and overview actions follow the same operational UI vocabulary as Kubernetes cluster pages while preserving VM-specific behavior.

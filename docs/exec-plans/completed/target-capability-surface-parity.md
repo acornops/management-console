@@ -1,5 +1,8 @@
 # Target Capability Surface Parity
 
+> Archive review — 2026-10-18: Implementation is present, including the three-route PageHeader/table-frame and localized Skills-filter regression guards in McpServersPresentation.test.ts. The original pending-validation note below is historical; no fresh browser acceptance is claimed.
+> Original scope, checklists, and validation below are historical; this is not a new runtime or rollout validation report.
+
 ## Goal
 
 Make the target Tools, Skills, and MCP Servers routes use one route-header,
@@ -24,4 +27,3 @@ terminal empty-state, responsive table, and localized control vocabulary.
 ## Validation Log
 
 - Pending implementation and focused validation.
-
