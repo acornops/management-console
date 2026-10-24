@@ -839,6 +839,7 @@ export const en = {
       enrollmentExpired: 'This enrollment command has expired.',
       enrollmentExpiresIn: 'Sensitive one-use command · expires in {{time}}.',
       generateNewCommand: 'Generate new command',
+      closeInstallDialog: 'Close install agent dialog',
       search: 'Search virtual machines',
       filterByState: 'Filter virtual machines by state',
       allVms: 'All VMs',

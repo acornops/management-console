@@ -119,20 +119,6 @@ export function useVirtualMachineAgentSetup({
     }
   };
 
-  const generateInitialEnrollment = async (virtualMachine: ControlPlaneVirtualMachine | null) => {
-    if (!virtualMachine || !canManageTargets || isRegisteringVm || isReplacingCredential || isGeneratingRepairInstructions) return;
-    setIsRegisteringVm(true);
-    setCredentialReplacementError(null);
-    try {
-      const result = await controlPlaneApi.createVirtualMachineAgentEnrollment(workspaceId, virtualMachine.id, 'initial');
-      setInstallInstructions({ vmId: virtualMachine.id, kind: 'initial', value: result.installInstructions });
-    } catch (error) {
-      setCredentialReplacementError(formatControlPlaneError(error, t('virtualMachines.settings.initialEnrollmentFailed'), { area: 'virtualMachines' }));
-    } finally {
-      setIsRegisteringVm(false);
-    }
-  };
-
   const replaceCredential = async (virtualMachine: ControlPlaneVirtualMachine | null) => {
     if (!virtualMachine || !canManageAgentKeys || isReplacingCredential || isGeneratingRepairInstructions) return;
     setIsReplacingCredential(true);
@@ -204,7 +190,6 @@ export function useVirtualMachineAgentSetup({
     openAddVmModal,
     registerVm,
     regenerateEnrollment,
-    generateInitialEnrollment,
     resetVmCreationState,
     replaceCredential,
     updateAgentAccessPolicy,

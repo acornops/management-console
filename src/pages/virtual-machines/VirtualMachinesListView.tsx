@@ -19,6 +19,7 @@ import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine, Contro
 import type { Workspace } from '@/types';
 import { getVmMetricTimeline, VmCardResourceChart, VmOperationalDetails, type VmMetricLoadState } from '@/pages/virtual-machines/VirtualMachineMetrics';
 import { PendingVirtualMachineSetup } from '@/pages/virtual-machines/PendingVirtualMachineSetup';
+import { VirtualMachineAgentInstallModal } from './VirtualMachineAgentInstallModal';
 import {
   getVmCatalogStatusLabel,
   getVmCatalogStatusReason,
@@ -70,7 +71,7 @@ interface VirtualMachinesListViewProps {
   issueSummaryByVmId: Record<string, ControlPlaneTargetIssueSummary | undefined>;
   issueSummaryLoadStateByVmId: Record<string, 'loading' | 'ready' | 'error' | undefined>;
   canManageTargets: boolean;
-  canManageAgentKeys: boolean;
+  onVirtualMachineUpdated: (vm: ControlPlaneVirtualMachine) => void;
   onQueryChange: (value: string) => void;
   onStatusChange: (value: VmConnectionFilter) => void;
   onClearFilters: () => void;
@@ -93,7 +94,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   issueSummaryByVmId,
   issueSummaryLoadStateByVmId,
   canManageTargets,
-  canManageAgentKeys,
+  onVirtualMachineUpdated,
   onQueryChange,
   onStatusChange,
   onClearFilters,
@@ -108,6 +109,8 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   const [deleteVmError, setDeleteVmError] = React.useState<string | null>(null);
   const [isDeletingVm, setIsDeletingVm] = React.useState(false);
   const [openVmActionMenuId, setOpenVmActionMenuId] = React.useState<string | null>(null);
+  const [installVmId, setInstallVmId] = React.useState<string | null>(null);
+  const installVm = items.find((vm) => vm.id === installVmId);
   const now = useCatalogNow();
   const notConnectedCount = items.filter((vm) => vm.status === 'unknown').length;
   const hasCompleteIssueSummaries = items
@@ -180,6 +183,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
 
       <section
         id="vm-catalog-panel"
+        tabIndex={-1}
         data-resource-card-catalog="true"
         aria-labelledby="vm-catalog-heading"
         className="resource-card-catalog grid min-w-0 shrink-0 content-start gap-4"
@@ -270,7 +274,10 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                         })
                       : t('virtualMachines.list.openVm', { name: vm.name })
                   }
-                  onActivate={() => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, requiresAgentInstall ? 'settings' : 'overview', catalogReturnState))}
+                  disabled={requiresAgentInstall && !canManageTargets}
+                  onActivate={() => requiresAgentInstall
+                    ? setInstallVmId(vm.id)
+                    : navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'overview', catalogReturnState))}
                 >
                   <div className="flex min-h-[4.5rem] min-w-0 items-start gap-3 px-4 py-4">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -335,7 +342,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       vmId={vm.id}
                       vmName={vm.name}
                       onInstallAgent={
-                        canManageAgentKeys ? (vmId) => navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vmId, 'settings', catalogReturnState)) : undefined
+                        canManageTargets ? setInstallVmId : undefined
                       }
                     />
                   ) : (
@@ -389,6 +396,16 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
           />
         )}
       </section>
+      {canManageTargets && installVm && (
+        <VirtualMachineAgentInstallModal
+          key={`${workspace.id}:${installVm.id}`}
+          workspaceId={workspace.id}
+          workspaceName={workspace.name || workspace.id}
+          vm={installVm}
+          onVirtualMachineUpdated={onVirtualMachineUpdated}
+          onClose={() => setInstallVmId(null)}
+        />
+      )}
       <AnimatePresence>
         {deleteTargetVm && (
           <DialogFrame unframed

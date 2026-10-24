@@ -53,8 +53,15 @@ The management console is the browser client for the control-plane API. Keep thi
   credential. The AgentV contract has no legacy raw-key decoder.
   The onboarding dialog copies only the command, labels it sensitive, counts
   down the 15-minute enrollment window, and regenerates an initial command
-  after expiry. VM settings keep credential-free repair separate from explicit
-  credential replacement. VM registration defaults to `agentAccessMode:
+  after expiry. The catalog's **Install Agent** action and Settings' **Finish
+  AgentV setup** action open the same existing-VM installation dialog without
+  navigating away or requesting enrollment. An explicit Generate action uses
+  that VM's ID and configured host policy with `purpose: initial` and requires
+  `manage_targets`; it never registers another VM or replaces credentials.
+  Closing or leaving the target discards the displayed command. Connection
+  checks only read VM status. VM settings keep credential-free repair separate
+  from explicit credential replacement, which requires `manage_agent_keys`.
+  VM registration defaults to `agentAccessMode:
   read_only`; read-write registration requires a non-empty list of unique exact
   non-AgentV `.service` units in `restartServices`. The command does not embed
   that non-secret policy: the control plane binds it to enrollment. VM settings

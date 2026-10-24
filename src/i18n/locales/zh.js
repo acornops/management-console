@@ -839,6 +839,7 @@ export const zh = {
       enrollmentExpired: '此注册命令已过期。',
       enrollmentExpiresIn: '敏感的一次性命令 · 将在 {{time}} 后过期。',
       generateNewCommand: '生成新命令',
+      closeInstallDialog: '关闭安装 agent 对话框',
       search: '搜索虚拟机',
       filterByState: '按状态筛选虚拟机',
       allVms: '全部虚拟机',

@@ -171,7 +171,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     agentAccessPolicyError, credentialReplacementError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
     isReplacingCredential, isGeneratingRepairInstructions, isUpdatingAgentAccessPolicy,
     newVmName, newVmAgentAccessMode, newVmRestartServices, openAddVmModal, registerVm,
-    resetVmCreationState, replaceCredential, generateRepairInstructions, regenerateEnrollment, generateInitialEnrollment,
+    resetVmCreationState, replaceCredential, generateRepairInstructions, regenerateEnrollment,
     updateAgentAccessPolicy,
     setNewVmName, setNewVmAgentAccessMode, setNewVmRestartServices, vmCreationError, vmCreationStep
   } = useVirtualMachineAgentSetup({
@@ -413,6 +413,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     return (
       <>
         <VirtualMachinesListView
+          key={workspace.id}
           workspace={workspace}
           items={virtualMachines}
           isLoading={isLoading}
@@ -425,7 +426,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           issueSummaryByVmId={issueSummaryByVmId}
           issueSummaryLoadStateByVmId={issueSummaryLoadStateByVmId}
           canManageTargets={canManageTargets}
-          canManageAgentKeys={canManageAgentKeys}
+          onVirtualMachineUpdated={(vm) => onUpsertWorkspaceVirtualMachine(workspace.id, vm)}
           onQueryChange={(nextQuery) => updateCatalogState({ q: nextQuery || undefined })}
           onStatusChange={(nextStatus) => updateCatalogState({ status: nextStatus === 'all' ? undefined : nextStatus })}
           onClearFilters={() => updateCatalogState({ q: undefined, status: undefined })}
@@ -564,17 +565,17 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   if (view === 'settings') {
     return (
       <VirtualMachineSettingsView
+        key={`${workspace.id}:${selected.id}`}
         vm={selected}
         workspace={workspace}
-        installInstructions={installInstructions?.vmId === selected.id ? installInstructions.value : null}
+        installInstructions={installInstructions?.vmId === selected.id && installInstructions.kind !== 'initial' ? installInstructions.value : null}
         installInstructionKind={installInstructions?.vmId === selected.id ? installInstructions.kind : null}
         requiresInitialEnrollment={selected.status === 'unknown'}
-        onGenerateInitialEnrollment={canManageTargets && selected.status === 'unknown' ? () => generateInitialEnrollment(selected) : undefined}
+        onVirtualMachineUpdated={(vm) => onUpsertWorkspaceVirtualMachine(workspace.id, vm)}
         onReplaceCredential={canManageAgentKeys && selected.status !== 'unknown' && !selected.pendingAgentAccessPolicy ? () => replaceCredential(selected) : undefined}
         onGenerateRepairInstructions={canManageTargets && selected.status !== 'unknown' && !selected.pendingAgentAccessPolicy ? () => generateRepairInstructions(selected) : undefined}
         isGeneratingRepairInstructions={isGeneratingRepairInstructions}
         isReplacingCredential={isReplacingCredential}
-        isGeneratingInitialEnrollment={isRegisteringVm}
         credentialError={credentialReplacementError}
         agentAccessPolicyError={agentAccessPolicyError}
         isUpdatingAgentAccessPolicy={isUpdatingAgentAccessPolicy}
@@ -582,17 +583,15 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           ? (accessMode, restartServices) => updateAgentAccessPolicy(selected, accessMode, restartServices)
           : undefined}
         onRegenerateInstallInstructions={installInstructions?.vmId === selected.id
-          ? installInstructions.kind === 'initial'
-            ? () => generateInitialEnrollment(selected)
-            : installInstructions.kind === 'replace'
-              ? () => replaceCredential(selected)
-              : installInstructions.kind === 'policy_update' && selected.pendingAgentAccessPolicy
-                ? () => updateAgentAccessPolicy(
-                    selected,
-                    selected.pendingAgentAccessPolicy!.accessMode,
-                    selected.pendingAgentAccessPolicy!.restartServices
-                  )
-                : undefined
+          ? installInstructions.kind === 'replace'
+            ? () => replaceCredential(selected)
+            : installInstructions.kind === 'policy_update' && selected.pendingAgentAccessPolicy
+              ? () => updateAgentAccessPolicy(
+                  selected,
+                  selected.pendingAgentAccessPolicy!.accessMode,
+                  selected.pendingAgentAccessPolicy!.restartServices
+                )
+              : undefined
           : undefined}
         onDeleteVirtualMachine={canManageTargets ? () => deleteVirtualMachine(selected) : undefined}
         onUpdatePermissionMode={canManageTargets ? async (permissionMode) => {

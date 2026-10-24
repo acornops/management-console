@@ -1,6 +1,35 @@
 import { expect, test } from '@playwright/test';
+import { FIXTURE_CLOCK } from '../../src/fixtures/store';
 
 const virtualMachinesPath = '/workspaces/fixture-workspace/virtual-machines';
+
+test('onboarding keeps the visible command expiry active after the VM connects', async ({ page }) => {
+  await page.clock.setFixedTime(FIXTURE_CLOCK);
+  await page.addInitScript(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const response = await originalFetch(input, init);
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href);
+      const method = init?.method || (typeof input === 'object' && 'method' in input ? input.method : 'GET');
+      if (method === 'GET' && url.pathname.endsWith('/virtual-machines')) {
+        const body = await response.json();
+        return new Response(JSON.stringify({ ...body, items: body.items.map((vm: Record<string, unknown>) => ({ ...vm, status: 'online' })) }), { headers: { 'content-type': 'application/json' } });
+      }
+      return response;
+    };
+  });
+  await page.goto(virtualMachinesPath);
+  await page.getByRole('button', { name: 'Connect VM' }).click();
+  await page.getByRole('textbox', { name: 'VM name' }).fill('Connected onboarding VM');
+  await page.getByRole('button', { name: 'Continue to Install Agent' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Connect VM' });
+  await expect(dialog.getByText(/expires in 15:/)).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(dialog.getByRole('status')).toHaveText('Agent connected');
+  await expect(dialog.getByRole('button', { name: 'Copy', exact: true })).toBeEnabled();
+  await page.clock.setFixedTime(new Date(new Date(FIXTURE_CLOCK).getTime() + 16 * 60_000));
+  await expect(dialog.getByRole('button', { name: 'Copy', exact: true })).toBeDisabled();
+});
 
 test('AgentV onboarding separates first install from repair and credential replacement', async ({ page }) => {
   await page.goto(virtualMachinesPath, { waitUntil: 'domcontentloaded' });
@@ -21,12 +50,16 @@ test('AgentV onboarding separates first install from repair and credential repla
   await onboarding.getByRole('button', { name: 'Close connect VM dialog' }).click();
   await page.getByRole('button', { name: 'Install Agent' }).click();
 
-  await expect(page.getByRole('heading', { name: 'VM Settings' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Generate setup command' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Generate repair command' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Replace AgentV credential' })).toHaveCount(0);
-  await expect(page.getByRole('alert')).toHaveCount(0);
-  await expect(page.getByText(/Read-write for these exact services: nginx.service/)).toBeVisible();
+  const installDialog = page.getByRole('dialog', { name: 'Install Agent', exact: true });
+  await expect(installDialog).toBeVisible();
+  await expect(page).toHaveURL(virtualMachinesPath);
+  await expect(installDialog.getByRole('button', { name: 'Generate setup command' })).toBeVisible();
+  await expect(installDialog.getByRole('button', { name: 'Generate repair command' })).toHaveCount(0);
+  await expect(installDialog.getByRole('button', { name: 'Replace AgentV credential' })).toHaveCount(0);
+  await expect(installDialog.getByRole('alert')).toHaveCount(0);
+  await expect(installDialog.getByText('Sensitive until used')).toHaveCount(0);
+  await expect(installDialog.getByText(/Read-write for these exact services: nginx.service/)).toBeVisible();
+  await installDialog.getByRole('button', { name: 'Close install agent dialog' }).click();
 
   await page.goto(`${virtualMachinesPath}/fixture-vm/settings`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('button', { name: 'Generate setup command' })).toHaveCount(0);

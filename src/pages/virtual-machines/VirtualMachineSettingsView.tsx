@@ -17,6 +17,7 @@ import type { RunPermissionMode } from '@/services/control-plane/runPermissionTy
 import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
 import type { AgentVInstructionKind } from './useVirtualMachineAgentSetup';
 import { VirtualMachineAgentAccessSelector } from './VirtualMachineAgentAccessSelector';
+import { VirtualMachineAgentInstallModal } from './VirtualMachineAgentInstallModal';
 
 export const VirtualMachineSettingsView: React.FC<{
   vm: ControlPlaneVirtualMachine;
@@ -24,11 +25,10 @@ export const VirtualMachineSettingsView: React.FC<{
   installInstructions: ControlPlaneVirtualMachineInstallInstructions | null;
   installInstructionKind?: AgentVInstructionKind | null;
   requiresInitialEnrollment?: boolean;
-  onGenerateInitialEnrollment?: () => void | Promise<void>;
+  onVirtualMachineUpdated: (vm: ControlPlaneVirtualMachine) => void;
   onReplaceCredential?: () => void | Promise<void>;
   onGenerateRepairInstructions?: () => void | Promise<void>;
   isGeneratingRepairInstructions?: boolean;
-  isGeneratingInitialEnrollment?: boolean;
   isReplacingCredential?: boolean;
   credentialError?: string | null;
   agentAccessPolicyError?: string | null;
@@ -45,11 +45,10 @@ export const VirtualMachineSettingsView: React.FC<{
   installInstructions,
   installInstructionKind = null,
   requiresInitialEnrollment = false,
-  onGenerateInitialEnrollment,
+  onVirtualMachineUpdated,
   onReplaceCredential,
   onGenerateRepairInstructions,
   isGeneratingRepairInstructions = false,
-  isGeneratingInitialEnrollment = false,
   isReplacingCredential = false,
   credentialError,
   agentAccessPolicyError,
@@ -62,6 +61,7 @@ export const VirtualMachineSettingsView: React.FC<{
   canCreateReadWriteRuns = false
 }) => {
   const { t } = useTranslation();
+  const [isInstallDialogOpen, setIsInstallDialogOpen] = React.useState(false);
   const allowedLogs = vm.allowedLogSources?.join(', ') || t('virtualMachines.settings.defaultAllowedLogs');
   const appliedAgentAccess = vm.agentAccessMode === 'read_write'
     ? t('virtualMachines.settings.agentAccessReadWrite', { services: vm.restartServices.join(', ') })
@@ -84,8 +84,7 @@ export const VirtualMachineSettingsView: React.FC<{
   const policyChanged = draftAccessMode !== configuredAccessMode
     || [...draftRestartServices].sort().join('\u0000') !== [...configuredRestartServices].sort().join('\u0000');
   const policyValid = draftAccessMode === 'read_only' || draftRestartServices.length > 0;
-  const policyBusy = isUpdatingAgentAccessPolicy || isGeneratingInitialEnrollment
-    || isGeneratingRepairInstructions || isReplacingCredential;
+  const policyBusy = isUpdatingAgentAccessPolicy || isGeneratingRepairInstructions || isReplacingCredential;
   const policyCommandVisible = installInstructionKind === 'policy_update' && Boolean(installInstructions?.command);
 
   return (
@@ -226,6 +225,7 @@ export const VirtualMachineSettingsView: React.FC<{
         <SettingsSection
           title={t('virtualMachines.settings.agentInstallTitle')}
           description={t('virtualMachines.settings.agentInstallBody')}
+          tabIndex={-1}
         >
           {requiresInitialEnrollment && (
             <SettingsRow
@@ -233,9 +233,9 @@ export const VirtualMachineSettingsView: React.FC<{
               label={t('virtualMachines.settings.initialEnrollment')}
               description={t('virtualMachines.settings.initialEnrollmentBody')}
               action={(
-                <Button onClick={onGenerateInitialEnrollment} disabled={!onGenerateInitialEnrollment || isGeneratingInitialEnrollment || isGeneratingRepairInstructions || isReplacingCredential} title={!onGenerateInitialEnrollment ? t('virtualMachines.settings.initialEnrollmentPermissionRequired') : undefined} variant="secondary" size="sm" className="w-full sm:w-auto">
+                <Button onClick={() => setIsInstallDialogOpen(true)} disabled={!canManageTargets} title={!canManageTargets ? t('virtualMachines.settings.initialEnrollmentPermissionRequired') : undefined} variant="secondary" size="sm" className="w-full sm:w-auto">
                   <PlugZap className="h-4 w-4" />
-                  {isGeneratingInitialEnrollment ? t('virtualMachines.settings.generatingInstructions') : t('virtualMachines.settings.generateInitialCommand')}
+                  {t('dashboard.installAgent')}
                 </Button>
               )}
             />
@@ -245,7 +245,7 @@ export const VirtualMachineSettingsView: React.FC<{
             label={t('virtualMachines.settings.repairAgent')}
             description={t('virtualMachines.settings.repairAgentBody')}
             action={(
-              <Button onClick={onGenerateRepairInstructions} disabled={!onGenerateRepairInstructions || isGeneratingInitialEnrollment || isGeneratingRepairInstructions || isReplacingCredential} variant="secondary" size="sm" className="w-full sm:w-auto">
+              <Button onClick={onGenerateRepairInstructions} disabled={!onGenerateRepairInstructions || isGeneratingRepairInstructions || isReplacingCredential} variant="secondary" size="sm" className="w-full sm:w-auto">
                 <Wrench className="h-4 w-4" />
                 {isGeneratingRepairInstructions ? t('virtualMachines.settings.generatingInstructions') : t('virtualMachines.settings.generateRepairCommand')}
               </Button>
@@ -256,7 +256,7 @@ export const VirtualMachineSettingsView: React.FC<{
             label={t('virtualMachines.settings.replaceCredential')}
             description={t('virtualMachines.settings.replaceCredentialBody')}
             action={(
-              <Button onClick={onReplaceCredential} disabled={!onReplaceCredential || isGeneratingInitialEnrollment || isReplacingCredential || isGeneratingRepairInstructions} title={!onReplaceCredential ? t('virtualMachines.settings.credentialPermissionRequired') : undefined} variant="secondary" size="sm" className="w-full sm:w-auto">
+              <Button onClick={onReplaceCredential} disabled={!onReplaceCredential || isReplacingCredential || isGeneratingRepairInstructions} title={!onReplaceCredential ? t('virtualMachines.settings.credentialPermissionRequired') : undefined} variant="secondary" size="sm" className="w-full sm:w-auto">
                 <KeyRound className="h-4 w-4" />
                 {isReplacingCredential ? t('virtualMachines.settings.generatingInstructions') : t('virtualMachines.settings.replaceCredential')}
               </Button>
@@ -339,6 +339,16 @@ export const VirtualMachineSettingsView: React.FC<{
           />
         )}
       </div>
+      {canManageTargets && isInstallDialogOpen && (
+        <VirtualMachineAgentInstallModal
+          key={`${workspace.id}:${vm.id}`}
+          workspaceId={workspace.id}
+          workspaceName={workspace.name || workspace.id}
+          vm={vm}
+          onVirtualMachineUpdated={onVirtualMachineUpdated}
+          onClose={() => setIsInstallDialogOpen(false)}
+        />
+      )}
     </PageShell>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Check, Copy, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile, InlineAlert } from '@acornops/ui';
+import { Button, IconTile } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -9,7 +9,7 @@ import { ModalStepIndicator } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
 import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
-import { useAgentVInstallCommand } from './useAgentVInstallCommand';
+import { AgentVInstallCommandPanel } from './AgentVInstallCommandPanel';
 import { VirtualMachineAgentAccessSelector } from './VirtualMachineAgentAccessSelector';
 
 interface AddVirtualMachineModalProps {
@@ -49,10 +49,6 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const vmNameInputRef = React.useRef<HTMLInputElement>(null);
-  const installCommand = useAgentVInstallCommand(
-    installInstructions,
-    isOpen && creationStep === 'instructions'
-  );
   const connectSteps = [
     { id: 'details', label: t('virtualMachines.list.stepConfigure') },
     { id: 'instructions', label: t('virtualMachines.list.installAgent') }
@@ -131,48 +127,15 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
             </div>
 
             {installInstructions?.command ? (
-              <div className="rounded-lg border border-ui-border bg-ui-bg shadow-sm">
-                <div className="flex items-center justify-between gap-3 px-4 pt-4">
-                  <div className="flex items-center gap-2">
-                    <span className="type-micro-label">{t('virtualMachines.list.installInstructions')}</span>
-                    {!isAgentConnected && <span className="rounded-full bg-status-warning-soft px-2 py-0.5 type-micro-label text-status-warning-text">{t('virtualMachines.list.sensitiveUntilUsed')}</span>}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="icon"
-                    size="icon"
-                    onClick={() => void installCommand.copy()}
-                    disabled={installCommand.enrollmentExpired}
-                    aria-label={installCommand.hasCopied ? t('virtualMachines.list.copied') : t('virtualMachines.list.copy')}
-                  >
-                    {installCommand.hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <div className="max-h-[18rem] overflow-auto px-4 pb-4 pt-3 font-mono type-caption leading-6 text-ui-text custom-scrollbar">
-                  <pre className="whitespace-pre-wrap break-words">{installInstructions.command}</pre>
-                </div>
-                {installCommand.copyFailed && (
-                  <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 p-3 type-caption">
-                    {t('virtualMachines.list.copyFailed')}
-                  </InlineAlert>
-                )}
-              </div>
+              <AgentVInstallCommandPanel
+                instructions={installInstructions}
+                isAgentConnected={isAgentConnected}
+                isRegenerating={isRegistering}
+                onRegenerateEnrollment={onRegenerateEnrollment}
+              />
             ) : (
               <div className="rounded-lg border border-status-warning/25 bg-status-warning-soft p-4 type-body type-emphasis text-status-warning-text">
                 {t('virtualMachines.list.missingInstallInstructions')}
-              </div>
-            )}
-            {installInstructions && installInstructions.warnings.length > 0 && (
-              <div className="space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
-                {installInstructions.warnings.map((warning) => (
-                  <p key={warning}>{warning}</p>
-                ))}
-              </div>
-            )}
-            {!isAgentConnected && installCommand.enrollmentExpiry !== null && (
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-ui-border bg-ui-surface p-3 type-caption text-ui-text-muted">
-                <span>{installCommand.enrollmentExpired ? t('virtualMachines.list.enrollmentExpired') : t('virtualMachines.list.enrollmentExpiresIn', { time: installCommand.timeRemaining })}</span>
-                {installCommand.enrollmentExpired && <Button size="sm" variant="secondary" disabled={isRegistering} onClick={() => void onRegenerateEnrollment()}>{t('virtualMachines.list.generateNewCommand')}</Button>}
               </div>
             )}
             <div className="rounded-lg border border-ui-border bg-ui-surface p-4">
