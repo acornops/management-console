@@ -61,6 +61,6 @@ describe('focused application motion source contracts', () => {
     expect(settingsPage).toContain('<LayoutGroup id={settingsTabsLayoutGroupId}>');
     expect(settingsPage).toContain('{isActive && <ActiveTabIndicator />}');
     expect(settingsPage).toContain("aria-current={isActive ? 'page' : undefined}");
-    expect(settingsPage).toContain('onSelectTab?.(tab);');
+    expect(settingsPage).toContain('onSelectTab(tab);');
   });
 });

@@ -72,6 +72,25 @@ test('settings destinations remain links with current-page and history semantics
   await expect(navigation.getByRole('link', { name: 'Workspace', exact: true })).toHaveAttribute('aria-current', 'page');
 });
 
+test('settings selection follows history when Back interrupts a tab transition', async ({ page }) => {
+  await page.goto('/workspaces/fixture-workspace/settings', { waitUntil: 'domcontentloaded' });
+  const navigation = page.getByRole('navigation', { name: 'Workspace Settings', exact: true });
+  await expect(navigation.getByRole('link', { name: 'Workspace', exact: true })).toHaveAttribute('aria-current', 'page');
+  const session = await page.context().newCDPSession(page);
+  await session.send('Emulation.setCPUThrottlingRate', { rate: 8 });
+  // Issue Back immediately, before waiting for the new route to render.
+  await navigation.getByRole('link', { name: 'Members', exact: true }).evaluate((link: HTMLAnchorElement) => {
+    link.click();
+    window.history.back();
+  });
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(page.locator('[data-settings-tab]')).toHaveAttribute('data-settings-tab', 'workspace');
+  await expect(navigation.getByRole('link', { name: 'Workspace', exact: true })).toHaveAttribute('aria-current', 'page');
+  await page.goForward();
+  await expect(page).toHaveURL(/\/members$/);
+  await expect(page.locator('[data-settings-tab]')).toHaveAttribute('data-settings-tab', 'members');
+});
+
 test('resource families retain a single keyboard tab stop and linked panel', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/kubernetes-clusters/fixture-cluster/resources');
   const tabs = page.getByRole('tablist', { name: 'Resource families' });

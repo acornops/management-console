@@ -33,7 +33,7 @@ function getTabUnavailableReason({ tab, hasWorkspace, canReadWorkspaceData, canR
 
 interface SettingsPageProps {
   workspace?: Workspace;
-  initialTab?: SettingsTab;
+  activeTab: SettingsTab;
   canReadWorkspaceData: boolean;
   canReadMembers: boolean;
   canDeleteWorkspace: boolean;
@@ -47,7 +47,7 @@ interface SettingsPageProps {
   onRevokeInvitation?: (invitation: WorkspaceInvitation) => Promise<void> | void;
   onUpdateMemberRole?: (member: ProjectMember, role: ProjectMember['role']) => Promise<void> | void;
   onRemoveMember?: (member: ProjectMember) => Promise<void> | void;
-  onSelectTab?: (tab: SettingsTab) => void;
+  onSelectTab: (tab: SettingsTab) => void;
   returnTo?: string;
   onReturnToAssistant?: (returnTo: string) => void;
   showToast: (message: string, options?: { tone: import('@acornops/ui').AppToast['tone'] }) => void;
@@ -55,7 +55,7 @@ interface SettingsPageProps {
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
   workspace,
-  initialTab = 'workspace',
+  activeTab: requestedTab,
   canReadWorkspaceData,
   canReadMembers,
   canDeleteWorkspace,
@@ -76,26 +76,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const settingsTabsLayoutGroupId = React.useId();
-  const [activeTab, setActiveTab] = React.useState<SettingsTab>(initialTab);
   const workspaceTabDisabled = !workspace;
   const aiTabDisabled = !workspace || !canReadWorkspaceData;
   const membersTabDisabled = !workspace || !canReadMembers;
   const hasWorkspace = Boolean(workspace);
+  // The route owns selection, including interrupted transitions and browser history.
+  const activeTab = (requestedTab === 'members' && membersTabDisabled)
+    || (requestedTab === 'ai' && aiTabDisabled) ? 'workspace' : requestedTab;
   const aiSettingsResource = useWorkspaceAiSettingsResource(workspace?.id, activeTab === 'ai' && !aiTabDisabled);
-
-  React.useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
-
-  React.useEffect(() => {
-    if (activeTab === 'members' && membersTabDisabled) {
-      setActiveTab('workspace');
-      return;
-    }
-    if (activeTab === 'ai' && aiTabDisabled) {
-      setActiveTab('workspace');
-    }
-  }, [activeTab, aiTabDisabled, membersTabDisabled]);
 
   const tabs: Array<{
     id: SettingsTab;
@@ -120,8 +108,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       t
     });
     if (unavailableReason) return;
-    setActiveTab(tab);
-    onSelectTab?.(tab);
+    onSelectTab(tab);
   };
 
   return (

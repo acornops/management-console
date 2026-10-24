@@ -16,6 +16,10 @@
 - During iteration, prefer the smallest affected Vitest or Playwright command.
 - Validate in control-plane mode when changing real API integrations.
 - Preserve route stability for workspace and cluster deep links.
+- Workspace Settings selection is controlled by the route, not an optimistic
+  local tab copy. Back/Forward, including Back before a tab transition commits,
+  must restore the selected link and displayed page together. Permission checks
+  still prevent unavailable settings from rendering.
 - Keep v1 console payloads bounded: lists use `{ items, nextCursor? }`, large routes lazy-load pages, and cluster detail exposes summary counts instead of full snapshot JSON.
 - Preserve run trace handling for replay, SSE, and terminal states.
 - Preserve target chat activity resume replay for collaborative message discovery, approval checkpoints, and final assistant commits; fresh streams rely on recent activity/session reads for initial state.

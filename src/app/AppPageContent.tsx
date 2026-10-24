@@ -532,7 +532,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
           {(route.kind === 'workspaceSettings' || route.kind === 'workspaceAiSettings' || route.kind === 'workspaceMembers') && (
             <SettingsPage
               workspace={workspaceContext}
-              initialTab={activeSettingsTab}
+              activeTab={activeSettingsTab}
               canReadWorkspaceData={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'read_workspace_data') : false}
               canReadMembers={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'read_members') : false}
               canDeleteWorkspace={workspaceContext ? getWorkspacePermission(workspaceContext.id, 'delete_workspace') : false}
