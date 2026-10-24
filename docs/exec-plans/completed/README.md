@@ -1,6 +1,7 @@
 # Completed Execution Plans
 
 - [Platform Release Hardening](platform-release-hardening.md)
+- [VM Install Dialog](vm-install-dialog.md)
 
 Move finished plans here after the work lands.
 
