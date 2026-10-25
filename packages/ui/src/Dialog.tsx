@@ -25,6 +25,10 @@ export interface DialogProps {
 const dialogOverlayClassName =
   'fixed inset-0 z-50 flex items-center justify-center bg-ui-text/40 p-4 dark:bg-ui-bg/75';
 
+// An onUpdate listener keeps Motion in its JS frame loop, avoiding the native
+// opacity handoff that briefly restores the scrim/panel's initial transparency.
+const keepDialogAnimationInFrameLoop = () => undefined;
+
 export function shouldCloseDialogOnKeyDown(key: string, closeDisabled: boolean): boolean {
   return shouldCloseModalOnKeyDown(key, closeDisabled);
 }
@@ -65,6 +69,7 @@ export const Dialog: React.FC<DialogProps> = ({
     <motion.div
       {...(shouldReduceMotion ? reducedMotion : modalOverlayMotion)}
       ref={containerRef}
+      onUpdate={keepDialogAnimationInFrameLoop}
       className={twMerge(dialogOverlayClassName, overlayClassName)}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !closeDisabled && isTopmost()) {
@@ -76,6 +81,7 @@ export const Dialog: React.FC<DialogProps> = ({
         {...(shouldReduceMotion ? reducedMotion : modalPanelMotion)}
         id={id}
         ref={panelRef}
+        onUpdate={keepDialogAnimationInFrameLoop}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
