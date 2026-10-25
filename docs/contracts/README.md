@@ -220,7 +220,21 @@ The management console is the browser client for the control-plane API. Keep thi
   rejects them.
 - Established chats restore provider, model, and reasoning effort from the
   control plane's latest accepted run snapshot; workspace AI settings seed
-  chats that do not yet have a run.
+  chats that do not yet have a run. The displayed default is pinned so a later
+  settings refresh cannot silently select a different model.
+- Agent, Kubernetes, and VM chat retain a selected model that is no longer
+  permitted or credential-ready. They name it, block Send, and require an
+  explicit replacement; no model/provider substitution or automatic retry
+  occurs. Policy rejections refresh workspace AI settings while retaining the
+  draft and attachments. Failed settings refreshes block Send and offer an
+  in-place retry that does not resend the message. Users with
+  `manage_ai_settings` retain the Configure AI recovery action beside an
+  unavailable-model notice; other users receive administrator guidance.
+  Only disallowed reasoning effort is normalized, with a notice; history and
+  cancellation of accepted
+  runs remain available. Once an Agent message is accepted, subsequent history
+  refresh failures are reported separately and do not retain submitted context
+  as an unsent attachment.
 - Agent chat uses the Agent capability-preview endpoint for the tools-and-skills
   control. The console does not derive effective run authority from Agent
   configuration; the control plane compiles it for the current actor and access

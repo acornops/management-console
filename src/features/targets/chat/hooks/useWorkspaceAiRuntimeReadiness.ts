@@ -16,7 +16,8 @@ export function useWorkspaceAiRuntimeReadiness(workspaceId: string, refreshToken
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(!hasSessionDataCacheValue(settingsCacheKey));
+    // A policy rejection invalidates cached readiness until the refresh succeeds.
+    setIsLoading(refreshToken > 0 || !hasSessionDataCacheValue(settingsCacheKey));
     setError('');
     controlPlaneApi.getWorkspaceAiSettings(workspaceId)
       .then((nextSettings) => {
@@ -24,7 +25,7 @@ export function useWorkspaceAiRuntimeReadiness(workspaceId: string, refreshToken
       })
       .catch((loadError) => {
         if (cancelled) return;
-        if (!hasSessionDataCacheValue(settingsCacheKey)) {
+        if (refreshToken > 0 || !hasSessionDataCacheValue(settingsCacheKey)) {
           setError(formatControlPlaneError(loadError, t('workspaceAiSettings.loadFailed'), { area: 'aiSettings' }));
         }
       })

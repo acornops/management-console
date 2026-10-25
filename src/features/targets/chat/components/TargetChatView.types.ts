@@ -55,6 +55,7 @@ export interface TargetChatViewProps {
   workspaceAiSettings: WorkspaceAiSettings | null;
   isWorkspaceAiSettingsLoading: boolean;
   workspaceAiSettingsError: string;
+  onRetryAiSettings: () => void;
   assistantMarkdownComponents: Components;
   userMarkdownComponents: Components;
   visibleMessages: ChatMessage[];

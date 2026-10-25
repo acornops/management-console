@@ -135,6 +135,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
     workspaceAiSettings,
     isWorkspaceAiSettingsLoading,
     workspaceAiSettingsError,
+    retryWorkspaceAiSettings,
     isActiveSessionOwner,
     conversationNotice,
     sessionDeepLinkError,
@@ -301,6 +302,7 @@ const KubernetesClusterDetail: React.FC<KubernetesClusterDetailProps> = ({
                 workspaceAiSettings={workspaceAiSettings}
                 isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
                 workspaceAiSettingsError={workspaceAiSettingsError}
+                onRetryAiSettings={retryWorkspaceAiSettings}
                 subject={target}
                 assistantMarkdownComponents={assistantMarkdownComponents}
                 userMarkdownComponents={userMarkdownComponents}

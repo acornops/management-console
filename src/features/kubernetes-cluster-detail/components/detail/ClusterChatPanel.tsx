@@ -120,6 +120,7 @@ export const ClusterChatPanel: React.FC<ClusterChatPanelProps> = ({
       workspaceAiSettings={workspaceAiSettings}
       isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
       workspaceAiSettingsError={workspaceAiSettingsError}
+      onRetryAiSettings={chatController.retryWorkspaceAiSettings}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={visibleMessages}

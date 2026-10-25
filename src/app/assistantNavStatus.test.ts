@@ -32,6 +32,7 @@ function controller(overrides: Partial<TargetChatController> = {}): TargetChatCo
     isWorkspaceAiSettingsLoading: false,
     workspaceAiSettingsError: '',
     workspaceAiSettingsRefreshToken: 0,
+    retryWorkspaceAiSettings: () => undefined,
     transcriptRef: () => undefined,
     setActiveSessionId: () => undefined,
     handleCreateSession: () => undefined,

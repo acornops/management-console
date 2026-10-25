@@ -594,7 +594,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
       setInputValue(inputValue);
       onRuntimeSelectionRejected?.();
     }
-    const shouldRethrow = isAssistantReferenceRejection(error);
+    const shouldRethrow = isRuntimeSelectionPolicyRejection(error) || isAssistantReferenceRejection(error);
     if (shouldRethrow) setInputValue(inputValue);
     const failureMessage = buildChatSubmitFailureMessage({
       error,

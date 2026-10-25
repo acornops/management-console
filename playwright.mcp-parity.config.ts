@@ -14,7 +14,8 @@ const appBaseUrl = `http://127.0.0.1:${appPort}`;
 const apiBaseUrl = `http://127.0.0.1:${apiPort}`;
 
 export default defineConfig({
-  testDir: './tests/mcp-parity',
+  testDir: './tests',
+  testMatch: ['**/mcp-parity/*.spec.ts', '**/fixtures/chat-model-availability.spec.ts'],
   outputDir: './test-results/mcp-parity',
   fullyParallel: false,
   workers: 1,

@@ -141,6 +141,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     userTurnRunIdsByIndex,
     visibleMessages,
     workspaceAiSettingsError,
+    onRetryAiSettings,
     startEditingMessage,
     cancelEditingMessage,
     closeDeleteSessionModal,
@@ -152,6 +153,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
     submitEditedMessage
   } = props;
   const hasReadyAiRuntime = aiRuntimeReadiness.status === 'ready';
+  const showComposer = hasReadyAiRuntime || Boolean(selectedModel) || Boolean(inputValue) || isRunActive;
   const {
     unseenCount: unseenInvestigationCount,
     markViewed: markInvestigationsViewed
@@ -504,13 +506,14 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                 )}
               </div>
 
-              {hasReadyAiRuntime ? (
+              {showComposer ? (
                 <TargetChatComposer
                   allowedReasoningOptions={allowedReasoningOptions}
                   assistantCapabilitiesPreview={assistantCapabilitiesPreview}
                   assistantCapabilitiesPreviewError={assistantCapabilitiesPreviewError}
                   targetMentionsEnabled={targetMentionsEnabled}
                   canChat={canChat}
+                  canManageAiSettings={canManageAiSettings}
                   canCancelActiveRun={canCancelActiveRun}
                   canPost={canPost}
                   subject={subject}
@@ -543,6 +546,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   modelSubmenuButtonId={modelSubmenuButtonId}
                   modelSubmenuPanelId={modelSubmenuPanelId}
                   onCancelRun={onCancelRun}
+                  onOpenAiSettings={onOpenAiSettings}
                   recentActivityWarning={recentActivityWarning}
                   removeComposerAttachment={removeComposerAttachment}
                   requestedToolAccessMode={requestedToolAccessMode}
@@ -561,6 +565,7 @@ export const TargetChatViewBody: React.FC<TargetChatViewBodyProps> = (props) => 
                   submitComposerMessage={submitComposerMessage}
                   t={t}
                   workspaceAiSettingsError={workspaceAiSettingsError}
+                  onRetryAiSettings={onRetryAiSettings}
                 />
               ) : visibleMessages.length > 0 ? (
                 <TargetAssistantReadinessState compact status={aiRuntimeReadiness.status} canManageAiSettings={canManageAiSettings} onOpenAiSettings={onOpenAiSettings} t={t} />

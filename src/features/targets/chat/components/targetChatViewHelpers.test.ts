@@ -3,11 +3,10 @@ import {
   getHistoryFocusWrapIndex,
   resolveComposerReasoningEffort,
   resolveComposerRuntimeSelection,
-  buildComposerModelOptions,
   isMessageOwnedByCurrentUser,
   shouldDismissHistoryOnKeyDown
 } from '@/features/targets/chat/components/targetChatViewHelpers';
-import type { ChatMessage, ChatSession, WorkspaceAiSettings } from '@/types';
+import type { ChatMessage, ChatRuntimeSelection, ChatSession, WorkspaceAiSettings } from '@/types';
 
 function aiSettings(overrides: Partial<WorkspaceAiSettings> = {}): WorkspaceAiSettings {
   return {
@@ -81,24 +80,47 @@ describe('target chat view helpers', () => {
     ).toBe('off');
   });
 
-  it('restores a valid conversation runtime and falls back when it is no longer available', () => {
+  it('restores a valid conversation runtime and preserves an unavailable model without substitution', () => {
     const settings = aiSettings();
-    const options = buildComposerModelOptions(settings);
-    expect(resolveComposerRuntimeSelection(settings, options, {
+    expect(resolveComposerRuntimeSelection(settings, {
       provider: 'openai',
       model: 'gpt-5-nano',
       reasoningEffort: 'high'
     })).toEqual({
       selection: { provider: 'openai', model: 'gpt-5-nano', reasoningEffort: 'high' },
-      fellBack: false
+      reasoningAdjusted: false
     });
-    expect(resolveComposerRuntimeSelection(settings, options, {
+    expect(resolveComposerRuntimeSelection(settings, {
       provider: 'gemini',
       model: 'removed-model',
       reasoningEffort: 'high'
     })).toEqual({
-      selection: { provider: 'openai', model: 'gpt-5-nano', reasoningEffort: 'medium' },
-      fellBack: true
+      selection: { provider: 'gemini', model: 'removed-model', reasoningEffort: 'high' },
+      reasoningAdjusted: false
     });
+  });
+
+  it('preserves unavailable defaults and missing credentials even when alternatives are ready', () => {
+    for (const settings of [
+      aiSettings({ defaultModel: 'removed-model' }),
+      aiSettings({ providers: [{ provider: 'openai', configured: false, enabled: true, source: 'none' }] }),
+      aiSettings({ allowedProviders: [], allowedProviderModels: { openai: [], anthropic: [], gemini: [] } })
+    ]) {
+      expect(resolveComposerRuntimeSelection(settings)).toEqual({
+        selection: { provider: settings.defaultProvider, model: settings.defaultModel, reasoningEffort: 'medium' },
+        reasoningAdjusted: false
+      });
+    }
+  });
+
+  it('normalizes only reasoning while preserving the selected model and provider', () => {
+    const settings = aiSettings({ allowedReasoningEfforts: ['low'] });
+    const selected: ChatRuntimeSelection = { provider: 'anthropic', model: 'chosen-model', reasoningEffort: 'high' };
+    expect(resolveComposerRuntimeSelection(settings, selected)).toEqual({
+      selection: { ...selected, reasoningEffort: 'low' }, reasoningAdjusted: true
+    });
+    expect(resolveComposerRuntimeSelection(settings, {
+      provider: 'openai', model: 'gpt-5-nano', reasoningEffort: 'low'
+    })).toEqual({ selection: { provider: 'openai', model: 'gpt-5-nano', reasoningEffort: 'low' }, reasoningAdjusted: false });
   });
 });

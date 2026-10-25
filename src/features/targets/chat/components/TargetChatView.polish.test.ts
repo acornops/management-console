@@ -235,10 +235,10 @@ describe('target chat polish contracts', () => {
     expect(chatView).not.toContain('disabled={!option.ready}');
     expect(chatView).not.toContain("t('workspaceAiSettings.providerDisabled')");
     expect(chatView).not.toContain("t('workspaceAiSettings.credentialMissingBadge')");
-    expect(chatView).toContain('resolveComposerRuntimeSelection(workspaceAiSettings, composerModelOptions, composerRuntimeSelection)');
+    expect(chatView).toContain('resolveComposerRuntimeSelection(workspaceAiSettings, composerRuntimeSelection)');
     expect(chatView).toContain('onComposerRuntimeSelectionChange({ ...resolvedComposerRuntimeSelection, reasoningEffort: value });');
-    expect(chatView).toContain('runtimeResolution.fellBack && !chatRuntimeSelectionsEqual');
-    expect(chatView).toContain("setRuntimeFallbackNotice(t('chat.runtimeFallbackNotice'));");
+    expect(chatView).toContain('if (!composerRuntimeSelection || runtimeResolution.reasoningAdjusted) {');
+    expect(chatView).toContain("setReasoningPolicyNotice(t('chat.reasoningPolicyNotice'));");
     expect(chatView).toContain('export function resolveComposerReasoningEffort(');
     expect(chatView).toContain('export function resolveComposerRuntimeSelection(');
     expect(chatView).toContain('settings.allowedReasoningEfforts.includes(settings.reasoningEffort)');

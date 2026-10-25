@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Check, ChevronDown, ChevronRight, FileText, Image as ImageIcon, Loader2, Plus, Square, X } from 'lucide-react';
-import { Button, Radio } from '@acornops/ui';
+import { Button, InlineAlert, Radio } from '@acornops/ui';
 import { Tooltip } from '@acornops/ui';
 import { AssistantCapabilityPreviewControl } from '@/features/targets/chat/components/AssistantCapabilityPreviewControl';
 import { TargetChatReferenceChips, TargetChatReferenceMenu } from '@/features/targets/chat/components/TargetChatReferencePicker';
@@ -18,6 +18,7 @@ type TargetChatComposerProps = Pick<
   | 'assistantCapabilitiesPreviewError'
   | 'targetMentionsEnabled'
   | 'canChat'
+  | 'canManageAiSettings'
   | 'canCancelActiveRun'
   | 'canPost'
   | 'subject'
@@ -54,6 +55,7 @@ type TargetChatComposerProps = Pick<
   | 'modelSubmenuButtonId'
   | 'modelSubmenuPanelId'
   | 'onCancelRun'
+  | 'onOpenAiSettings'
   | 'recentActivityWarning'
   | 'referenceActiveIndex'
   | 'referenceMenuId'
@@ -78,6 +80,7 @@ type TargetChatComposerProps = Pick<
   | 'submitComposerMessage'
   | 't'
   | 'workspaceAiSettingsError'
+  | 'onRetryAiSettings'
 >;
 
 export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
@@ -86,6 +89,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   assistantCapabilitiesPreviewError,
   targetMentionsEnabled,
   canChat,
+  canManageAiSettings,
   canCancelActiveRun,
   canPost,
   subject,
@@ -122,6 +126,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   modelSubmenuButtonId,
   modelSubmenuPanelId,
   onCancelRun,
+  onOpenAiSettings,
   recentActivityWarning,
   referenceActiveIndex,
   referenceMenuId,
@@ -145,7 +150,8 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
   selectComposerReference,
   submitComposerMessage,
   t,
-  workspaceAiSettingsError
+  workspaceAiSettingsError,
+  onRetryAiSettings
 }) => {
   const targetMentions = useTargetMentionAutocomplete({
     enabled: targetMentionsEnabled,
@@ -239,9 +245,23 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 </div>
               )}
               {composerAttachmentNotice && (
-                <p className="rounded-lg border border-status-warning/25 bg-status-warning-soft/45 px-3 py-2 type-caption type-emphasis leading-5 text-status-warning-text">
+                <InlineAlert tone="warning" className="px-3 py-2 type-emphasis leading-5">
                   {composerAttachmentNotice}
-                </p>
+                  {workspaceAiSettingsError && (
+                    <div className="mt-2">
+                      <Button type="button" variant="secondary" size="sm" onClick={onRetryAiSettings} disabled={isWorkspaceAiSettingsLoading}>
+                        {t('chat.retryAiSettings')}
+                      </Button>
+                    </div>
+                  )}
+                  {!workspaceAiSettingsError && isComposerRuntimeUnavailable && canManageAiSettings && (
+                    <div className="mt-2">
+                      <Button type="button" variant="secondary" size="sm" onClick={onOpenAiSettings}>
+                        {t('chat.configureAi')}
+                      </Button>
+                    </div>
+                  )}
+                </InlineAlert>
               )}
             </div>
           )}
@@ -284,14 +304,14 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 type="button"
                 variant="tertiary"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={!canPost || isRunActive}
+                disabled={!canPost || isRunActive || isComposerRuntimeUnavailable}
                 className="control-target inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full p-0 text-ui-text-muted transition-colors hover:bg-ui-bg hover:text-ui-text focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-9"
                 aria-label={t('chat.attachFiles')}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </Tooltip>
-            <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive} />
+            <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive || isComposerRuntimeUnavailable} />
             <div className="order-1 inline-flex h-11 min-w-0 w-full max-w-full items-center overflow-visible rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60 sm:order-2 sm:ml-auto sm:h-8 sm:w-auto">
               <AssistantCapabilityPreviewControl
                 canChat={canChat}
@@ -377,7 +397,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                           type="button"
                           variant="tertiary"
                           id={modelSubmenuButtonId}
-                          onClick={() => setIsModelSubmenuOpen((current) => !current)}
+                          onClick={() => setIsModelSubmenuOpen(true)}
                           className="control-target flex h-10 w-full items-center justify-between rounded-xl px-3 text-left type-ui text-ui-text transition-colors hover:bg-ui-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
                           aria-controls={modelSubmenuPanelId}
                           aria-expanded={isModelSubmenuOpen}

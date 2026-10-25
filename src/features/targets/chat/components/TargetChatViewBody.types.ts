@@ -139,6 +139,7 @@ export interface TargetChatViewBodyProps {
   userTurnRunIdsByIndex: Map<number, string | undefined>;
   visibleMessages: ChatMessage[];
   workspaceAiSettingsError: string;
+  onRetryAiSettings: () => void;
   startEditingMessage: (messageId: string, content: string) => void;
   cancelEditingMessage: () => void;
   closeDeleteSessionModal: () => void;

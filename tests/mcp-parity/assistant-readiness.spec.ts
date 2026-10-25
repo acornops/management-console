@@ -4,6 +4,7 @@ const workspaceId = 'fixture-workspace';
 const clusterId = 'fixture-cluster';
 const virtualMachineId = 'fixture-vm';
 const controlPlaneUrl = `http://127.0.0.1:${process.env.MCP_PARITY_API_PORT || '4190'}`;
+const credentialGuidance = 'gpt-5.5 cannot be used with the current provider credentials.';
 
 async function resetWithAiRuntimeDisabled(page: Page) {
   await page.request.post(`${controlPlaneUrl}/api/v1/__fixtures/reset`);
@@ -26,7 +27,11 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
 
   await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/chat?session=fixture-session`);
   await expect(page.getByText('Why is the payments worker restarting?')).toBeVisible();
-  await expect(page.getByText('Connect an AI model to continue')).toBeVisible();
+  await expect(page.getByText(credentialGuidance, { exact: false })).toBeVisible();
+  const draft = page.getByRole('combobox', { name: /Message .* assistant/ });
+  await draft.fill('Keep my investigation draft while credentials are unavailable.');
+  await expect(page.getByRole('button', { name: 'Model unavailable', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Configure AI', exact: true })).toBeVisible();
   const chatNewChatBox = await page.locator('[data-chat-new-chat="true"]').boundingBox();
   expect(chatNewChatBox?.height).toBe(44);
   const railNewChat = page.locator('[data-chat-history-trigger="new-chat"]');
@@ -36,9 +41,10 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await expect(page.getByRole('tooltip', {
     name: 'Configure an AI provider and model before starting a new chat.'
   })).toBeVisible();
-  await expect(page.getByRole('textbox', { name: /Message .* assistant/ })).toHaveCount(0);
+  await expect(draft).toHaveValue('Keep my investigation draft while credentials are unavailable.');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.screenshot({ path: '/tmp/ai-readiness-desktop-light.png', fullPage: true });
+  await draft.fill('');
 
   await page.locator('[data-chat-history-trigger="search"]').click();
   await expect(page.getByRole('heading', { name: 'Chats' })).toBeVisible();
@@ -78,13 +84,16 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   });
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/dark/);
-  await expect(page.getByText('Connect an AI model to continue')).toBeVisible();
+  await expect(page.getByText(credentialGuidance, { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Configure AI', exact: true })).toBeVisible();
   await page.screenshot({ path: '/tmp/ai-readiness-desktop-dark.png', fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/workspaces/${workspaceId}/virtual-machines/${virtualMachineId}/chat`);
-  await expect(page.getByText('Connect an AI model to continue')).toBeVisible();
-  await expect(page.getByRole('textbox', { name: /Message .* assistant/ })).toHaveCount(0);
+  await expect(page.getByText(credentialGuidance, { exact: false })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: /Message .* assistant/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Model unavailable', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Configure AI', exact: true })).toBeVisible();
   await page.locator('[data-chat-history-trigger="chats"]').click();
   await expect(page.getByRole('dialog', { name: 'Chats' })).toBeVisible();
   await page.keyboard.press('Escape');
@@ -99,7 +108,12 @@ test('AI readiness stays inline across full-page, mobile, dark, and docked assis
   await page.goto(`/workspaces/${workspaceId}/kubernetes-clusters/${clusterId}/overview`);
   await page.getByRole('button', { name: 'Open assistant' }).first().click();
   const dockedAssistant = page.getByRole('complementary', { name: 'Cluster Assistant' });
-  await expect(dockedAssistant.getByText('Connect an AI model to continue')).toBeVisible();
-  await expect(dockedAssistant.getByRole('textbox', { name: /Message .* assistant/ })).toHaveCount(0);
+  const recentActivityDialog = dockedAssistant.getByRole('dialog', { name: 'Choose how to continue' });
+  await recentActivityDialog.getByRole('button', { name: 'Continue separate chat', exact: true }).click();
+  await expect(recentActivityDialog).toBeHidden();
+  await expect(dockedAssistant.getByText(credentialGuidance, { exact: false })).toBeVisible();
+  await expect(dockedAssistant.getByRole('combobox', { name: /Message .* assistant/ })).toBeVisible();
+  await expect(dockedAssistant.getByRole('button', { name: 'Model unavailable', exact: true })).toBeDisabled();
+  await expect(dockedAssistant.locator('form').getByRole('button', { name: 'Configure AI', exact: true })).toBeVisible();
   await page.screenshot({ path: '/tmp/ai-readiness-docked-dark.png', fullPage: true });
 });

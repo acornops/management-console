@@ -12,7 +12,6 @@ import {
   ComposerAttachment,
   ComposerModelOption,
   createComposerAttachment,
-  chatRuntimeSelectionsEqual,
   findComposerModelOption,
   fitAttachmentToRemainingContext,
   formatAttachmentSize,
@@ -63,6 +62,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   workspaceAiSettings,
   isWorkspaceAiSettingsLoading,
   workspaceAiSettingsError,
+  onRetryAiSettings,
   assistantMarkdownComponents,
   userMarkdownComponents,
   visibleMessages,
@@ -103,7 +103,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const [assistantCapabilitiesPreview, setAssistantCapabilitiesPreview] = React.useState<ControlPlaneAssistantCapabilitiesPreview | null>(null);
   const [isAssistantCapabilitiesPreviewLoading, setIsAssistantCapabilitiesPreviewLoading] = React.useState(canChat);
   const [assistantCapabilitiesPreviewError, setAssistantCapabilitiesPreviewError] = React.useState('');
-  const [runtimeFallbackNotice, setRuntimeFallbackNotice] = React.useState('');
+  const [reasoningPolicyNotice, setReasoningPolicyNotice] = React.useState('');
   const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
   const [isModelSubmenuOpen, setIsModelSubmenuOpen] = React.useState(false);
   const [dragDepth, setDragDepth] = React.useState(0);
@@ -185,7 +185,6 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const resolvedFooterNoAccessKey = footerNoAccessKey || 'chat.footerNoAccess';
   const hasComposerAttachmentContext = composerAttachments.some((attachment) => attachment.status === 'ready' && attachment.content.trim());
   const hasComposerSubmitPayload = Boolean(inputValue.trim() || hasComposerAttachmentContext);
-  const composerNotice = [runtimeFallbackNotice, composerAttachmentNotice].filter(Boolean).join(' ');
   const composerModelOptions = React.useMemo(() => buildComposerModelOptions(workspaceAiSettings), [workspaceAiSettings]);
   const selectableComposerModelOptions = React.useMemo(() => composerModelOptions.filter((option) => option.ready), [composerModelOptions]);
   const hasReadyComposerModel = selectableComposerModelOptions.length > 0;
@@ -200,9 +199,9 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   const hasReadyAiRuntime = isAiRuntimeReady(aiRuntimeReadiness);
   const runtimeResolution = React.useMemo(
     () => workspaceAiSettings
-      ? resolveComposerRuntimeSelection(workspaceAiSettings, composerModelOptions, composerRuntimeSelection)
-      : { selection: undefined, fellBack: false },
-    [composerModelOptions, composerRuntimeSelection, workspaceAiSettings]
+      ? resolveComposerRuntimeSelection(workspaceAiSettings, composerRuntimeSelection)
+      : { selection: undefined, reasoningAdjusted: false },
+    [composerRuntimeSelection, workspaceAiSettings]
   );
   const resolvedComposerRuntimeSelection = runtimeResolution.selection;
   const selectedProvider = resolvedComposerRuntimeSelection?.provider || composerRuntimeSelection?.provider || 'openai';
@@ -213,13 +212,17 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     [composerModelOptions, selectedModel, selectedProvider]
   );
   const isComposerRuntimeUnavailable = !hasReadyAiRuntime || !selectedModelOption?.ready;
+  const modelUnavailableNotice = workspaceAiSettings && !isWorkspaceAiSettingsLoading && !workspaceAiSettingsError && selectedModel && !selectedModelOption?.ready
+    ? t(selectedModelOption ? 'chat.runtimeCredentialsUnavailable' : 'chat.runtimeModelUnavailable', { model: selectedModel })
+    : '';
+  const composerNotice = [workspaceAiSettingsError, modelUnavailableNotice, reasoningPolicyNotice, composerAttachmentNotice].filter(Boolean).join(' ');
   const allowedReasoningOptions = React.useMemo(
     () => REASONING_OPTIONS.filter((option) => !workspaceAiSettings || workspaceAiSettings.allowedReasoningEfforts.includes(option.value as ReasoningEffort)),
     [workspaceAiSettings]
   );
   const selectedEffortOption = allowedReasoningOptions.find((option) => option.value === selectedEffort) || allowedReasoningOptions[0] || REASONING_OPTIONS[0];
-  const selectedModelLabel = selectedModelOption?.ready
-    ? selectedModelOption.model
+  const selectedModelLabel = workspaceAiSettings && selectedModel
+    ? selectedModel
     : isWorkspaceAiSettingsLoading
       ? t('chat.modelLoading')
       : workspaceAiSettingsError
@@ -321,6 +324,8 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     try {
       await onEditLastUserMessage(messageId, nextContent, resolvedComposerRuntimeSelection);
       cancelEditingMessage();
+    } catch {
+      // The parent reports the failure; retain the edit for explicit retry.
     } finally {
       setIsSubmittingEdit(false);
     }
@@ -454,7 +459,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
     if (resolvedComposerRuntimeSelection) {
       onComposerRuntimeSelectionChange({ ...resolvedComposerRuntimeSelection, reasoningEffort: value });
     }
-    setRuntimeFallbackNotice('');
+    setReasoningPolicyNotice('');
     setIsModelMenuOpen(false);
     setIsModelSubmenuOpen(false);
   };
@@ -466,7 +471,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
       model: option.model,
       reasoningEffort: resolvedComposerRuntimeSelection?.reasoningEffort || selectedEffort
     });
-    setRuntimeFallbackNotice('');
+    setReasoningPolicyNotice('');
     setIsModelMenuOpen(false);
     setIsModelSubmenuOpen(false);
   };
@@ -528,18 +533,17 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
   }, [canChat, loadAssistantCapabilitiesPreview, subject.id, subject.workspaceId, requestedToolAccessMode, t]);
 
   React.useEffect(() => {
-    setRuntimeFallbackNotice('');
+    setReasoningPolicyNotice('');
   }, [activeSessionId]);
 
   React.useEffect(() => {
     if (!resolvedComposerRuntimeSelection) return;
-    if (runtimeResolution.fellBack && !chatRuntimeSelectionsEqual(composerRuntimeSelection, resolvedComposerRuntimeSelection)) {
+    // Pin the displayed default before a later policy refresh can change it.
+    if (!composerRuntimeSelection || runtimeResolution.reasoningAdjusted) {
       onComposerRuntimeSelectionChange(resolvedComposerRuntimeSelection);
     }
-    if (runtimeResolution.fellBack) {
-      setRuntimeFallbackNotice(t('chat.runtimeFallbackNotice'));
-    }
-  }, [composerRuntimeSelection, onComposerRuntimeSelectionChange, resolvedComposerRuntimeSelection, runtimeResolution.fellBack, t]);
+    if (runtimeResolution.reasoningAdjusted) setReasoningPolicyNotice(t('chat.reasoningPolicyNotice'));
+  }, [composerRuntimeSelection, onComposerRuntimeSelectionChange, resolvedComposerRuntimeSelection, runtimeResolution.reasoningAdjusted, t]);
 
   React.useEffect(() => {
     if (deleteTargetSessionId && !deleteTargetSession && !deletingSessionId) {
@@ -550,7 +554,10 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
 
   React.useEffect(() => {
     if (previousActiveSessionIdRef.current === activeSessionId) return;
+    const hadActiveSession = Boolean(previousActiveSessionIdRef.current);
     previousActiveSessionIdRef.current = activeSessionId;
+    // Creating the first backend conversation does not discard its draft.
+    if (!hadActiveSession) return;
     clearComposerAttachments();
     clearComposerReferences();
   }, [activeSessionId]);
@@ -633,7 +640,7 @@ export const TargetChatView: React.FC<TargetChatViewProps> = ({
         resolvedNoChatAccessKey, resolvedPromptBodyKey, resolvedPromptTitleKey, resolvedSuggestionKeys, runTracesByRunId, selectSession, selectedEffort, selectedEffortLabel,
         selectedModel, selectedModelLabel, selectedProvider, sendText, sessionAssistantStatuses, sessionDeepLinkError, sessions, setEditingMessageValue, setIsHistoryOpen,
         selectComposerReference, setIsModelMenuOpen, setIsModelSubmenuOpen, setReferenceActiveIndex, setTraceExpandedByRunId, shouldShowTranscriptSkeleton, submitComposerMessage, t, title, traceExpandedByRunId,
-        transcriptRef, usesOverlayHistory, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
+        transcriptRef, usesOverlayHistory, userMarkdownComponents, userTurnRunIdsByIndex, visibleMessages, workspaceAiSettingsError, onRetryAiSettings, startEditingMessage, cancelEditingMessage, closeDeleteSessionModal,
         confirmDeleteSession, editingMessageId, editingMessageValue, isInFlightAssistantPlaceholder, openDeleteSessionModal, submitEditedMessage
       }}
     />

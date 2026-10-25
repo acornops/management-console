@@ -111,6 +111,7 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       workspaceAiSettings={controller.workspaceAiSettings}
       isWorkspaceAiSettingsLoading={controller.isWorkspaceAiSettingsLoading}
       workspaceAiSettingsError={controller.workspaceAiSettingsError}
+      onRetryAiSettings={controller.retryWorkspaceAiSettings}
       assistantMarkdownComponents={assistantMarkdownComponents}
       userMarkdownComponents={userMarkdownComponents}
       visibleMessages={controller.visibleMessages}

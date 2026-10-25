@@ -52,6 +52,7 @@ export interface TargetChatController {
   isWorkspaceAiSettingsLoading: boolean;
   workspaceAiSettingsError: string;
   workspaceAiSettingsRefreshToken: number;
+  retryWorkspaceAiSettings: () => void;
   transcriptRef: (node: HTMLDivElement | null) => void;
   setActiveSessionId: (sessionId: string) => void;
   handleCreateSession: () => void;

@@ -619,6 +619,7 @@ export function useTargetChat({
     workspaceAiSettingsError,
     workspaceAiSettingsRefreshToken,
     transcriptRef,
+    retryWorkspaceAiSettings: handleRuntimeSelectionRejected,
     setActiveSessionId: handleSelectSession,
     handleCreateSession,
     handleCreateSessionWithInput,

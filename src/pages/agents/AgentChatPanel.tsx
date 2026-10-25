@@ -8,6 +8,8 @@ import {
 } from '@/features/conversations/presentation';
 import { buildTargetChatAutoScrollSignature } from '@/features/targets/chat/hooks/targetChatState';
 import { useTargetChatScrollAnchor } from '@/features/targets/chat/hooks/useTargetChatScrollAnchor';
+import { useWorkspaceAiRuntimeReadiness } from '@/features/targets/chat/hooks/useWorkspaceAiRuntimeReadiness';
+import { isRuntimeSelectionPolicyRejection } from '@/features/targets/chat/hooks/chatSubmitFailures';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import type { ChatMessage, ChatRuntimeSelection, ChatSession, PendingApproval, Workspace } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -166,8 +168,8 @@ export const AgentChatPanel: React.FC<{
   const [isSending, setIsSending] = React.useState(false);
   const [isCancellingRun, setIsCancellingRun] = React.useState(false);
   const [runTracesByRunId, setRunTracesByRunId] = useSessionCachedState<Record<string, LiveRunTrace>>(`${agentChatCachePrefix}run-traces`, {});
-  const [workspaceAiSettings, setWorkspaceAiSettings] = useSessionCachedState<Awaited<ReturnType<typeof controlPlaneApi.getWorkspaceAiSettings>> | null>(`workspace:${agent.workspaceId}:ai-settings`, null);
-  const [workspaceAiSettingsError, setWorkspaceAiSettingsError] = React.useState('');
+  const [aiSettingsRefreshToken, setAiSettingsRefreshToken] = React.useState(0);
+  const { settings: workspaceAiSettings, error: workspaceAiSettingsError, isLoading: isWorkspaceAiSettingsLoading } = useWorkspaceAiRuntimeReadiness(agent.workspaceId, aiSettingsRefreshToken);
   const [operationError, setOperationError] = React.useState('');
   const assistantMarkdownComponents = React.useMemo(() => createMarkdownComponents('assistant'), []);
   const userMarkdownComponents = React.useMemo(() => createMarkdownComponents('user'), []);
@@ -259,7 +261,8 @@ export const AgentChatPanel: React.FC<{
       ? toChatSession(response.conversation, hydrated.messages, true)
       : session));
     setRunTracesByRunId((current) => ({ ...current, ...hydrated.traces }));
-    setComposerRuntimeSelection(hydrated.runtimeSelection);
+    // A newly created conversation has no accepted run to replace its draft selection.
+    setComposerRuntimeSelection((current) => hydrated.runtimeSelection || current);
   }, []);
 
   React.useEffect(() => {
@@ -274,9 +277,6 @@ export const AgentChatPanel: React.FC<{
       .finally(() => {
         if (!cancelled) setIsSessionsLoading(false);
       });
-    controlPlaneApi.getWorkspaceAiSettings(agent.workspaceId)
-      .then((settings) => { if (!cancelled) setWorkspaceAiSettings(settings); })
-      .catch((error) => { if (!cancelled) setWorkspaceAiSettingsError(error instanceof Error ? error.message : 'AI settings are unavailable.'); });
     return () => { cancelled = true; };
   }, [agent.workspaceId, refreshSummaries, summariesCacheKey]);
 
@@ -344,14 +344,21 @@ export const AgentChatPanel: React.FC<{
       }
       setComposerRuntimeSelection(accepted.runtimeSelection || runtimeSelection);
       setInputValue('');
-      await refreshConversation(conversationId);
-      await refreshSummaries(conversationId);
+      try {
+        await refreshConversation(conversationId);
+        await refreshSummaries(conversationId);
+      } catch {
+        // The POST succeeded: settle the composer so submitted attachments clear.
+        setOperationError(t('agentChat.messageAcceptedRefreshFailed'));
+      }
     } catch (error) {
+      if (isRuntimeSelectionPolicyRejection(error)) setAiSettingsRefreshToken((current) => current + 1);
       reportError(error, 'The message could not be sent.');
+      throw error;
     } finally {
       setIsSending(false);
     }
-  }, [activeSessionId, agent.permissionMode, canChat, createConversation, inputValue, isSending, narrowConversationToReadOnly, refreshConversation, refreshSummaries, reportError, summaries]);
+  }, [activeSessionId, agent.permissionMode, canChat, createConversation, inputValue, isSending, narrowConversationToReadOnly, refreshConversation, refreshSummaries, reportError, summaries, t]);
 
   return (
     <div className={`flex flex-1 flex-col overflow-hidden ${
@@ -394,8 +401,9 @@ export const AgentChatPanel: React.FC<{
         activeSessionId={activeSessionId}
         composerRuntimeSelection={composerRuntimeSelection}
         workspaceAiSettings={workspaceAiSettings}
-        isWorkspaceAiSettingsLoading={!workspaceAiSettings && !workspaceAiSettingsError}
+        isWorkspaceAiSettingsLoading={isWorkspaceAiSettingsLoading}
         workspaceAiSettingsError={workspaceAiSettingsError}
+        onRetryAiSettings={() => setAiSettingsRefreshToken((current) => current + 1)}
         assistantMarkdownComponents={assistantMarkdownComponents}
         userMarkdownComponents={userMarkdownComponents}
         visibleMessages={activeSession?.messages || []}
@@ -426,13 +434,14 @@ export const AgentChatPanel: React.FC<{
             reportError(error, 'The approval decision could not be saved.');
           }
         }}
-        onSelectSession={setActiveSessionId}
-        onCreateSession={() => { void createConversation(); }}
+        onSelectSession={(sessionId) => { if (sessionId !== activeSessionId) setComposerRuntimeSelection(undefined); setActiveSessionId(sessionId); }}
+        onCreateSession={() => { setComposerRuntimeSelection(undefined); void createConversation(); }}
         onDismissRecentActivityWarning={() => undefined}
         onOpenRecentActivitySession={setActiveSessionId}
         onDeleteSession={async (sessionId) => {
           try {
             await deleteAgentConversation(sessionId);
+            if (sessionId === activeSessionId) setComposerRuntimeSelection(undefined);
             await refreshSummaries();
           } catch (error) {
             reportError(error, 'The conversation could not be deleted.');
