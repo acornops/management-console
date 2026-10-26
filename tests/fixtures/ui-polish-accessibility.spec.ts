@@ -40,6 +40,34 @@ for (const width of [320, 390, 768]) test(`capabilities stay bounded at ${width}
   await withinViewport(panel, width, 568);
 });
 
+for (const approvalRequired of [true, false]) test(`capability policy stays concise when approval is ${approvalRequired ? 'required' : 'not required'}`, async ({ page }) => {
+  await page.addInitScript(({ approvalRequired }) => {
+    const original = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const response = await original(input, init);
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href);
+      if (!url.pathname.endsWith('/assistant/capabilities-preview') || !response.ok) return response;
+      const body = await response.json();
+      body.confirmationRequiredForWrite = approvalRequired;
+      body.writeUnavailableReason = null;
+      body.unavailableMcpToolCount = 0;
+      body.tools = [
+        { id: 'get_service', name: 'get_service', label: 'get_service', description: 'Read service state', capability: 'read', runtimeKind: 'function', source: 'builtin' },
+        { id: 'restart_service', name: 'restart_service', label: 'restart_service', description: 'Restart an allowed service', capability: 'write', runtimeKind: 'function', source: 'builtin' }
+      ];
+      body.toolSummary = { totalAllowed: 2, nativeAllowed: 0, readAllowed: 1, writeAllowed: 1 };
+      return new Response(JSON.stringify(body), { status: response.status, headers: response.headers });
+    };
+  }, { approvalRequired });
+  await page.goto('/workspaces/fixture-workspace/virtual-machines/fixture-vm/chat', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-assistant-capability-preview-trigger]').click();
+  const panel = page.getByRole('region', { name: /capabilit/i });
+  const readExplanation = 'READ means no target changes. Authorized internal document and insight creation may still be available.';
+  await expect(panel.getByTitle(readExplanation)).toHaveText('read');
+  await expect(panel.getByText(readExplanation, { exact: true })).toHaveCount(0);
+  await expect(panel.getByText(approvalRequired ? 'Write tools require approval.' : 'Available tools run without approval.', { exact: true })).toBeVisible();
+});
+
 test('reasoning effort is one named radio choice with keyboard selection', async ({ page }) => {
   await page.goto('/workspaces/fixture-workspace/agents/fixture-specialist/chat', { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Model and reasoning effort' }).click();
