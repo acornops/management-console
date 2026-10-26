@@ -15,6 +15,7 @@ import { formatLastUpdated, getAgentConnectionState } from '@/utils/telemetry';
 import { TextInput } from '@acornops/ui';
 import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
 import { resolveClusterPermissionMode } from '@/services/control-plane/runPermissionPolicy';
+import { ClusterAgentMaintenance } from './ClusterAgentMaintenance';
 
 interface ClusterSettingsViewProps {
   cluster: KubernetesCluster;
@@ -25,7 +26,7 @@ interface ClusterSettingsViewProps {
   onUpdateName?: (name: string) => void | Promise<void>;
   onEditNamespaceScope?: () => void;
   onUpdatePermissionMode?: (permissionMode: RunPermissionMode) => void | Promise<void>;
-  onReinstallAgent?: () => void;
+  onInstallAgent?: () => void;
   onDeleteCluster?: () => void | Promise<void>;
 }
 
@@ -62,7 +63,7 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   onUpdateName,
   onEditNamespaceScope,
   onUpdatePermissionMode,
-  onReinstallAgent,
+  onInstallAgent,
   onDeleteCluster
 }) => {
   const { t } = useTranslation();
@@ -77,7 +78,6 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
   const canEditNamespaceScope = canManageCluster && Boolean(onEditNamespaceScope);
   const canEditPermissionMode = canManageCluster && Boolean(onUpdatePermissionMode);
   const canEditClusterName = canManageCluster && Boolean(onUpdateName);
-  const canReinstallAgent = agentConnectionState === 'disconnected' && canManageAgentKeys && Boolean(onReinstallAgent);
   const trimmedDraftName = draftName.trim();
   const clusterNameValidationError = isEditingName && trimmedDraftName.length === 0 ? t('clusterSettings.clusterNameRequired') : null;
   const canSaveClusterName = trimmedDraftName.length > 0 && trimmedDraftName !== cluster.name && !isSavingName;
@@ -183,14 +183,6 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
             icon={ICONS.Activity}
             label={t('clusterSettings.connectionState')}
             description={t(`clusterSettings.connection.${agentConnectionState}`)}
-            action={
-              canReinstallAgent ? (
-                <Button data-cluster-settings-action="reinstall-agent" onClick={onReinstallAgent} variant="secondary" size="sm" className="w-full sm:w-auto">
-                  <ICONS.Wrench className="h-4 w-4" />
-                  {t('clusterSettings.reinstallAgent')}
-                </Button>
-              ) : undefined
-            }
           />
           <SettingsRow icon={ICONS.Clock} label={t('clusterSettings.lastTelemetry')} description={formatLastUpdated(cluster.lastUpdate)} />
         </SettingsSection>
@@ -232,6 +224,15 @@ export const ClusterSettingsView: React.FC<ClusterSettingsViewProps> = ({
           targetType="kubernetes"
           canManageTargets={canManageCluster}
           canCreateReadWriteRuns={canCreateReadWriteRuns}
+        />
+
+        <ClusterAgentMaintenance
+          key={`${cluster.workspaceId}:${cluster.id}`}
+          cluster={cluster}
+          workspaceName={workspaceName}
+          canManageCluster={canManageCluster}
+          canManageAgentKeys={canManageAgentKeys}
+          onInstallAgent={onInstallAgent}
         />
 
         {canManageCluster && onDeleteCluster && (

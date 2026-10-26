@@ -46,6 +46,14 @@ The management console is the browser client for the control-plane API. Keep thi
   builder; no workflow/execution identity is guessed when it is absent.
 - Cluster registration returns `{ cluster, agentKey, installInstructions }`.
 - Agent-key rotation returns `{ clusterId, agentKey, keyVersion, installInstructions }`.
+- Kubernetes settings separate **Upgrade or repair AgentK** from **Replace AgentK
+  credential**, online or offline. Repair requires `manage_targets` and consumes
+  `GET /workspaces/:workspaceId/kubernetes-clusters/:clusterId/install-instructions`
+  with `{clusterId,installInstructions:{command,warnings}}`. It does not rotate a
+  credential. Replacement requires `manage_agent_keys` and warns before generation
+  that the old credential is immediately revoked. Initial installation keeps its
+  read-only default. Shared maintenance rows and command display retain the native
+  VM enrollment expiry and host-policy behavior. Deploy Control Plane first.
 - VM registration and credential replacement return structured
   `installInstructions` with `{ command, releaseVersion, bootstrapUrl,
   enrollmentExpiresAt?, warnings }`. Enrollment commands contain a one-use

@@ -10,7 +10,7 @@ import { routeApprovalFixtureRequest } from './approvalRoutes';
 import { routeAgentConversationFixtureRequest } from './agentConversationRoutes';
 import { routeAgentTargetAccessFixtureRequest } from './agentTargetAccessRoutes';
 import { applyFixtureRole } from './roleProfiles';
-import { applyClusterPermissionFixturePatch } from './clusterPermissionRoutes';
+import { routeClusterFixtureRequest } from './clusterRoutes';
 import { fixtureAgentVEnrollmentInstructions, fixtureAgentVRepairInstructions } from './agentVInstallInstructions';
 import { routeAgentVAccessPolicyFixtureRequest } from './agentVAccessPolicyRoutes';
 import { fixtureTargetType, routeTargetFixtureRequest, targetSkillCatalog } from './targetFixtureRoutes';
@@ -267,25 +267,8 @@ export async function routeFixtureRequest(request: Request): Promise<FixtureResp
   if (match && method === 'GET') return json({ workspaceId: decode(match[1]), clusterId: decode(match[2]), windowMs: 21600000, points: [{ timestamp: metricTime, cpuCores: 0.25, memoryBytes: 734003200 }, { timestamp: NOW, cpuCores: 0.325, memoryBytes: 805306368 }] });
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/pods\/([^/]+)\/([^/]+)\/logs$/);
   if (match && method === 'GET') return json({ name: decode(match[4]), namespace: decode(match[3]), container: url.searchParams.get('container') || 'worker', logs: '2026-07-15T08:29:58Z starting payments worker\n2026-07-15T08:29:59Z missing PAYMENT_QUEUE_URL\n2026-07-15T08:29:59Z exiting with status 1', tailLines: Number(url.searchParams.get('tailLines') || 100), previous: url.searchParams.get('previous') === 'true', fetchedAt: NOW });
-  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)\/rotate-agent-key$/);
-  if (match && method === 'POST') return json({ clusterId: decode(match[2]), agentKey: 'ak_fixture_rotated_local_only', keyVersion: 2, installInstructions: { command: 'fixture-mode: no agent installation is required', warnings: [] } });
-  match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/kubernetes-clusters\/([^/]+)$/);
-  if (match) {
-    const clusterId = decode(match[2]);
-    const cluster = state.clusters.find((item) => item.id === clusterId);
-    if (!cluster) return notFound('Kubernetes cluster');
-    if (method === 'GET') return json(clone(cluster));
-    if (method === 'PATCH') {
-      const input = await bodyOf(request);
-      Object.assign(cluster, input);
-      applyClusterPermissionFixturePatch(cluster, input);
-      return json(clone(cluster));
-    }
-    if (method === 'DELETE') {
-      state.clusters = state.clusters.filter((item) => item.id !== clusterId);
-      return noContent();
-    }
-  }
+  const clusterResponse = await routeClusterFixtureRequest({ method, path, request, state });
+  if (clusterResponse) return clusterResponse;
 
   match = path.match(/^\/api\/v1\/workspaces\/([^/]+)\/virtual-machines$/);
   if (match) {

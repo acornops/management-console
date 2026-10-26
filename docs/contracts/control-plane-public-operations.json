@@ -78,6 +78,7 @@
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}",
+  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/install-instructions",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs",
   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources",

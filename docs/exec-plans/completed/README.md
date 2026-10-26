@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Agent maintenance standardization](agent-maintenance-standardization.md) — Source qualification complete; release acceptance is tracked separately.
+
 - [Platform Release Hardening](platform-release-hardening.md)
 - [VM Install Dialog](vm-install-dialog.md)
 

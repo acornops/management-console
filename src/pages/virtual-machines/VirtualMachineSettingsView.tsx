@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
-import { Check, Copy, KeyRound, PlugZap, ShieldCheck, Wrench } from 'lucide-react';
+import { PlugZap, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineAlert, SettingsSection } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
@@ -12,7 +12,8 @@ import { RunPermissionSettingsSection } from '@/features/run-permissions/RunPerm
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
 import { formatSnapshotTime, getVmStatusLabel } from '@/pages/virtual-machines/virtualMachineUi';
-import { useAgentVInstallCommand } from './useAgentVInstallCommand';
+import { AgentCommandPanel } from '@/features/targets/agent-maintenance/AgentCommandPanel';
+import { AgentMaintenanceRows } from '@/features/targets/agent-maintenance/AgentMaintenanceRows';
 import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
 import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
 import type { AgentVInstructionKind } from './useVirtualMachineAgentSetup';
@@ -69,7 +70,6 @@ export const VirtualMachineSettingsView: React.FC<{
   const pendingAgentAccess = vm.pendingAgentAccessPolicy?.accessMode === 'read_write'
     ? t('virtualMachines.settings.agentAccessReadWrite', { services: vm.pendingAgentAccessPolicy.restartServices.join(', ') })
     : t('virtualMachines.settings.agentAccessReadOnly');
-  const installCommand = useAgentVInstallCommand(installInstructions);
   const configuredAccessMode = vm.pendingAgentAccessPolicy?.accessMode || vm.agentAccessMode;
   const configuredRestartServices = vm.pendingAgentAccessPolicy?.restartServices || vm.restartServices;
   const configuredRestartServicesKey = configuredRestartServices.join('\u0000');
@@ -223,7 +223,7 @@ export const VirtualMachineSettingsView: React.FC<{
         />
 
         <SettingsSection
-          title={t('virtualMachines.settings.agentInstallTitle')}
+          title={t('agentMaintenance.title')}
           description={t('virtualMachines.settings.agentInstallBody')}
           tabIndex={-1}
         >
@@ -240,82 +240,28 @@ export const VirtualMachineSettingsView: React.FC<{
               )}
             />
           )}
-          {!requiresInitialEnrollment && <SettingsRow
-            icon={Wrench}
-            label={t('virtualMachines.settings.repairAgent')}
-            description={t('virtualMachines.settings.repairAgentBody')}
-            action={(
-              <Button onClick={onGenerateRepairInstructions} disabled={!onGenerateRepairInstructions || isGeneratingRepairInstructions || isReplacingCredential} variant="secondary" size="sm" className="w-full sm:w-auto">
-                <Wrench className="h-4 w-4" />
-                {isGeneratingRepairInstructions ? t('virtualMachines.settings.generatingInstructions') : t('virtualMachines.settings.generateRepairCommand')}
-              </Button>
-            )}
-          />}
-          {!requiresInitialEnrollment && <SettingsRow
-            icon={KeyRound}
-            label={t('virtualMachines.settings.replaceCredential')}
-            description={t('virtualMachines.settings.replaceCredentialBody')}
-            action={(
-              <Button onClick={onReplaceCredential} disabled={!onReplaceCredential || isReplacingCredential || isGeneratingRepairInstructions} title={!onReplaceCredential ? t('virtualMachines.settings.credentialPermissionRequired') : undefined} variant="secondary" size="sm" className="w-full sm:w-auto">
-                <KeyRound className="h-4 w-4" />
-                {isReplacingCredential ? t('virtualMachines.settings.generatingInstructions') : t('virtualMachines.settings.replaceCredential')}
-              </Button>
-            )}
+          {!requiresInitialEnrollment && <AgentMaintenanceRows
+            agentName="AgentV"
+            repairDescription={t('virtualMachines.settings.repairAgentBody')}
+            replacementDescription={t('virtualMachines.settings.replaceCredentialBody')}
+            onRepair={canManageTargets ? onGenerateRepairInstructions : undefined}
+            onReplace={onReplaceCredential}
+            repairing={isGeneratingRepairInstructions}
+            replacing={isReplacingCredential}
+            disabled={isUpdatingAgentAccessPolicy}
           />}
           {credentialError && <InlineAlert tone="danger" className="rounded-none border-x-0 border-b-0 p-4 type-body type-emphasis">{credentialError}</InlineAlert>}
           {installInstructions?.command && (!policyCommandVisible || vm.pendingAgentAccessPolicy) && (
-            <div className="border-t border-ui-border bg-ui-bg/60 p-6">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <p className="type-row-title">
-                    {t(installInstructionKind === 'policy_update'
-                      ? 'virtualMachines.settings.hostPolicyCommand'
-                      : 'virtualMachines.settings.installInstructions')}
-                  </p>
-                  {installCommand.enrollmentExpiry !== null && (
-                    <span className="rounded-full bg-status-warning-soft px-2 py-0.5 type-micro-label text-status-warning-text">
-                      {t('virtualMachines.list.sensitiveUntilUsed')}
-                    </span>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="icon"
-                  size="icon"
-                  onClick={() => void installCommand.copy()}
-                  disabled={installCommand.enrollmentExpired}
-                  aria-label={installCommand.hasCopied ? t('virtualMachines.list.copied') : t('virtualMachines.list.copy')}
-                >
-                  {installCommand.hasCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md border border-ui-border bg-ui-surface p-4 type-caption leading-5 text-ui-text">
-                {installInstructions.command}
-              </pre>
-              {installCommand.copyFailed && (
-                <InlineAlert tone="danger" className="mt-3 p-3 type-caption">
-                  {t('virtualMachines.list.copyFailed')}
-                </InlineAlert>
-              )}
-              {installInstructions.warnings.length > 0 && (
-                <div className="mt-3 space-y-1 rounded-lg border border-status-warning/25 bg-status-warning-soft p-3 type-caption text-status-warning-text">
-                  {installInstructions.warnings.map((warning) => <p key={warning}>{warning}</p>)}
-                </div>
-              )}
-              {installCommand.enrollmentExpiry !== null && (
-                <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-ui-border bg-ui-surface p-3 type-caption text-ui-text-muted">
-                  <span>
-                    {installCommand.enrollmentExpired
-                      ? t('virtualMachines.list.enrollmentExpired')
-                      : t('virtualMachines.list.enrollmentExpiresIn', { time: installCommand.timeRemaining })}
-                  </span>
-                  {installCommand.enrollmentExpired && onRegenerateInstallInstructions && (
-                    <Button size="sm" variant="secondary" disabled={policyBusy} onClick={onRegenerateInstallInstructions}>
-                      {t('virtualMachines.list.generateNewCommand')}
-                    </Button>
-                  )}
-                </div>
-              )}
+            <div className="space-y-3 border-t border-ui-border bg-ui-bg/60 p-6">
+              <AgentCommandPanel
+                instructions={installInstructions}
+                label={t(installInstructionKind === 'policy_update'
+                  ? 'virtualMachines.settings.hostPolicyCommand'
+                  : 'agentMaintenance.command')}
+                sensitive={installInstructions.enrollmentExpiresAt ? 'enrollment' : undefined}
+                regenerating={policyBusy}
+                onRegenerate={onRegenerateInstallInstructions}
+              />
             </div>
           )}
         </SettingsSection>

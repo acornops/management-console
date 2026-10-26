@@ -301,6 +301,13 @@ export const kubernetesClusterApi = {
     };
   },
 
+  async getClusterInstallInstructions(workspaceId: string, clusterId: string): Promise<{ command: string; warnings: string[] }> {
+    const result = await requestJson<{ clusterId: string; installInstructions: { command: string; warnings: string[] } }>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}/install-instructions`
+    );
+    return result.installInstructions;
+  },
+
   async createSession(workspaceId: string, clusterId: string, title: string): Promise<ControlPlaneSession> {
     return requestJson<ControlPlaneSession>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/kubernetes-clusters/${encodeURIComponent(clusterId)}/sessions`,

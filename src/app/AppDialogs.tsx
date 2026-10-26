@@ -241,7 +241,7 @@ export const AppDialogs: React.FC<AppDialogsProps> = ({
         />
 
         {installAgentCluster && installAgentWorkspace && (
-          <ClusterAgentInstallModal cluster={installAgentCluster} workspaceName={installAgentWorkspace.name} onClose={onCloseInstallAgent} />
+          <ClusterAgentInstallModal mode="install" cluster={installAgentCluster} workspaceName={installAgentWorkspace.name} onClose={onCloseInstallAgent} />
         )}
       </AnimatePresence>
     </>

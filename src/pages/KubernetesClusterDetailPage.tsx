@@ -85,7 +85,7 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
               onUpdateName={(name) => onUpdateClusterName(selectedCluster.id, name)}
               onUpdateNamespaceScope={(scope) => onUpdateClusterNamespaceScope(selectedCluster.id, scope)}
               onUpdatePermissionMode={(permissionMode) => onUpdateClusterPermissionMode(selectedCluster.id, permissionMode)}
-              onReinstallAgent={() => onOpenInstallModal(selectedCluster.id)}
+              onInstallAgent={() => onOpenInstallModal(selectedCluster.id)}
               onDeleteCluster={() => onDeleteCluster(selectedCluster)}
               onOpenAiSettings={() => onOpenAiSettings(selectedCluster.workspaceId)}
               onOpenCopilot={(prompt) => onOpenClusterChatPanel?.(selectedCluster, prompt)}

@@ -18,6 +18,14 @@ vi.mock('./toolMappers', () => ({
 
 import { kubernetesClusterApi } from './kubernetesClusterApi';
 
+it('gets credential-free maintenance instructions without a rotation request', async () => {
+  requestJson.mockReset();
+  const response = { clusterId: 'cluster/1', installInstructions: { command: 'helm upgrade', warnings: ['Verify context'] } };
+  requestJson.mockResolvedValueOnce(response);
+  expect(await kubernetesClusterApi.getClusterInstallInstructions('workspace/1', 'cluster/1')).toEqual(response.installInstructions);
+  expect(requestJson).toHaveBeenCalledExactlyOnceWith('/api/v1/workspaces/workspace%2F1/kubernetes-clusters/cluster%2F1/install-instructions');
+});
+
 describe('target MCP server catalog pagination', () => {
   beforeEach(() => vi.clearAllMocks());
 

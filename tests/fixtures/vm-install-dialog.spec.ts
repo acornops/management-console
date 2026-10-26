@@ -213,7 +213,7 @@ test('users without target-management permission cannot open initial setup', asy
   expect(await page.evaluate(() => window.vmInstallProbe.writes)).toEqual([]);
 });
 
-test('Settings restores focus to Agent install after connection removes its setup button', async ({ page }) => {
+test('Settings restores focus to Agent maintenance after connection removes its setup button', async ({ page }) => {
   await prepare(page);
   await page.goto(`${catalogPath}/pending-vm-a/settings`);
   await page.getByRole('button', { name: 'Install Agent', exact: true }).click();
@@ -223,7 +223,7 @@ test('Settings restores focus to Agent install after connection removes its setu
   await dialog.getByRole('button', { name: "I've Installed the Agent" }).click();
   await expect(dialog.getByRole('status')).toHaveText('Agent connected');
   await dialog.getByRole('button', { name: 'Done', exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Agent install', exact: true })).toBeFocused();
+  await expect(page.getByRole('region', { name: 'Agent maintenance', exact: true })).toBeFocused();
   await expect(page.getByRole('button', { name: 'Generate repair command' })).toBeEnabled();
 });
 
