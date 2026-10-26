@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Compact Assistant Capability Preview](compact-capability-preview.md) — Restored the existing bounded tool list without changing the visual design.
+
 - [Agent maintenance standardization](agent-maintenance-standardization.md) — Source qualification complete; release acceptance is tracked separately.
 
 - [Platform Release Hardening](platform-release-hardening.md)
