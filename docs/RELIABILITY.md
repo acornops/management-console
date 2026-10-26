@@ -38,6 +38,11 @@
   classify completed successes and failures explicitly.
 - An open shared Select consumes Escape when it closes its own menu, leaving
   the parent dialog's close or draft-discard policy for a subsequent Escape.
+- Assistant capability previews keep the tools/skills list capped at `14rem`
+  with keyboard-accessible internal scrolling. More tools must not turn the
+  popup into a nearly full-height panel. Keep the outer viewport/dialog height
+  limit as a short-screen fallback and preserve portal placement and Escape
+  focus restoration. Test compact desktop height as well as mobile containment.
 - Route-level control-plane reads use session-scoped, in-memory data continuity:
   a previously loaded snapshot remains visible across route unmounts while the
   route revalidates in the background. Only a first visit without a usable

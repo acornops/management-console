@@ -194,7 +194,7 @@ const assistants = [
   { name: 'VM', full: '/workspaces/fixture-workspace/virtual-machines/fixture-vm/chat', quick: '/workspaces/fixture-workspace/overview', target: 'Payments VM' }
 ];
 for (const assistant of assistants) for (const quick of [false, true]) for (const theme of ['light', 'dark']) {
-  test(`${assistant.name} ${quick ? 'quick' : 'full'} capabilities retain 200 tools at narrow and short sizes in ${theme}`, async ({ page }, testInfo) => {
+  test(`${assistant.name} ${quick ? 'quick' : 'full'} capabilities stay compact and retain 200 tools in ${theme}`, async ({ page }, testInfo) => {
     await page.emulateMedia({ colorScheme: theme });
     await page.addInitScript(({ isolateVmCapabilities }) => {
       const original = window.fetch.bind(window);
@@ -232,10 +232,53 @@ for (const assistant of assistants) for (const quick of [false, true]) for (cons
     const panel = page.getByRole('region', { name: /capabilit/i });
     await expect(panel).toHaveCSS('opacity', '1');
     await expect(panel.getByText(/^199 translated/)).toHaveCount(1);
-    for (const size of [{ width: 320, height: 568 }, { width: 390, height: 360 }, { width: 768, height: 568 }]) {
+    for (const size of [{ width: 1440, height: 900 }, { width: 1920, height: 1080 }]) {
+      // Crossing the quick-chat dock breakpoint remounts its composer. Open
+      // the preview at each size instead of expecting it to survive that swap.
+      await panel.press('Escape');
+      await expect(panel).toBeHidden();
       await page.setViewportSize(size);
+      await trigger.click();
+      await expect(panel).toHaveCSS('opacity', '1');
+      // Viewport containment alone allowed this popup to occupy nearly the
+      // whole screen. Long lists must scroll without expanding the preview.
+      await expect.poll(async () => (await panel.boundingBox())!.height).toBeLessThan(600);
+      await withinViewport(panel, size.width, size.height);
+      const list = panel.locator('[tabindex="0"]').filter({ has: page.getByText(/^199 translated/) });
+      await expect(list).toBeVisible();
+      expect((await list.boundingBox())!.height).toBeLessThanOrEqual(224);
+      const heading = panel.getByText('Assistant capabilities', { exact: true });
+      const headingTop = (await heading.boundingBox())!.y;
+      await list.focus();
+      await page.keyboard.press('End');
+      await expect.poll(() => list.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop)).toBe(0);
+      await expect(panel.getByText(/^199 translated/)).toBeInViewport();
+      expect((await heading.boundingBox())!.y).toBe(headingTop);
+      await page.keyboard.press('Home');
+      await expect.poll(() => list.evaluate(node => node.scrollTop)).toBe(0);
+      await expect(panel.getByText(/^000 translated/)).toBeInViewport();
+    }
+    for (const size of [{ width: 320, height: 568 }, { width: 390, height: 360 }, { width: 768, height: 568 }]) {
+      await panel.press('Escape');
+      await expect(panel).toBeHidden();
+      await page.setViewportSize(size);
+      await trigger.click();
+      await expect(panel).toHaveCSS('opacity', '1');
       await expect.poll(async () => (await panel.boundingBox())!.x).toBeGreaterThanOrEqual(0);
       await withinViewport(panel, size.width, size.height);
+      if (size.height === 360) {
+        const list = panel.locator('[tabindex="0"]').filter({ has: page.getByText(/^199 translated/) });
+        const listBox = (await list.boundingBox())!;
+        const panelBox = (await panel.boundingBox())!;
+        // Use pointer input, not scrollIntoView, so nested scrolling cannot
+        // conceal a clipped footer behind programmatic ancestor scrolling.
+        await page.mouse.move(listBox.x + listBox.width / 2, (listBox.y + Math.min(listBox.y + listBox.height, panelBox.y + panelBox.height)) / 2);
+        await page.mouse.wheel(0, 20_000);
+        await expect.poll(() => list.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop)).toBe(0);
+        await page.mouse.wheel(0, 1000);
+        await expect.poll(() => panel.evaluate(node => node.scrollTop)).toBeGreaterThan(0);
+        await expect(panel.getByText('Skills are frozen when you send.', { exact: true })).toBeInViewport({ ratio: 1 });
+      }
       await panel.getByText(/^199 translated/).scrollIntoViewIfNeeded();
       await withinViewport(panel.getByText(/^199 translated/), size.width, size.height);
     }

@@ -238,7 +238,7 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
                     )}
                   </div>
                 )}
-                <div className="mt-3 pr-1">
+                <div tabIndex={0} className="mt-3 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
                   {toolItems.length === 0 && skillItems.length === 0 ? (
                     <p className="rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption text-ui-text-muted">{t('chat.capabilityPreviewEmpty')}</p>
                   ) : (
