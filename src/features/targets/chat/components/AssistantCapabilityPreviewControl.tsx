@@ -226,7 +226,6 @@ export const AssistantCapabilityPreviewControl: React.FC<AssistantCapabilityPrev
               <>
                 {showToolPolicyNote && (
                   <div className="mt-3 rounded-xl border border-ui-border bg-ui-bg px-3 py-2 type-caption leading-5 text-ui-text-muted">
-                    <p className="mb-1">{t('chat.capabilityPreviewReadMeaning')}</p>
                     {preview.confirmationRequiredForWrite && preview.toolSummary.writeAllowed > 0
                       ? t('chat.capabilityPreviewApprovalRequired')
                       : t('chat.capabilityPreviewApprovalNotRequired')}
