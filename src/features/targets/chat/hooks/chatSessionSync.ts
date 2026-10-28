@@ -223,6 +223,8 @@ function shouldPreserveLocalHydrationMessage(args: {
     return false;
   }
 
+  if (message.runId && runTracesByRunId[message.runId]?.needsReconciliation) return true;
+
   if (message.runId && terminalRunIds?.has(message.runId)) {
     return false;
   }

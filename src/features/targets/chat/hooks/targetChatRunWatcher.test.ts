@@ -5,6 +5,8 @@ import type { ChatSession } from '@/types';
 import type { LiveRunTrace } from '../types';
 import { useWatchedRunStream } from './targetChatRunWatcher';
 import { deriveTargetChatRunState } from './targetChatState';
+import { buildTraceFromRunEvents, preferRicherRunTrace } from './chatRunTrace';
+import { mergeHydratedChatMessages } from './chatSessionSync';
 
 const lifecycle = vi.hoisted(() => ({ effects: [] as Array<() => void | (() => void)> }));
 vi.mock('react', async (original) => ({
@@ -115,6 +117,167 @@ describe('watched run recovery lifecycle', () => {
     expect(controlPlaneApi.streamRunEvents).toHaveBeenCalledTimes(1);
     expect(state.latestSessionsRef.current[0].messages[0].content).toBe('Final answer');
     expect(state.runTracesByRunIdRef.current['run-1'].needsReconciliation).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('reconciles a polled terminal event while the SSE connection remains open', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun')
+      .mockResolvedValueOnce({ id: 'run-1', status: 'running' } as never)
+      .mockResolvedValue(completedRun as never);
+    vi.mocked(controlPlaneApi.getRunEvents)
+      .mockResolvedValueOnce([])
+      .mockResolvedValue([{ seq: 1, type: 'run_completed', payload: {} }] as never);
+    vi.mocked(controlPlaneApi.streamRunEvents).mockImplementation(async (_runId, options) => {
+      await new Promise<void>((resolve) => options?.signal?.addEventListener('abort', () => resolve(), { once: true }));
+    });
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(state.latestSessionsRef.current[0].messages).toEqual([
+      expect.objectContaining({ id: 'stream-run-1', runId: 'run-1', content: 'Final answer' })
+    ]);
+    expect(state.runTracesByRunIdRef.current['run-1']).toMatchObject({ status: 'completed', needsReconciliation: false });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('keeps the placeholder until the completed run has a durable assistant message', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValueOnce({ items: [], nextCursor: null } as never)
+      .mockResolvedValue(finalMessages as never);
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.latestSessionsRef.current[0].messages).toEqual([
+      expect.objectContaining({ id: 'stream-run-1', runId: 'run-1', content: '' })
+    ]);
+    expect(state.runTracesByRunIdRef.current['run-1']).toMatchObject({ status: 'completed', needsReconciliation: true });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(state.latestSessionsRef.current[0].messages).toEqual([
+      expect.objectContaining({ id: 'stream-run-1', runId: 'run-1', content: 'Final answer' })
+    ]);
+    expect(state.runTracesByRunIdRef.current['run-1'].needsReconciliation).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('finds an older final message without replacing the newest page or traversing older history afterward', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    const newestMessages = Array.from({ length: 100 }, (_, index) => ({
+      id: `newer-${index}`, sessionId: 'session-1', runId: `newer-run-${Math.floor(index / 2)}`,
+      role: index % 2 ? 'assistant' : 'user', kind: index % 2 ? 'assistant_final' : 'user',
+      content: 'A newer completed turn', createdAt: '2026-10-29T01:00:00Z'
+    }));
+    const unrelatedOlderMessage = { ...finalMessages.items[0], id: 'older-unrelated', runId: 'older-run' };
+    const messages = vi.mocked(controlPlaneApi.getSessionMessages).mockImplementation(async (_sessionId, options) =>
+      options?.cursor === 'older-page'
+        ? { items: [unrelatedOlderMessage, ...finalMessages.items], nextCursor: 'oldest-page' } as never
+        : { items: newestMessages, nextCursor: 'older-page' } as never);
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(60000);
+    const session = state.latestSessionsRef.current[0];
+    expect(session.messages).toHaveLength(101);
+    expect(session.messages).toContainEqual(
+      expect.objectContaining({ id: 'stream-run-1', runId: 'run-1', content: 'Final answer' }));
+    expect(session.messages.filter((message) => message.id.startsWith('newer-'))).toHaveLength(100);
+    expect(session.messages.some((message) => message.id === 'older-unrelated')).toBe(false);
+    expect(deriveTargetChatRunState({ localActiveRunId: null, activeSession: session,
+      runTracesByRunId: state.runTracesByRunIdRef.current })).toEqual({ activeRunId: null, isRunActive: false });
+    expect(messages.mock.calls).toEqual([
+      ['session-1', { limit: 100 }], ['session-1', { limit: 100, cursor: 'older-page' }]
+    ]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('retries a transient older-page read without restarting the page traversal', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    const messages = vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValueOnce({ items: [], nextCursor: 'older-page' } as never)
+      .mockRejectedValueOnce(new ControlPlaneRequestError('draining', 503))
+      .mockResolvedValue(finalMessages as never);
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(state.latestSessionsRef.current[0].messages).toEqual([
+      expect.objectContaining({ id: 'stream-run-1', runId: 'run-1', content: 'Final answer' })
+    ]);
+    expect(messages.mock.calls).toEqual([
+      ['session-1', { limit: 100 }], ['session-1', { limit: 100, cursor: 'older-page' }],
+      ['session-1', { limit: 100, cursor: 'older-page' }]
+    ]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([401, 403, 404])('stops older-page reconciliation on permanent failure (%s)', async (status) => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    const messages = vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValueOnce({ items: [], nextCursor: 'older-page' } as never)
+      .mockRejectedValue(new ControlPlaneRequestError('denied', status));
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(messages.mock.calls).toEqual([
+      ['session-1', { limit: 100 }], ['session-1', { limit: 100, cursor: 'older-page' }]
+    ]);
+    expect(state.runTracesByRunIdRef.current['run-1']).toMatchObject({ status: 'completed', needsReconciliation: false });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('disposes retrying older-page reconciliation without fetching another page', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    const messages = vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValueOnce({ items: [], nextCursor: 'older-page' } as never)
+      .mockRejectedValue(new TypeError('connection closed'));
+    mountWatcher();
+    await vi.advanceTimersByTimeAsync(0);
+    cleanups.forEach((cleanup) => cleanup());
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(messages.mock.calls).toEqual([
+      ['session-1', { limit: 100 }], ['session-1', { limit: 100, cursor: 'older-page' }]
+    ]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('retains watcher ownership through competing terminal activity hydration', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValueOnce({ items: [], nextCursor: null } as never)
+      .mockResolvedValue(finalMessages as never);
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(0);
+    // Activity/session hydration may see the same terminal status before the final row.
+    const traces = state.runTracesByRunIdRef.current;
+    traces['run-1'] = preferRicherRunTrace(traces['run-1'], buildTraceFromRunEvents(completedRun, []));
+    const session = state.latestSessionsRef.current[0];
+    session.messages = mergeHydratedChatMessages({
+      localMessages: session.messages, backendMessages: [], runTracesByRunId: traces,
+      terminalRunIds: new Set(['run-1'])
+    });
+    expect(deriveTargetChatRunState({ localActiveRunId: null, activeSession: session, runTracesByRunId: traces }))
+      .toEqual({ activeRunId: 'run-1', isRunActive: true });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(state.latestSessionsRef.current[0].messages).toEqual([
+      expect.objectContaining({ id: 'stream-run-1', runId: 'run-1', content: 'Final answer' })
+    ]);
+    expect(state.runTracesByRunIdRef.current['run-1'].needsReconciliation).toBe(false);
+  });
+
+  it.each([401, 403, 404])('stops final-message reconciliation on permanent failure (%s)', async (status) => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    const messages = vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValueOnce({ items: [], nextCursor: null } as never)
+      .mockRejectedValue(new ControlPlaneRequestError('denied', status));
+    const state = mountWatcher();
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(messages).toHaveBeenCalledTimes(2);
+    expect(state.runTracesByRunIdRef.current['run-1']).toMatchObject({ status: 'completed', needsReconciliation: false });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('disposes final-message reconciliation while the durable message is pending', async () => {
+    vi.spyOn(controlPlaneApi, 'getRun').mockResolvedValue(completedRun as never);
+    const messages = vi.mocked(controlPlaneApi.getSessionMessages)
+      .mockResolvedValue({ items: [], nextCursor: null } as never);
+    mountWatcher();
+    await vi.advanceTimersByTimeAsync(0);
+    cleanups.forEach((cleanup) => cleanup());
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(messages).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
   });
 

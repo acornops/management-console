@@ -101,6 +101,7 @@ export function useWatchedRunStream(args: {
     let pendingWatchedSessions: ChatSession[] | null = null;
     let pendingSessionPublish: ReturnType<typeof setTimeout> | null = null;
     let pollEventsStop = false;
+    let streamController: AbortController | null = null;
 
     const setTraceForRun = (nextTrace: LiveRunTrace, needsReconciliation = true) => {
       if (cancelled || isRunCancelled(runId)) return;
@@ -343,7 +344,28 @@ export function useWatchedRunStream(args: {
     const observe = <T,>(read: () => Promise<T>) => retryRunObservation(read, abortController.signal);
 
     const reconcileWatchedSession = async (latestRun: ControlPlaneRun | null) => {
-      const backendMessages = await observe(() => controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100 }));
+      let backendMessages = await observe(() => controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100 }));
+      const isRunFinalMessage = (message: (typeof backendMessages.items)[number]) =>
+        message.role === 'assistant' && message.runId === runId && message.content.trim().length > 0;
+      // The run status can commit before its final assistant message does.
+      for (let attempt = 0; latestRun?.status === 'completed' && !backendMessages.items.some(isRunFinalMessage); attempt += 1) {
+        let cursor = backendMessages.nextCursor;
+        while (cursor) {
+          if (cancelled || isRunCancelled(runId)) return;
+          const page = await observe(() => controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100, cursor }));
+          const finalMessage = page.items.find(isRunFinalMessage);
+          if (finalMessage) {
+            // Keep the newest page's messages; hydrate only this retained run from history.
+            backendMessages = { ...backendMessages, items: [finalMessage, ...backendMessages.items] };
+            break;
+          }
+          cursor = page.nextCursor;
+        }
+        if (backendMessages.items.some(isRunFinalMessage)) break;
+        await waitForReconnect(WATCHER_RECONNECT_DELAYS_MS[Math.min(attempt, WATCHER_RECONNECT_DELAYS_MS.length - 1)]);
+        if (cancelled || isRunCancelled(runId)) return;
+        backendMessages = await observe(() => controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100 }));
+      }
       if (cancelled || isRunCancelled(runId)) return;
       let mappedMessages = backendMessages
         ? preserveStreamingAssistantMessageId(sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage)), runId, activeStreamingMessageId)
@@ -412,6 +434,7 @@ export function useWatchedRunStream(args: {
               for (const polledEvent of polledEvents) {
                 if (pollEventsStop || cancelled || isRunCancelled(runId)) break;
                 handleRunEvent(polledEvent);
+                if (isTerminalRunEventType(polledEvent.type)) streamController?.abort();
               }
             } catch {
               // Polling is best-effort; SSE remains the primary channel.
@@ -422,17 +445,18 @@ export function useWatchedRunStream(args: {
 
         while (!cancelled && !isRunCancelled(runId) && latestRun && isRunInProgress(latestRun.status)) {
           let streamError: unknown;
-          const streamController = new AbortController();
-          const stopStream = () => streamController.abort();
+          streamController = new AbortController();
+          const currentStreamController = streamController;
+          const stopStream = () => currentStreamController.abort();
           abortController.signal.addEventListener('abort', stopStream, { once: true });
           try {
-            await controlPlaneApi.streamRunEvents(runId, {
-              signal: streamController.signal,
+            if (!isTraceTerminal(trace)) await controlPlaneApi.streamRunEvents(runId, {
+              signal: currentStreamController.signal,
               onEvent: (event) => {
                 reconnectAttempt = 0;
                 handleRunEvent(event);
                 if (isTerminalRunEventType(event.type)) {
-                  streamController.abort();
+                  currentStreamController.abort();
                 }
               }
             });
@@ -442,6 +466,7 @@ export function useWatchedRunStream(args: {
               reportBrowserError(error, 'operation');
             }
           } finally {
+            streamController = null;
             abortController.signal.removeEventListener('abort', stopStream);
           }
 

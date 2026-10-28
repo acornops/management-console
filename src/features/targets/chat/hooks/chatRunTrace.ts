@@ -59,7 +59,7 @@ export function traceDetailScore(trace?: LiveRunTrace): number {
 }
 
 export function preferRicherRunTrace(existing: LiveRunTrace | undefined, restored: LiveRunTrace): LiveRunTrace {
-  if (!existing || traceDetailScore(existing) <= traceDetailScore(restored)) return restored;
+  if (!existing || traceDetailScore(existing) <= traceDetailScore(restored)) return existing?.needsReconciliation ? { ...restored, needsReconciliation: true } : restored;
   return {
     ...existing,
     status: restored.status,

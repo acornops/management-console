@@ -207,13 +207,14 @@ async function retryDrainRejection(request: () => Promise<Response>, signal?: Ab
     signal?.throwIfAborted();
     const response = await request();
     if (attempt >= 3 || response.status !== 503 || response.redirected) return response;
-    let error: { code?: unknown; outcome?: unknown; retryable?: unknown } | undefined;
+    let error: { code?: unknown; message?: unknown; outcome?: unknown; retryable?: unknown } | undefined;
     try {
       error = (await response.clone().json())?.error;
     } catch {
       return response;
     }
-    if (error?.code !== 'SERVICE_DRAINING' || error.outcome !== 'not_started' || error.retryable !== true) return response;
+    if (error?.code !== 'SERVICE_DRAINING' || error.message !== 'Service is draining'
+      || error.outcome !== 'not_started' || error.retryable !== true) return response;
     await response.body?.cancel();
     const retryAfter = parseRetryAfterSeconds(response.headers.get('retry-after'));
     await delay(Math.min((retryAfter ?? 2 ** attempt) * 1000, 4000));

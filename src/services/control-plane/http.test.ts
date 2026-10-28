@@ -43,7 +43,7 @@ describe('control-plane http helpers', () => {
     clearControlPlaneCsrfState();
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(Response.json({ csrfToken: 'csrf-drain' }))
-      .mockResolvedValueOnce(Response.json({ error: { code: 'SERVICE_DRAINING', outcome: 'not_started', retryable: true } }, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({ error: { code: 'SERVICE_DRAINING', message: 'Service is draining', outcome: 'not_started', retryable: true } }, { status: 503 }))
       .mockResolvedValueOnce(Response.json({ runId: 'run-1' }));
     vi.stubGlobal('fetch', fetchMock);
     const body = JSON.stringify({ clientMessageId: 'message-1', content: 'Check pods' });
@@ -59,9 +59,9 @@ describe('control-plane http helpers', () => {
 
   it.each([
     { status: 503, error: { code: 'UPSTREAM_UNAVAILABLE', outcome: 'not_started', retryable: true } },
-    { status: 503, error: { code: 'SERVICE_DRAINING', outcome: 'unknown', retryable: true } },
-    { status: 503, error: { code: 'SERVICE_DRAINING', retryable: true } },
-    { status: 502, error: { code: 'SERVICE_DRAINING', outcome: 'not_started', retryable: true } }
+    { status: 503, error: { code: 'SERVICE_DRAINING', message: 'Service is draining', outcome: 'unknown', retryable: true } },
+    { status: 503, error: { code: 'SERVICE_DRAINING', message: 'Service is draining', retryable: true } },
+    { status: 502, error: { code: 'SERVICE_DRAINING', message: 'Service is draining', outcome: 'not_started', retryable: true } }
   ])('does not replay a mutation on ambiguous or non-drain errors: %j', async ({ status, error }) => {
     clearControlPlaneCsrfState();
     const fetchMock = vi.fn()
@@ -72,10 +72,25 @@ describe('control-plane http helpers', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it.each([undefined, 'Upstream failed after dispatch'])('does not replay an incomplete or wrong-message drain response (%s)', async (message) => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ csrfToken: 'csrf-drain' }))
+      .mockResolvedValueOnce(Response.json({ error: {
+        code: 'SERVICE_DRAINING', message, outcome: 'not_started', retryable: true
+      } }, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({ runId: 'duplicate-run' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = requestJson('/api/v1/test', { method: 'POST', body: '{}' }).catch((error: unknown) => error);
+    await vi.runAllTimersAsync();
+    expect(await result).toMatchObject({ status: 503 });
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+  });
+
   it('bounds retries when every replica rejects admission', async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn().mockImplementation(async () => Response.json(
-      { error: { code: 'SERVICE_DRAINING', outcome: 'not_started', retryable: true } }, { status: 503 }
+      { error: { code: 'SERVICE_DRAINING', message: 'Service is draining', outcome: 'not_started', retryable: true } }, { status: 503 }
     ));
     vi.stubGlobal('fetch', fetchMock);
     const assertion = expect(requestJson('/api/v1/test')).rejects.toMatchObject({ status: 503, code: 'SERVICE_DRAINING' });
@@ -86,7 +101,7 @@ describe('control-plane http helpers', () => {
 
   it('never replays a workspace mutation after a redirect to a draining service', async () => {
     vi.useFakeTimers();
-    const redirected = Response.json({ error: { code: 'SERVICE_DRAINING', outcome: 'not_started', retryable: true } }, { status: 503 });
+    const redirected = Response.json({ error: { code: 'SERVICE_DRAINING', message: 'Service is draining', outcome: 'not_started', retryable: true } }, { status: 503 });
     Object.defineProperty(redirected, 'redirected', { value: true });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(Response.json({ csrfToken: 'csrf-drain' }))
@@ -105,7 +120,7 @@ describe('control-plane http helpers', () => {
     vi.useFakeTimers();
     const controller = new AbortController();
     const fetchMock = vi.fn().mockImplementation(async () => Response.json(
-      { error: { code: 'SERVICE_DRAINING', outcome: 'not_started', retryable: true } }, { status: 503 }
+      { error: { code: 'SERVICE_DRAINING', message: 'Service is draining', outcome: 'not_started', retryable: true } }, { status: 503 }
     ));
     vi.stubGlobal('fetch', fetchMock);
     const result = requestJson('/api/v1/test', { signal: controller.signal }).catch((error: unknown) => error);

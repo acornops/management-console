@@ -70,9 +70,17 @@
 - A terminal event retains its truthful status while final-message hydration is
   pending. Initial status reads and final hydration retry transient failures
   until the observer is disposed; permanent errors stop observation. Reconciliation
-  preserves the existing assistant message identity.
+  preserves the existing assistant message identity and waits for the durable
+  assistant message even when the run status commits first. Terminal events found
+  by polling also close the current SSE connection to start reconciliation.
+  Concurrent activity/session hydration retains a watcher's pending reconciliation
+  and placeholder until that final message is available.
+  Reconciliation follows older message pages when a retained run is outside the
+  newest page, adds only its final assistant to the newest-page merge, and stops
+  traversing history once that message is found.
 - JSON requests retry at most three times only after an explicit HTTP 503
-  `SERVICE_DRAINING` response with `retryable: true` and `outcome: not_started`.
+  `SERVICE_DRAINING` response with message `Service is draining`,
+  `retryable: true` and `outcome: not_started`.
   Retries preserve the original body, including message identity and approval
   decision. Network errors, ambiguous write outcomes and redirects do not grant
   permission to replay a mutation; aborting prevents the next attempt.
