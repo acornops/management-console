@@ -13,7 +13,12 @@ export function isTransientStreamFailure(error: unknown): boolean {
 }
 
 export function streamReconnectDelay(error: unknown, attempt: number, delays: readonly number[]): number | null {
-  if (isStreamAuthorizationFailure(error) || !isTransientStreamFailure(error)) return null;
   if (attempt >= MAX_STREAM_RECONNECT_ATTEMPTS) return null;
+  return activeRunReconnectDelay(error, attempt, delays);
+}
+
+/** An active run remains observable until it settles or its observer is disposed. */
+export function activeRunReconnectDelay(error: unknown, attempt: number, delays: readonly number[]): number | null {
+  if (isStreamAuthorizationFailure(error) || !isTransientStreamFailure(error)) return null;
   return delays[Math.min(attempt, delays.length - 1)] ?? null;
 }

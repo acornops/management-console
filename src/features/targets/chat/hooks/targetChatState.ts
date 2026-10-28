@@ -254,7 +254,7 @@ export function deriveTargetChatRunState(args: {
     if (runId && cancelledRunIds?.has(runId)) {
       continue;
     }
-    if (runId && isTraceInProgress(runTracesByRunId[runId])) {
+    if (runId && (isTraceInProgress(runTracesByRunId[runId]) || runTracesByRunId[runId]?.needsReconciliation)) {
       return { activeRunId: runId, isRunActive: true };
     }
   }
@@ -272,7 +272,8 @@ export function deriveActivityDiscoveredRunId(args: {
   if (!activityWatchedRun) return null;
   if (activityWatchedRun.sessionId !== activeSession.id) return null;
   if (cancelledRunIds?.has(activityWatchedRun.runId)) return null;
-  return isTraceInProgress(runTracesByRunId[activityWatchedRun.runId])
+  const trace = runTracesByRunId[activityWatchedRun.runId];
+  return isTraceInProgress(trace) || trace?.needsReconciliation
     ? activityWatchedRun.runId
     : null;
 }

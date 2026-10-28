@@ -107,6 +107,8 @@ export interface RunTraceTimelineEvent {
 export interface LiveRunTrace {
   runId: string;
   status: RunTraceStatus;
+  /** Observation continues until the durable final message has been reconciled. */
+  needsReconciliation?: boolean;
   steps: RunTraceStep[];
   toolCalls: RunTraceToolCall[];
   skillLoads?: RunTraceSkillLoad[];

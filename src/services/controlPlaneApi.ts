@@ -13,7 +13,6 @@ import {
 } from '@/types';
 import { toArray } from './control-plane/formatters';
 import {
-  delay,
   requestEventStream,
   requestArtifact,
   requestJson
@@ -64,6 +63,9 @@ import { webhookApi } from './control-plane/webhookApi';
 import { autoTriageApi } from './control-plane/autoTriageApi';
 import { targetSessionApi } from './control-plane/targetSessionApi';
 import type { RunPermissionMode } from './control-plane/runPermissionTypes';
+import { waitForRunTerminalState } from './control-plane/runMonitoring';
+
+export { RunMonitoringTimeoutError } from './control-plane/runMonitoring';
 
 export type {
   ControlPlaneAcceptWorkspaceInvitationResult,
@@ -630,16 +632,7 @@ export const controlPlaneApi = {
   },
 
   async waitForRunTerminalState(runId: string, options?: { timeoutMs?: number; pollIntervalMs?: number }): Promise<ControlPlaneRun> {
-    const timeoutMs = options?.timeoutMs ?? 120000;
-    const pollIntervalMs = options?.pollIntervalMs ?? 1200;
-    const deadline = Date.now() + timeoutMs;
-
-    while (true) {
-      const run = await this.getRun(runId);
-      if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled') return run;
-      if (Date.now() >= deadline) throw new Error(`Run ${runId} did not complete within ${timeoutMs}ms`);
-      await delay(pollIntervalMs);
-    }
+    return waitForRunTerminalState(runId, (id) => this.getRun(id), options);
   },
 
   async streamRunEvents(runId: string, options?: { signal?: AbortSignal; onEvent?: (event: ControlPlaneRunEvent) => void }): Promise<void> {

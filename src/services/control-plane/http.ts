@@ -80,10 +80,10 @@ async function getCsrfToken(sessionExpiry: SessionExpiryBehavior): Promise<strin
   if (existing) return existing;
   if (cachedCsrfToken) return cachedCsrfToken;
   if (!csrfTokenRequest) {
-    csrfTokenRequest = fetch(`${getControlPlaneBaseUrl()}/api/v1/auth/csrf`, {
+    csrfTokenRequest = retryDrainRejection(() => fetch(`${getControlPlaneBaseUrl()}/api/v1/auth/csrf`, {
       credentials: 'include',
       cache: 'no-store'
-    })
+    }))
       .then(async (response) => {
         if (!response.ok) {
           await throwControlPlaneResponseError(response, sessionExpiry);
@@ -190,13 +190,35 @@ async function fetchWorkspaceRequest(path: string, init: RequestInit): Promise<R
       async cancel() { controller.abort(); untrack(); await reader.cancel(); }
     });
     const wrapped = new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
-    Object.defineProperty(wrapped, 'url', { value: response.url });
+    Object.defineProperties(wrapped, {
+      url: { value: response.url },
+      redirected: { value: response.redirected }
+    });
     responseWorkspaceIds.set(wrapped, workspaceId);
     return wrapped;
   } catch (error) { untrack(); throw error; }
 }
 
 export type ControlPlaneRequestInit = RequestInit & { sessionExpiry?: SessionExpiryBehavior };
+
+/** Only the control plane's rejection before admission permits mutation replay. */
+async function retryDrainRejection(request: () => Promise<Response>, signal?: AbortSignal): Promise<Response> {
+  for (let attempt = 0; ; attempt += 1) {
+    signal?.throwIfAborted();
+    const response = await request();
+    if (attempt >= 3 || response.status !== 503 || response.redirected) return response;
+    let error: { code?: unknown; outcome?: unknown; retryable?: unknown } | undefined;
+    try {
+      error = (await response.clone().json())?.error;
+    } catch {
+      return response;
+    }
+    if (error?.code !== 'SERVICE_DRAINING' || error.outcome !== 'not_started' || error.retryable !== true) return response;
+    await response.body?.cancel();
+    const retryAfter = parseRetryAfterSeconds(response.headers.get('retry-after'));
+    await delay(Math.min((retryAfter ?? 2 ** attempt) * 1000, 4000));
+  }
+}
 
 export async function requestJson<T>(path: string, init?: ControlPlaneRequestInit): Promise<T> {
   const method = (init?.method || 'GET').toUpperCase();
@@ -214,7 +236,10 @@ export async function requestJson<T>(path: string, init?: ControlPlaneRequestIni
   if ((method === 'GET' || method === 'HEAD') && requestInit.cache === undefined) {
     requestInit.cache = 'no-store';
   }
-  const response = await fetchWorkspaceRequest(path, requestInit);
+  // JSON bodies are immutable and replayable; one-shot body streams are not.
+  const response = requestInit.body == null || typeof requestInit.body === 'string'
+    ? await retryDrainRejection(() => fetchWorkspaceRequest(path, requestInit), requestInit.signal ?? undefined)
+    : await fetchWorkspaceRequest(path, requestInit);
 
   if (!response.ok) {
     return throwControlPlaneResponseError(response, sessionExpiry);

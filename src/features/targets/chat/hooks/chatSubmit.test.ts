@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ChatMessage, ChatSession } from '@/types';
 import { isRuntimeSelectionPolicyRejection, RUN_TERMINAL_WAIT_TIMEOUT_MS, submitChatMessage } from '@/features/targets/chat/hooks/chatSubmit';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
-import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { controlPlaneApi, RunMonitoringTimeoutError } from '@/services/controlPlaneApi';
+import type { LiveRunTrace } from '@/features/targets/chat/types';
+import { deriveTargetChatRunState } from './targetChatState';
 import { preserveStreamingAssistantMessageId } from '@/features/targets/chat/lib/session-utils';
 import {
   replaceCancelledRunAssistantMessages,
@@ -11,6 +13,7 @@ import {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 function deferred<T>(): {
@@ -309,6 +312,59 @@ describe('replaceCancelledRunAssistantMessages', () => {
 describe('RUN_TERMINAL_WAIT_TIMEOUT_MS', () => {
   it('exceeds the default write approval timeout window', () => {
     expect(RUN_TERMINAL_WAIT_TIMEOUT_MS).toBeGreaterThan(300000);
+  });
+});
+
+describe('submitChatMessage monitoring recovery', () => {
+  it.each([
+    { error: new TypeError('connection closed'), terminal: false },
+    { error: new ControlPlaneRequestError('draining', 503, 'SERVICE_DRAINING'), terminal: false },
+    { error: new RunMonitoringTimeoutError('run-1', 600000), terminal: false },
+    { error: new TypeError('session read interrupted'), terminal: true },
+    { error: new RunMonitoringTimeoutError('run-1', 600000), terminal: true, eventFirst: true }
+  ])('preserves accepted observation and terminal truth when monitoring stops: %j', async ({ error, terminal, eventFirst }) => {
+    vi.useFakeTimers();
+    const post = vi.spyOn(controlPlaneApi, 'postSessionMessage').mockResolvedValue({ messageId: 'message-1', runId: 'run-1' });
+    vi.spyOn(controlPlaneApi, 'streamRunEvents').mockImplementation(async (_runId, options) => {
+      if (eventFirst) options?.onEvent?.({ seq: 1, type: 'run_completed', payload: {} } as never);
+    });
+    vi.spyOn(controlPlaneApi, 'getRunEvents').mockResolvedValue([]);
+    const wait = vi.spyOn(controlPlaneApi, 'waitForRunTerminalState');
+    if (terminal && !eventFirst) {
+      wait.mockResolvedValue({ id: 'run-1', status: 'completed', assistantMessage: { content: 'Final answer' } } as never);
+      vi.spyOn(controlPlaneApi, 'getSessionMessages').mockRejectedValue(error);
+    } else wait.mockRejectedValue(error);
+    const initialSession: ChatSession = {
+      id: 'session-local', backendSessionId: 'session-backend', name: 'Chat', messages: [], timestamp: 1
+    };
+    let sessions = [initialSession];
+    let traces: Record<string, LiveRunTrace> = {};
+    const unregister = vi.fn();
+    const setActiveRunId = vi.fn();
+    const submit = submitChatMessage({
+      target: { id: 'target-1', workspaceId: 'workspace-1', targetType: 'kubernetes', name: 'Target', chatSessions: sessions, mcpTools: [] },
+      activeSession: initialSession, activeSessionId: initialSession.id,
+      canChat: true, canRequestWriteRuns: false, inputValue: 'Check pods', isLoading: false,
+      shouldStickToBottomRef: { current: false }, onUpdateSessions: (next) => { sessions = next; },
+      setActiveSessionId: () => undefined, setInputValue: () => undefined, setIsLoading: () => undefined,
+      setActiveRunId, setRunTracesByRunId: (next) => { traces = typeof next === 'function' ? next(traces) : next; },
+      setTraceExpandedByRunId: () => undefined, draftConversationName: 'Chat',
+      fallbackBackendErrorMessage: 'Request failed.', runCancelledMessage: 'Run cancelled.',
+      onPendingCancellationAccepted: () => undefined, unregisterRunStream: unregister
+    });
+    await vi.runAllTimersAsync();
+    await submit;
+
+    expect(sessions[0].messages).toEqual([
+      expect.objectContaining({ role: 'user', content: 'Check pods', runId: 'run-1' }),
+      expect.objectContaining({ id: 'stream-run-1', role: 'assistant', content: '', runId: 'run-1', transientStatus: 'pending_assistant' })
+    ]);
+    expect(traces['run-1'].status).toBe(terminal ? 'completed' : 'connecting');
+    expect(deriveTargetChatRunState({ localActiveRunId: null, activeSession: sessions[0], runTracesByRunId: traces }))
+      .toEqual({ activeRunId: 'run-1', isRunActive: true });
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(unregister).toHaveBeenCalledWith('run-1');
+    expect(setActiveRunId).toHaveBeenLastCalledWith(null);
   });
 });
 

@@ -1,5 +1,7 @@
 # Active Execution Plans
 
+- [Graceful Rolling Restarts](2026-10-29-graceful-rolling-restarts.md) — Preserve accepted runs and safely reconnect during planned service restarts.
+
 Reviewed 2026-10-19. Implementation-only plans that have landed are in
 [Completed plans](../completed/README.md). Historical validation results are not fresh release acceptance.
 

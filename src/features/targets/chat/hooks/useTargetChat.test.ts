@@ -162,6 +162,13 @@ describe('deriveTargetChatRunState', () => {
 });
 
 describe('deriveActivityDiscoveredRunId', () => {
+  it('retains a terminal discovered run until its messages are reconciled', () => {
+    expect(deriveActivityDiscoveredRunId({
+      activityWatchedRun: { sessionId: 'session-1', runId: 'run-2' },
+      activeSession: makeSession([]),
+      runTracesByRunId: { 'run-2': { ...makeTrace('run-2', 'completed'), needsReconciliation: true } }
+    })).toBe('run-2');
+  });
   it('uses an in-progress run discovered from target activity for the active session', () => {
     expect(deriveActivityDiscoveredRunId({
       activityWatchedRun: { sessionId: 'session-1', runId: 'run-2' },

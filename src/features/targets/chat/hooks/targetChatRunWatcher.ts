@@ -2,11 +2,13 @@ import { useEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { ChatSession } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { streamReconnectDelay } from '@/services/control-plane/streamRetry';
+import { activeRunReconnectDelay } from '@/services/control-plane/streamRetry';
+import { retryRunObservation, waitForRunObservation } from '@/services/control-plane/runMonitoring';
 import { reportBrowserError } from '@/observability/browserErrors';
 import {
   ensureFailedRunAssistantMessage,
   mapControlPlaneMessage,
+  preserveStreamingAssistantMessageId,
   resolveAssistantTransientStatus,
   sanitizeChatMessages,
   upsertSession
@@ -100,13 +102,13 @@ export function useWatchedRunStream(args: {
     let pendingSessionPublish: ReturnType<typeof setTimeout> | null = null;
     let pollEventsStop = false;
 
-    const setTraceForRun = (nextTrace: LiveRunTrace) => {
-      if (isRunCancelled(runId)) return;
-      trace = nextTrace;
+    const setTraceForRun = (nextTrace: LiveRunTrace, needsReconciliation = true) => {
+      if (cancelled || isRunCancelled(runId)) return;
+      trace = { ...nextTrace, needsReconciliation };
       setRunTracesByRunId((current) => {
         const next = {
           ...current,
-          [runId]: nextTrace
+          [runId]: trace
         };
         runTracesByRunIdRef.current = next;
         return next;
@@ -337,24 +339,14 @@ export function useWatchedRunStream(args: {
       }
     };
 
-    const waitForReconnect = (delayMs: number) =>
-      new Promise<void>((resolve) => {
-        const timer = window.setTimeout(resolve, delayMs);
-        abortController.signal.addEventListener(
-          'abort',
-          () => {
-            window.clearTimeout(timer);
-            resolve();
-          },
-          { once: true }
-        );
-      });
+    const waitForReconnect = (delayMs: number) => waitForRunObservation(delayMs, abortController.signal);
+    const observe = <T,>(read: () => Promise<T>) => retryRunObservation(read, abortController.signal);
 
     const reconcileWatchedSession = async (latestRun: ControlPlaneRun | null) => {
-      const backendMessages = await controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100 }).catch(() => null);
+      const backendMessages = await observe(() => controlPlaneApi.getSessionMessages(watchedBackendSessionId, { limit: 100 }));
       if (cancelled || isRunCancelled(runId)) return;
       let mappedMessages = backendMessages
-        ? sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage))
+        ? preserveStreamingAssistantMessageId(sanitizeChatMessages(backendMessages.items.map(mapControlPlaneMessage)), runId, activeStreamingMessageId)
         : null;
       if (latestRun?.status === 'failed' && mappedMessages) {
         mappedMessages = ensureFailedRunAssistantMessage(mappedMessages, latestRun);
@@ -387,6 +379,7 @@ export function useWatchedRunStream(args: {
           timestamp: Date.now()
         };
       }, true);
+      if (latestRun && !isRunInProgress(latestRun.status)) setTraceForRun(trace, false);
     };
 
     void (async () => {
@@ -395,7 +388,7 @@ export function useWatchedRunStream(args: {
       let pollEventsPromise: Promise<void> | null = null;
       try {
         const [run, events] = await Promise.all([
-          controlPlaneApi.getRun(runId),
+          observe(() => controlPlaneApi.getRun(runId)),
           controlPlaneApi.getRunEvents(runId).catch(() => [])
         ]);
         latestRun = run;
@@ -408,6 +401,10 @@ export function useWatchedRunStream(args: {
           .map((event) => String(event.payload.text))
           .join('');
         ensureStreamingMessage(replayedText);
+        if (!isRunInProgress(run.status)) {
+          await reconcileWatchedSession(run);
+          return;
+        }
         pollEventsPromise = (async () => {
           while (!pollEventsStop && !cancelled && !isRunCancelled(runId)) {
             try {
@@ -425,14 +422,17 @@ export function useWatchedRunStream(args: {
 
         while (!cancelled && !isRunCancelled(runId) && latestRun && isRunInProgress(latestRun.status)) {
           let streamError: unknown;
+          const streamController = new AbortController();
+          const stopStream = () => streamController.abort();
+          abortController.signal.addEventListener('abort', stopStream, { once: true });
           try {
             await controlPlaneApi.streamRunEvents(runId, {
-              signal: abortController.signal,
+              signal: streamController.signal,
               onEvent: (event) => {
                 reconnectAttempt = 0;
                 handleRunEvent(event);
                 if (isTerminalRunEventType(event.type)) {
-                  abortController.abort();
+                  streamController.abort();
                 }
               }
             });
@@ -441,15 +441,19 @@ export function useWatchedRunStream(args: {
             if (!cancelled) {
               reportBrowserError(error, 'operation');
             }
+          } finally {
+            abortController.signal.removeEventListener('abort', stopStream);
           }
 
           if (cancelled || isRunCancelled(runId)) return;
-          latestRun = await controlPlaneApi.getRun(runId).catch(() => latestRun);
+          if (streamError !== undefined && activeRunReconnectDelay(streamError, reconnectAttempt, WATCHER_RECONNECT_DELAYS_MS) === null) throw streamError;
+          latestRun = await observe(() => controlPlaneApi.getRun(runId));
           const missedEvents = await controlPlaneApi.getRunEvents(runId).catch(() => []);
           for (const event of missedEvents) {
             if (isRunCancelled(runId)) break;
             handleRunEvent(event);
           }
+          if (!isRunInProgress(latestRun.status)) replayRunEvents(latestRun, missedEvents);
           await reconcileWatchedSession(latestRun);
 
           if (!latestRun || !isRunInProgress(latestRun.status)) {
@@ -457,7 +461,7 @@ export function useWatchedRunStream(args: {
             return;
           }
 
-          const delayMs = streamReconnectDelay(streamError, reconnectAttempt, WATCHER_RECONNECT_DELAYS_MS);
+          const delayMs = activeRunReconnectDelay(streamError, reconnectAttempt, WATCHER_RECONNECT_DELAYS_MS);
           if (delayMs === null) {
             pollEventsStop = true;
             return;
@@ -468,15 +472,12 @@ export function useWatchedRunStream(args: {
       } catch (error) {
         if (!cancelled) {
           reportBrowserError(error, 'operation');
+          setTraceForRun(trace, false);
         }
       } finally {
         pollEventsStop = true;
         if (pollEventsPromise) {
           await pollEventsPromise.catch(() => undefined);
-        }
-        if (!cancelled) {
-          if (isRunCancelled(runId)) return;
-          await reconcileWatchedSession(latestRun || await controlPlaneApi.getRun(runId).catch(() => null));
         }
       }
     })();

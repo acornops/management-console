@@ -15,7 +15,8 @@ const userFromControlPlane = vi.fn((user) => ({ email: user.email, name: user.di
 const mapWorkspace = vi.fn((workspace) => ({ id: workspace.id, name: workspace.name, members: [], currentUserRole: 'viewer', description: '', clusterCount: 0, memberCount: 0, clusterIds: [] }));
 const mapWorkspaceMember = vi.fn((member) => ({ email: member.email, name: member.displayName || member.email, role: member.role, source: member.source === 'oidc' ? 'OIDC' : 'Internal', userId: member.userId }));
 
-vi.mock('./control-plane/http', () => ({
+vi.mock('./control-plane/http', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./control-plane/http')>(),
   requestJson,
   requestArtifact,
   delay,

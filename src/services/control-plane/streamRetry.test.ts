@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ControlPlaneRequestError } from './http';
-import { streamReconnectDelay } from './streamRetry';
+import { activeRunReconnectDelay, streamReconnectDelay } from './streamRetry';
 
 const delays = [250, 1000, 3000] as const;
 
@@ -15,5 +15,14 @@ describe('SSE retry classification', () => {
     expect(streamReconnectDelay(new ControlPlaneRequestError('upstream', 503), 3, delays)).toBe(3000);
     expect(streamReconnectDelay(new ControlPlaneRequestError('upstream', 503), 5, delays)).toBeNull();
     expect(streamReconnectDelay(new ControlPlaneRequestError('not found', 404), 0, delays)).toBeNull();
+  });
+
+  it('continues reconnecting an active run with capped backoff after repeated rolling restarts', () => {
+    expect(activeRunReconnectDelay(new ControlPlaneRequestError('draining', 503), 5, delays)).toBe(3000);
+    expect(activeRunReconnectDelay(new TypeError('connection closed'), 50, delays)).toBe(3000);
+    expect(activeRunReconnectDelay(undefined, 50, delays)).toBe(3000);
+    expect(activeRunReconnectDelay(new ControlPlaneRequestError('unauthorized', 401), 50, delays)).toBeNull();
+    expect(activeRunReconnectDelay(new ControlPlaneRequestError('forbidden', 403), 50, delays)).toBeNull();
+    expect(activeRunReconnectDelay(new ControlPlaneRequestError('not found', 404), 0, delays)).toBeNull();
   });
 });

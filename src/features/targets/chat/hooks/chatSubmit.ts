@@ -1,5 +1,6 @@
 import { ChatMessage } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
+import { retainRunForReconciliation } from './chatRunMonitoring';
 import { createLocalMessageId, sleep } from '@/features/targets/chat/lib/helpers';
 import { appendRunTraceStep, formatTraceFailureDetail, parseRunUsage } from '@/features/targets/chat/lib/trace-utils';
 import {
@@ -422,7 +423,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     streamPromise = controlPlaneApi.streamRunEvents(accepted.runId, {
       signal: streamAbortController.signal,
       onEvent: handleRunEvent
-    });
+    }).catch(() => undefined);
     pollEventsPromise = (async () => {
       while (!pollEventsStop && !isRunCancelled(accepted.runId)) {
         try {
@@ -590,6 +591,7 @@ export async function submitChatMessage(args: ChatSubmitArgs): Promise<void> {
     if (isPendingRunCancelled() || isAcceptedRunCancelled()) {
       return;
     }
+    if (retainRunForReconciliation(error, runIdForMessage, setRunTracesByRunId)) return;
     if (isRuntimeSelectionPolicyRejection(error)) {
       setInputValue(inputValue);
       onRuntimeSelectionRejected?.();

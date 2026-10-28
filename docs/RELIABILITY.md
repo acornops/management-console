@@ -59,9 +59,23 @@
 - After authentication, the first `401` expires the client session once, clears
   user/workspace/target/cluster/VM and CSRF state, unmounts active streams, and
   preserves the current deep link for sign-in recovery.
-- SSE `401` and `403` responses stop immediately. Network and `5xx` failures use
-  capped backoff with at most five reconnect attempts; logout and session expiry
-  unmount stream owners and prevent further retries.
+- SSE `401` and `403` responses stop immediately. General streams use capped
+  backoff with at most five reconnect attempts. An active run keeps reconnecting
+  with capped backoff while its observer remains mounted; logout and session
+  expiry unmount stream owners and prevent further retries.
+- Run status polling tolerates transient network and `5xx` failures within its
+  observation deadline. A monitoring timeout does not establish run failure:
+  an accepted turn stays pending and transfers to the active-run watcher for
+  reconciliation with durable server state.
+- A terminal event retains its truthful status while final-message hydration is
+  pending. Initial status reads and final hydration retry transient failures
+  until the observer is disposed; permanent errors stop observation. Reconciliation
+  preserves the existing assistant message identity.
+- JSON requests retry at most three times only after an explicit HTTP 503
+  `SERVICE_DRAINING` response with `retryable: true` and `outcome: not_started`.
+  Retries preserve the original body, including message identity and approval
+  decision. Network errors, ambiguous write outcomes and redirects do not grant
+  permission to replay a mutation; aborting prevents the next attempt.
 - Root and global browser error handlers emit deduplicated, sanitized incident
   records. Records may contain HTTP status and control-plane request IDs, but
   never raw errors, stacks, tokens, bodies, or URL query parameters.
