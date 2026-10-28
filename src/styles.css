@@ -506,6 +506,72 @@ select {
   }
 }
 
+@media (width < 1200px) {
+  /* Keep focused chat inputs readable without iPhone's automatic page zoom. */
+  .target-chat-composer-input {
+    font-size: max(1rem, 16px);
+  }
+
+  [data-chat-composer-controls='true'] {
+    position: relative;
+  }
+
+  .target-chat-composer-attach {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  [data-chat-composer-controls='true'] .target-chat-composer-options {
+    order: 2;
+    display: grid;
+    grid-template-columns: minmax(2.75rem, 2fr) 1px minmax(2.75rem, 3fr);
+    align-content: center;
+    /* Fit one row normally; keep controls reachable when text is enlarged. */
+    flex: 1 1 calc(5.75rem + 1px);
+    min-width: calc(5.75rem + 1px);
+    width: auto;
+    margin-left: 0;
+  }
+
+  .target-chat-composer-options [data-assistant-capability-preview-trigger] {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .target-chat-composer-options > div {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .target-chat-composer-send {
+    order: 3;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  /* Anchor menus to the control row instead of the truncated model label. */
+  .target-chat-composer-model {
+    position: static;
+  }
+
+  .target-chat-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (min-width: 640px) and (width < 1200px) {
+  .target-chat-composer-model .target-chat-composer-model-submenu {
+    bottom: 0;
+    left: auto;
+    right: calc(100% + 0.5rem);
+  }
+}
+
 @media (min-width: 1200px) {
   .management-console-mobile-navigation {
     display: none !important;

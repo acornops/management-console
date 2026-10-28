@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Mobile Navigation and Chat Polish](mobile-navigation-chat-polish.md) — Mobile-only alignment, compact composer, input sizing, and title truncation with desktop comparisons and release qualification.
+
 - [Capability Preview Copy](capability-preview-copy.md) — Concise approval note with the READ explanation retained on its existing tooltip; no styling changes.
 
 - [Compact Assistant Capability Preview](compact-capability-preview.md) — Restored the existing bounded tool list without changing the visual design.

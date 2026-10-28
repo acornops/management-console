@@ -347,7 +347,7 @@ describe('target chat polish contracts', () => {
     expect(chatView).toContain("isPanel");
     expect(chatView).toContain("'w-[min(23rem,calc(100vw-3rem))] pr-[12rem]'");
     expect(chatView).toContain("? 'bottom-2 right-2 top-2 w-44'");
-    expect(chatView).toContain("'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'");
+    expect(chatView).toContain("bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto");
     expect(chatGateDialog).toContain('<DialogFrame');
     expect(chatGateDialog).toContain('unframed');
     expect(chatGateDialog).toContain('titleId={dialogTitleId}');

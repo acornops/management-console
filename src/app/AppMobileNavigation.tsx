@@ -176,7 +176,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           onSetMobileNavOpen(false);
                           onBackToWorkspaceSidebar();
                         }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
+                        className="min-h-11 justify-start rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
                       >
                         {t('agentChat.backToAgents')}
                       </Button>
@@ -195,7 +195,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateAgentSubview(tab);
                               }}
                               disabled={!selectedSidebarAgent}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
+                              className={`min-h-11 justify-start rounded-md px-3 py-2 text-left transition-colors ${
                                 activeAgentSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
@@ -224,7 +224,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateAgentSubview(tab);
                               }}
                               disabled={!selectedSidebarAgent}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
+                              className={`min-h-11 justify-start rounded-md px-3 py-2 text-left transition-colors ${
                                 activeAgentSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
@@ -245,7 +245,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateAgentSubview('settings');
                           }}
                           disabled={!selectedSidebarAgent}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left transition-colors ${
+                          className={`min-h-11 w-full justify-start rounded-md px-3 py-2 text-left transition-colors ${
                             activeAgentSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
@@ -265,7 +265,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           onSetMobileNavOpen(false);
                           onBackToWorkspaceSidebar();
                         }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
+                        className="min-h-11 justify-start rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
                       >
                         {t('app.backToWorkspace')}
                       </Button>
@@ -288,7 +288,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateClusterSubview(tab);
                               }}
                               disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
+                              className={`min-h-11 justify-start rounded-md px-3 py-2 text-left transition-colors ${
                                 activeClusterSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
@@ -329,7 +329,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateClusterSubview(tab);
                               }}
                               disabled={!selectedSidebarCluster}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
+                              className={`min-h-11 justify-start rounded-md px-3 py-2 text-left transition-colors ${
                                 activeClusterSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
@@ -350,7 +350,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateClusterSubview('settings');
                           }}
                           disabled={!selectedSidebarCluster}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left transition-colors ${
+                          className={`min-h-11 w-full justify-start rounded-md px-3 py-2 text-left transition-colors ${
                             activeClusterSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
@@ -370,7 +370,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                           onSetMobileNavOpen(false);
                           onBackToWorkspaceSidebar();
                         }}
-                        className="min-h-11 rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
+                        className="min-h-11 justify-start rounded-md px-3 py-2 text-left text-ui-text-muted hover:bg-ui-bg hover:text-accent-strong"
                       >
                         {t('app.backToWorkspace')}
                       </Button>
@@ -393,7 +393,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateVmSubview(tab);
                               }}
                               disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
+                              className={`min-h-11 justify-start rounded-md px-3 py-2 text-left transition-colors ${
                                 (
                                   tab === 'resources'
                                     ? activeVmSubview === 'resources' ||
@@ -437,7 +437,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                                 onNavigateVmSubview(tab);
                               }}
                               disabled={!selectedSidebarVm}
-                              className={`min-h-11 rounded-md px-3 py-2 text-left transition-colors ${
+                              className={`min-h-11 justify-start rounded-md px-3 py-2 text-left transition-colors ${
                                 activeVmSubview === tab ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                               } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
@@ -458,7 +458,7 @@ export const AppMobileNavigation: React.FC<AppMobileNavigationProps> = ({
                             onNavigateVmSubview('settings');
                           }}
                           disabled={!selectedSidebarVm}
-                          className={`min-h-11 w-full rounded-md px-3 py-2 text-left transition-colors ${
+                          className={`min-h-11 w-full justify-start rounded-md px-3 py-2 text-left transition-colors ${
                             activeVmSubview === 'settings' ? 'bg-accent-soft text-accent-strong' : 'text-ui-text-muted hover:bg-ui-bg hover:text-ui-text'
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >

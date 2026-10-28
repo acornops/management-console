@@ -275,7 +275,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               }}
               onBlur={targetMentions.dismiss}
               rows={1}
-              className={`${
+              className={`target-chat-composer-input ${
                 isPanel ? 'min-h-9 type-body' : 'min-h-11 type-body'
               } max-h-36 w-full min-w-0 resize-none overflow-y-auto border-0 bg-transparent px-0 py-2 text-ui-text shadow-none outline-none placeholder:text-ui-text-muted/60 hover:bg-transparent focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60`}
               role="combobox"
@@ -299,7 +299,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
             />
           </div>
           <div data-chat-composer-controls="true" className="flex min-w-0 flex-wrap items-center gap-2 px-2 pb-0.5">
-            <Tooltip content={t('chat.attachFiles')} className="order-2 sm:order-1">
+            <Tooltip content={t('chat.attachFiles')} className="target-chat-composer-attach order-2 sm:order-1">
               <Button
                 type="button"
                 variant="tertiary"
@@ -312,7 +312,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
               </Button>
             </Tooltip>
             <FileInput ref={fileInputRef} multiple hidden onChange={(event) => void handleAttachmentInputChange(event)} disabled={!canPost || isRunActive || isComposerRuntimeUnavailable} />
-            <div className="order-1 inline-flex h-11 min-w-0 w-full max-w-full items-center overflow-visible rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60 sm:order-2 sm:ml-auto sm:h-8 sm:w-auto">
+            <div className="target-chat-composer-options order-1 inline-flex h-11 min-w-0 w-full max-w-full items-center overflow-visible rounded-full bg-ui-bg/70 px-0.5 text-ui-text-muted ring-1 ring-ui-border/60 sm:order-2 sm:ml-auto sm:h-8 sm:w-auto">
               <AssistantCapabilityPreviewControl
                 canChat={canChat}
                 isPanel={isPanel}
@@ -322,7 +322,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 requestedToolAccessMode={requestedToolAccessMode}
               />
               <span className="h-4 w-px shrink-0 bg-ui-border" aria-hidden="true" />
-              <div ref={modelMenuRef} className={`${isPanel ? 'static' : 'relative'} min-w-0 flex-1`} onBlur={(event) => {
+              <div ref={modelMenuRef} className={`target-chat-composer-model ${isPanel ? 'static' : 'relative'} min-w-0 flex-1`} onBlur={(event) => {
                 if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
                 setIsModelMenuOpen(false);
                 setIsModelSubmenuOpen(false);
@@ -419,7 +419,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                               className={`absolute z-50 max-h-[min(24rem,calc(100vh-8rem))] overflow-y-auto rounded-2xl border border-ui-border bg-ui-surface-strong p-2 shadow-xl shadow-ui-text/10 custom-scrollbar ${
                                 isPanel
                                   ? 'bottom-2 right-2 top-2 w-44'
-                                  : 'bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'
+                                  : 'target-chat-composer-model-submenu bottom-[calc(100%+0.5rem)] right-0 w-56 sm:bottom-0 sm:left-[calc(100%+0.5rem)] sm:right-auto'
                               }`}
                               role="group"
                               aria-labelledby={modelSubmenuButtonId}
@@ -456,7 +456,7 @@ export const TargetChatComposer: React.FC<TargetChatComposerProps> = ({
                 </AnimatePresence>
               </div>
             </div>
-            <Tooltip content={composerActionLabel} className="order-2 ml-auto sm:order-3 sm:ml-0">
+            <Tooltip content={composerActionLabel} className="target-chat-composer-send order-2 ml-auto sm:order-3 sm:ml-0">
               <Button
                 type={isRunActive ? 'button' : 'submit'}
                 onClick={
