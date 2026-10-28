@@ -84,6 +84,18 @@ describe('formatControlPlaneError', () => {
     );
   });
 
+  it('explains unavailable pod logs without exposing upstream error details', async () => {
+    const error = controlPlaneError(409, 'POD_LOGS_UNAVAILABLE', 'private-registry/image details');
+    expect(formatControlPlaneError(error, 'Fallback', { area: 'cluster' })).toBe(
+      'No logs yet; this container has not started.'
+    );
+
+    await i18n.changeLanguage('zh');
+    expect(formatControlPlaneError(error, 'Fallback', { area: 'cluster' })).toBe(
+      '此容器尚未启动，暂无日志。'
+    );
+  });
+
   it('uses owner conflict override copy', () => {
     const error = controlPlaneError(409, 'LAST_OWNER', 'Workspace must keep at least one owner');
 

@@ -52,38 +52,43 @@ Centralized browser error reporting is deliberately deferred. Incidents exist
 only in the affected browser console, so support depends on user-provided IDs;
 this remains an operational risk until a privacy-reviewed reporting path exists.
 
-## MCP tool filtering and Agent appearance
+## MCP tool search and Agent appearance
 
-Manage Tools searches tool names and displayed labels, with capability and
-configured-enabled filters. Starting a filter completes the existing paged
+Manage Tools searches tool names and displayed labels. Starting a search completes the existing paged
 discovered-tool read before reporting complete results. Failed reads retain known
 tools, label results incomplete and offer Retry. Unfiltered browsing stays paged.
-Enabled-state filters include unsaved edits; they do not describe effective
-runtime access. The existing Enabled tools summary remains the server-reported
+The Enabled tools summary remains the server-reported
 effective count, not an unsaved-draft count. Group switches apply to every tool
 in their capability group, including tools hidden by a filter, and show the full
 group count.
 
-Clear filters keeps edits. Reset changes clears only edits, not discovered tools
-or filters. A failed save retains the remaining draft for another Save changes
+Clear search keeps edits. Reset changes clears only edits, not discovered tools
+or the search. A failed save retains the remaining draft for another Save changes
 attempt. Agent appearance is optional and collapsed by default in Agent
 definition settings; the selected emoji remains visible while its picker is
-collapsed. Ownership, capabilities and save permissions are unchanged.
+collapsed. Agent owner selection uses the existing dropdown with Load more for
+additional member pages; there is no separate owner search field.
 
 ## Bounded log investigation
 
 Kubernetes pod logs retain their container, previous-container, tail and polling
-Follow controls. Find highlights only the loaded output and preserves the log
+Follow controls. Search logs highlights only the loaded output and preserves the log
 viewport; Paused stops polling, not the workload. Fetched time includes the
 user's timezone and is distinct from timestamps reported inside log entries.
 
-VM Logs are bounded snapshots, not a live stream. Find filters only loaded
+With the matching AgentK and Control Plane updates, a container waiting to start
+shows "No logs yet; this container has not started." Resolve its startup issue
+and use Refresh once it starts. Other read failures retain their existing error
+handling; this message does not mean the agent connection failed.
+
+VM Logs use a bounded on-demand agent query, not a live stream. Search logs filters only loaded
 entries. Entry timestamps use the user's timezone; missing timestamps and
 unavailable collection times remain explicitly unknown. Refresh failures retain
 previously loaded output with stale feedback in both viewers.
 
-Copy loaded logs and Download loaded logs export the entire loaded output, not
-only find matches or additional history. Exports include source and scope context,
+The Copy and Download icon buttons beside Search logs export the entire loaded output, not
+only search matches or additional history. Tooltips and accessible labels identify
+both actions. Exports include source and scope context,
 use the same authorized fields shown in the viewer, and make no extra log read.
 Logs can contain sensitive application output: review before sharing. The console
 does not persist these exports or send their contents to analytics. Clipboard

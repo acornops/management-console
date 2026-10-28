@@ -51,11 +51,18 @@ function capabilityDisplayName(id: string): string {
 }
 
 function toolReviews(agent: WorkflowCapabilityAgentSource): WorkflowAgentCapabilityReview['tools'] {
-  const mcpTools = (agent.mcpInstallations || []).flatMap((server) => server.tools);
-  return uniqueInOrder(agent.tools).map((toolId) => {
-    const mcpTool = mcpTools.find((tool) => tool.alias === toolId || tool.name === toolId);
+  const mcpTools = (agent.mcpInstallations || []).flatMap((server) => (
+    server.tools.map((tool) => ({ ...tool, serverName: server.name }))
+  ));
+  const selectedTools = uniqueInOrder(agent.tools).map((toolId) => {
+    const nameMatches = mcpTools.filter((tool) => tool.toolName === toolId);
+    const mcpTool = mcpTools.find((tool) => tool.alias === toolId)
+      || (nameMatches.length === 1 ? nameMatches[0] : undefined);
+    return { toolId, mcpTool };
+  });
+  return selectedTools.map(({ toolId, mcpTool }) => {
     const capability = agent.capabilities.find((item) => (
-      item.toolId === toolId || (mcpTool && item.toolId === mcpTool.name)
+      item.toolId === toolId || (mcpTool && item.toolId === mcpTool.toolName)
     ));
     const access = mcpTool?.capability || capability?.operation || 'unknown';
     const requiresApproval = access === 'write' && (
@@ -64,9 +71,20 @@ function toolReviews(agent: WorkflowCapabilityAgentSource): WorkflowAgentCapabil
       || (agent.permissionMode === 'auto_allowed_changes'
         && (!mcpTool || mcpTool.riskLevel === 'high_risk' || mcpTool.riskLevel === 'destructive' || !mcpTool.autoAllowed))
     );
+    let label = mcpTool?.toolName || toolId;
+    if (mcpTool) {
+      const peers = selectedTools.filter((item) => item.mcpTool?.toolName === mcpTool.toolName);
+      if (peers.length > 1) {
+        const sameServerName = peers.filter((item) => item.mcpTool?.serverName === mcpTool.serverName);
+        const serverLabel = sameServerName.length > 1
+          ? `${mcpTool.serverName} · ${mcpTool.serverId}`
+          : mcpTool.serverName;
+        label = `${mcpTool.toolName} (${serverLabel})`;
+      }
+    }
     return {
       id: toolId,
-      label: mcpTool?.alias || toolId,
+      label,
       description: mcpTool?.description,
       access,
       requiresApproval

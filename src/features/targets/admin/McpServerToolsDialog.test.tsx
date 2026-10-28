@@ -70,7 +70,7 @@ describe('McpServerToolsDialog group controls', () => {
   it.each([
     ['en', 'Approval depends on run permissions', 'Approval required', 'Saved effective'],
     ['zh', '是否审批取决于运行权限', '需要审批', '已保存的生效值']
-  ])('qualifies write approval and saved-effective counts locally in %s', async (language, approval, unconditional, saved) => {
+  ])('keeps approval guidance and plain enabled counts in %s', async (language, approval, unconditional, saved) => {
     const i18n = createInstance();
     await i18n.init({ lng: language, resources: { en: { translation: en }, zh: { translation: zh } } });
     const markup = renderToStaticMarkup(
@@ -80,17 +80,18 @@ describe('McpServerToolsDialog group controls', () => {
     );
     expect(markup).toContain(approval);
     expect(markup).not.toContain(`>${unconditional}<`);
-    expect(markup).toMatch(new RegExp(`${saved}[\\s\\S]*?>200<`));
+    expect(markup).not.toContain(saved);
+    expect(markup).toContain('>200<');
   });
 
-  it('labels search, capability and draft-enabled filters without replacing group-wide controls', () => {
+  it('keeps search and group-wide controls without capability or state filters', () => {
     const markup = renderToStaticMarkup(
       <McpServerToolsDialog server={server} canManageTools pendingToolName={null} onClose={vi.fn()} onToggleTool={vi.fn()} />
     );
     expect(markup).toContain('type="search"');
     expect(markup).toContain('Search tools');
-    expect(markup).toContain('aria-label="Tool capability"');
-    expect(markup).toContain('aria-label="Configured tool state"');
+    expect(markup).not.toContain('Tool capability');
+    expect(markup).not.toContain('Configured tool state');
     expect(markup).toContain('All 2 tools');
     expect(markup).toContain('All 1 tool');
   });

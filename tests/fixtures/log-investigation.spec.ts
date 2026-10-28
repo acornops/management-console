@@ -5,7 +5,7 @@ const clusterPath = '/workspaces/fixture-workspace/kubernetes-clusters/fixture-c
 const vmPath = '/workspaces/fixture-workspace/virtual-machines/fixture-vm/resources';
 const logText = Array.from({ length: 90 }, (_, i) => `2026-07-15T08:29:58Z line ${i} ${i === 30 ? 'Error [x]\ncontinuation ' + 'z'.repeat(400) : 'worker output'}`).join('\n');
 
-async function installLogs(page: Page, options: { empty?: boolean; fail?: boolean; missingTime?: boolean; sourceTimes?: boolean } = {}) {
+async function installLogs(page: Page, options: { empty?: boolean; fail?: boolean; notStarted?: boolean; missingTime?: boolean; sourceTimes?: boolean } = {}) {
   await page.addInitScript(({ options, logText }) => {
     const originalFetch = window.fetch.bind(window);
     const state = { requests: 0, fail: Boolean(options.fail), empty: Boolean(options.empty), delayed: false, pending: [] as Array<() => void> };
@@ -20,10 +20,12 @@ async function installLogs(page: Page, options: { empty?: boolean; fail?: boolea
         state.requests++;
         const isPod = url.pathname.includes('/pods/');
         const container = url.searchParams.get('container') || 'worker';
-        const body = state.fail ? { error: { code: 'UNAVAILABLE', message: 'Unavailable', retryable: true } } : isPod
+        const body = state.fail ? { error: options.notStarted
+          ? { code: 'POD_LOGS_UNAVAILABLE', message: 'No logs yet; this container has not started.', retryable: false }
+          : { code: 'UNAVAILABLE', message: 'Unavailable', retryable: true } } : isPod
           ? { name: 'payments-worker-7c5b9f-demo', namespace: 'production', container, logs: state.empty ? '' : `${container} request ${state.requests}\n${logText}`, tailLines: Number(url.searchParams.get('tailLines')), previous: url.searchParams.get('previous') === 'true', fetchedAt: options.missingTime ? '' : '2026-07-15T08:30:00Z' }
           : { entries: state.empty ? [] : [{ entryId: 'one', timestamp: options.missingTime ? '' : options.sourceTimes ? '2026-07-15T08:30:00.123456Z' : '2026-07-15T08:30:00Z', source: 'system', message: `VM Error [x] request ${state.requests}\n${'long'.repeat(100)}` }, { entryId: 'two', timestamp: options.sourceTimes ? '2026-07-15T10:20:00.654321+02:00' : '2026-07-15T08:20:00Z', source: 'journald', message: 'Unmatched loaded entry' }] };
-        const response = () => new Response(JSON.stringify(body), { status: state.fail ? 503 : 200, headers: { 'content-type': 'application/json' } });
+        const response = () => new Response(JSON.stringify(body), { status: state.fail ? options.notStarted ? 409 : 503 : 200, headers: { 'content-type': 'application/json' } });
         if (state.delayed) return new Promise<Response>(resolve => { state.pending.push(() => resolve(response())); });
         return Promise.resolve(response());
       }
@@ -78,13 +80,13 @@ test('pod find preserves loaded output, scroll and paused state; copy/download u
   await viewport.evaluate(element => { element.scrollTop = 300; });
   const before = await viewport.evaluate(element => element.scrollTop);
   const beforeHeight = await viewport.evaluate(element => element.scrollHeight);
-  await page.getByRole('searchbox', { name: 'Find in loaded logs', exact: true }).fill('[X]');
+  await page.getByRole('searchbox', { name: 'Search logs', exact: true }).fill('[X]');
   await expect(page.getByRole('status').filter({ hasText: '1 match in loaded logs' })).toBeVisible();
   await expect(viewport.locator('mark')).toHaveText('[x]');
   expect(await viewport.evaluate(element => element.scrollHeight)).toBe(beforeHeight);
   expect(await viewport.evaluate(element => element.scrollTop)).toBe(before);
   await expect(page.getByText('Paused', { exact: true })).toBeVisible();
-  await page.getByRole('searchbox', { name: 'Find in loaded logs', exact: true }).fill('not-present');
+  await page.getByRole('searchbox', { name: 'Search logs', exact: true }).fill('not-present');
   await expect(page.getByRole('status').filter({ hasText: /^No matches in loaded logs$/ })).toBeVisible();
   await expect(viewport).toContainText('line 89');
   await page.getByRole('button', { name: 'Copy loaded logs', exact: true }).click();
@@ -99,6 +101,18 @@ test('pod find preserves loaded output, scroll and paused state; copy/download u
   await page.getByRole('button', { name: 'Copy loaded logs', exact: true }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Could not copy' })).toBeVisible();
   expect(await page.evaluate(() => (window as any).logTest.requests)).toBe(1);
+});
+
+test('pod waiting to start explains unavailable logs and can load them after startup', async ({ page }) => {
+  await installLogs(page, { fail: true, notStarted: true });
+  await openPod(page);
+  await expect(page.getByRole('alert')).toContainText('No logs yet; this container has not started.');
+  await expect(page.getByRole('button', { name: 'Copy loaded logs', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Download loaded logs', exact: true })).toBeDisabled();
+  await page.evaluate(() => { (window as any).logTest.fail = false; });
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Loaded logs', exact: true })).toContainText('line 89');
+  await expect(page.getByText('No logs yet; this container has not started.', { exact: true })).toHaveCount(0);
 });
 
 test('pod initial failure is not empty and failed refresh retains stale lines and fetched time', async ({ page }) => {
@@ -131,7 +145,7 @@ test('following refresh keeps find and reader position; pausing ignores an in-fl
   await installLogs(page);
   await openPod(page);
   await expect(page.getByRole('region', { name: 'Loaded logs' })).toContainText('line 89');
-  const search = page.getByRole('searchbox', { name: 'Find in loaded logs' });
+  const search = page.getByRole('searchbox', { name: 'Search logs' });
   await search.fill('[x]');
   await page.getByRole('button', { name: 'Follow', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Following', exact: true })).toBeVisible();
@@ -238,7 +252,7 @@ test('VM snapshot find, unknown times and failed refresh stay bounded and honest
   await expect(page.getByText('VM Error [x]', { exact: false })).toBeVisible();
   await expect(page.getByText('Timestamp unknown', { exact: true })).toBeVisible();
   await expect(page.getByText(/Snapshot logs.*not live/)).toBeVisible();
-  const search = page.getByRole('searchbox', { name: 'Find in loaded logs' });
+  const search = page.getByRole('searchbox', { name: 'Search logs' });
   await search.fill('missing');
   await expect(page.getByRole('status').filter({ hasText: /^No matches in loaded logs$/ })).toBeVisible();
   await search.fill('Error');
@@ -300,7 +314,7 @@ for (const [language, theme] of [['en', 'light'], ['zh', 'dark']]) {
     await page.goto(clusterPath);
     await page.getByRole('button', { name: /payments-worker-7c5b9f-demo/ }).first().click();
     await page.getByRole('button', { name: language === 'en' ? 'Logs' : '日志', exact: true }).click();
-    const findLabel = language === 'en' ? 'Find in loaded logs' : '在已加载日志中查找';
+    const findLabel = language === 'en' ? 'Search logs' : '搜索日志';
     const copyLabel = language === 'en' ? 'Copy loaded logs' : '复制已加载日志';
     const find = page.getByRole('searchbox', { name: findLabel });
     await expect(find).toBeVisible();

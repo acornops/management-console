@@ -97,6 +97,14 @@ describe('Agent MCP data source', () => {
     });
   });
 
+  it('uses the canonical name when an MCP tool has no description', async () => {
+    agentApi.listAgentMcpServers.mockResolvedValue([{ ...oauthServer, tools: [{
+      ...reviewedTool, alias: 'm_40ad20abc2fe4669a5d259107c56cc55_records_list_ca829ba628'
+    }] }]);
+    const catalog = await createAgentMcpDataSource(agent, true).getCatalog(agent.workspaceId, agent.id);
+    expect(catalog.servers[0].tools[0]).toMatchObject({ name: 'records.list', description: 'records.list' });
+  });
+
   it('preserves platform-default provenance in Agent catalog mappings', async () => {
     agentApi.listAgentMcpServers.mockResolvedValue([{ ...oauthServer, inherited: true }]);
     agentApi.createAgentMcpServer.mockResolvedValue({ ...oauthServer, inherited: true });

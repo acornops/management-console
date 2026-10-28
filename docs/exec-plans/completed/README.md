@@ -1,5 +1,9 @@
 # Completed Execution Plans
 
+- [Console control simplification](console-control-simplification.md)
+
+- [Readable MCP Tool Labels](readable-mcp-tool-labels.md) — Frontend canonical labels for workflow tools and approval details, with production-shaped snapshot coverage and isolated validation.
+
 - [Mobile Navigation and Chat Polish](mobile-navigation-chat-polish.md) — Mobile-only alignment, compact composer, input sizing, and title truncation with desktop comparisons and release qualification.
 
 - [Capability Preview Copy](capability-preview-copy.md) — Concise approval note with the READ explanation retained on its existing tooltip; no styling changes.

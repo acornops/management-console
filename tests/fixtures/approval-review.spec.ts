@@ -86,6 +86,22 @@ test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date(clock));
 });
 
+test('MCP approval shows canonical identity while retaining the original decision target', async ({ page }) => {
+  const alias = 'm_40ad20abc2fe4669a5d259107c56cc55_scale_workload_ca829ba628';
+  await overrideDetail(page, { override: {
+    toolName: alias, toolRef: { serverId: 'server-1', toolName: 'scale_workload' }
+  } });
+  const dialog = await openInbox(page);
+  await expect(dialog.getByText('scale_workload', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('server-1', { exact: true })).toBeVisible();
+  await expect(dialog).not.toContainText(alias);
+  const decision = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/decision'));
+  await dialog.getByRole('button', { name: 'Reject', exact: true }).click();
+  const request = await decision;
+  expect(new URL(request.url()).pathname).toBe('/api/v1/runs/fixture-execution-review-run/approvals/fixture-workspace-approval/decision');
+  expect(request.postDataJSON()).toEqual({ decision: 'rejected' });
+});
+
 test('inbox opens exact context without deciding, then rejects once and retains history', async ({ page }) => {
   const decisions: string[] = [];
   page.on('request', (request) => { if (request.method() === 'POST' && request.url().endsWith('/decision')) decisions.push(request.postData() || ''); });

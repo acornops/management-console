@@ -10,6 +10,10 @@ export type AgentProviderType = 'internal' | 'external';
 export interface AgentMcpToolApi { name: string; serverId: string; alias: string; description?: string; inputSchema?: Record<string, unknown>; outputSchema?: Record<string, unknown>; capability: 'read' | 'write'; enabled: boolean; reviewState: 'pending' | 'approved' | 'rejected'; riskLevel: 'read_only' | 'non_destructive_write' | 'high_risk' | 'destructive'; autoAllowed: boolean }
 export type McpAuthType = 'none' | 'bearer_token' | 'custom_header' | 'oauth';
 export interface AgentMcpServerApi { id: string; name: string; url: string; enabled: boolean; isSystem: boolean; canDelete: boolean; canEditConnection: boolean; canToggle: boolean; credentialMode: 'none' | 'workspace' | 'individual'; authType?: McpAuthType; authHeaderName?: string; authHeaderPrefix?: string; revision: number; integrationProfileId?: string; integrationProfileVersion?: number; publicHeaders?: Record<string, string>; credentialTransitioning?: boolean; connectionStatus?: string; lastDiscoveryAt?: string | null; lastDiscoveryError?: string | null; tools: AgentMcpToolApi[]; inherited?: boolean }
+/** Agent definitions embed capability snapshots, not the live MCP management catalog. */
+export interface AgentMcpInstallationSnapshotApi extends Pick<AgentMcpServerApi, 'id' | 'name' | 'url' | 'enabled' | 'credentialMode' | 'revision'> {
+  tools: Array<Omit<AgentMcpToolApi, 'name'> & { toolName: string }>;
+}
 export interface AgentMcpServerCreateInput { name: string; url: string; enabled?: boolean; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: McpAuthType; authHeaderName?: string; authHeaderPrefix?: string; publicHeaders?: Record<string, string> }
 export interface AgentMcpServerUpdateInput { name?: string; enabled?: boolean; credentialMode?: 'none' | 'workspace' | 'individual'; authType?: McpAuthType; authHeaderName?: string; authHeaderPrefix?: string; publicHeaders?: Record<string, string>; expectedRevision?: number }
 export interface AgentMcpServerTestConnectionApi { server_id: string; server_name: string; server_url: string; connection_status: 'ok' | 'error'; last_discovery_at: string; discovered_tool_count: number; discovered_tools: string[]; error?: string | null }
@@ -113,7 +117,7 @@ export interface AgentDefinitionApi {
   createdBy: string;
   mcpServers?: string[];
   mcpTools?: Array<{ serverId: string; toolName: string }>;
-  mcpInstallations?: AgentMcpServerApi[];
+  mcpInstallations?: AgentMcpInstallationSnapshotApi[];
   tools?: string[];
   nativeToolConfigs?: Record<string, Record<string, unknown>>;
   skills?: string[];
