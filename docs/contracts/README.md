@@ -36,6 +36,9 @@ The management console is the browser client for the control-plane API. Keep thi
   and executable arguments. Workflow records retain producer `approvalKind`
   values `pre_step` and `tool_write`; interactive records omit this field and
   target scope is optional. Missing context is never replaced by empty arguments.
+  MCP review details display the existing optional `toolRef.toolName` and
+  `toolRef.serverId`; records without a reference retain their exact stored name.
+  Display labels never change approval IDs or decision payloads.
   The browser displays only action context and decision/execution metadata,
   redacts sensitive argument fields, and never renders continuations, credentials
   or tool results. The external-integration projection remains bounded and is
@@ -85,6 +88,13 @@ The management console is the browser client for the control-plane API. Keep thi
 
 ## Shared Invariants
 
+- Pod-log error `POD_LOGS_UNAVAILABLE` (HTTP 409, `retryable: false`) means the
+  selected container has not started. The console shows localized no-logs-yet
+  copy and keeps Refresh available. Control Plane derives this code from
+  AgentK `PRECONDITION_FAILED` / `ContainerNotStarted` / upstream HTTP 400;
+  all three components must be updated for the improved message. Older
+  combinations retain generic error handling; other failures stay distinct.
+
 - Target-chat documents are created only by the model-invoked platform
   function. The console keeps Copy as a response action and renders successful
   report metadata as a persistent authenticated download card; it does not
@@ -114,6 +124,11 @@ The management console is the browser client for the control-plane API. Keep thi
   stale, failed, or blocked. Workflow setup never presents target selection.
   Compiled scopes remain internal; the console uses only the bounded capability
   preview and public run status after dispatch.
+- Agent definition MCP snapshots use `toolName`, while the live MCP management
+  catalog uses `name`. Workflow tool labels use the snapshot's canonical name
+  and qualify duplicate names by server. Internal aliases remain row identities;
+  missing metadata retains the exact identity instead of decoding a truncated
+  alias. Missing catalog descriptions fall back to the canonical name.
 - Agent **Capabilities → Tools** lists AcornOps native tools separately from
   MCP-discovered tools. Native grant and revoke require `manage_agents` only,
   the native assignment itself satisfies coordinated Workflow routing without a

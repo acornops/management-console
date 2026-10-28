@@ -23,6 +23,22 @@ async function render(override: Partial<WorkflowRunApproval> = {}) {
 }
 
 describe('informed approval review', () => {
+  it('shows the canonical MCP tool and server from the existing approval reference', async () => {
+    const alias = 'm_40ad20abc2fe4669a5d259107c56cc55_scale_workload_ca829ba628';
+    const html = await render({ toolName: alias,
+      toolRef: { serverId: 'server-1', toolName: 'scale_workload' }
+    });
+    expect(html).toContain('>scale_workload<');
+    expect(html).toContain('>server-1<');
+    expect(html).not.toContain(alias);
+  });
+
+  it('retains the exact legacy alias when no canonical reference is available', async () => {
+    const alias = 'm_40ad20abc2fe4669a5d259107c56cc55_scale_workload_ca829ba628';
+    const html = await render({ toolName: alias });
+    expect(html).toContain(alias);
+  });
+
   it('keeps exact tool identity beside the non-authoritative summary and readable context', async () => {
     const html = await render();
     expect(html).toContain('scale_workload');

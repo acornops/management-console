@@ -1,4 +1,4 @@
-import type { AgentCapability, AgentMcpServerApi, AgentProviderType, AgentSkillApi, AgentStatus, RunPermissionMode } from '@/services/control-plane/agentApi';
+import type { AgentCapability, AgentMcpInstallationSnapshotApi, AgentProviderType, AgentSkillApi, AgentStatus, RunPermissionMode } from '@/services/control-plane/agentApi';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
 
 export interface AgentDefinition {
@@ -15,7 +15,7 @@ export interface AgentDefinition {
   createdBy: string;
   owner: string;
   mcpServers: string[];
-  mcpInstallations?: AgentMcpServerApi[];
+  mcpInstallations?: AgentMcpInstallationSnapshotApi[];
   tools: string[];
   nativeToolConfigs: Record<string, Record<string, unknown>>;
   skills: string[];

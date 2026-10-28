@@ -123,10 +123,6 @@ export const AgentDefinitionSettingsSection: React.FC<AgentDefinitionSettingsSec
           </div>
 
           <div className="border-t border-ui-border p-6">
-            {canReadMembers && <label className="mb-4 block sm:max-w-md">
-              <span className="type-micro-label">Search owner members</span>
-              <TextInput type="search" value={ownerOptions.query} onChange={(event) => ownerOptions.setQuery(event.target.value)} disabled={!canManageAgents || saving} placeholder="Search members by name or email" className="mt-2" />
-            </label>}
             <label className="block">
               <span className="type-micro-label">Agent owner</span>
               <Select<string>
@@ -140,12 +136,12 @@ export const AgentDefinitionSettingsSection: React.FC<AgentDefinitionSettingsSec
               />
             </label>
             <p className="type-caption mt-2 text-ui-text-muted">
-              {canReadMembers ? 'Search workspace members or load more to choose an owner. Your selection is kept when the search changes.' : `Current owner: ${agent.owner}. Read-members permission is required to choose another owner.`}
+              {canReadMembers ? 'Choose a workspace member to transfer ownership.' : `Current owner: ${agent.owner}. Read-members permission is required to choose another owner.`}
             </p>
             {canReadMembers && <div className="mt-3 space-y-3">
               <CollectionState phase={ownerOptions.phase} itemCount={ownerOptions.items.length}
                 loading={<p role="status" className="type-caption text-ui-text-muted">Loading members...</p>}
-                empty={<p role="status" className="type-caption text-ui-text-muted">No members match this search.</p>}
+                empty={<p role="status" className="type-caption text-ui-text-muted">No members available.</p>}
                 error={null}>
                 <p role="status" className="type-caption text-ui-text-muted">{ownerOptions.items.length} {ownerOptions.items.length === 1 ? 'member' : 'members'} loaded</p>
               </CollectionState>

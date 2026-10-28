@@ -19,7 +19,7 @@ describe('Agent owner member discovery through the existing cursor API', () => {
       const offset = options?.cursor === 'page-2' ? 50 : options?.cursor === 'page-3' ? 100 : 0;
       return { items: Array.from({ length: offset === 100 ? 25 : 50 }, (_, index) => member(offset + index + 1)), nextCursor: offset === 0 ? 'page-2' : offset === 50 ? 'page-3' : undefined };
     });
-    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true, ''));
+    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true));
     await controller.reset();
     expect(controller.getState().items).toHaveLength(50);
     expect(requests).toHaveBeenCalledTimes(1);
@@ -31,18 +31,11 @@ describe('Agent owner member discovery through the existing cursor API', () => {
     ]);
     expect(controller.getState().nextCursor).toBeUndefined();
   });
-  it('sends literal search to the server and exposes a genuine empty result', async () => {
-    const requests = vi.spyOn(controlPlaneApi, 'listWorkspaceMembers').mockResolvedValue({ items: [] });
-    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true, 'Alex_%[]'));
-    await controller.reset();
-    expect(requests).toHaveBeenCalledWith('workspace-1', expect.objectContaining({ q: 'Alex_%[]', limit: 50, cursor: undefined }));
-    expect(controller.getState()).toEqual({ items: [], nextCursor: undefined, phase: 'ready' });
-  });
   it('keeps duplicate display names distinct and deduplicates only the immutable identity', async () => {
     vi.spyOn(controlPlaneApi, 'listWorkspaceMembers')
       .mockResolvedValueOnce({ items: [member(1)], nextCursor: 'next' })
       .mockResolvedValueOnce({ items: [member(1), member(2)] });
-    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true, 'Alex'));
+    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true));
     await controller.reset(); await controller.loadMore();
     expect(controller.getState().items.map(({ userId, name, email }) => [userId, name, email])).toEqual([
       ['user-1', 'Alex Chen', 'member-1@example.test'], ['user-2', 'Alex Chen', 'member-2@example.test']
@@ -53,19 +46,19 @@ describe('Agent owner member discovery through the existing cursor API', () => {
       .mockResolvedValueOnce({ items: [member(1)], nextCursor: 'next' })
       .mockRejectedValueOnce(new Error('Member page unavailable'))
       .mockResolvedValueOnce({ items: [member(2)] });
-    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true, ''));
+    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true));
     await controller.reset(); await controller.loadMore();
     expect(controller.getState()).toEqual({ items: [member(1)], nextCursor: 'next', phase: 'error', error: 'Member page unavailable' });
     await controller.retry();
     expect(requests.mock.calls.map(([, options]) => options?.cursor)).toEqual([undefined, 'next', 'next']);
     expect(controller.getState().items.map(({ userId }) => userId)).toEqual(['user-1', 'user-2']);
   });
-  it.each(['query', 'workspace'] as const)('ignores stale pages after a %s change and resets the cursor', async (change) => {
+  it('ignores stale pages after a workspace change and resets the cursor', async () => {
     const old = deferred<{ items: ProjectMember[]; nextCursor?: string }>();
     const requests = vi.spyOn(controlPlaneApi, 'listWorkspaceMembers').mockReturnValueOnce(old.promise).mockResolvedValueOnce({ items: [member(2)] });
-    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true, 'old'));
+    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', true));
     const pending = controller.reset();
-    controller.updateOptions(agentOwnerCollectionOptions(change === 'workspace' ? 'workspace-2' : 'workspace-1', true, change === 'query' ? 'new' : ''));
+    controller.updateOptions(agentOwnerCollectionOptions('workspace-2', true));
     await controller.reset();
     old.resolve({ items: [member(1)], nextCursor: 'stale' }); await pending;
     expect(controller.getState().items.map(({ userId }) => userId)).toEqual(['user-2']);
@@ -75,7 +68,7 @@ describe('Agent owner member discovery through the existing cursor API', () => {
   });
   it('does not discover identities without read-members permission', async () => {
     const requests = vi.spyOn(controlPlaneApi, 'listWorkspaceMembers');
-    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', false, 'Alex'));
+    const controller = new CursorCollectionController(agentOwnerCollectionOptions('workspace-1', false));
     await controller.reset();
     expect(requests).not.toHaveBeenCalled();
     expect(controller.getState().items).toEqual([]);

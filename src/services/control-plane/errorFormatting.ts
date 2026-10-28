@@ -234,6 +234,8 @@ function mapControlPlaneCode(
       return tr('controlPlaneErrors.agentUnavailable', 'The agent is offline or did not respond. Check connectivity and try again.');
     case 'AGENT_TOOL_ERROR':
       return tr('controlPlaneErrors.agentToolError', 'The agent could not complete the request. Try again or check the agent logs.');
+    case 'POD_LOGS_UNAVAILABLE':
+      return tr('controlPlaneErrors.podLogsUnavailable', 'No logs yet; this container has not started.');
     case 'INVALID_CURSOR':
       return tr('controlPlaneErrors.invalidCursor', 'This list could not be loaded. Refresh and try again.');
     case 'INVALID_REPO_URL':

@@ -37,7 +37,8 @@ export function ApprovalReviewContent({ approval, canDecide, busy, onDecide, now
   const expired = approval.status === 'pending' && Date.parse(approval.expiresAt) <= now;
   const facts = [
     [t('approvals.review.kind'), t(`approvals.review.${approval.approvalKind === 'pre_step' ? 'gate' : 'tool'}`)],
-    [t('approvals.review.toolName'), approval.toolName],
+    [t('approvals.review.toolName'), approval.toolRef?.toolName || approval.toolName],
+    ...(approval.toolRef?.serverId ? [[t('approvals.review.mcpServer'), approval.toolRef.serverId]] : []),
     [t('approvals.review.workspace'), approval.workspaceId],
     [t('approvals.table.target'), [approval.targetType, approval.targetId].filter(Boolean).join(': ') || unavailable],
     [t('approvals.table.requestedBy'), approval.requestedBy || unavailable],

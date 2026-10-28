@@ -251,7 +251,10 @@ export function createFixtureState(clock = FIXTURE_CLOCK): FixtureState {
       permissionMode: 'ask_before_changes',
       semanticCapabilityIds: ['documents.create', 'infrastructure.diagnostics.read', 'infrastructure.remediation.write'],
       templateRef: { templateId: 'acornops-starter', recordKey: 'agent:kubernetesAgent' },
-      mcpInstallations: [agentTargetsMcpServer],
+      mcpInstallations: [{
+        ...agentTargetsMcpServer,
+        tools: agentTargetsMcpServer.tools.map(({ name, ...tool }) => ({ ...tool, toolName: name }))
+      }],
       targetAccessPolicy: { mode: 'all', targetIds: [] },
       tools: ['documents.create'], readiness: { status: 'ready', reasons: [] },
       capabilitySummary: 'Kubernetes MCP tools', createdAt: EARLIER, updatedAt: NOW

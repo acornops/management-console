@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
-import { Button, TextInput } from '@acornops/ui';
-import { Copy, Download } from 'lucide-react';
+import { Button, TextInput, Tooltip } from '@acornops/ui';
+import { Copy, Download, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { findLoadedLogMatches, safeLogFilename } from './loadedLogContent';
 
@@ -56,23 +56,28 @@ export function LoadedLogTools({ query, onQueryChange, matchCount, content, sour
   };
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <label htmlFor={id} className="type-label">{t('loadedLogs.find')}</label>
-        <TextInput id={id} type="search" value={query} onChange={event => onQueryChange(event.target.value)} aria-describedby={`${id}-scope ${id}-result`} />
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <label htmlFor={id} className="sr-only">{t('loadedLogs.find')}</label>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ui-text-muted" aria-hidden="true" />
+          <TextInput id={id} type="search" value={query} onChange={event => onQueryChange(event.target.value)} placeholder={t('loadedLogs.find')} aria-describedby={`${id}-scope ${id}-result`} className="w-full pl-10" />
+        </div>
+        <Tooltip content={t('loadedLogs.copy')}>
+          <Button type="button" variant="icon" size="md" aria-label={t('loadedLogs.copy')} disabled={disabled || !content || isCopying} onClick={() => void copy()}>
+            <Copy className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </Tooltip>
+        <Tooltip content={t('loadedLogs.download')}>
+          <Button type="button" variant="icon" size="md" aria-label={t('loadedLogs.download')} disabled={disabled || !content} onClick={download}>
+            <Download className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </Tooltip>
       </div>
       <p id={`${id}-scope`} className="type-caption break-words text-ui-text-muted">{scope} {t('loadedLogs.localOnly')}</p>
       <p id={`${id}-result`} role="status" className="type-caption text-ui-text-muted">
         {query ? t(matchCount ? 'loadedLogs.matches' : 'loadedLogs.noMatches', { count: matchCount }) : t('loadedLogs.findHelp')}
       </p>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" size="sm" disabled={disabled || !content || isCopying} onClick={() => void copy()}>
-          <Copy className="h-4 w-4" />{t('loadedLogs.copy')}
-        </Button>
-        <Button type="button" variant="secondary" size="sm" disabled={disabled || !content} onClick={download}>
-          <Download className="h-4 w-4" />{t('loadedLogs.download')}
-        </Button>
-      </div>
       {feedback && <p role={feedback === 'copied' ? 'status' : 'alert'} className="type-caption">{t(`loadedLogs.${feedback}`)}</p>}
     </div>
   );

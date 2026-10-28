@@ -3,15 +3,6 @@ import { expect, test } from '@playwright/test';
 const agentDetailPath = (tab = 'chat') =>
   `/workspaces/fixture-workspace/agents/fixture-specialist/${tab}`;
 
-test('owner loaded counts distinguish empty, singular and plural search results', async ({ page }) => {
-  await page.goto(`${agentDetailPath('settings')}?fixtureMembers=125&fixtureMemberNames=duplicate-long`);
-  const search = page.getByRole('searchbox', { name: 'Search owner members', exact: true });
-  for (const [query, label] of [['no-matching-person', 'No members match this search.'], ['member-125', '1 member loaded'], ['Alex', '2 members loaded']]) {
-    await search.fill(query);
-    await expect(page.getByText(label, { exact: true })).toBeVisible();
-  }
-});
-
 for (const width of [1440, 390]) {
 test(`Open Agent and Chat labels identify the full route and quick-chat drawer at ${width}px`, async ({ page }) => {
   await page.setViewportSize({ width, height: 1000 });
@@ -66,15 +57,14 @@ for (const width of [1440, 390]) {
 
 for (const width of [1440, 390]) {
   for (const theme of ['light', 'dark'] as const) {
-    test(`owner transfer reaches member 125 and preserves selection across searches at ${width}px ${theme}`, async ({ page }) => {
+    test(`owner transfer reaches member 125 and keeps duplicate identities distinct at ${width}px ${theme}`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1000 });
       await page.emulateMedia({ colorScheme: theme });
       await page.addInitScript((value) => localStorage.setItem('acornops_active_theme_preference', value), theme);
       await page.goto(`${agentDetailPath('settings')}?fixtureMembers=125&fixtureMemberNames=duplicate-long`, { waitUntil: 'domcontentloaded' });
       await expect(page.locator('html')).toHaveClass(theme === 'dark' ? /dark/ : /^(?!.*dark).*$/);
       await expect(page.getByRole('heading', { name: 'Agent definition', exact: true })).toBeVisible();
-      const search = page.getByRole('searchbox', { name: 'Search owner members' });
-      await expect(search).toBeVisible({ timeout: 3000 });
+      await expect(page.getByRole('searchbox', { name: 'Search owner members' })).toHaveCount(0);
       const owner = page.getByRole('button', { name: 'Agent owner', exact: true });
       await expect(page.getByText('50 members loaded', { exact: true })).toBeVisible();
       await owner.click();
@@ -92,18 +82,10 @@ for (const width of [1440, 390]) {
       for (let index = 0; index < targetIndex; index += 1) await owner.press('ArrowDown');
       await owner.press('Enter');
       await expect(owner).toContainText('member-125@fixture.acornops.dev');
-      await search.fill('Alex');
-      await expect(page.getByText('2 members loaded', { exact: true })).toBeVisible();
-      await expect(owner).toContainText('member-125@fixture.acornops.dev');
       await owner.click();
-      await expect(page.getByRole('option', { name: /Alex Chen.*member-1@/ })).toBeVisible();
-      await expect(page.getByRole('option', { name: /Alex Chen.*member-2@/ })).toBeVisible();
-      // Re-selecting the retained option must not discard its identity merely
-      // because it is absent from the current query's page.
-      await page.getByRole('option', { name: /Fixture member 125.*member-125@/ }).click();
-      await expect(owner).toContainText('member-125@fixture.acornops.dev');
-      await search.fill('no-matching-person');
-      await expect(page.getByText('No members match this search.', { exact: true })).toBeVisible();
+      await expect(page.getByRole('option', { name: /Alex Chen.*member-1@/ })).toHaveCount(1);
+      await expect(page.getByRole('option', { name: /Alex Chen.*member-2@/ })).toHaveCount(1);
+      await page.keyboard.press('Escape');
       await expect(owner).toContainText('member-125@fixture.acornops.dev');
       await page.screenshot({ path: `/tmp/acornops-phase03-mc-owner-${width}-${theme}.png`, fullPage: true });
       const mutation = page.waitForRequest((request) => request.method() === 'PATCH' && new URL(request.url()).pathname.endsWith('/agents/fixture-specialist'));

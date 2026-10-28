@@ -54,7 +54,7 @@ function mapAgentMcpTool(tool: AgentMcpToolApi, serverEnabled: boolean): McpTool
   const enabledEffective = serverEnabled && tool.enabled;
   return {
     name: tool.name,
-    description: tool.description || tool.alias || tool.name,
+    description: tool.description || tool.name,
     capability: tool.capability,
     version: 'v1',
     source: 'mcp',

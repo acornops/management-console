@@ -617,6 +617,8 @@ export interface ControlPlaneRunToolApproval {
   approvalKind?: 'pre_step' | 'tool_write';
   toolCallId: string;
   toolName: string;
+  /** Canonical MCP identity already returned by run approval APIs; absent on legacy records and gates. */
+  toolRef?: { serverId: string; toolName: string };
   summary?: string;
   arguments: Record<string, unknown>;
   status: 'pending' | 'approved' | 'rejected' | 'expired';
