@@ -31,3 +31,14 @@ status, stable message identity and observer disposal. Cross-service rollout
 evidence remains tracked in the coordinated plan.
 
 Concurrent unrelated Agent capability and approval UI edits appeared during this work. They are outside this plan and must not be staged with it.
+
+## Release verification
+
+Fresh canonical validation passed 1,240 tests and all preflight gates. CI also
+exercised the Linux browser matrix and found two stale mobile VM-log snapshots
+from upstream control simplification commit `8373124`, also failing on its own
+main CI before this feature. Reviewed both rendered outputs against the source:
+the compact search/copy/download controls match that intended change. Updated
+only the light/dark mobile VM-log baselines from this candidate CI; retry images
+differ by at most two color levels on 36 or fewer pixels. No UI code or
+comparison tolerance changed. The complete browser CI remains the release gate.
