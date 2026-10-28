@@ -42,3 +42,11 @@ the compact search/copy/download controls match that intended change. Updated
 only the light/dark mobile VM-log baselines from this candidate CI; retry images
 differ by at most two color levels on 36 or fewer pixels. No UI code or
 comparison tolerance changed. The complete browser CI remains the release gate.
+
+The next CI run passed both mobile baselines and exposed the same inherited
+VM-log control mismatch at the sidebar-constrained viewport. The focused Linux
+Playwright 1.61.1 check exercised only VM logs across all five layouts, updated
+only the remaining sidebar baseline, and reran all five without updates.
+Desktop and mobile checks and accessibility/zoom assertions remain intact.
+The production dependency audit (`npm audit --omit=dev`) reports zero findings;
+the existing development-tool advisories are outside the deployed nginx bundle.
