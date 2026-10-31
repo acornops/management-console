@@ -1,5 +1,7 @@
 # Active Execution Plans
 
+- [Target deletion completion](2026-10-31-target-delete-latency.md) — Independent summary refresh and stale-response guards; rollout pending.
+
 - [Graceful Rolling Restarts](2026-10-29-graceful-rolling-restarts.md) — Preserve accepted runs and safely reconnect during planned service restarts.
 
 Reviewed 2026-10-19. Implementation-only plans that have landed are in

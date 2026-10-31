@@ -1,4 +1,5 @@
 import { requestJson } from './http';
+import { getSessionGeneration } from './sessionLifecycle';
 import { recordWorkspaceAccessState, type WorkspaceAccessState } from './workspaceAccessState';
 
 export const workspaceAccessApi = {
@@ -8,7 +9,9 @@ export const workspaceAccessApi = {
     return page.items;
   },
   async getWorkspaceAccessState(workspaceId: string): Promise<WorkspaceAccessState> {
+    const sessionGeneration = getSessionGeneration();
     const state = await requestJson<WorkspaceAccessState>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}/access-state`, { signal: AbortSignal.timeout(10000) });
+    if (getSessionGeneration() !== sessionGeneration) throw new DOMException('Session changed', 'AbortError');
     recordWorkspaceAccessState(state);
     return state;
   }
