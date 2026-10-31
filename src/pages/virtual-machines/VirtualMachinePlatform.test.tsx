@@ -58,3 +58,43 @@ it('renders PowerShell instructions verbatim and keeps Linux installation copy',
   const linux = renderToStaticMarkup(<AddVirtualMachineModal {...props} />);
   expect(linux).toContain('Run this command on the VM to install the AcornOps host agent.');
 });
+
+const resourceProps = { vmName: 'Windows', inventory: [], logs: [], isLoading: false, error: null, isLogsLoading: false, logsError: null, onCategoryChange() {}, onRetry() {} };
+for (const [status, label] of [['permission_denied', 'Permission denied'], ['unavailable', 'Collection unavailable'], ['timed_out', 'Collection timed out'], ['partial', 'Collection incomplete']] as const) {
+  it(`shows successful Windows log ${status} evidence without claiming no events`, () => {
+    const html = renderToStaticMarkup(<VirtualMachineResourcesView {...resourceProps} osFamily="windows" activeCategory="logs"
+      logsCollection={{ health: { status }, truncated: true, returned_count: 0, original_count: 0, byte_count: 2 }} />);
+    expect(html).toContain(label);
+    expect(html).not.toContain('No logs returned for this VM.');
+  });
+}
+it('retains partial Windows rows, truncation and category-specific snapshot evidence', () => {
+  const collection = { targetId: 'vm', workspaceId: 'ws', snapshotTs: '2026-10-31T01:00:00.000Z', categories: {
+    host: { status: 'ok' }, filesystems: { status: 'permission_denied', omittedCount: 0, findingCoverage: 'incomplete' },
+    services: { status: 'ok', omittedCount: 0, findingCoverage: 'complete' },
+    processes: { status: 'partial', omittedCount: 3 }, network: { status: 'unknown', omittedCount: 0 }
+  } } as const;
+  const html = renderToStaticMarkup(<VirtualMachineResourcesView {...resourceProps} osFamily="windows" activeCategory="processes"
+    inventoryCollection={collection} inventory={[{ category: 'processes', name: 'kept-process' }]} />);
+  expect(html).toContain('kept-process');
+  expect(html).toContain('Collection incomplete');
+  expect(html).toContain('3 records omitted');
+  expect(html).toContain('2026-10-31T01:00:00.000Z');
+  expect(html).not.toContain('Permission denied');
+  const denied = renderToStaticMarkup(<VirtualMachineResourcesView {...resourceProps} osFamily="windows" activeCategory="all" inventoryCollection={collection} />);
+  expect(denied).toContain('Permission denied');
+  expect(denied).not.toContain('No inventory returned for this view.');
+  const logs = renderToStaticMarkup(<VirtualMachineResourcesView {...resourceProps} osFamily="windows" activeCategory="logs"
+    logs={[{ message: 'retained event' }]} logsCollection={{ health: { status: 'partial' }, truncated: true, returned_count: 1, original_count: 2, byte_count: 100 }} />);
+  expect(logs).toContain('retained event');
+  expect(logs).toContain('Results truncated');
+});
+it('treats missing Windows collection evidence as unknown and leaves Linux rendering exactly unchanged', () => {
+  const windows = renderToStaticMarkup(<VirtualMachineResourcesView {...resourceProps} osFamily="windows" activeCategory="logs" />);
+  expect(windows).toContain('Collection status unknown');
+  expect(windows).not.toContain('No logs returned for this VM.');
+  const props = { ...resourceProps, activeCategory: 'logs' as const };
+  const linux = renderToStaticMarkup(<VirtualMachineResourcesView {...props} />);
+  expect(linux).toContain('No logs returned for this VM.');
+  expect(renderToStaticMarkup(<VirtualMachineResourcesView {...props} logsCollection={{ health: { status: 'permission_denied' }, truncated: true }} />)).toBe(linux);
+});

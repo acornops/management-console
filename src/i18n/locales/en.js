@@ -1084,6 +1084,13 @@ export const en = {
       category: 'Category',
       status: 'Status',
       detail: 'Detail',
+      collection: {
+        partial: 'Collection incomplete', permission_denied: 'Permission denied', unavailable: 'Collection unavailable',
+        timed_out: 'Collection timed out', unsupported: 'Collection unsupported', unknown: 'Collection status unknown',
+        truncated: 'Results truncated; additional events may be missing.', omitted: '{{count}} records omitted.',
+        coverage: 'Finding coverage is incomplete.', counts: '{{returned}} events returned; {{original}} observed before the response limit.',
+        snapshot: 'Snapshot:', categories: { host: 'Host', filesystems: 'Volumes', services: 'Services', processes: 'Processes', network: 'Network' }
+      },
       eventChannel: 'Event channel',
       logTime: 'Time',
       logSource: 'Source',

@@ -318,3 +318,27 @@ loaded output by workspace, target, and channel. Linux log requests are unchange
 Unavailable Windows load/swap values remain unavailable; storage labels identify
 the system volume. Installation commands are displayed/copied verbatim from the
 server with the existing enrollment expiry and sensitive-command treatment.
+
+
+## Windows collection evidence
+
+Windows resources add `collectionStatus` with workspace/target identity,
+`snapshotTs`, and fixed host, filesystems, services, processes, and network
+categories. Each carries an allowlisted status; list categories include
+`omittedCount`, and volumes/services include separate `findingCoverage`.
+Missing collectors remain unknown, even when rows are empty. The response reads
+raw snapshot, summary generation and matching inventory together; absent or
+inconsistent projection is `null` (unknown), never a healthy empty collection.
+
+Windows logs can return HTTP 200 with denied, unavailable, partial or truncated
+collection. Preserve `health.status`, `truncated`, `returned_count`,
+`original_count`, and `byte_count` beside usable entries. Runtime health messages
+are untrusted and are not shown. Count metadata describes the bounded response,
+not the total number of events on the host.
+
+The console caches Windows envelopes by workspace/target and, for logs, channel;
+stale responses cannot replace another selection. Inventory evidence is bound
+to the rows' snapshot timestamp. Fixed category notices retain usable rows and
+qualify incomplete empty collections. Linux keeps its exact `{items}` inventory
+envelope, log handling, array caches and UI behavior. Deploy the additive backend
+before the consumer; an older backend leaves Windows collection status unknown.

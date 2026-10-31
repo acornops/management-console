@@ -34,3 +34,39 @@ describe('VM platform API', () => {
     expect(requestJson).toHaveBeenLastCalledWith('/api/v1/workspaces/ws-1/virtual-machines/linux-1/logs?q=error&source=journald');
   });
 });
+
+for (const status of ['permission_denied', 'unavailable', 'partial']) {
+  it(`retains successful Windows log ${status} counts and removes untrusted health text`, async () => {
+    requestJson.mockResolvedValueOnce({ entries: [{ message: 'kept' }], health: { status, message: '<script>unsafe</script>', collector: 'arbitrary' },
+      truncated: true, returned_count: 1, original_count: 2, byte_count: 100 });
+    const { controlPlaneApi } = await import('../controlPlaneApi');
+    expect(await controlPlaneApi.getVirtualMachineLogs('ws', 'vm', { channel: 'System' })).toEqual({
+      entries: [{ message: 'kept' }], health: { status }, truncated: true, returned_count: 1, original_count: 2, byte_count: 100
+    });
+  });
+}
+it('keeps Linux envelopes exact and bounds unknown Windows health and invalid counts', async () => {
+  const { controlPlaneApi } = await import('../controlPlaneApi');
+  const payload = { entries: [], source: 'journald', truncated: false };
+  requestJson.mockResolvedValueOnce(payload);
+  expect(await controlPlaneApi.getVirtualMachineLogs('ws', 'linux')).toEqual(payload);
+  requestJson.mockResolvedValueOnce({ entries: [], health: { status: '<script>unsafe</script>' }, returned_count: -1, original_count: 1e30, byte_count: '100' });
+  expect(await controlPlaneApi.getVirtualMachineLogs('ws', 'windows', { channel: 'System' })).toEqual({ entries: [],
+    health: { status: 'unknown' }, truncated: undefined, returned_count: undefined, original_count: undefined, byte_count: undefined });
+});
+it('binds inventory evidence to the requested workspace, target and every row timestamp', async () => {
+  const { controlPlaneApi } = await import('../controlPlaneApi');
+  const snapshotTs = '2026-10-31T01:00:00.000Z';
+  const collectionStatus = { workspaceId: 'ws', targetId: 'vm', snapshotTs,
+    categories: { processes: { status: 'partial', omittedCount: 3 }, services: { status: 'permission_denied', findingCoverage: 'incomplete' } } };
+  const items = [{ name: 'kept', snapshotTs }];
+  requestJson.mockResolvedValueOnce({ items, collectionStatus });
+  const response = await controlPlaneApi.listVirtualMachineInventory('ws', 'vm');
+  expect(response.items).toEqual(items);
+  expect(response.collectionStatus).toMatchObject({ workspaceId: 'ws', targetId: 'vm', snapshotTs,
+    categories: { host: { status: 'unknown' }, services: { status: 'permission_denied' }, processes: { status: 'partial', omittedCount: 3 } } });
+  for (const change of [{ workspaceId: 'other' }, { targetId: 'other' }, { snapshotTs: '2026-10-31T02:00:00.000Z' }]) {
+    requestJson.mockResolvedValueOnce({ items, collectionStatus: { ...collectionStatus, ...change } });
+    expect((await controlPlaneApi.listVirtualMachineInventory('ws', 'vm')).collectionStatus).toBeNull();
+  }
+});

@@ -1084,6 +1084,13 @@ export const zh = {
       category: '类别',
       status: '状态',
       detail: '详情',
+      collection: {
+        partial: '采集不完整', permission_denied: '权限被拒绝', unavailable: '采集不可用',
+        timed_out: '采集超时', unsupported: '不支持采集', unknown: '采集状态未知',
+        truncated: '结果已截断，可能缺少其他事件。', omitted: '省略了 {{count}} 条记录。',
+        coverage: '问题发现覆盖范围不完整。', counts: '返回了 {{returned}} 个事件；响应限制前观察到 {{original}} 个事件。',
+        snapshot: '快照：', categories: { host: '主机', filesystems: '卷', services: '服务', processes: '进程', network: '网络' }
+      },
       eventChannel: '事件通道',
       logTime: '时间',
       logSource: '来源',

@@ -1,3 +1,4 @@
+import { listVirtualMachineInventory, getVirtualMachineLogs } from './control-plane/virtualMachineCollection';
 import { workspaceAccessApi } from './control-plane/workspaceAccessApi';
 import { getSessionGeneration } from './control-plane/sessionLifecycle';
 import {
@@ -538,11 +539,7 @@ export const controlPlaneApi = {
     return parseVirtualMachineInstructionResponse(response);
   },
 
-  async listVirtualMachineInventory(workspaceId: string, vmId: string): Promise<PagedResult<Record<string, unknown>>> {
-    return requestJson<PagedResult<Record<string, unknown>>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/resources`
-    );
-  },
+  listVirtualMachineInventory,
 
   async getVirtualMachineMetricsHistory(workspaceId: string, vmId: string): Promise<ControlPlaneVirtualMachineMetricsHistoryResponse> {
     const response = await requestJson<ControlPlaneVirtualMachineMetricsHistoryResponse>(
@@ -551,13 +548,7 @@ export const controlPlaneApi = {
     return mapVirtualMachineMetricsHistoryResponse(response);
   },
 
-  async getVirtualMachineLogs(workspaceId: string, vmId: string, options?: { q?: string; source?: string; channel?: 'Application' | 'System' }): Promise<{ entries?: Record<string, unknown>[] }> {
-    return requestJson<{ entries?: Record<string, unknown>[] }>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/logs${pageQuery({
-        filters: { q: options?.q, source: options?.source, channel: options?.channel }
-      })}`
-    );
-  },
+  getVirtualMachineLogs,
 
   async deleteWorkspace(workspaceId: string): Promise<void> {
     await requestJson<void>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}`, { method: 'DELETE' });

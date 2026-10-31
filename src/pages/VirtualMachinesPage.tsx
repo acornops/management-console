@@ -1,3 +1,4 @@
+import type { VmInventoryResponse, VmLogsResponse } from '@/services/control-plane/virtualMachineCollection';
 import React from 'react';
 import { refreshLatestWorkspaceSummary } from '@/app/workspaceSummaryRefresh';
 import { useTranslation } from 'react-i18next';
@@ -98,16 +99,22 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
   const [windowsLogChannel, setWindowsLogChannel] = React.useState<'Application' | 'System'>('Application');
   const vmDetailCachePrefix = `workspace:${workspace.id}:virtual-machine:${selectedId || 'none'}:`;
-  const inventoryCacheKey = `${vmDetailCachePrefix}inventory`;
-  const logsCacheKey = `${vmDetailCachePrefix}logs${selected?.osFamily === 'windows' ? `:${windowsLogChannel}` : ''}`;
+  const isWindows = selected?.osFamily === 'windows';
+  const inventoryCacheKey = `${vmDetailCachePrefix}inventory${isWindows ? ':collection-v1' : ''}`;
+  const logsCacheKey = `${vmDetailCachePrefix}logs${selected?.osFamily === 'windows' ? `:${windowsLogChannel}:collection-v1` : ''}`;
   const metricHistoryCacheKey = `${vmDetailCachePrefix}metric-history`;
-  const [inventory, setInventory] = useSessionCachedState<Record<string, unknown>[]>(inventoryCacheKey, []);
-  const [logs, setLogs] = useSessionCachedState<Record<string, unknown>[]>(logsCacheKey, []);
+  const [inventoryPayload, setInventory] = useSessionCachedState<Record<string, unknown>[] | VmInventoryResponse>(inventoryCacheKey, []);
+  const inventory = Array.isArray(inventoryPayload) ? inventoryPayload : inventoryPayload.items;
+  const inventoryCollection = Array.isArray(inventoryPayload) ? undefined : inventoryPayload.collectionStatus;
+  const [logsPayload, setLogs] = useSessionCachedState<Record<string, unknown>[] | VmLogsResponse>(logsCacheKey, []);
+  const logs = Array.isArray(logsPayload) ? logsPayload : logsPayload.entries || [];
+  const logsCollection = Array.isArray(logsPayload) ? undefined : logsPayload;
   const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'idle');
   const [resourceError, setResourceError] = React.useState<string | null>(null);
   const [logsStatus, setLogsStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'idle');
   const [logsError, setLogsError] = React.useState<string | null>(null);
   const logsRequestSeqRef = React.useRef(0);
+  const inventoryRequestSeqRef = React.useRef(0);
   const [metricHistory, setMetricHistory] = useSessionCachedState<ControlPlaneVirtualMachineMetricHistoryPoint[]>(metricHistoryCacheKey, []);
   const [metricHistoryByVmId, setMetricHistoryByVmId] = useSessionCachedState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>(`workspace:${workspace.id}:virtual-machine-card-metrics`, {});
   const [metricLoadStateByVmId, setMetricLoadStateByVmId] = useSessionCachedState<Record<string, VmMetricLoadState>>(`workspace:${workspace.id}:virtual-machine-card-metric-states`, {});
@@ -126,6 +133,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   React.useEffect(() => () => {
     logsRequestSeqRef.current += 1;
   }, [logsCacheKey, view]);
+  React.useEffect(() => () => {
+    inventoryRequestSeqRef.current += 1;
+  }, [inventoryCacheKey, view]);
   const selectedTargetId = selected?.id || null;
   const capabilityCatalogCache = useCapabilityCatalogCache(selectedId ? `${workspace.id}:${selectedId}` : '');
   const issueCollection = useTargetIssues(workspace.id, view === 'overview' ? selectedTargetId : null);
@@ -246,18 +256,21 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }, [onPendingTargetPromptConsumed, pendingTargetPrompt, selectedId, view, workspace.id]);
 
   const loadVmInventory = React.useCallback(async (vmId: string) => {
+    const requestSeq = ++inventoryRequestSeqRef.current;
     if (!hasSessionDataCacheValue(inventoryCacheKey)) setResourceStatus('loading');
     setResourceError(null);
     try {
       const page = await controlPlaneApi.listVirtualMachineInventory(workspace.id, vmId);
-      setInventory(page.items || []);
+      if (requestSeq !== inventoryRequestSeqRef.current) return;
+      setInventory(isWindows ? page : page.items || []);
       setResourceStatus('ready');
     } catch (error) {
+      if (requestSeq !== inventoryRequestSeqRef.current) return;
       console.error('Failed loading virtual machine inventory', error);
       setResourceError(formatControlPlaneError(error, t('virtualMachines.resources.loadFailed'), { area: 'virtualMachines' }));
       setResourceStatus(hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'error');
     }
-  }, [inventoryCacheKey, t, workspace.id]);
+  }, [inventoryCacheKey, isWindows, t, workspace.id]);
   const loadVmLogs = React.useCallback(async (vmId: string) => {
     const requestSeq = ++logsRequestSeqRef.current;
     setLogsStatus('loading');
@@ -267,7 +280,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         selected?.osFamily === 'windows' ? { channel: windowsLogChannel } : undefined);
 
       if (requestSeq !== logsRequestSeqRef.current) return;
-      setLogs(payload.entries || []);
+      setLogs(selected?.osFamily === 'windows' ? payload : payload.entries || []);
       setLogsStatus('ready');
     } catch (error) {
       if (requestSeq !== logsRequestSeqRef.current) return;
@@ -561,6 +574,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         onLogChannelChange={setWindowsLogChannel}
         activeCategory={activeResourceCategory}
         inventory={inventory}
+        inventoryCollection={inventoryCollection}
+        logsCollection={logsCollection}
         logs={logs}
         isLoading={resourceStatus === 'loading'}
         error={resourceError}

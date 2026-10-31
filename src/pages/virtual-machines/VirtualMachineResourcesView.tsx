@@ -1,3 +1,5 @@
+import type { VmInventoryCollection, VmLogsResponse } from '@/services/control-plane/virtualMachineCollection';
+import { VirtualMachineCollectionNotice, inventoryCollectionNotices, logCollectionState, isIncompleteCollection } from './VirtualMachineCollectionNotice';
 import React from 'react';
 import { RefreshCw, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +38,8 @@ interface VirtualMachineResourcesViewProps {
   activeCategory: VmResourceCategory;
   inventory: Record<string, unknown>[];
   logs: Record<string, unknown>[];
+  logsCollection?: VmLogsResponse;
+  inventoryCollection?: VmInventoryCollection | null;
   isLoading: boolean;
   error: string | null;
   isLogsLoading: boolean;
@@ -142,6 +146,8 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
   activeCategory,
   inventory,
   logs,
+  logsCollection,
+  inventoryCollection,
   isLoading,
   error,
   isLogsLoading,
@@ -150,9 +156,13 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
   onRetry
 }) => {
   const { t } = useTranslation();
+  const inventoryNotices = osFamily === 'windows' && activeCategory !== 'logs' ? inventoryCollectionNotices(inventoryCollection, activeCategory) : [];
+  const logState = logCollectionState(logsCollection);
+  const logsIncomplete = osFamily === 'windows' && (isIncompleteCollection(logState) || logsCollection?.truncated === true);
   const [resourceSearchTerm, setResourceSearchTerm] = React.useState('');
   const [logQuery, setLogQuery] = React.useState('');
   const hasResourceSearch = (activeCategory === 'logs' ? logQuery : resourceSearchTerm).trim().length > 0;
+  const suppressInventoryEmpty = inventoryNotices.length > 0 && !hasResourceSearch;
   const filteredInventory = React.useMemo(
     () =>
       sortInventoryAttentionFirst(
@@ -256,6 +266,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
       <section id="vm-resource-panel" role="tabpanel" tabIndex={0} aria-labelledby={`vm-resource-category-${activeCategory}-tab`} className="min-h-[14rem] overflow-hidden rounded-lg border border-ui-border bg-ui-surface shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/25">
         {activeCategory === 'logs' ? (
           <div className="max-h-[calc(100vh-22rem)] overflow-auto">
+            {logsIncomplete && (!isLogsLoading || logs.length > 0) && <VirtualMachineCollectionNotice label={logChannel} collection={logState} logs={logsCollection} />}
             {logsError && (
               <div className="flex flex-col items-start gap-3 px-4 py-5">
                 <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
@@ -273,7 +284,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
               itemCount={filteredLogs.length}
               loading={<CollectionLoadingSkeleton label={t('virtualMachines.resources.loadingLogs')} />}
               error={null}
-              empty={(
+              empty={logsIncomplete && !hasResourceSearch ? null : (
                 <EmptyState
                   embedded
                   headingLevel={3}
@@ -301,6 +312,8 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           </div>
         ) : (
           <>
+            {!isLoading && inventoryNotices.map(({ key, collection }) => <VirtualMachineCollectionNotice key={key}
+              label={t(`virtualMachines.resources.collection.categories.${key}`)} collection={collection} snapshotTs={inventoryCollection?.snapshotTs} />)}
             {error ? (
               <div className="flex flex-col items-start gap-3 px-4 py-5">
                 <p className="type-caption rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
@@ -313,7 +326,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
               </div>
             ) : isLoading ? (
               <CollectionLoadingSkeleton label={t('virtualMachines.resources.loading')} />
-            ) : filteredInventory.length === 0 ? (
+            ) : filteredInventory.length === 0 && suppressInventoryEmpty ? null : filteredInventory.length === 0 ? (
               <EmptyState
                 embedded
                 headingLevel={3}
