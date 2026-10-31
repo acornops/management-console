@@ -199,6 +199,10 @@ The management console is the browser client for the control-plane API. Keep thi
   workflow-webhook responses expose the latest successful execution pointer
   separately from configuration and last-dispatch state; a rejected dispatch
   never implies that an execution is running.
+- Automation diagnostics expose `runtime.admissionEnabled`,
+  `runtime.dispatchEnabled`, and `runtime.workerIntervalMs`. The retired rollout
+  mode and per-workspace canary flag are removed; diagnostics clients must use
+  the explicit maintenance controls. The console does not consume these fields.
 - The console consumes automation-template metadata and exposes explicit idempotent install and activation actions. The Workflow Library lists only definitions installed in the workspace. Automatic templates are provisioned active; opt-in Infrastructure remediation and Incident investigation remain in the template catalog until installation, then stay paused until setup is complete and the user activates them.
 - Workflow authoring sends only a unique, non-empty `agentIds` set. One selected
   Agent is summarized as running the workflow directly without a redundant row
