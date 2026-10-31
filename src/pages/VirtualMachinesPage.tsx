@@ -1,4 +1,5 @@
 import React from 'react';
+import { refreshLatestWorkspaceSummary } from '@/app/workspaceSummaryRefresh';
 import { useTranslation } from 'react-i18next';
 import { ICONS } from '@/constants';
 import { Button, StatusBadge } from '@acornops/ui';
@@ -163,9 +164,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   [catalogReturnState.q, catalogReturnState.status, workspace.id]);
 
   const refreshWorkspaceSummary = React.useCallback(async () => {
-    const refreshed = await controlPlaneApi.getWorkspace(workspace.id);
-    const { clusterIds: _clusterIds, members: _members, ...updates } = refreshed;
-    onUpdateWorkspace(workspace.id, updates);
+    await refreshLatestWorkspaceSummary(workspace.id, (updates) => {
+      onUpdateWorkspace(workspace.id, updates);
+    });
   }, [onUpdateWorkspace, workspace.id]);
   const {
     agentAccessPolicyError, credentialReplacementError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
@@ -369,7 +370,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const deleteVirtualMachine = React.useCallback(async (vm: ControlPlaneVirtualMachine) => {
     await controlPlaneApi.deleteVirtualMachine(workspace.id, vm.id);
     onRemoveWorkspaceVirtualMachine(workspace.id, vm.id);
-    await refreshWorkspaceSummary();
+    void refreshWorkspaceSummary().catch((error) => {
+      console.warn('Failed refreshing workspace summary after deleting VM', error);
+    });
     setMetricHistoryByVmId((current) => {
       const remaining = { ...current };
       delete remaining[vm.id];
