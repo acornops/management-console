@@ -118,11 +118,12 @@ for (const target of targets) {
       const dialog = await confirm(page);
       await expect(dialog.getByRole('button', { name: 'Deleting…', exact: true })).toBeDisabled();
       await expect(page).toHaveURL(initialPath);
-      expect(await page.evaluate(() => window.targetDeleteProbe.deleteCount)).toBe(1);
+      await expect.poll(() => page.evaluate(() => window.targetDeleteProbe.deleteCount)).toBe(1);
       expect(await page.evaluate(() => window.targetDeleteProbe.summaryCount)).toBe(0);
       await page.evaluate(() => window.targetDeleteProbe.releaseDelete?.());
       await expect(dialog).toBeHidden();
       await expect(page).toHaveURL(catalogPath);
+      expect(await page.evaluate(() => window.targetDeleteProbe.deleteCount)).toBe(1);
     });
   }
 }

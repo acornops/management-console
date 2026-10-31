@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Target deletion completion](2026-10-31-target-delete-latency.md) — Confirmed deletion completes independently of summary refresh, with session and response-order guards.
+
 - [Console control simplification](console-control-simplification.md)
 
 - [Readable MCP Tool Labels](readable-mcp-tool-labels.md) — Frontend canonical labels for workflow tools and approval details, with production-shaped snapshot coverage and isolated validation.

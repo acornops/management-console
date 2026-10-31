@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type { Workspace } from '@/types';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
-import { emitSessionExpired, setAuthenticatedSession } from '@/services/control-plane/sessionLifecycle';
+import { emitSessionExpired, setAuthenticatedSession, subscribeToSessionExpiry } from '@/services/control-plane/sessionLifecycle';
 import { clearWorkspaceAccessStates, isWorkspaceSuspended, readWorkspaceAccessState, recordWorkspaceAccessState } from '@/services/control-plane/workspaceAccessState';
 import { refreshLatestWorkspaceSummary } from './workspaceSummaryRefresh';
 
@@ -108,4 +108,66 @@ it('discards a summary already in flight when the session changes', async () => 
   response.resolve(summary('ws', 1));
   await pending;
   expect(apply).not.toHaveBeenCalled();
+});
+
+for (const reauthenticate of [true, false]) {
+  it.each([
+    { stage: 'access-state', status: 401, code: 'UNAUTHORIZED' },
+    { stage: 'summary', status: 401, code: 'UNAUTHORIZED' },
+    { stage: 'summary', status: 403, code: 'WORKSPACE_SUSPENDED' }
+  ])(`${reauthenticate ? 'discards stale' : 'preserves current-session'} $status from $stage`, async ({ stage, status, code }) => {
+    setAuthenticatedSession(true);
+    const response = deferred<Response>();
+    const freshAccess = { id: 'ws', name: 'Current workspace', accessState: 'active' as const };
+    const fetch = vi.fn();
+    if (stage === 'summary') fetch.mockResolvedValueOnce(Response.json(freshAccess));
+    fetch.mockReturnValueOnce(response.promise);
+    vi.stubGlobal('fetch', fetch);
+    const expired = vi.fn();
+    const unsubscribe = subscribeToSessionExpiry(expired);
+    try {
+      const apply = vi.fn();
+      const pending = refreshLatestWorkspaceSummary('ws', apply).catch(error => error);
+      await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(stage === 'summary' ? 2 : 1));
+      if (reauthenticate) {
+        setAuthenticatedSession(false);
+        clearWorkspaceAccessStates();
+        setAuthenticatedSession(true);
+      }
+      recordWorkspaceAccessState(freshAccess);
+      response.resolve(Response.json({ error: { code, message: code } }, { status }));
+      const error = await pending;
+      expect(apply).not.toHaveBeenCalled();
+      expect(expired).toHaveBeenCalledTimes(!reauthenticate && status === 401 ? 1 : 0);
+      expect(isWorkspaceSuspended('ws')).toBe(!reauthenticate && status === 403);
+      expect(readWorkspaceAccessState('ws')).toEqual(freshAccess);
+      expect(error).toMatchObject(reauthenticate ? { name: 'AbortError' } : { status, code });
+    } finally {
+      unsubscribe();
+    }
+  });
+}
+
+it('discards suspension errors whose body finishes after reauthentication', async () => {
+  setAuthenticatedSession(true);
+  const freshAccess = { id: 'ws', name: 'Current workspace', accessState: 'active' as const };
+  let body!: ReadableStreamDefaultController<Uint8Array>;
+  const delayedBody = new ReadableStream<Uint8Array>({ start(controller) { body = controller; } });
+  vi.stubGlobal('fetch', vi.fn()
+    .mockResolvedValueOnce(Response.json(freshAccess))
+    .mockResolvedValueOnce(new Response(delayedBody, { status: 403 })));
+  const readingBody = vi.spyOn(Response.prototype, 'text');
+  const apply = vi.fn();
+  const pending = refreshLatestWorkspaceSummary('ws', apply).catch(error => error);
+  await vi.waitFor(() => expect(readingBody).toHaveBeenCalled());
+  setAuthenticatedSession(false);
+  clearWorkspaceAccessStates();
+  setAuthenticatedSession(true);
+  recordWorkspaceAccessState(freshAccess);
+  body.enqueue(new TextEncoder().encode(JSON.stringify({ error: { code: 'WORKSPACE_SUSPENDED' } })));
+  body.close();
+  const error = await pending;
+  expect(isWorkspaceSuspended('ws')).toBe(false);
+  expect(apply).not.toHaveBeenCalled();
+  expect(error).toMatchObject({ name: 'AbortError' });
 });
