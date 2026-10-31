@@ -7,6 +7,7 @@ import { controlPlaneApi } from '@/services/controlPlaneApi';
 import { AppRoute, AppPaths } from '@/utils/routes';
 import { KubernetesCluster, User, Workspace } from '@/types';
 import { parseNamespaceList } from '@/app/useAppSupport';
+import { refreshLatestWorkspaceSummary } from '@/app/workspaceSummaryRefresh';
 import type { AgentAccessMode, KubernetesRbacAdditionSummary } from '@/services/control-plane/types';
 import { getAgentConnectionState } from '@/utils/telemetry';
 
@@ -86,15 +87,15 @@ export function useWorkspaceClusterActions(args: {
 
   const refreshWorkspaceSummary = async (workspaceId: string) => {
     if (!user) return;
-    const refreshed = await controlPlaneApi.getWorkspace(workspaceId, user);
-    const { clusterIds: _clusterIds, members: _members, ...summaryUpdates } = refreshed;
-    setWorkspaces((prev) =>
-      prev.map((workspace) =>
-        workspace.id === workspaceId
-          ? { ...workspace, ...summaryUpdates, clusterIds: workspace.clusterIds }
-          : workspace
-      )
-    );
+    await refreshLatestWorkspaceSummary(workspaceId, (summaryUpdates) => {
+      setWorkspaces((prev) =>
+        prev.map((workspace) =>
+          workspace.id === workspaceId
+            ? { ...workspace, ...summaryUpdates, clusterIds: workspace.clusterIds }
+            : workspace
+        )
+      );
+    });
   };
 
   const handleCreateWorkspace = async (name: string): Promise<Workspace> => {
@@ -288,11 +289,9 @@ export function useWorkspaceClusterActions(args: {
           : workspace
       )
     );
-    try {
-      await refreshWorkspaceSummary(cluster.workspaceId);
-    } catch (err) {
+    void refreshWorkspaceSummary(cluster.workspaceId).catch((err) => {
       console.warn('Failed refreshing workspace summary after deleting cluster', err);
-    }
+    });
     setInstallAgentClusterId((current) => (current === cluster.id ? null : current));
     showToast(t('app.deletedCluster', { name: clusterName }), { tone: 'success' });
 

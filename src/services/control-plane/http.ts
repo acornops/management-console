@@ -1,6 +1,6 @@
 import { requestWorkspaceId, hasWorkspaceAccessDiscovery, isWorkspaceSuspended, notifyWorkspaceSuspended, readWorkspaceAccessState, recordWorkspaceAccessState, trackWorkspaceRequest, workspaceIdFromPath, type WorkspaceAccessState } from './workspaceAccessState';
 import { ControlPlaneRunEvent } from './types';
-import { emitSessionExpired } from './sessionLifecycle';
+import { emitSessionExpired, getSessionGeneration } from './sessionLifecycle';
 
 const CSRF_COOKIE_NAME = 'acornops_cp_csrf';
 const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -104,16 +104,25 @@ async function getCsrfToken(sessionExpiry: SessionExpiryBehavior): Promise<strin
 
 export type SessionExpiryBehavior = 'notify' | 'ignore';
 
+function assertRequestSession(generation?: number): void {
+  if (generation !== undefined && getSessionGeneration() !== generation) {
+    throw new DOMException('Session changed', 'AbortError');
+  }
+}
+
 async function throwControlPlaneResponseError(
   response: Response,
-  sessionExpiry: SessionExpiryBehavior = 'notify'
+  sessionExpiry: SessionExpiryBehavior = 'notify',
+  sessionGeneration?: number
 ): Promise<never> {
+  assertRequestSession(sessionGeneration);
   const requestId = response.headers.get('x-request-id') || undefined;
   if (response.status === 401) {
     if (sessionExpiry === 'notify') emitSessionExpired(requestId);
     throw new ControlPlaneRequestError('Control plane request was unauthorized', 401, 'UNAUTHORIZED', undefined, undefined, requestId);
   }
   const body = await response.text();
+  assertRequestSession(sessionGeneration);
   let message = body.trim();
   let code: string | undefined;
   let details: Record<string, unknown> | undefined;
@@ -199,7 +208,11 @@ async function fetchWorkspaceRequest(path: string, init: RequestInit): Promise<R
   } catch (error) { untrack(); throw error; }
 }
 
-export type ControlPlaneRequestInit = RequestInit & { sessionExpiry?: SessionExpiryBehavior };
+export type ControlPlaneRequestInit = RequestInit & {
+  sessionExpiry?: SessionExpiryBehavior;
+  /** Discard a detached read before its response can affect a replacement session. */
+  sessionGeneration?: number;
+};
 
 /** Only the control plane's rejection before admission permits mutation replay. */
 async function retryDrainRejection(request: () => Promise<Response>, signal?: AbortSignal): Promise<Response> {
@@ -223,7 +236,7 @@ async function retryDrainRejection(request: () => Promise<Response>, signal?: Ab
 
 export async function requestJson<T>(path: string, init?: ControlPlaneRequestInit): Promise<T> {
   const method = (init?.method || 'GET').toUpperCase();
-  const { sessionExpiry = 'notify', ...fetchInit } = init || {};
+  const { sessionExpiry = 'notify', sessionGeneration, ...fetchInit } = init || {};
   const requestInit: RequestInit = {
     ...fetchInit,
     credentials: 'include'
@@ -238,19 +251,26 @@ export async function requestJson<T>(path: string, init?: ControlPlaneRequestIni
     requestInit.cache = 'no-store';
   }
   // JSON bodies are immutable and replayable; one-shot body streams are not.
+  const send = () => {
+    assertRequestSession(sessionGeneration);
+    return fetchWorkspaceRequest(path, requestInit);
+  };
   const response = requestInit.body == null || typeof requestInit.body === 'string'
-    ? await retryDrainRejection(() => fetchWorkspaceRequest(path, requestInit), requestInit.signal ?? undefined)
-    : await fetchWorkspaceRequest(path, requestInit);
+    ? await retryDrainRejection(send, requestInit.signal ?? undefined)
+    : await send();
 
+  assertRequestSession(sessionGeneration);
   if (!response.ok) {
-    return throwControlPlaneResponseError(response, sessionExpiry);
+    return throwControlPlaneResponseError(response, sessionExpiry, sessionGeneration);
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  const body = (await response.json()) as T;
+  assertRequestSession(sessionGeneration);
+  return body;
 }
 
 /** Fetch a bounded redacted artifact as JSON or text using the user session. */

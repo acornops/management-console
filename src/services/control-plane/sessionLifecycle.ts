@@ -8,8 +8,12 @@ export type SessionExpiryListener = (event: SessionExpiredEvent) => void;
 const listeners = new Set<SessionExpiryListener>();
 let authenticated = false;
 let expiryEmitted = false;
+let sessionGeneration = 0;
+
+export function getSessionGeneration(): number { return sessionGeneration; }
 
 export function setAuthenticatedSession(active: boolean): void {
+  if (active !== authenticated) sessionGeneration += 1;
   if (active && !authenticated) expiryEmitted = false;
   authenticated = active;
   if (!active) expiryEmitted = false;
@@ -19,6 +23,7 @@ export function emitSessionExpired(requestId?: string): boolean {
   if (!authenticated || expiryEmitted) return false;
   expiryEmitted = true;
   authenticated = false;
+  sessionGeneration += 1;
   const event: SessionExpiredEvent = { type: 'session-expired', requestId };
   listeners.forEach((listener) => listener(event));
   return true;

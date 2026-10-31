@@ -1,4 +1,5 @@
 import { workspaceAccessApi } from './control-plane/workspaceAccessApi';
+import { getSessionGeneration } from './control-plane/sessionLifecycle';
 import {
   ChatAssistantReference,
   ChatRuntimeSelection,
@@ -30,9 +31,9 @@ import { mapVirtualMachineMetricsHistoryResponse } from './control-plane/virtual
 import {
   parseControlPlaneVirtualMachine,
   parseVirtualMachineInstallInstructions,
-  parseVirtualMachineRegistrationOptions,
   parseVirtualMachineInstructionResponse
 } from './control-plane/virtualMachineTypes';
+import { getVirtualMachineRegistrationOptions } from './control-plane/virtualMachineRegistrationApi';
 import { createVirtualMachineAgentAccessPolicyUpdate } from './control-plane/virtualMachineAgentAccessApi';
 import type {
   ControlPlaneVirtualMachine,
@@ -169,10 +170,11 @@ export const controlPlaneApi = {
   },
 
   async getWorkspace(workspaceId: string, _currentUser?: User): Promise<Workspace> {
+    const sessionGeneration = getSessionGeneration();
     const state = await controlPlaneApi.getWorkspaceAccessState(workspaceId);
     if (state.accessState === 'suspended') return { ...state, description: '', members: [], clusterIds: [] };
     const workspace = await requestJson<ControlPlaneWorkspace>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}`
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}`, { sessionGeneration }
     );
     return mapWorkspace(workspace, []);
   },
@@ -474,11 +476,7 @@ export const controlPlaneApi = {
     return { ...page, items: page.items.map(parseControlPlaneVirtualMachine) };
   },
 
-  async getVirtualMachineRegistrationOptions(workspaceId: string) {
-    return parseVirtualMachineRegistrationOptions(await requestJson<unknown>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/registration-options`
-    ));
-  },
+  getVirtualMachineRegistrationOptions,
 
   async registerVirtualMachine(
     workspaceId: string,

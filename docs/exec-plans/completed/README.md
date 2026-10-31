@@ -1,6 +1,7 @@
 # Completed Execution Plans
 
 - [Windows VM console](windows-vm-console.md) — OS-aware registration, immutable read-only Windows host settings, native event channels, and unavailable telemetry labels.
+- [Target deletion completion](2026-10-31-target-delete-latency.md) — Confirmed deletion completes independently of summary refresh, with session and response-order guards.
 
 - [Console control simplification](console-control-simplification.md)
 
