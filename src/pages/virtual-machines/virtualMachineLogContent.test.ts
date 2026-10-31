@@ -11,3 +11,9 @@ it('does not invent a VM time or source for missing or malformed metadata', () =
     .toBe('Timestamp unknown\tSource unknown\toutput\nTimestamp unknown\tSource unknown\tnext');
   expect(formatVmLoadedLogs([], 'Timestamp unknown', 'Source unknown')).toBe('');
 });
+
+
+it('preserves a Windows event channel in the loaded-only export', () => {
+  expect(formatVmLoadedLogs([{ timestamp: '2026-07-15T08:30:00Z', source: 'windows_event_log', channel: 'System', message: 'Event' }], 'Timestamp unknown', 'Source unknown'))
+    .toBe('2026-07-15T08:30:00Z\twindows_event_log / System\tEvent');
+});

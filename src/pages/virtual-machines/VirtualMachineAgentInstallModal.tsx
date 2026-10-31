@@ -93,7 +93,7 @@ export const VirtualMachineAgentInstallModal: React.FC<{
         </div>
         {instructions && !isAgentConnected && (
           <>
-            <p className="type-body text-ui-text-muted">{t('virtualMachines.list.installBody')}</p>
+            <p className="type-body text-ui-text-muted">{t(vm.osFamily === 'windows' ? 'virtualMachines.list.windowsInstallBody' : 'virtualMachines.list.installBody')}</p>
             <AgentVInstallCommandPanel instructions={instructions} isAgentConnected={false} />
           </>
         )}

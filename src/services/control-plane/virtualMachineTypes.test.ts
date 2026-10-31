@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isValidAgentVRestartService,
+  parseVirtualMachineRegistrationOptions,
   parseControlPlaneVirtualMachine,
   parseVirtualMachineInstallInstructions,
   parseVirtualMachineInstructionResponse
@@ -77,5 +78,30 @@ describe('AgentV install instruction parsing', () => {
     expect(() => parseVirtualMachineInstallInstructions({
       ...instructions, enrollmentExpiresAt: 'not-a-date'
     })).toThrow('invalid AgentV install instructions');
+  });
+});
+
+
+describe('VM platform boundaries', () => {
+  it('defaults omitted legacy OS metadata to Linux/systemd', () => {
+    const { osFamily, serviceManager, ...legacy } = virtualMachine;
+    expect(parseControlPlaneVirtualMachine(legacy)).toMatchObject({ osFamily: 'linux', serviceManager: 'systemd' });
+  });
+
+  it('accepts Windows read-only and rejects writes or inconsistent explicit platforms', () => {
+    const windows = { ...virtualMachine, osFamily: 'windows', serviceManager: 'scm', agentAccessMode: 'read_only', restartServices: [] };
+    expect(parseControlPlaneVirtualMachine(windows)).toMatchObject({ osFamily: 'windows', serviceManager: 'scm' });
+    expect(() => parseControlPlaneVirtualMachine({ ...windows, agentAccessMode: 'read_write', restartServices: ['ssh.service'] })).toThrow();
+    expect(() => parseControlPlaneVirtualMachine({ ...windows, pendingAgentAccessPolicy: { accessMode: 'read_write', restartServices: ['ssh.service'] } })).toThrow();
+    for (const pair of [{ osFamily: 'windows', serviceManager: 'systemd' }, { osFamily: 'linux', serviceManager: 'scm' }, { osFamily: 'other', serviceManager: 'systemd' }, { osFamily: null, serviceManager: null }]) {
+      expect(() => parseControlPlaneVirtualMachine({ ...windows, ...pair })).toThrow();
+    }
+  });
+
+  it('accepts only known read-only Windows registration availability', () => {
+    expect(parseVirtualMachineRegistrationOptions({ platforms: [{ osFamily: 'windows', serviceManager: 'scm', accessModes: ['read_only'] }] })).toEqual({ platforms: [{ osFamily: 'windows', serviceManager: 'scm', accessModes: ['read_only'] }] });
+    for (const platform of [{ osFamily: 'windows', serviceManager: 'scm', accessModes: ['read_write'] }, { osFamily: 'windows', serviceManager: 'systemd', accessModes: ['read_only'] }, { osFamily: 'future', serviceManager: 'scm', accessModes: ['read_only'] }]) {
+      expect(() => parseVirtualMachineRegistrationOptions({ platforms: [platform] })).toThrow();
+    }
   });
 });

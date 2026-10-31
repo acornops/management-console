@@ -13,6 +13,7 @@ import {
   EmptyState,
   PageHeader,
   PageShell,
+  Select,
   formInputClassName
 } from '@acornops/ui';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
@@ -29,6 +30,9 @@ export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 
 
 interface VirtualMachineResourcesViewProps {
   vmName: string;
+  osFamily?: 'linux' | 'windows';
+  logChannel?: 'Application' | 'System';
+  onLogChannelChange?: (channel: 'Application' | 'System') => void;
   activeCategory: VmResourceCategory;
   inventory: Record<string, unknown>[];
   logs: Record<string, unknown>[];
@@ -132,6 +136,9 @@ function sortInventoryAttentionFirst(items: Record<string, unknown>[]): Record<s
 
 export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewProps> = ({
   vmName,
+  osFamily = 'linux',
+  logChannel = 'Application',
+  onLogChannelChange,
   activeCategory,
   inventory,
   logs,
@@ -177,6 +184,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           entry.source,
           entry.source || t('loadedLogs.unknownSource'),
           entry.unit,
+          entry.channel,
           entry.message
         ])
       ),
@@ -212,6 +220,15 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           className="grid min-w-0 w-full max-w-full gap-3 rounded-lg border border-ui-border bg-ui-surface px-4 py-4 shadow-sm"
         >
           {activeCategory === 'logs' ? <>
+            {osFamily === 'windows' && <label className="type-label" htmlFor="vm-log-channel">
+              {t('virtualMachines.resources.eventChannel')}
+              <Select<'Application' | 'System'> id="vm-log-channel" value={logChannel} onChange={(channel) => onLogChannelChange?.(channel)} ariaLabel={t('virtualMachines.resources.eventChannel')} className="mt-2"
+                options={[
+                  { value: 'Application', label: 'Application' },
+                  { value: 'System', label: 'System' }
+                ]}
+              />
+            </label>}
             <LoadedLogTools query={logQuery} onQueryChange={setLogQuery} matchCount={filteredLogs.length}
               content={formatVmLoadedLogs(logs, t('loadedLogs.unknownTime'), t('loadedLogs.unknownSource'))}
               source={`${t('loadedLogs.source', { source: vmName })}${logsError ? `\n${t('loadedLogs.stale')}` : ''}`}
@@ -275,7 +292,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                 {filteredLogs.map((entry, index) => (
                   <article key={String(entry.entryId || index)} className={`grid gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 lg:px-8 lg:py-6 ${virtualMachineLogGridClass}`}>
                     <span className="type-code text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: t('loadedLogs.unknownTime') })}</span>
-                    <span className="type-row-title min-w-0 break-words">{[entry.source, entry.unit].filter(Boolean).map(String).join(' / ') || t('loadedLogs.unknownSource')}</span>
+                    <span className="type-row-title min-w-0 break-words">{[entry.source, entry.channel, entry.unit].filter(Boolean).map(String).join(' / ') || t('loadedLogs.unknownSource')}</span>
                     <span className="type-body min-w-0 whitespace-pre-wrap break-words">{String(entry.message || '')}</span>
                   </article>
                 ))}

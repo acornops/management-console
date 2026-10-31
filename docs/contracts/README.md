@@ -299,5 +299,18 @@ When Windows rollout is explicitly enabled with valid pinned release
 coordinates, the server appends
 `{osFamily:"windows",serviceManager:"scm",accessModes:["read_only"]}`.
 No release URL, version, token or credential is exposed. The VM list response
-is unchanged. Consumers can request these options when opening registration;
-this contract declaration does not enable Windows onboarding in the console.
+is unchanged. The console requests these options when opening registration and
+only enables Windows after a valid response for the current workspace. Loading,
+unavailable, or older endpoints leave the Linux flow available. An explicit
+Windows selection is retained on failure and never silently submitted as Linux.
+The registration request includes Windows/SCM identity and read-only access;
+Linux keeps its existing omitted-identity request and exact-service validation.
+
+VM OS/service-manager identity is immutable in settings. Windows host-policy
+mutation controls are absent; the shared run-permission selector remains an
+approval policy, separate from host capabilities. Windows logs require the
+native `channel=Application|System` query, default to Application, and cache
+loaded output by workspace, target, and channel. Linux log requests are unchanged.
+Unavailable Windows load/swap values remain unavailable; storage labels identify
+the system volume. Installation commands are displayed/copied verbatim from the
+server with the existing enrollment expiry and sensitive-command treatment.

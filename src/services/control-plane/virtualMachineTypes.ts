@@ -1,6 +1,8 @@
 import type { VirtualMachine } from '@/types';
 import { isRunPermissionMode, type RunPermissionMode } from './runPermissionTypes';
 
+export type VirtualMachineOsFamily = 'linux' | 'windows';
+
 export type AgentVAccessMode = 'read_only' | 'read_write';
 
 interface AgentVAccessPolicy {
@@ -23,8 +25,8 @@ export interface ControlPlaneVirtualMachine {
   name: string;
   status: 'online' | 'offline' | 'degraded' | 'unknown';
   hostname?: string;
-  osFamily: 'linux';
-  serviceManager: 'systemd';
+  osFamily: VirtualMachineOsFamily;
+  serviceManager: 'systemd' | 'scm';
   agentAccessMode: AgentVAccessMode;
   restartServices: string[];
   pendingAgentAccessPolicy: AgentVAccessPolicy | null;
@@ -69,6 +71,12 @@ export function parseControlPlaneVirtualMachine(value: unknown): ControlPlaneVir
     throw new Error('Control plane returned an invalid virtual machine');
   }
   const input = value as Record<string, unknown>;
+  const osFamily = input.osFamily === undefined ? 'linux' : input.osFamily;
+  const serviceManager = input.serviceManager === undefined ? 'systemd' : input.serviceManager;
+  if (!((osFamily === 'linux' && serviceManager === 'systemd')
+    || (osFamily === 'windows' && serviceManager === 'scm'))) {
+    throw new Error('Control plane returned an invalid VM platform');
+  }
   const accessPolicy = parseAgentVAccessPolicy({
     accessMode: input.agentAccessMode,
     restartServices: input.restartServices
@@ -77,6 +85,10 @@ export function parseControlPlaneVirtualMachine(value: unknown): ControlPlaneVir
   const pendingAgentAccessPolicy = pendingAgentAccessPolicyInput === null
     ? null
     : parseAgentVAccessPolicy(pendingAgentAccessPolicyInput);
+  if (osFamily === 'windows' && (accessPolicy.accessMode !== 'read_only'
+    || (pendingAgentAccessPolicy && pendingAgentAccessPolicy.accessMode !== 'read_only'))) {
+    throw new Error('Control plane returned an invalid Windows access policy');
+  }
   if (!isRunPermissionMode(input.permissionMode)
     || (input.permissionModeOverride !== null && !isRunPermissionMode(input.permissionModeOverride))
     || (input.permissionModeSource !== 'virtual_machine_override' && input.permissionModeSource !== 'deployment_default')
@@ -87,6 +99,8 @@ export function parseControlPlaneVirtualMachine(value: unknown): ControlPlaneVir
   }
   return {
     ...input,
+    osFamily,
+    serviceManager,
     agentAccessMode: accessPolicy.accessMode,
     restartServices: accessPolicy.restartServices,
     pendingAgentAccessPolicy
@@ -182,4 +196,30 @@ export interface ControlPlaneVirtualMachineMetricsHistoryResponse {
   targetId: string;
   windowMs: number;
   points: ControlPlaneVirtualMachineMetricHistoryPoint[];
+}
+
+
+export interface VirtualMachineRegistrationOptions {
+  platforms: Array<{
+    osFamily: VirtualMachineOsFamily;
+    serviceManager: 'systemd' | 'scm';
+    accessModes: AgentVAccessMode[];
+  }>;
+}
+
+export function parseVirtualMachineRegistrationOptions(value: unknown): VirtualMachineRegistrationOptions {
+  const invalid = () => new Error('Control plane returned invalid VM registration options');
+  if (!value || typeof value !== 'object' || !('platforms' in value) || !Array.isArray(value.platforms)) throw invalid();
+  const platforms = value.platforms.map((platform: unknown) => {
+    if (!platform || typeof platform !== 'object' || Array.isArray(platform)) throw invalid();
+    const input = platform as Record<string, unknown>;
+    if (!((input.osFamily === 'linux' && input.serviceManager === 'systemd')
+      || (input.osFamily === 'windows' && input.serviceManager === 'scm'))
+      || !Array.isArray(input.accessModes) || input.accessModes.length === 0
+      || !input.accessModes.every((mode) => mode === 'read_only' || (input.osFamily === 'linux' && mode === 'read_write'))
+      || new Set(input.accessModes).size !== input.accessModes.length) throw invalid();
+    return { osFamily: input.osFamily, serviceManager: input.serviceManager, accessModes: [...input.accessModes] };
+  });
+  if (new Set(platforms.map((platform) => platform.osFamily)).size !== platforms.length) throw invalid();
+  return { platforms } as VirtualMachineRegistrationOptions;
 }

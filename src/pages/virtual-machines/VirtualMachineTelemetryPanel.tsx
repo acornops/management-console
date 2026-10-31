@@ -14,6 +14,7 @@ import {
 import { VirtualMachineTelemetrySummary } from '@/pages/virtual-machines/VirtualMachineTelemetrySummary';
 
 interface VirtualMachineTelemetryPanelProps {
+  osFamily?: 'linux' | 'windows';
   metricHistory: ControlPlaneVirtualMachineMetricHistoryPoint[];
   status: 'idle' | 'loading' | 'ready' | 'error';
   onRetry: () => Promise<void>;
@@ -21,6 +22,7 @@ interface VirtualMachineTelemetryPanelProps {
 
 export const VirtualMachineTelemetryPanel: React.FC<VirtualMachineTelemetryPanelProps> = ({
   metricHistory,
+  osFamily = 'linux',
   status,
   onRetry
 }) => {
@@ -39,7 +41,7 @@ export const VirtualMachineTelemetryPanel: React.FC<VirtualMachineTelemetryPanel
     [metricTimeline]
   );
   const latestTelemetryPoint = React.useMemo(() => getLatestVmTelemetryPoint(metricTimeline), [metricTimeline]);
-  const hasLoadTrend = loadSeries.length >= 2;
+  const hasLoadTrend = osFamily !== 'windows' && loadSeries.length >= 2;
   const hasMemoryTrend = memorySeries.length >= 2;
   const hasTelemetryTrend = hasLoadTrend || hasMemoryTrend;
 
@@ -117,7 +119,7 @@ export const VirtualMachineTelemetryPanel: React.FC<VirtualMachineTelemetryPanel
               {t('virtualMachines.overview.waitingForAnotherVmSampleBody')}
             </p>
           )}
-          <VirtualMachineTelemetrySummary latestTelemetryPoint={latestTelemetryPoint} mode={hasTelemetryTrend ? 'storage' : 'all'} />
+          <VirtualMachineTelemetrySummary osFamily={osFamily} latestTelemetryPoint={latestTelemetryPoint} mode={hasTelemetryTrend ? 'storage' : 'all'} />
         </div>
       </CollectionState>
     </section>

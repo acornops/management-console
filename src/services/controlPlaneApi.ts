@@ -30,6 +30,7 @@ import { mapVirtualMachineMetricsHistoryResponse } from './control-plane/virtual
 import {
   parseControlPlaneVirtualMachine,
   parseVirtualMachineInstallInstructions,
+  parseVirtualMachineRegistrationOptions,
   parseVirtualMachineInstructionResponse
 } from './control-plane/virtualMachineTypes';
 import { createVirtualMachineAgentAccessPolicyUpdate } from './control-plane/virtualMachineAgentAccessApi';
@@ -473,9 +474,15 @@ export const controlPlaneApi = {
     return { ...page, items: page.items.map(parseControlPlaneVirtualMachine) };
   },
 
+  async getVirtualMachineRegistrationOptions(workspaceId: string) {
+    return parseVirtualMachineRegistrationOptions(await requestJson<unknown>(
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/registration-options`
+    ));
+  },
+
   async registerVirtualMachine(
     workspaceId: string,
-    input: { name: string; hostname?: string; allowedLogSources?: string[]; agentAccessMode: 'read_only' | 'read_write'; restartServices: string[] }
+    input: { name: string; hostname?: string; osFamily?: 'linux' | 'windows'; serviceManager?: 'systemd' | 'scm'; allowedLogSources?: string[]; agentAccessMode: 'read_only' | 'read_write'; restartServices: string[] }
   ): Promise<RegisterVirtualMachineResponse> {
     const response = await requestJson<unknown>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`,
@@ -546,10 +553,10 @@ export const controlPlaneApi = {
     return mapVirtualMachineMetricsHistoryResponse(response);
   },
 
-  async getVirtualMachineLogs(workspaceId: string, vmId: string, options?: { q?: string; source?: string }): Promise<{ entries?: Record<string, unknown>[] }> {
+  async getVirtualMachineLogs(workspaceId: string, vmId: string, options?: { q?: string; source?: string; channel?: 'Application' | 'System' }): Promise<{ entries?: Record<string, unknown>[] }> {
     return requestJson<{ entries?: Record<string, unknown>[] }>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/logs${pageQuery({
-        filters: { q: options?.q, source: options?.source }
+        filters: { q: options?.q, source: options?.source, channel: options?.channel }
       })}`
     );
   },

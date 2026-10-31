@@ -92,8 +92,8 @@ export interface VirtualMachine {
   workspaceId: string;
   name: string;
   hostname?: string;
-  osFamily: 'linux';
-  serviceManager: 'systemd';
+  osFamily: 'linux' | 'windows';
+  serviceManager: 'systemd' | 'scm';
   allowedLogSources: string[];
   agentConnectionState?: 'connected' | 'disconnected' | 'not_installed';
   status: HealthStatus;

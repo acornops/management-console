@@ -63,7 +63,7 @@ export const VirtualMachineSettingsView: React.FC<{
 }) => {
   const { t } = useTranslation();
   const [isInstallDialogOpen, setIsInstallDialogOpen] = React.useState(false);
-  const allowedLogs = vm.allowedLogSources?.join(', ') || t('virtualMachines.settings.defaultAllowedLogs');
+  const allowedLogs = vm.allowedLogSources?.join(', ') || (vm.osFamily === 'windows' ? 'Application, System' : t('virtualMachines.settings.defaultAllowedLogs'));
   const appliedAgentAccess = vm.agentAccessMode === 'read_write'
     ? t('virtualMachines.settings.agentAccessReadWrite', { services: vm.restartServices.join(', ') })
     : t('virtualMachines.settings.agentAccessReadOnly');
@@ -149,13 +149,13 @@ export const VirtualMachineSettingsView: React.FC<{
           description={t('virtualMachines.settings.permissionModeBody')}
           permissionMode={vm.permissionMode}
           disabled={!canManageTargets || !onUpdatePermissionMode}
-          note={t('virtualMachines.settings.restartLocalPolicyApplies')}
+          note={t(vm.osFamily === 'windows' ? 'virtualMachines.list.windowsReadOnly' : 'virtualMachines.settings.restartLocalPolicyApplies')}
           onChange={onUpdatePermissionMode}
         />
 
         <SettingsSection
           title={t('virtualMachines.settings.hostPolicyTitle')}
-          description={t('virtualMachines.settings.hostPolicyBody')}
+          description={t(vm.osFamily === 'windows' ? 'virtualMachines.list.windowsReadOnly' : 'virtualMachines.settings.hostPolicyBody')}
         >
           <SettingsRow
             icon={ShieldCheck}
@@ -174,7 +174,7 @@ export const VirtualMachineSettingsView: React.FC<{
               {t('virtualMachines.settings.pendingHostPolicyBody')}
             </InlineAlert>
           )}
-          {!requiresInitialEnrollment && (
+          {!requiresInitialEnrollment && vm.osFamily !== 'windows' && (
             <div className="space-y-4 border-t border-ui-border p-4 sm:p-6">
               <VirtualMachineAgentAccessSelector
                 context="settings"

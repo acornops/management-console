@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Windows VM console](windows-vm-console.md) — OS-aware registration, immutable read-only Windows host settings, native event channels, and unavailable telemetry labels.
+
 - [Console control simplification](console-control-simplification.md)
 
 - [Readable MCP Tool Labels](readable-mcp-tool-labels.md) — Frontend canonical labels for workflow tools and approval details, with production-shaped snapshot coverage and isolated validation.
