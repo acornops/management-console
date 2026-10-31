@@ -1,4 +1,5 @@
 import { workspaceAccessApi } from './control-plane/workspaceAccessApi';
+import { getSessionGeneration } from './control-plane/sessionLifecycle';
 import {
   ChatAssistantReference,
   ChatRuntimeSelection,
@@ -168,10 +169,11 @@ export const controlPlaneApi = {
   },
 
   async getWorkspace(workspaceId: string, _currentUser?: User): Promise<Workspace> {
+    const sessionGeneration = getSessionGeneration();
     const state = await controlPlaneApi.getWorkspaceAccessState(workspaceId);
     if (state.accessState === 'suspended') return { ...state, description: '', members: [], clusterIds: [] };
     const workspace = await requestJson<ControlPlaneWorkspace>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}`
+      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}`, { sessionGeneration }
     );
     return mapWorkspace(workspace, []);
   },
