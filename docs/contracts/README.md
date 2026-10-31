@@ -287,3 +287,17 @@ When changing a console API call, mapper, or screen contract:
 ## Workspace Suspension Discovery
 
 Member-only `GET /api/v1/workspaces?view=access-state` and `GET /api/v1/workspaces/{workspaceId}/access-state` expose only id, name, accessState, publicReason and suspendedAt. This discovery runs before workload bootstrap. Suspended selector entries have no inferred permissions. HTTP 403 WORKSPACE_SUSPENDED and SSE workspace_suspended trigger safe-state refresh; a 15-second idle recheck catches missed stream events. The blocking page replaces workload content, aborts tracked requests/streams and clears current workspace caches. Restored access requires explicit refresh into a fresh overview; old actions are never replayed.
+
+
+## VM registration availability
+
+The additive control-plane endpoint
+`GET /api/v1/workspaces/{workspaceId}/virtual-machines/registration-options`
+requires a user session and `manage_targets`. It returns
+`{platforms:[{osFamily:"linux",serviceManager:"systemd",accessModes:["read_only","read_write"]}]}`.
+When Windows rollout is explicitly enabled with valid pinned release
+coordinates, the server appends
+`{osFamily:"windows",serviceManager:"scm",accessModes:["read_only"]}`.
+No release URL, version, token or credential is exposed. The VM list response
+is unchanged. Consumers can request these options when opening registration;
+this contract declaration does not enable Windows onboarding in the console.
