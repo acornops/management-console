@@ -14,3 +14,8 @@ Connection labels/confirmation honor expiry; initial command eligibility stays
 on stored `unknown` status. Hidden command-step errors now use the existing alert.
 Independent coordinated review has no blocking source findings. Exact-revision
 hosted evidence is recorded on draft PR #35; no Windows rollout is qualified.
+
+Hosted browser CI exposed a VM policy fixture that depended on recent-conversation
+chooser timing. It now explicitly supplies no recent activity, following the
+existing capability-fixture pattern; policy/tool assertions and production chat
+behavior are unchanged. All eight adjacent overview browser cases pass locally.
