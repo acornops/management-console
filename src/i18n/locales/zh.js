@@ -1855,6 +1855,7 @@ export const zh = {
     namespaceScopeExcludeCount: '排除 {{count}} 个',
     namespaceScopeCounts: '包含 {{include}} 个 · 排除 {{exclude}} 个',
     connection: {
+      unknown: '连接状态不可用',
       connected: '已连接',
       disconnected: '已断开',
       not_installed: '需要配置'

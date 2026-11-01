@@ -1,4 +1,5 @@
 import { requestJson } from './http';
+import { parseAgentConnection } from '@/utils/agentConnection';
 import type { PagedResult, TargetSummary } from './types';
 
 function targetPageQuery(options?: { limit?: number; cursor?: string; q?: string; targetType?: TargetSummary['targetType'] }): string {
@@ -11,17 +12,19 @@ function targetPageQuery(options?: { limit?: number; cursor?: string; q?: string
   return query ? `?${query}` : '';
 }
 
-export function listTargetsForWorkspace(
+export async function listTargetsForWorkspace(
   workspaceId: string,
   options?: { limit?: number; cursor?: string; q?: string; targetType?: TargetSummary['targetType'] }
 ): Promise<PagedResult<TargetSummary>> {
-  return requestJson<PagedResult<TargetSummary>>(
+  const page = await requestJson<PagedResult<TargetSummary>>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets${targetPageQuery(options)}`
   );
+  return { ...page, items: page.items.map((target) => ({ ...target, connection: parseAgentConnection(target.connection) })) };
 }
 
-export function getTarget(workspaceId: string, targetId: string): Promise<TargetSummary> {
-  return requestJson<TargetSummary>(
+export async function getTarget(workspaceId: string, targetId: string): Promise<TargetSummary> {
+  const target = await requestJson<TargetSummary>(
     `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/targets/${encodeURIComponent(targetId)}`
   );
+  return { ...target, connection: parseAgentConnection(target.connection) };
 }

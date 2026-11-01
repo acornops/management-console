@@ -342,3 +342,25 @@ to the rows' snapshot timestamp. Fixed category notices retain usable rows and
 qualify incomplete empty collections. Linux keeps its exact `{items}` inventory
 envelope, log handling, array caches and UI behavior. Deploy the additive backend
 before the consumer; an older backend leaves Windows collection status unknown.
+
+## Agent connection observations
+
+Target, VM and Kubernetes reads accept optional `connection` with `state`
+(`connected`, `disconnected`, `unknown`), nullable `lastHeartbeatAt`/`expiresAt`,
+and server `observedAt`. The default grace is 120 seconds (backend configurable
+60–600). Stored `status`, API filters, permissions and command routing keep their
+existing meaning. Fresh degraded targets remain reachable with degraded health.
+
+The API boundary validates the observation and stores its local receipt time in
+the existing session cache. Remaining server validity ages from that receipt,
+including failed refreshes and navigation; cache reads never renew it. Catalog
+counts/filters, VM details, Kubernetes connection reporting and workspace cards
+use the shared calculation. Missing legacy fields retain old behavior; malformed
+new evidence is unavailable, distinct from never-connected setup. Deploy the
+backend first. No AgentV/AgentK release is required.
+
+`connection.hasConnectionEvidence` preserves whether an identity or heartbeat
+was recorded, including unusable/future timestamps. This prevents invalid
+evidence from becoming fabricated initial setup. Failed Kubernetes publication
+invalidates only that attempt's heartbeat using its exact persisted identity;
+replacement evidence, keys and stored health remain unchanged.

@@ -1,4 +1,5 @@
 import type { VirtualMachine } from '@/types';
+import { parseAgentConnection, type AgentConnectionObservation } from '@/utils/agentConnection';
 import { isRunPermissionMode, type RunPermissionMode } from './runPermissionTypes';
 
 export type VirtualMachineOsFamily = 'linux' | 'windows';
@@ -24,6 +25,7 @@ export interface ControlPlaneVirtualMachine {
   workspaceId: string;
   name: string;
   status: 'online' | 'offline' | 'degraded' | 'unknown';
+  connection?: AgentConnectionObservation;
   hostname?: string;
   osFamily: VirtualMachineOsFamily;
   serviceManager: 'systemd' | 'scm';
@@ -99,6 +101,7 @@ export function parseControlPlaneVirtualMachine(value: unknown): ControlPlaneVir
   }
   return {
     ...input,
+    connection: parseAgentConnection(input.connection),
     osFamily,
     serviceManager,
     agentAccessMode: accessPolicy.accessMode,

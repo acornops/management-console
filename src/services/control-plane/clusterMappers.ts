@@ -1,3 +1,4 @@
+import { parseAgentConnection } from '@/utils/agentConnection';
 import {
   Alert,
   HealthStatus,
@@ -550,6 +551,7 @@ export function mapControlPlaneClusterToKubernetesCluster(cluster: ControlPlaneC
         : 'unknown',
     workspaceId: cluster.workspaceId,
     agentConnectionState,
+    connection: parseAgentConnection(cluster.connection),
     owners: [],
     gitlabPipelines: [],
     status: computedStatus,

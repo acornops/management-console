@@ -1,27 +1,40 @@
+import { virtualMachineConnectionState } from '@/utils/agentConnection';
 import type { ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { formatRelativeTime } from '@/utils/dateTime';
+
+export function getVmReportedStatus(vm: ControlPlaneVirtualMachine): ControlPlaneVirtualMachine['status'] | 'unavailable' {
+  if (!vm.connection) return vm.status;
+  const state = virtualMachineConnectionState(vm);
+  if (state === 'unknown') return 'unavailable';
+  if (state === 'not_installed') return 'unknown';
+  if (state === 'disconnected') return 'offline';
+  return vm.status;
+}
 
 export type VmConnectionFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 export function vmNeedsAttention(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
-  if (vm.status === 'unknown') return false;
-  if (vm.status === 'degraded' || vm.status === 'offline') return true;
+  const status = getVmReportedStatus(vm);
+  if (status === 'unknown') return false;
+  if (status === 'degraded' || status === 'offline' || status === 'unavailable') return true;
   return (issueSummary?.total ?? 0) > 0;
 }
 
 export function vmMatchesConnectionFilter(vm: ControlPlaneVirtualMachine, filter: VmConnectionFilter, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
+  const status = getVmReportedStatus(vm);
   if (filter === 'all') return true;
   if (filter === 'attention') return vmNeedsAttention(vm, issueSummary);
-  if (filter === 'healthy') return vm.status === 'online' && !vmNeedsAttention(vm, issueSummary);
-  return vm.status === 'unknown';
+  if (filter === 'healthy') return status === 'online' && !vmNeedsAttention(vm, issueSummary);
+  return status === 'unknown';
 }
 
 export function getVmStatusLabel(
-  status: ControlPlaneVirtualMachine['status'],
+  status: ControlPlaneVirtualMachine['status'] | 'unavailable',
   t: (key: string) => string
 ): string {
+  if (status === 'unavailable') return t('dashboard.unavailable');
   if (status === 'online') return t('virtualMachines.list.agentConnected');
   if (status === 'degraded') return t('virtualMachines.list.degraded');
   if (status === 'offline') return t('virtualMachines.list.offline');
@@ -29,7 +42,8 @@ export function getVmStatusLabel(
 }
 
 export function getVmCatalogStatusLabel(vm: ControlPlaneVirtualMachine, issueSummary: ControlPlaneTargetIssueSummary | undefined, t: Translate): string {
-  if (vm.status === 'unknown') return getVmStatusLabel(vm.status, t);
+  const status = getVmReportedStatus(vm);
+  if (status === 'unknown' || status === 'offline' || status === 'unavailable') return getVmStatusLabel(status, t);
   if ((issueSummary?.critical ?? 0) > 0) {
     return t('dashboard.criticalStatus', { count: issueSummary?.critical });
   }
@@ -39,7 +53,7 @@ export function getVmCatalogStatusLabel(vm: ControlPlaneVirtualMachine, issueSum
   if ((issueSummary?.total ?? 0) > 0) {
     return t('dashboard.findingStatus', { count: issueSummary?.total });
   }
-  return getVmStatusLabel(vm.status, t);
+  return getVmStatusLabel(status, t);
 }
 
 export function getVmCatalogStatusReason(
@@ -48,30 +62,33 @@ export function getVmCatalogStatusReason(
   issueSummaryLoadState: 'loading' | 'ready' | 'error' | undefined,
   t: Translate
 ): string {
-  if (vm.status === 'unknown') return t('virtualMachines.list.vmStateInstallAgent');
+  const status = getVmReportedStatus(vm);
+  if (status === 'unknown') return t('virtualMachines.list.vmStateInstallAgent');
+  if (status === 'unavailable') return t('dashboard.unavailable');
+  if (status === 'offline') return t('virtualMachines.list.vmStateAgentOffline');
   if (issueSummaryLoadState === 'error') return issueSummary
     ? t('virtualMachines.list.vmStateIssuesRefreshFailed')
     : t('virtualMachines.list.vmStateIssuesUnavailable');
   if (!issueSummary) return t('virtualMachines.list.vmStateCheckingIssues');
   if (issueSummary.critical > 0) return t('virtualMachines.list.vmStateCriticalIssues', { count: issueSummary.critical });
-  if (vm.status === 'offline') return t('virtualMachines.list.vmStateAgentOffline');
   if (issueSummary.warning > 0) return t('virtualMachines.list.vmStateWarningIssues', { count: issueSummary.warning });
   if (issueSummary.total > 0) return t('virtualMachines.list.vmStateIssues', { count: issueSummary.total });
-  if (vm.status === 'degraded') return t('virtualMachines.list.vmStateDegraded');
+  if (status === 'degraded') return t('virtualMachines.list.vmStateDegraded');
   return t('virtualMachines.list.vmStateClear');
 }
 
 export function getVmCatalogStatusTone(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (vm.status === 'unknown') return 'warning';
+  const status = getVmReportedStatus(vm);
+  if (status === 'unknown' || status === 'unavailable') return 'warning';
   if ((issueSummary?.critical ?? 0) > 0) {
     return 'danger';
   }
-  if ((issueSummary?.total ?? 0) > 0 && vm.status === 'online') {
+  if ((issueSummary?.total ?? 0) > 0 && status === 'online') {
     return 'warning';
   }
-  if (vm.status === 'online') return 'success';
-  if (vm.status === 'degraded') return 'warning';
-  if (vm.status === 'offline') return 'danger';
+  if (status === 'online') return 'success';
+  if (status === 'degraded') return 'warning';
+  if (status === 'offline') return 'danger';
   return 'neutral';
 }
 

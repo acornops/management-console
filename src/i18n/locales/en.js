@@ -1855,6 +1855,7 @@ export const en = {
     namespaceScopeExcludeCount: '{{count}} excluded',
     namespaceScopeCounts: '{{include}} included · {{exclude}} excluded',
     connection: {
+      unknown: 'Connection unavailable',
       connected: 'Connected',
       disconnected: 'Disconnected',
       not_installed: 'Setup Required'

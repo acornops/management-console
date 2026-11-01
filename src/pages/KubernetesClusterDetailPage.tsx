@@ -1,3 +1,5 @@
+import { useAgentConnectionNow } from '@/hooks/useAgentConnectionNow';
+import { getAgentConnectionState } from '@/utils/telemetry';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@acornops/ui';
@@ -54,15 +56,8 @@ export const KubernetesClusterDetailPage: React.FC<KubernetesClusterDetailPagePr
   const { t } = useTranslation();
   const selectedCluster = kubernetesClusters.find((cluster) => cluster.id === clusterId) || null;
   const selectedWorkspace = selectedCluster ? workspaces.find((workspace) => workspace.id === selectedCluster.workspaceId) : undefined;
-  const selectedClusterAgentState =
-    selectedCluster?.agentConnectionState ||
-    (selectedCluster &&
-    (selectedCluster.workloads.length > 0 ||
-      selectedCluster.nodes.length > 0 ||
-      selectedCluster.services.length > 0 ||
-      Number(selectedCluster.resourceSummary?.resourceCount || 0) > 0)
-      ? 'connected'
-      : 'not_installed');
+  useAgentConnectionNow(selectedCluster ? [selectedCluster] : []);
+  const selectedClusterAgentState = selectedCluster ? getAgentConnectionState(selectedCluster) : 'not_installed';
   const requiresClusterAgentInstall = selectedCluster && selectedClusterAgentState === 'not_installed';
   const canManageAgentKeys = Boolean(selectedWorkspace?.permissions?.manage_agent_keys);
   const requestedClusterView = activeSubview === 'health' ? 'overview' : activeSubview;

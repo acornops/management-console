@@ -110,3 +110,5 @@ If docs are intentionally unchanged, record `Docs impact: none` and the reason i
 Keep `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `docs/index.md`, this file, and `docs/OPERATIONS.md` in sync when changing repo behavior. `npm run harness:check` enforces the required structure.
 
 For suspension regression, run `npx playwright test --config=playwright.fixtures.config.ts tests/fixtures/workspace-suspension.spec.ts`. Set `FIXTURE_APP_PORT` to an unused local port. The fixture key `acornops-fixture-suspended-workspace` supplies safe suspended membership discovery without changing the normal active fixture flow.
+
+Heartbeat reporting is covered by `src/utils/agentConnection.test.ts` and `tests/fixtures/agent-heartbeat-freshness.spec.ts`. The browser fixture uses synthetic API observations and failures for Linux, Windows and Kubernetes; it does not qualify a native Windows host.

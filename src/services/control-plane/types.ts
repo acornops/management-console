@@ -105,6 +105,7 @@ export interface TargetSummary {
   targetType: TargetType;
   name: string;
   status: 'online' | 'offline' | 'degraded' | 'unknown';
+  connection?: import('@/utils/agentConnection').AgentConnectionObservation;
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

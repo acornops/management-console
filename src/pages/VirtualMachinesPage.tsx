@@ -18,6 +18,7 @@ import { AppPaths, AppRoute, getCurrentAppPath, type VmCatalogReturnState, VmSub
 import { Workspace } from '@/types';
 import {
   formatSnapshotTime,
+  getVmReportedStatus,
   getVmStatusLabel,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
@@ -513,8 +514,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       <PageShell>
         <PageHeader title={t('virtualMachines.overview.title')} description={t('virtualMachines.overview.latestTelemetryFor', { name: selected.name })} actions={
           <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
-            <StatusBadge tone={selected.status === 'online' ? 'success' : selected.status === 'degraded' ? 'warning' : 'danger'}>
-              {getVmStatusLabel(selected.status, t)}
+            <StatusBadge tone={getVmReportedStatus(selected) === 'online' ? 'success' : getVmReportedStatus(selected) === 'degraded' || getVmReportedStatus(selected) === 'unavailable' ? 'warning' : 'danger'}>
+              {getVmStatusLabel(getVmReportedStatus(selected), t)}
             </StatusBadge>
             <span className="type-caption text-ui-text-muted">{formatSnapshotTime(selected)}</span>
           </div>

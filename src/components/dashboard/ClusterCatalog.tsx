@@ -1,3 +1,4 @@
+import { useAgentConnectionNow } from '@/hooks/useAgentConnectionNow';
 import React, { useMemo } from 'react';
 import { Settings, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +43,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 function clusterNeedsAttention(cluster: KubernetesCluster, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
   const agentState = getAgentConnectionState(cluster);
   if (agentState === 'not_installed') return false;
-  if (agentState === 'disconnected') return true;
+  if (agentState === 'disconnected' || agentState === 'unknown') return true;
   if (getEffectiveHealthStatus(cluster) !== HealthStatus.GREEN) return true;
   return Boolean(issueSummary && (issueSummary.critical > 0 || issueSummary.warning > 0 || issueSummary.active > 0));
 }
@@ -59,6 +60,7 @@ function getClusterPriority(cluster: KubernetesCluster, issueSummary?: ControlPl
 function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall: boolean, issueSummary: ControlPlaneTargetIssueSummary | undefined, t: Translate): string {
   const status = getEffectiveHealthStatus(cluster);
   if (requiresAgentInstall) return t('dashboard.notConnected');
+  if (getAgentConnectionState(cluster) === 'unknown') return t('dashboard.unavailable');
   if ((issueSummary?.critical ?? 0) > 0) return t('dashboard.criticalStatus', { count: issueSummary?.critical });
   if (getAgentConnectionState(cluster) === 'disconnected' || status === HealthStatus.RED) return t('dashboard.error');
   if ((issueSummary?.warning ?? 0) > 0) return t('dashboard.warningStatus', { count: issueSummary?.warning });
@@ -69,7 +71,7 @@ function getClusterStatusLabel(cluster: KubernetesCluster, requiresAgentInstall:
 
 function getClusterStatusTone(cluster: KubernetesCluster, requiresAgentInstall: boolean, issueSummary?: ControlPlaneTargetIssueSummary): 'success' | 'warning' | 'danger' {
   const status = getEffectiveHealthStatus(cluster);
-  if (requiresAgentInstall) return 'warning';
+  if (requiresAgentInstall || getAgentConnectionState(cluster) === 'unknown') return 'warning';
   if (getAgentConnectionState(cluster) === 'disconnected' || status === HealthStatus.RED || (issueSummary?.critical ?? 0) > 0)
     return 'danger';
   if (status === HealthStatus.YELLOW || (issueSummary?.warning ?? 0) > 0 || (issueSummary?.active ?? 0) > 0)
@@ -87,6 +89,7 @@ function getClusterStateReason(
   const status = getEffectiveHealthStatus(cluster);
   const agentState = getAgentConnectionState(cluster);
   if (requiresAgentInstall) return t('dashboard.clusterStateInstallAgent');
+  if (agentState === 'unknown') return t('dashboard.unavailable');
   if (agentState === 'disconnected') return t('dashboard.clusterStateAgentOffline');
   if (issueSummaryLoadState === 'error') return issueSummary ? t('dashboard.clusterStateIssuesRefreshFailed') : t('dashboard.clusterStateIssuesUnavailable');
   if (!issueSummary) return t('dashboard.clusterStateCheckingIssues');
@@ -413,13 +416,14 @@ export const ClusterCatalog: React.FC<ClusterCatalogProps> = ({
 }) => {
   const { t } = useTranslation();
   const now = useCatalogNow();
+  const connectionNow = useAgentConnectionNow(kubernetesClusters);
   const sortedClusters = useMemo(
     () =>
       [...kubernetesClusters].sort((left, right) => {
         const priorityDifference = getClusterPriority(left, issueSummaryByClusterId[left.id]) - getClusterPriority(right, issueSummaryByClusterId[right.id]);
         return priorityDifference || left.name.localeCompare(right.name);
       }),
-    [issueSummaryByClusterId, kubernetesClusters]
+    [connectionNow, issueSummaryByClusterId, kubernetesClusters]
   );
 
   const itemProps = (cluster: KubernetesCluster): ClusterItemProps => ({

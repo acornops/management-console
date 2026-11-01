@@ -52,3 +52,5 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 - [Security Model](/docs/security-model.md)
 - [References](/docs/references/index.md)
 - [Generated Artifacts](/docs/generated/README.md)
+
+- [Agent heartbeat freshness](exec-plans/completed/agent-heartbeat-freshness.md) — Shared observation parsing, cache expiry and validation.

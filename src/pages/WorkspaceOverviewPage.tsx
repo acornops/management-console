@@ -1,3 +1,5 @@
+import { useAgentConnectionNow } from '@/hooks/useAgentConnectionNow';
+import { getVmReportedStatus } from '@/pages/virtual-machines/virtualMachineUi';
 import React from 'react';
 import { ArrowRight, Bot, Clock3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +56,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const [workspaceVirtualMachines, setWorkspaceVirtualMachines] = React.useState(virtualMachines);
+  const connectionNow = useAgentConnectionNow([...kubernetesClusters, ...workspaceVirtualMachines]);
   const loadIssuePage = React.useCallback(
     async ({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => {
       try {
@@ -93,8 +96,8 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
     strategy: 'manual'
   });
   const connectedWorkspaceVirtualMachines = React.useMemo(
-    () => workspaceVirtualMachines.filter((virtualMachine) => virtualMachine.status === 'online' || virtualMachine.status === 'degraded'),
-    [workspaceVirtualMachines]
+    () => workspaceVirtualMachines.filter((virtualMachine) => getVmReportedStatus(virtualMachine) === 'online' || getVmReportedStatus(virtualMachine) === 'degraded'),
+    [connectionNow, workspaceVirtualMachines]
   );
   const { summaryByTargetId: issueSummaryByVmId } = useTargetIssueSummaries(connectedWorkspaceVirtualMachines);
   const workspaceIssues = issueCollection.items;
@@ -126,7 +129,7 @@ export const WorkspaceOverviewPage: React.FC<WorkspaceOverviewPageProps> = ({
         virtualMachines: workspaceVirtualMachines,
         t
       }),
-    [issueSummaryByVmId, kubernetesClusters, t, workspaceIssues, workspaceVirtualMachines]
+    [connectionNow, issueSummaryByVmId, kubernetesClusters, t, workspaceIssues, workspaceVirtualMachines]
   );
 
   const hasMoreIssues = Boolean(issueCollection.nextCursor);
