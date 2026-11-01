@@ -7,8 +7,29 @@ import type { Workspace } from '@/types';
 import { VirtualMachineSettingsView } from './VirtualMachineSettingsView';
 import { AddVirtualMachineModal } from './AddVirtualMachineModal';
 import { VirtualMachineResourcesView } from './VirtualMachineResourcesView';
+import { VirtualMachineAgentInstallModal } from './VirtualMachineAgentInstallModal';
+import { parseControlPlaneVirtualMachine } from '@/services/control-plane/virtualMachineTypes';
 
 beforeAll(initializeI18n);
+
+for (const osFamily of ['linux', 'windows'] as const) {
+  for (const [status, state, connected] of [
+    ['online', 'disconnected', false], ['online', 'unknown', false],
+    ['offline', 'connected', false], ['degraded', 'connected', true],
+    ['online', 'connected', true], ['degraded', undefined, true],
+    ['unknown', undefined, false], ['offline', undefined, false],
+  ] as const) it(`${osFamily} install dialog: ${status}/${state ?? 'legacy'}`, () => {
+    const vm = parseControlPlaneVirtualMachine({ id: 'vm', workspaceId: 'ws', name: 'VM', status, osFamily,
+      serviceManager: osFamily === 'windows' ? 'scm' : 'systemd', agentAccessMode: 'read_only', restartServices: [],
+      permissionMode: 'ask_before_changes', permissionModeOverride: null, permissionModeSource: 'deployment_default',
+      connection: state && { state, lastHeartbeatAt: '2026-01-01T00:00:00Z', observedAt: '2026-01-01T00:01:00Z',
+        expiresAt: '2026-01-01T00:02:00Z', hasConnectionEvidence: true } });
+    const html = renderToStaticMarkup(<VirtualMachineAgentInstallModal workspaceId="ws" workspaceName="Workspace"
+      vm={vm} onVirtualMachineUpdated={() => {}} onClose={() => {}} />);
+    expect(html.includes('Agent connected')).toBe(connected);
+    expect(html.includes('Generate setup command')).toBe(status === 'unknown');
+  });
+}
 
 it('keeps Linux read-write and exact service entry while Windows exposes only read-only', () => {
   const linux = renderToStaticMarkup(<VirtualMachineAgentAccessSelector value="read_write" restartServices={['ssh.service']} onChange={() => {}} />);

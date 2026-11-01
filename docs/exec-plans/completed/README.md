@@ -71,3 +71,5 @@ certification. Each archive note preserves outstanding acceptance or historical 
 - [Workflow, Agent, and trigger affordance polish](workflow-agent-trigger-affordance-polish.md)
 - [Workflow workspace information space](workflow-workspace-information-space.md)
 - [Workspace Overview Redesign](workspace-overview-redesign.md)
+
+- [Windows VM final catch-all](windows-final-catch-all.md) — Scoped audit fixes, redundancy removal and verification evidence.

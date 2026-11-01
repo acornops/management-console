@@ -54,3 +54,5 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 - [Generated Artifacts](/docs/generated/README.md)
 
 - [Agent heartbeat freshness](exec-plans/completed/agent-heartbeat-freshness.md) — Shared observation parsing, cache expiry and validation.
+
+- [Windows VM final catch-all](exec-plans/completed/windows-final-catch-all.md).

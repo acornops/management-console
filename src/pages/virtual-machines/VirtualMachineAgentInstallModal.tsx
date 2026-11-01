@@ -5,6 +5,7 @@ import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus
 import { controlPlaneApi, type ControlPlaneVirtualMachine, type ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
 import { AgentVInstallCommandPanel } from './AgentVInstallCommandPanel';
+import { isVmAgentConnected } from './virtualMachineUi';
 
 export const VirtualMachineAgentInstallModal: React.FC<{
   workspaceId: string;
@@ -21,7 +22,8 @@ export const VirtualMachineAgentInstallModal: React.FC<{
   const inFlightRef = React.useRef(false);
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
   const generateButtonRef = React.useRef<HTMLButtonElement>(null);
-  const isAgentConnected = vm.status !== 'unknown';
+  const isAgentConnected = isVmAgentConnected(vm);
+  const needsInitialEnrollment = vm.status === 'unknown';
 
   React.useEffect(() => {
     mountedRef.current = true;
@@ -33,7 +35,7 @@ export const VirtualMachineAgentInstallModal: React.FC<{
   }, [isAgentConnected]);
 
   const generateCommand = async () => {
-    if (isAgentConnected || inFlightRef.current) return;
+    if (!needsInitialEnrollment || isAgentConnected || inFlightRef.current) return;
     inFlightRef.current = true;
     setBusy('generate');
     setError(null);
@@ -57,7 +59,7 @@ export const VirtualMachineAgentInstallModal: React.FC<{
     try {
       const updated = await controlPlaneApi.getVirtualMachine(workspaceId, vm.id);
       if (!mountedRef.current) return;
-      if (updated.status === 'unknown') setError(t('virtualMachines.list.agentNotConnected'));
+      if (!isVmAgentConnected(updated)) setError(t('virtualMachines.list.agentNotConnected'));
       onVirtualMachineUpdated(updated);
     } catch (cause) {
       if (mountedRef.current) setError(formatControlPlaneError(cause, t('virtualMachines.list.connectionCheckFailed'), { area: 'virtualMachines' }));
@@ -91,7 +93,7 @@ export const VirtualMachineAgentInstallModal: React.FC<{
               : t('virtualMachines.settings.agentAccessReadOnly')}
           </p>
         </div>
-        {instructions && !isAgentConnected && (
+        {instructions && needsInitialEnrollment && !isAgentConnected && (
           <>
             <p className="type-body text-ui-text-muted">{t(vm.osFamily === 'windows' ? 'virtualMachines.list.windowsInstallBody' : 'virtualMachines.list.installBody')}</p>
             <AgentVInstallCommandPanel instructions={instructions} isAgentConnected={false} />
@@ -114,7 +116,7 @@ export const VirtualMachineAgentInstallModal: React.FC<{
             {busy === 'check' ? t('virtualMachines.list.checkingConnection') : t('virtualMachines.list.installedAgent')}
           </Button>
         )}
-        {!isAgentConnected && (
+        {needsInitialEnrollment && !isAgentConnected && (
           <Button ref={generateButtonRef} onClick={() => void generateCommand()} aria-disabled={busy !== null} className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50" variant="primary" size="sm">
             {busy === 'generate' ? t('virtualMachines.settings.generatingInstructions') : instructions ? t('virtualMachines.list.generateNewCommand') : t('virtualMachines.settings.generateInitialCommand')}
           </Button>

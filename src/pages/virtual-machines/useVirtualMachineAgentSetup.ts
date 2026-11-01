@@ -7,6 +7,7 @@ import {
   type ControlPlaneVirtualMachineInstallInstructions
 } from '@/services/controlPlaneApi';
 import type { AgentVAccessMode, VirtualMachineOsFamily, VirtualMachineRegistrationOptions } from '@/services/control-plane/virtualMachineTypes';
+import { isVmAgentConnected } from './virtualMachineUi';
 
 export type AgentVInstructionKind = 'initial' | 'repair' | 'replace' | 'policy_update';
 
@@ -129,7 +130,7 @@ export function useVirtualMachineAgentSetup({
     try {
       const refreshed = await controlPlaneApi.getVirtualMachine(workspaceId, installInstructions.vmId);
       onUpsertVirtualMachine(refreshed);
-      if (refreshed.status === 'unknown') {
+      if (!isVmAgentConnected(refreshed)) {
         setVmCreationError(t('virtualMachines.list.agentNotConnected'));
         return;
       }

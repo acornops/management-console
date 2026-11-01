@@ -1,7 +1,7 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile, Select } from '@acornops/ui';
+import { Button, IconTile, InlineAlert, Select } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
@@ -172,6 +172,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 </p>
               </div>
             </div>
+            {errorMessage && <InlineAlert tone="danger">{errorMessage}</InlineAlert>}
             <AgentConnectionStatus
               isConnected={isAgentConnected}
               waitingLabel={t('virtualMachines.list.waitingForAgent')}

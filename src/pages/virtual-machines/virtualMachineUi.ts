@@ -11,6 +11,11 @@ export function getVmReportedStatus(vm: ControlPlaneVirtualMachine): ControlPlan
   return vm.status;
 }
 
+export function isVmAgentConnected(vm: ControlPlaneVirtualMachine): boolean {
+  const status = getVmReportedStatus(vm);
+  return status === 'online' || status === 'degraded';
+}
+
 export type VmConnectionFilter = 'all' | 'attention' | 'healthy' | 'not_installed';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;

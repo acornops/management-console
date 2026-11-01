@@ -19,6 +19,7 @@ import { Workspace } from '@/types';
 import {
   formatSnapshotTime,
   getVmReportedStatus,
+  isVmAgentConnected,
   getVmStatusLabel,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
@@ -204,7 +205,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const isRegisteredVmAgentConnected = Boolean(
     installInstructions?.vmId &&
     virtualMachines.some((virtualMachine) =>
-      virtualMachine.id === installInstructions.vmId && virtualMachine.status !== 'unknown'
+      virtualMachine.id === installInstructions.vmId && isVmAgentConnected(virtualMachine)
     )
   );
 
