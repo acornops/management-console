@@ -1,7 +1,8 @@
 import { HealthStatus, KubernetesCluster } from '@/types';
 import { formatRelativeTime } from '@/utils/dateTime';
+import { hasNeverConnectedObservation, observedAgentConnectionState, type AgentConnectionState } from './agentConnection';
 
-export type AgentConnectionState = 'connected' | 'disconnected' | 'not_installed';
+export type { AgentConnectionState } from './agentConnection';
 export type TelemetryFreshness = 'current' | 'stale' | 'offline' | 'unavailable';
 
 export function getTelemetryTimestampFreshness(timestamp: string | number, now = Date.now()): TelemetryFreshness {
@@ -14,7 +15,11 @@ export function getTelemetryTimestampFreshness(timestamp: string | number, now =
   return 'offline';
 }
 
-export function getAgentConnectionState(cluster: KubernetesCluster): AgentConnectionState {
+export function getAgentConnectionState(cluster: KubernetesCluster, now = Date.now()): AgentConnectionState {
+  if (cluster.connection) {
+    if (cluster.agentConnectionState === 'not_installed' && hasNeverConnectedObservation(cluster.connection)) return 'not_installed';
+    return observedAgentConnectionState(cluster.connection, now);
+  }
   if (cluster.agentConnectionState) {
     return cluster.agentConnectionState;
   }
@@ -28,8 +33,8 @@ export function getAgentConnectionState(cluster: KubernetesCluster): AgentConnec
 }
 
 export function getTelemetryFreshness(cluster: KubernetesCluster, now = Date.now()): TelemetryFreshness {
-  const connectionState = getAgentConnectionState(cluster);
-  if (connectionState === 'not_installed') return 'unavailable';
+  const connectionState = getAgentConnectionState(cluster, now);
+  if (connectionState === 'not_installed' || connectionState === 'unknown') return 'unavailable';
   if (connectionState === 'disconnected') return 'offline';
 
   return getTelemetryTimestampFreshness(cluster.lastUpdate, now);

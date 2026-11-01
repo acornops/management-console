@@ -1,3 +1,4 @@
+import { useAgentConnectionNow } from '@/hooks/useAgentConnectionNow';
 import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Trans, useTranslation } from 'react-i18next';
@@ -21,6 +22,7 @@ import { getVmMetricTimeline, VmCardResourceChart, VmOperationalDetails, type Vm
 import { PendingVirtualMachineSetup } from '@/pages/virtual-machines/PendingVirtualMachineSetup';
 import { VirtualMachineAgentInstallModal } from './VirtualMachineAgentInstallModal';
 import {
+  getVmReportedStatus,
   getVmCatalogStatusLabel,
   getVmCatalogStatusReason,
   getVmCatalogStatusTone,
@@ -39,10 +41,10 @@ function vmSearchMatches(vm: ControlPlaneVirtualMachine, query: string): boolean
 
 function vmPriority(vm: ControlPlaneVirtualMachine, issueSummary?: ControlPlaneTargetIssueSummary): number {
   if ((issueSummary?.critical ?? 0) > 0) return 0;
-  if (vm.status === 'offline') return 1;
+  if (getVmReportedStatus(vm) === 'offline' || getVmReportedStatus(vm) === 'unavailable') return 1;
   if (vm.status === 'degraded') return 2;
   if ((issueSummary?.total ?? 0) > 0) return 3;
-  if (vm.status === 'unknown') return 4;
+  if (getVmReportedStatus(vm) === 'unknown') return 4;
   return 5;
 }
 
@@ -112,9 +114,10 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   const [installVmId, setInstallVmId] = React.useState<string | null>(null);
   const installVm = items.find((vm) => vm.id === installVmId);
   const now = useCatalogNow();
-  const notConnectedCount = items.filter((vm) => vm.status === 'unknown').length;
+  const connectionNow = useAgentConnectionNow(items);
+  const notConnectedCount = items.filter((vm) => getVmReportedStatus(vm) === 'unknown').length;
   const hasCompleteIssueSummaries = items
-    .filter((vm) => vm.status !== 'unknown')
+    .filter((vm) => getVmReportedStatus(vm) !== 'unknown')
     .every((vm) => issueSummaryLoadStateByVmId[vm.id] === 'ready' && issueSummaryByVmId[vm.id] !== undefined);
   const statusLabels: Record<VmConnectionFilter, string> = {
     all: t('virtualMachines.list.allVms'),
@@ -128,14 +131,14 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
   };
   if (hasCompleteIssueSummaries) {
     catalogCounts.attention = items.filter((vm) => vmNeedsAttention(vm, issueSummaryByVmId[vm.id])).length;
-    catalogCounts.healthy = items.filter((vm) => vm.status === 'online' && !vmNeedsAttention(vm, issueSummaryByVmId[vm.id])).length;
+    catalogCounts.healthy = items.filter((vm) => vmMatchesConnectionFilter(vm, 'healthy', issueSummaryByVmId[vm.id])).length;
   }
   const visibleItems = React.useMemo(
     () =>
       items
         .filter((vm) => vmMatchesConnectionFilter(vm, status, issueSummaryByVmId[vm.id]) && vmSearchMatches(vm, query))
         .sort((left, right) => vmPriority(left, issueSummaryByVmId[left.id]) - vmPriority(right, issueSummaryByVmId[right.id]) || left.name.localeCompare(right.name)),
-    [issueSummaryByVmId, items, query, status]
+    [connectionNow, issueSummaryByVmId, items, query, status]
   );
   const hasActiveFilter = Boolean(query.trim()) || status !== 'all';
   const catalogPending = isLoading && items.length === 0;
@@ -251,7 +254,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
         ) : visibleItems.length > 0 ? (
           <div data-vm-card-grid="true" data-resource-card-grid="true" className="resource-card-grid min-w-0 gap-4">
             {visibleItems.map((vm) => {
-              const requiresAgentInstall = vm.status === 'unknown';
+              const requiresAgentInstall = getVmReportedStatus(vm) === 'unknown';
               const canDeleteVm = canManageTargets;
               const hasVmMenu = canManageTargets;
               const vmIssueSummary = issueSummaryByVmId[vm.id];
@@ -350,7 +353,7 @@ export const VirtualMachinesListView: React.FC<VirtualMachinesListViewProps> = (
                       vm={vm}
                       points={getVmMetricTimeline(metricHistoryByVmId[vm.id] || [])}
                       now={now}
-                      paused={vm.status === 'offline'}
+                      paused={getVmReportedStatus(vm) === 'offline' || getVmReportedStatus(vm) === 'unavailable'}
                       loadState={metricLoadStateByVmId[vm.id] || 'loading'}
                     />
                   )}

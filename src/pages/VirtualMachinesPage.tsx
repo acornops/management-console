@@ -1,3 +1,4 @@
+import type { VmInventoryResponse, VmLogsResponse } from '@/services/control-plane/virtualMachineCollection';
 import React from 'react';
 import { refreshLatestWorkspaceSummary } from '@/app/workspaceSummaryRefresh';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +18,8 @@ import { AppPaths, AppRoute, getCurrentAppPath, type VmCatalogReturnState, VmSub
 import { Workspace } from '@/types';
 import {
   formatSnapshotTime,
+  getVmReportedStatus,
+  isVmAgentConnected,
   getVmStatusLabel,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
@@ -95,17 +98,25 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
 }) => {
   const { t } = useTranslation();
   const selectedId = route.kind === 'workspaceVirtualMachineDetail' ? route.vmId : null;
+  const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
+  const [windowsLogChannel, setWindowsLogChannel] = React.useState<'Application' | 'System'>('Application');
   const vmDetailCachePrefix = `workspace:${workspace.id}:virtual-machine:${selectedId || 'none'}:`;
-  const inventoryCacheKey = `${vmDetailCachePrefix}inventory`;
-  const logsCacheKey = `${vmDetailCachePrefix}logs`;
+  const isWindows = selected?.osFamily === 'windows';
+  const inventoryCacheKey = `${vmDetailCachePrefix}inventory${isWindows ? ':collection-v1' : ''}`;
+  const logsCacheKey = `${vmDetailCachePrefix}logs${selected?.osFamily === 'windows' ? `:${windowsLogChannel}:collection-v1` : ''}`;
   const metricHistoryCacheKey = `${vmDetailCachePrefix}metric-history`;
-  const [inventory, setInventory] = useSessionCachedState<Record<string, unknown>[]>(inventoryCacheKey, []);
-  const [logs, setLogs] = useSessionCachedState<Record<string, unknown>[]>(logsCacheKey, []);
+  const [inventoryPayload, setInventory] = useSessionCachedState<Record<string, unknown>[] | VmInventoryResponse>(inventoryCacheKey, []);
+  const inventory = Array.isArray(inventoryPayload) ? inventoryPayload : inventoryPayload.items;
+  const inventoryCollection = Array.isArray(inventoryPayload) ? undefined : inventoryPayload.collectionStatus;
+  const [logsPayload, setLogs] = useSessionCachedState<Record<string, unknown>[] | VmLogsResponse>(logsCacheKey, []);
+  const logs = Array.isArray(logsPayload) ? logsPayload : logsPayload.entries || [];
+  const logsCollection = Array.isArray(logsPayload) ? undefined : logsPayload;
   const [resourceStatus, setResourceStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'idle');
   const [resourceError, setResourceError] = React.useState<string | null>(null);
   const [logsStatus, setLogsStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'idle');
   const [logsError, setLogsError] = React.useState<string | null>(null);
   const logsRequestSeqRef = React.useRef(0);
+  const inventoryRequestSeqRef = React.useRef(0);
   const [metricHistory, setMetricHistory] = useSessionCachedState<ControlPlaneVirtualMachineMetricHistoryPoint[]>(metricHistoryCacheKey, []);
   const [metricHistoryByVmId, setMetricHistoryByVmId] = useSessionCachedState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>(`workspace:${workspace.id}:virtual-machine-card-metrics`, {});
   const [metricLoadStateByVmId, setMetricLoadStateByVmId] = useSessionCachedState<Record<string, VmMetricLoadState>>(`workspace:${workspace.id}:virtual-machine-card-metric-states`, {});
@@ -124,7 +135,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   React.useEffect(() => () => {
     logsRequestSeqRef.current += 1;
   }, [logsCacheKey, view]);
-  const selected = selectedId ? virtualMachines.find((item) => item.id === selectedId) || null : null;
+  React.useEffect(() => () => {
+    inventoryRequestSeqRef.current += 1;
+  }, [inventoryCacheKey, view]);
   const selectedTargetId = selected?.id || null;
   const capabilityCatalogCache = useCapabilityCatalogCache(selectedId ? `${workspace.id}:${selectedId}` : '');
   const issueCollection = useTargetIssues(workspace.id, view === 'overview' ? selectedTargetId : null);
@@ -171,7 +184,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const {
     agentAccessPolicyError, credentialReplacementError, confirmVmInstalled, installInstructions, isAddingVm, isRegisteringVm,
     isReplacingCredential, isGeneratingRepairInstructions, isUpdatingAgentAccessPolicy,
-    newVmName, newVmAgentAccessMode, newVmRestartServices, openAddVmModal, registerVm,
+    newVmName, newVmOsFamily, changeVmOsFamily, windowsAvailable, registrationOptionsStatus, newVmAgentAccessMode, newVmRestartServices, openAddVmModal, registerVm,
     resetVmCreationState, replaceCredential, generateRepairInstructions, regenerateEnrollment,
     updateAgentAccessPolicy,
     setNewVmName, setNewVmAgentAccessMode, setNewVmRestartServices, vmCreationError, vmCreationStep
@@ -192,7 +205,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const isRegisteredVmAgentConnected = Boolean(
     installInstructions?.vmId &&
     virtualMachines.some((virtualMachine) =>
-      virtualMachine.id === installInstructions.vmId && virtualMachine.status !== 'unknown'
+      virtualMachine.id === installInstructions.vmId && isVmAgentConnected(virtualMachine)
     )
   );
 
@@ -245,26 +258,31 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   }, [onPendingTargetPromptConsumed, pendingTargetPrompt, selectedId, view, workspace.id]);
 
   const loadVmInventory = React.useCallback(async (vmId: string) => {
+    const requestSeq = ++inventoryRequestSeqRef.current;
     if (!hasSessionDataCacheValue(inventoryCacheKey)) setResourceStatus('loading');
     setResourceError(null);
     try {
       const page = await controlPlaneApi.listVirtualMachineInventory(workspace.id, vmId);
-      setInventory(page.items || []);
+      if (requestSeq !== inventoryRequestSeqRef.current) return;
+      setInventory(isWindows ? page : page.items || []);
       setResourceStatus('ready');
     } catch (error) {
+      if (requestSeq !== inventoryRequestSeqRef.current) return;
       console.error('Failed loading virtual machine inventory', error);
       setResourceError(formatControlPlaneError(error, t('virtualMachines.resources.loadFailed'), { area: 'virtualMachines' }));
       setResourceStatus(hasSessionDataCacheValue(inventoryCacheKey) ? 'ready' : 'error');
     }
-  }, [inventoryCacheKey, t, workspace.id]);
+  }, [inventoryCacheKey, isWindows, t, workspace.id]);
   const loadVmLogs = React.useCallback(async (vmId: string) => {
     const requestSeq = ++logsRequestSeqRef.current;
     setLogsStatus('loading');
     setLogsError(null);
     try {
-      const payload = await controlPlaneApi.getVirtualMachineLogs(workspace.id, vmId);
+      const payload = await controlPlaneApi.getVirtualMachineLogs(workspace.id, vmId,
+        selected?.osFamily === 'windows' ? { channel: windowsLogChannel } : undefined);
+
       if (requestSeq !== logsRequestSeqRef.current) return;
-      setLogs(payload.entries || []);
+      setLogs(selected?.osFamily === 'windows' ? payload : payload.entries || []);
       setLogsStatus('ready');
     } catch (error) {
       if (requestSeq !== logsRequestSeqRef.current) return;
@@ -272,7 +290,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       setLogsError(formatControlPlaneError(error, t('virtualMachines.resources.logsLoadFailed'), { area: 'virtualMachines' }));
       setLogsStatus(hasSessionDataCacheValue(logsCacheKey) ? 'ready' : 'error');
     }
-  }, [logsCacheKey, t, workspace.id]);
+  }, [logsCacheKey, selected?.osFamily, t, windowsLogChannel, workspace.id]);
 
   React.useEffect(() => {
     if (!selectedTargetId) {
@@ -442,6 +460,10 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           isOpen={isAddingVm}
           creationStep={vmCreationStep}
           vmName={newVmName}
+          osFamily={newVmOsFamily}
+          onOsFamilyChange={changeVmOsFamily}
+          windowsAvailable={windowsAvailable}
+          registrationOptionsStatus={registrationOptionsStatus}
           agentAccessMode={newVmAgentAccessMode}
           restartServices={newVmRestartServices}
           installInstructions={installInstructions?.value || null}
@@ -493,8 +515,8 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       <PageShell>
         <PageHeader title={t('virtualMachines.overview.title')} description={t('virtualMachines.overview.latestTelemetryFor', { name: selected.name })} actions={
           <div className="flex min-h-11 w-fit items-center gap-2 rounded-md border border-ui-border bg-ui-surface px-4 py-2 shadow-sm">
-            <StatusBadge tone={selected.status === 'online' ? 'success' : selected.status === 'degraded' ? 'warning' : 'danger'}>
-              {getVmStatusLabel(selected.status, t)}
+            <StatusBadge tone={getVmReportedStatus(selected) === 'online' ? 'success' : getVmReportedStatus(selected) === 'degraded' || getVmReportedStatus(selected) === 'unavailable' ? 'warning' : 'danger'}>
+              {getVmStatusLabel(getVmReportedStatus(selected), t)}
             </StatusBadge>
             <span className="type-caption text-ui-text-muted">{formatSnapshotTime(selected)}</span>
           </div>
@@ -510,13 +532,13 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
           onOpenIssueTriage={openVmIssueTriage}
         />
 
-        <VirtualMachineTelemetryPanel metricHistory={metricHistory} status={metricHistoryStatus} onRetry={retryVmMetricHistory} />
+        <VirtualMachineTelemetryPanel osFamily={selected.osFamily} metricHistory={metricHistory} status={metricHistoryStatus} onRetry={retryVmMetricHistory} />
 
         <div className="mb-12 grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
           {[
             [t('virtualMachines.settings.osFamily'), selected.osFamily],
             [t('virtualMachines.settings.serviceManager'), selected.serviceManager],
-            [t('virtualMachines.settings.allowedLogs'), selected.allowedLogSources?.join(', ') || t('virtualMachines.settings.defaultAllowedLogs')]
+            [t('virtualMachines.settings.allowedLogs'), selected.allowedLogSources?.join(', ') || (selected.osFamily === 'windows' ? 'Application, System' : t('virtualMachines.settings.defaultAllowedLogs'))]
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-ui-border bg-ui-surface p-4 shadow-sm sm:p-6">
               <p className="type-micro-label text-ui-text-muted">{label}</p>
@@ -549,8 +571,13 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
     return (
       <VirtualMachineResourcesView
         vmName={selected.name}
+        osFamily={selected.osFamily}
+        logChannel={windowsLogChannel}
+        onLogChannelChange={setWindowsLogChannel}
         activeCategory={activeResourceCategory}
         inventory={inventory}
+        inventoryCollection={inventoryCollection}
+        logsCollection={logsCollection}
         logs={logs}
         isLoading={resourceStatus === 'loading'}
         error={resourceError}

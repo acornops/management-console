@@ -2,10 +2,11 @@ import React from 'react';
 import { Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Radio, TextInput } from '@acornops/ui';
-import { isValidAgentVRestartService, type AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
+import { isValidAgentVRestartService, type AgentVAccessMode, type VirtualMachineOsFamily } from '@/services/control-plane/virtualMachineTypes';
 
 interface VirtualMachineAgentAccessSelectorProps {
   value: AgentVAccessMode;
+  osFamily?: VirtualMachineOsFamily;
   restartServices: string[];
   onChange: (value: AgentVAccessMode, restartServices: string[]) => void;
   disabled?: boolean;
@@ -15,6 +16,7 @@ interface VirtualMachineAgentAccessSelectorProps {
 
 export const VirtualMachineAgentAccessSelector: React.FC<VirtualMachineAgentAccessSelectorProps> = ({
   value,
+  osFamily = 'linux',
   restartServices,
   onChange,
   disabled = false,
@@ -48,7 +50,7 @@ export const VirtualMachineAgentAccessSelector: React.FC<VirtualMachineAgentAcce
     <fieldset aria-disabled={disabled} className="rounded-lg border border-ui-border bg-ui-bg p-4">
       <legend className="px-1 type-micro-label">{t('virtualMachines.list.agentAccess')}</legend>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        {(['read_only', 'read_write'] as const).map((mode) => {
+        {(osFamily === 'windows' ? ['read_only'] as const : ['read_only', 'read_write'] as const).map((mode) => {
           const checked = value === mode;
           const inputId = `${idPrefix}-${mode}`;
           return (
@@ -84,7 +86,9 @@ export const VirtualMachineAgentAccessSelector: React.FC<VirtualMachineAgentAcce
         })}
       </div>
 
-      {value === 'read_write' && (
+      {osFamily === 'windows' && <p className="mt-3 type-caption text-ui-text-muted">{t('virtualMachines.list.windowsReadOnly')}</p>}
+
+      {osFamily !== 'windows' && value === 'read_write' && (
         <div className="mt-4 rounded-md border border-ui-border bg-ui-surface p-3">
           <label htmlFor={`${idPrefix}-restart-service`} className="block type-label">
             {t('virtualMachines.list.restartServices')}

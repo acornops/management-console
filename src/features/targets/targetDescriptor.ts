@@ -2,6 +2,8 @@ import type { ControlPlaneVirtualMachine } from '@/services/control-plane/virtua
 import type { TargetType } from '@/services/control-plane/types';
 import type { ChatSession, KubernetesCluster } from '@/types';
 import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
+import { virtualMachineConnectionState, type AgentConnectionState } from '@/utils/agentConnection';
+import { getAgentConnectionState } from '@/utils/telemetry';
 
 export interface TargetMcpToolSummary {
   toolId: string;
@@ -24,7 +26,7 @@ export interface TargetDescriptor {
   targetType: TargetType;
   name: string;
   status?: 'online' | 'offline' | 'degraded' | 'unknown';
-  agentConnectionState?: 'connected' | 'disconnected' | 'not_installed';
+  agentConnectionState?: AgentConnectionState;
   lastUpdate?: string;
   permissionMode?: RunPermissionMode;
   permissionModeOverride?: RunPermissionMode | null;
@@ -38,21 +40,13 @@ export interface TargetDescriptor {
   mcpTools: TargetMcpToolSummary[];
 }
 
-function mapVirtualMachineConnectionState(
-  status: ControlPlaneVirtualMachine['status']
-): TargetDescriptor['agentConnectionState'] {
-  if (status === 'online') return 'connected';
-  if (status === 'unknown') return 'not_installed';
-  return 'disconnected';
-}
-
 export function toKubernetesTargetDescriptor(cluster: KubernetesCluster): TargetDescriptor {
   return {
     id: cluster.id,
     workspaceId: cluster.workspaceId,
     targetType: 'kubernetes',
     name: cluster.name,
-    agentConnectionState: cluster.agentConnectionState,
+    agentConnectionState: getAgentConnectionState(cluster),
     lastUpdate: cluster.lastUpdate,
     permissionMode: cluster.permissionMode,
     permissionModeOverride: cluster.permissionModeOverride,
@@ -73,7 +67,7 @@ export function toVirtualMachineTargetDescriptor(
     targetType: 'virtual_machine',
     name: vm.name,
     status: vm.status,
-    agentConnectionState: mapVirtualMachineConnectionState(vm.status),
+    agentConnectionState: virtualMachineConnectionState(vm),
     lastUpdate: vm.latestSnapshot?.timestamp || vm.updatedAt,
     permissionMode: vm.permissionMode,
     permissionModeOverride: vm.permissionModeOverride,

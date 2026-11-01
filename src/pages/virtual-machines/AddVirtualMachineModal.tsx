@@ -1,14 +1,14 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconTile } from '@acornops/ui';
+import { Button, IconTile, InlineAlert, Select } from '@acornops/ui';
 import { AgentConnectionStatus } from '@/components/common/AgentConnectionStatus';
 import { CloseButton, TextInput } from '@acornops/ui';
 import { DialogFrame } from '@acornops/ui';
 import { ModalStepIndicator } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import type { ControlPlaneVirtualMachineInstallInstructions } from '@/services/controlPlaneApi';
-import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
+import type { AgentVAccessMode, VirtualMachineOsFamily } from '@/services/control-plane/virtualMachineTypes';
 import { AgentVInstallCommandPanel } from './AgentVInstallCommandPanel';
 import { VirtualMachineAgentAccessSelector } from './VirtualMachineAgentAccessSelector';
 
@@ -16,6 +16,10 @@ interface AddVirtualMachineModalProps {
   isOpen: boolean;
   creationStep: 'details' | 'instructions';
   vmName: string;
+  osFamily?: VirtualMachineOsFamily;
+  windowsAvailable?: boolean;
+  registrationOptionsStatus?: 'loading' | 'ready' | 'error';
+  onOsFamilyChange?: (value: VirtualMachineOsFamily) => void;
   agentAccessMode: AgentVAccessMode;
   restartServices: string[];
   installInstructions: ControlPlaneVirtualMachineInstallInstructions | null;
@@ -34,6 +38,10 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
   isOpen,
   creationStep,
   vmName,
+  osFamily = 'linux',
+  windowsAvailable = false,
+  registrationOptionsStatus = 'loading',
+  onOsFamilyChange,
   agentAccessMode,
   restartServices,
   installInstructions,
@@ -92,7 +100,25 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
               />
             </section>
 
+            <section className="space-y-3">
+              <p id="add-vm-os-label" className="px-1 type-micro-label">{t('virtualMachines.list.osFamily')}</p>
+              <Select<VirtualMachineOsFamily>
+                value={osFamily}
+                options={[
+                  { value: 'linux', label: t('virtualMachines.list.linux') },
+                  { value: 'windows', label: t('virtualMachines.list.windows'), disabled: !windowsAvailable }
+                ]}
+                ariaLabel={t('virtualMachines.list.osFamily')}
+                disabled={isRegistering}
+                onChange={(value) => onOsFamilyChange?.(value)}
+              />
+              {registrationOptionsStatus !== 'ready' && <p role="status" className="type-caption text-ui-text-muted">
+                {t(registrationOptionsStatus === 'loading' ? 'virtualMachines.list.checkingPlatforms' : 'virtualMachines.list.platformsUnavailable')}
+              </p>}
+            </section>
+
             <VirtualMachineAgentAccessSelector
+              osFamily={osFamily}
               value={agentAccessMode}
               restartServices={restartServices}
               onChange={onAgentAccessChange}
@@ -108,7 +134,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
             <Button onClick={onClose} disabled={isRegistering} variant="secondary" size="sm" className="rounded-lg">
               {t('app.cancel')}
             </Button>
-            <Button onClick={() => void onProceedToInstructions()} disabled={!vmName.trim() || isRegistering || (agentAccessMode === 'read_write' && restartServices.length === 0)} variant="primary" size="sm" className="rounded-lg">
+            <Button onClick={() => void onProceedToInstructions()} disabled={!vmName.trim() || isRegistering || (osFamily === 'windows' && !windowsAvailable) || (agentAccessMode === 'read_write' && restartServices.length === 0)} variant="primary" size="sm" className="rounded-lg">
               <Zap className="h-4 w-4" />
               {isRegistering ? t('virtualMachines.list.registering') : t('virtualMachines.list.continueToInstallAgent')}
             </Button>
@@ -122,7 +148,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 <IconTile size="xs" tone="accent" className="mt-0.5">
                   <ICONS.Terminal className="h-4 w-4" />
                 </IconTile>
-                <p>{t('virtualMachines.list.installBody')}</p>
+                <p>{t(osFamily === 'windows' ? 'virtualMachines.list.windowsInstallBody' : 'virtualMachines.list.installBody')}</p>
               </div>
             </div>
 
@@ -146,6 +172,7 @@ export const AddVirtualMachineModal: React.FC<AddVirtualMachineModalProps> = ({
                 </p>
               </div>
             </div>
+            {errorMessage && <InlineAlert tone="danger">{errorMessage}</InlineAlert>}
             <AgentConnectionStatus
               isConnected={isAgentConnected}
               waitingLabel={t('virtualMachines.list.waitingForAgent')}

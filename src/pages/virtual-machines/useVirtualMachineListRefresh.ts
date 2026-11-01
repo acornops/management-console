@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { useAgentConnectionNow } from '@/hooks/useAgentConnectionNow';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
@@ -24,6 +25,7 @@ export function useVirtualMachineListRefresh({
   hasLoadedWorkspaceVirtualMachines,
   onReplaceWorkspaceVirtualMachines
 }: VirtualMachineListRefreshArgs): VirtualMachineListRefreshState {
+  useAgentConnectionNow(virtualMachines);
   const hasWorkspaceVirtualMachineCache = hasLoadedWorkspaceVirtualMachines || virtualMachines.length > 0;
   const loadVirtualMachinePage = useCallback(({ cursor, limit, signal }: { cursor?: string; limit: number; signal: AbortSignal }) => (
     controlPlaneApi.listVirtualMachinesForWorkspace(workspaceId, { limit, cursor, signal })

@@ -291,3 +291,76 @@ When changing a console API call, mapper, or screen contract:
 ## Workspace Suspension Discovery
 
 Member-only `GET /api/v1/workspaces?view=access-state` and `GET /api/v1/workspaces/{workspaceId}/access-state` expose only id, name, accessState, publicReason and suspendedAt. This discovery runs before workload bootstrap. Suspended selector entries have no inferred permissions. HTTP 403 WORKSPACE_SUSPENDED and SSE workspace_suspended trigger safe-state refresh; a 15-second idle recheck catches missed stream events. The blocking page replaces workload content, aborts tracked requests/streams and clears current workspace caches. Restored access requires explicit refresh into a fresh overview; old actions are never replayed.
+
+
+## VM registration availability
+
+The additive control-plane endpoint
+`GET /api/v1/workspaces/{workspaceId}/virtual-machines/registration-options`
+requires a user session and `manage_targets`. It returns
+`{platforms:[{osFamily:"linux",serviceManager:"systemd",accessModes:["read_only","read_write"]}]}`.
+When Windows rollout is explicitly enabled with valid pinned release
+coordinates, the server appends
+`{osFamily:"windows",serviceManager:"scm",accessModes:["read_only"]}`.
+No release URL, version, token or credential is exposed. The VM list response
+is unchanged. The console requests these options when opening registration and
+only enables Windows after a valid response for the current workspace. Loading,
+unavailable, or older endpoints leave the Linux flow available. An explicit
+Windows selection is retained on failure and never silently submitted as Linux.
+The registration request includes Windows/SCM identity and read-only access;
+Linux keeps its existing omitted-identity request and exact-service validation.
+
+VM OS/service-manager identity is immutable in settings. Windows host-policy
+mutation controls are absent; the shared run-permission selector remains an
+approval policy, separate from host capabilities. Windows logs require the
+native `channel=Application|System` query, default to Application, and cache
+loaded output by workspace, target, and channel. Linux log requests are unchanged.
+Unavailable Windows load/swap values remain unavailable; storage labels identify
+the system volume. Installation commands are displayed/copied verbatim from the
+server with the existing enrollment expiry and sensitive-command treatment.
+
+
+## Windows collection evidence
+
+Windows resources add `collectionStatus` with workspace/target identity,
+`snapshotTs`, and fixed host, filesystems, services, processes, and network
+categories. Each carries an allowlisted status; list categories include
+`omittedCount`, and volumes/services include separate `findingCoverage`.
+Missing collectors remain unknown, even when rows are empty. The response reads
+raw snapshot, summary generation and matching inventory together; absent or
+inconsistent projection is `null` (unknown), never a healthy empty collection.
+
+Windows logs can return HTTP 200 with denied, unavailable, partial or truncated
+collection. Preserve `health.status`, `truncated`, `returned_count`,
+`original_count`, and `byte_count` beside usable entries. Runtime health messages
+are untrusted and are not shown. Count metadata describes the bounded response,
+not the total number of events on the host.
+
+The console caches Windows envelopes by workspace/target and, for logs, channel;
+stale responses cannot replace another selection. Inventory evidence is bound
+to the rows' snapshot timestamp. Fixed category notices retain usable rows and
+qualify incomplete empty collections. Linux keeps its exact `{items}` inventory
+envelope, log handling, array caches and UI behavior. Deploy the additive backend
+before the consumer; an older backend leaves Windows collection status unknown.
+
+## Agent connection observations
+
+Target, VM and Kubernetes reads accept optional `connection` with `state`
+(`connected`, `disconnected`, `unknown`), nullable `lastHeartbeatAt`/`expiresAt`,
+and server `observedAt`. The default grace is 120 seconds (backend configurable
+60–600). Stored `status`, API filters, permissions and command routing keep their
+existing meaning. Fresh degraded targets remain reachable with degraded health.
+
+The API boundary validates the observation and stores its local receipt time in
+the existing session cache. Remaining server validity ages from that receipt,
+including failed refreshes and navigation; cache reads never renew it. Catalog
+counts/filters, VM details, Kubernetes connection reporting and workspace cards
+use the shared calculation. Missing legacy fields retain old behavior; malformed
+new evidence is unavailable, distinct from never-connected setup. Deploy the
+backend first. No AgentV/AgentK release is required.
+
+`connection.hasConnectionEvidence` preserves whether an identity or heartbeat
+was recorded, including unusable/future timestamps. This prevents invalid
+evidence from becoming fabricated initial setup. Failed Kubernetes publication
+invalidates only that attempt's heartbeat using its exact persisted identity;
+replacement evidence, keys and stored health remain unchanged.

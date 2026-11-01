@@ -848,6 +848,14 @@ export const en = {
       registering: 'Registering…',
       registerFailed: 'Failed registering virtual machine.',
       continueToInstallAgent: 'Continue to Install Agent',
+      osFamily: 'Operating system',
+      linux: 'Linux',
+      windows: 'Windows',
+      windowsReadOnly: 'Windows supports read-only access. Service changes are unavailable.',
+      windowsInstallBody: 'Run this command in PowerShell as Administrator on the Windows VM to install the AcornOps host agent.',
+      checkingPlatforms: 'Checking Windows availability…',
+      platformsUnavailable: 'Windows availability could not be confirmed. Linux registration remains available.',
+      windowsUnavailable: 'Windows registration is unavailable. Choose Linux or try again later.',
       installBody: 'Run this command on the VM to install the AcornOps host agent.',
       installInstructions: 'Install command',
       sensitiveUntilUsed: 'Sensitive until used',
@@ -985,6 +993,8 @@ export const en = {
       memoryUsed: 'Memory used',
       memoryUsedDetail: '{{used}} of {{total}}',
       swapUsed: 'Swap used',
+      systemVolumeUsed: 'System volume used',
+      unavailableOnWindows: 'Unavailable on Windows',
       rootDiskUsed: 'Root disk used'
     },
     chat: {
@@ -1074,6 +1084,14 @@ export const en = {
       category: 'Category',
       status: 'Status',
       detail: 'Detail',
+      collection: {
+        partial: 'Collection incomplete', permission_denied: 'Permission denied', unavailable: 'Collection unavailable',
+        timed_out: 'Collection timed out', unsupported: 'Collection unsupported', unknown: 'Collection status unknown',
+        truncated: 'Results truncated; additional events may be missing.', omitted: '{{count}} records omitted.',
+        coverage: 'Finding coverage is incomplete.', counts: '{{returned}} events returned; {{original}} observed before the response limit.',
+        snapshot: 'Snapshot:', categories: { host: 'Host', filesystems: 'Volumes', services: 'Services', processes: 'Processes', network: 'Network' }
+      },
+      eventChannel: 'Event channel',
       logTime: 'Time',
       logSource: 'Source',
       logMessage: 'Message',
@@ -1837,6 +1855,7 @@ export const en = {
     namespaceScopeExcludeCount: '{{count}} excluded',
     namespaceScopeCounts: '{{include}} included · {{exclude}} excluded',
     connection: {
+      unknown: 'Connection unavailable',
       connected: 'Connected',
       disconnected: 'Disconnected',
       not_installed: 'Setup Required'

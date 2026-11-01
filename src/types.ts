@@ -1,5 +1,6 @@
 
 import type { RunPermissionMode } from '@/services/control-plane/runPermissionTypes';
+import type { AgentConnectionObservation, AgentConnectionState } from '@/utils/agentConnection';
 
 export enum HealthStatus {
   GREEN = 'GREEN',
@@ -26,7 +27,8 @@ export interface KubernetesCluster {
   };
   agentAccessMode?: 'read_only' | 'read_write' | 'unknown';
   workspaceId: string;
-  agentConnectionState?: 'connected' | 'disconnected' | 'not_installed';
+  agentConnectionState?: AgentConnectionState;
+  connection?: AgentConnectionObservation;
   owners: string[];
   healthEndpoint?: string;
   gitlabProjectId?: string;
@@ -92,10 +94,11 @@ export interface VirtualMachine {
   workspaceId: string;
   name: string;
   hostname?: string;
-  osFamily: 'linux';
-  serviceManager: 'systemd';
+  osFamily: 'linux' | 'windows';
+  serviceManager: 'systemd' | 'scm';
   allowedLogSources: string[];
-  agentConnectionState?: 'connected' | 'disconnected' | 'not_installed';
+  agentConnectionState?: AgentConnectionState;
+  connection?: AgentConnectionObservation;
   status: HealthStatus;
   lastUpdate: string;
   latestSnapshot?: {

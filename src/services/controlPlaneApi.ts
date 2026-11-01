@@ -1,3 +1,4 @@
+import { listVirtualMachineInventory, getVirtualMachineLogs } from './control-plane/virtualMachineCollection';
 import { workspaceAccessApi } from './control-plane/workspaceAccessApi';
 import { getSessionGeneration } from './control-plane/sessionLifecycle';
 import {
@@ -33,6 +34,7 @@ import {
   parseVirtualMachineInstallInstructions,
   parseVirtualMachineInstructionResponse
 } from './control-plane/virtualMachineTypes';
+import { getVirtualMachineRegistrationOptions } from './control-plane/virtualMachineRegistrationApi';
 import { createVirtualMachineAgentAccessPolicyUpdate } from './control-plane/virtualMachineAgentAccessApi';
 import type {
   ControlPlaneVirtualMachine,
@@ -475,9 +477,11 @@ export const controlPlaneApi = {
     return { ...page, items: page.items.map(parseControlPlaneVirtualMachine) };
   },
 
+  getVirtualMachineRegistrationOptions,
+
   async registerVirtualMachine(
     workspaceId: string,
-    input: { name: string; hostname?: string; allowedLogSources?: string[]; agentAccessMode: 'read_only' | 'read_write'; restartServices: string[] }
+    input: { name: string; hostname?: string; osFamily?: 'linux' | 'windows'; serviceManager?: 'systemd' | 'scm'; allowedLogSources?: string[]; agentAccessMode: 'read_only' | 'read_write'; restartServices: string[] }
   ): Promise<RegisterVirtualMachineResponse> {
     const response = await requestJson<unknown>(
       `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines`,
@@ -535,11 +539,7 @@ export const controlPlaneApi = {
     return parseVirtualMachineInstructionResponse(response);
   },
 
-  async listVirtualMachineInventory(workspaceId: string, vmId: string): Promise<PagedResult<Record<string, unknown>>> {
-    return requestJson<PagedResult<Record<string, unknown>>>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/resources`
-    );
-  },
+  listVirtualMachineInventory,
 
   async getVirtualMachineMetricsHistory(workspaceId: string, vmId: string): Promise<ControlPlaneVirtualMachineMetricsHistoryResponse> {
     const response = await requestJson<ControlPlaneVirtualMachineMetricsHistoryResponse>(
@@ -548,13 +548,7 @@ export const controlPlaneApi = {
     return mapVirtualMachineMetricsHistoryResponse(response);
   },
 
-  async getVirtualMachineLogs(workspaceId: string, vmId: string, options?: { q?: string; source?: string }): Promise<{ entries?: Record<string, unknown>[] }> {
-    return requestJson<{ entries?: Record<string, unknown>[] }>(
-      `/api/v1/workspaces/${encodeURIComponent(workspaceId)}/virtual-machines/${encodeURIComponent(vmId)}/logs${pageQuery({
-        filters: { q: options?.q, source: options?.source }
-      })}`
-    );
-  },
+  getVirtualMachineLogs,
 
   async deleteWorkspace(workspaceId: string): Promise<void> {
     await requestJson<void>(`/api/v1/workspaces/${encodeURIComponent(workspaceId)}`, { method: 'DELETE' });

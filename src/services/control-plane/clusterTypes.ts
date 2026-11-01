@@ -26,6 +26,7 @@ export interface ControlPlaneCluster {
   workspaceId: string;
   name: string;
   status: 'online' | 'offline' | 'degraded' | 'unknown';
+  connection?: unknown;
   agentAccessMode?: 'read_only' | 'read_write' | 'unknown';
   namespaceInclude?: string[];
   namespaceExclude?: string[];

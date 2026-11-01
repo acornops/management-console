@@ -6,7 +6,8 @@ import {
   type ControlPlaneVirtualMachine,
   type ControlPlaneVirtualMachineInstallInstructions
 } from '@/services/controlPlaneApi';
-import type { AgentVAccessMode } from '@/services/control-plane/virtualMachineTypes';
+import type { AgentVAccessMode, VirtualMachineOsFamily, VirtualMachineRegistrationOptions } from '@/services/control-plane/virtualMachineTypes';
+import { isVmAgentConnected } from './virtualMachineUi';
 
 export type AgentVInstructionKind = 'initial' | 'repair' | 'replace' | 'policy_update';
 
@@ -39,9 +40,38 @@ export function useVirtualMachineAgentSetup({
   const [credentialReplacementError, setCredentialReplacementError] = React.useState<string | null>(null);
   const [agentAccessPolicyError, setAgentAccessPolicyError] = React.useState<string | null>(null);
   const [vmCreationError, setVmCreationError] = React.useState<string | null>(null);
+  const currentWorkspaceRef = React.useRef(workspaceId);
+  currentWorkspaceRef.current = workspaceId;
+  const [newVmOsFamily, setNewVmOsFamily] = React.useState<VirtualMachineOsFamily>('linux');
+  const [registrationOptions, setRegistrationOptions] = React.useState<{ workspaceId: string; status: 'loading' | 'ready' | 'error'; value?: VirtualMachineRegistrationOptions } | null>(null);
   const [newVmName, setNewVmName] = React.useState('');
   const [newVmAgentAccessMode, setNewVmAgentAccessMode] = React.useState<AgentVAccessMode>('read_only');
   const [newVmRestartServices, setNewVmRestartServices] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (!isAddingVm || !canManageTargets) return;
+    let active = true;
+    setRegistrationOptions({ workspaceId, status: 'loading' });
+    void controlPlaneApi.getVirtualMachineRegistrationOptions(workspaceId).then((value) => {
+      if (active) setRegistrationOptions({ workspaceId, status: 'ready', value });
+    }).catch(() => {
+      if (active) setRegistrationOptions({ workspaceId, status: 'error' });
+    });
+    return () => { active = false; };
+  }, [workspaceId, isAddingVm, canManageTargets]);
+
+  const registrationOptionsStatus = registrationOptions?.workspaceId === workspaceId ? registrationOptions.status : 'loading';
+  const windowsAvailable = registrationOptions?.workspaceId === workspaceId && registrationOptions.status === 'ready'
+    && Boolean(registrationOptions.value?.platforms.some((platform) => platform.osFamily === 'windows'));
+
+  const changeVmOsFamily = (osFamily: VirtualMachineOsFamily) => {
+    if (isRegisteringVm || (osFamily === 'windows' && !windowsAvailable)) return;
+    setNewVmOsFamily(osFamily);
+    if (osFamily === 'windows') {
+      setNewVmAgentAccessMode('read_only');
+      setNewVmRestartServices([]);
+    }
+  };
 
   const resetVmCreationState = () => {
     setIsAddingVm(false);
@@ -50,6 +80,7 @@ export function useVirtualMachineAgentSetup({
     setInstallInstructions(null);
     setVmCreationError(null);
     setNewVmName('');
+    setNewVmOsFamily('linux');
     setNewVmAgentAccessMode('read_only');
     setNewVmRestartServices([]);
   };
@@ -64,14 +95,20 @@ export function useVirtualMachineAgentSetup({
 
   const registerVm = async () => {
     if (!newVmName.trim() || !canManageTargets || (newVmAgentAccessMode === 'read_write' && newVmRestartServices.length === 0)) return;
+    if (newVmOsFamily === 'windows' && (!windowsAvailable || newVmAgentAccessMode !== 'read_only' || newVmRestartServices.length !== 0)) {
+      setVmCreationError(t('virtualMachines.list.windowsUnavailable'));
+      return;
+    }
     setIsRegisteringVm(true);
     setVmCreationError(null);
     try {
       const result = await controlPlaneApi.registerVirtualMachine(workspaceId, {
         name: newVmName.trim(),
         agentAccessMode: newVmAgentAccessMode,
-        restartServices: newVmRestartServices
+        restartServices: newVmRestartServices,
+        ...(newVmOsFamily === 'windows' ? { osFamily: 'windows' as const, serviceManager: 'scm' as const } : {})
       });
+      if (currentWorkspaceRef.current !== workspaceId) return;
       setInstallInstructions({ vmId: result.virtualMachine.id, kind: 'initial', value: result.installInstructions });
       onUpsertVirtualMachine(result.virtualMachine);
       setVmCreationStep('instructions');
@@ -93,7 +130,7 @@ export function useVirtualMachineAgentSetup({
     try {
       const refreshed = await controlPlaneApi.getVirtualMachine(workspaceId, installInstructions.vmId);
       onUpsertVirtualMachine(refreshed);
-      if (refreshed.status === 'unknown') {
+      if (!isVmAgentConnected(refreshed)) {
         setVmCreationError(t('virtualMachines.list.agentNotConnected'));
         return;
       }
@@ -152,7 +189,7 @@ export function useVirtualMachineAgentSetup({
     agentAccessMode: AgentVAccessMode,
     restartServices: string[]
   ) => {
-    if (!virtualMachine || !canManageTargets || isUpdatingAgentAccessPolicy || isReplacingCredential || isGeneratingRepairInstructions) return;
+    if (!virtualMachine || virtualMachine.osFamily === 'windows' || !canManageTargets || isUpdatingAgentAccessPolicy || isReplacingCredential || isGeneratingRepairInstructions) return;
     setIsUpdatingAgentAccessPolicy(true);
     setAgentAccessPolicyError(null);
     try {
@@ -185,6 +222,10 @@ export function useVirtualMachineAgentSetup({
     isGeneratingRepairInstructions,
     isUpdatingAgentAccessPolicy,
     newVmName,
+    newVmOsFamily,
+    changeVmOsFamily,
+    windowsAvailable,
+    registrationOptionsStatus,
     newVmAgentAccessMode,
     newVmRestartServices,
     openAddVmModal,

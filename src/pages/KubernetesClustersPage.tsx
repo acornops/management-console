@@ -1,3 +1,4 @@
+import { useAgentConnectionNow } from '@/hooks/useAgentConnectionNow';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCursorCollection } from '@/hooks/useCursorCollection';
 import { useSessionCachedState } from '@/hooks/sessionDataCache';
@@ -17,7 +18,7 @@ const CLUSTER_STATUS_FILTERS: ReadonlyArray<ClusterCatalogStatusFilter> = ['all'
 function clusterNeedsAttention(cluster: KubernetesCluster, issueSummary?: ControlPlaneTargetIssueSummary): boolean {
   const agentState = getAgentConnectionState(cluster);
   if (agentState === 'not_installed') return false;
-  if (agentState === 'disconnected') return true;
+  if (agentState === 'disconnected' || agentState === 'unknown') return true;
   if (getEffectiveHealthStatus(cluster) !== HealthStatus.GREEN) return true;
   return Boolean(issueSummary && (issueSummary.critical > 0 || issueSummary.warning > 0 || issueSummary.active > 0));
 }
@@ -88,6 +89,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
   onCatalogStateChange
 }) => {
   const { t } = useTranslation();
+  const connectionNow = useAgentConnectionNow(kubernetesClusters);
   const metricHistoryRequestSeqRef = useRef(0);
   const [deletedClusterIds, setDeletedClusterIds] = useState<ReadonlySet<string>>(() => new Set());
   const [localCatalogState, setLocalCatalogState] = useState<ClusterCatalogRouteState>({});
@@ -128,7 +130,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
       (cluster) => getAgentConnectionState(cluster) === 'connected' && !clusterNeedsAttention(cluster, issueSummaryByClusterId[cluster.id])
     ).length;
     return counts;
-  }, [hasCompleteCatalogCounts, hasCompleteIssueSummaries, issueSummaryByClusterId, kubernetesClusters, totalClusterCount]);
+  }, [connectionNow, hasCompleteCatalogCounts, hasCompleteIssueSummaries, issueSummaryByClusterId, kubernetesClusters, totalClusterCount]);
 
   const setCatalogState = useCallback(
     (nextState: ClusterCatalogRouteState) => {
@@ -207,6 +209,7 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
     () => clusterCollection.items.filter((cluster) => !deletedClusterIds.has(cluster.id)),
     [clusterCollection.items, deletedClusterIds]
   );
+  const pageConnectionNow = useAgentConnectionNow(loadedClusterPageItems);
   const nextCursor = clusterCollection.nextCursor;
   const isLoading = clusterCollection.phase === 'loading';
   const isLoadingMore = clusterCollection.phase === 'loadingMore';
@@ -292,13 +295,13 @@ export const KubernetesClustersPage: React.FC<KubernetesClustersPageProps> = ({
 
   const clientFilteredClusters = useMemo(
     () => kubernetesClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status, issueSummaryByClusterId[cluster.id])),
-    [issueSummaryByClusterId, kubernetesClusters, query, status]
+    [connectionNow, issueSummaryByClusterId, kubernetesClusters, query, status]
   );
 
   const visibleClusters = useMemo(() => {
     const mergedClusters = loadedClusterPageItems.length > 0 ? mergeClustersById(loadedClusterPageItems, clientFilteredClusters) : clientFilteredClusters;
     return mergedClusters.filter((cluster) => clusterMatchesCatalogState(cluster, query, status, issueSummaryByClusterId[cluster.id]));
-  }, [clientFilteredClusters, issueSummaryByClusterId, loadedClusterPageItems, query, status]);
+  }, [pageConnectionNow, clientFilteredClusters, issueSummaryByClusterId, loadedClusterPageItems, query, status]);
 
   const clustersWithMetricHistory = useMemo(
     () =>

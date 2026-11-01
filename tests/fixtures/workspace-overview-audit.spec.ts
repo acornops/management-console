@@ -120,6 +120,18 @@ test('workspace overview keeps the desktop assistant beside the main content', a
 });
 
 test('workspace overview opens VM issue assistance in the desktop dock', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const response = await original(input, init);
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, location.href);
+      if (!response.ok || url.pathname !== '/api/v1/workspaces/fixture-workspace/targets/fixture-vm/chat-activity') return response;
+      const body = await response.json();
+      // Keep this policy/capability check independent of the recent-conversation chooser.
+      body.recentActivity = [];
+      return new Response(JSON.stringify(body), { status: response.status, headers: response.headers });
+    };
+  });
   await page.goto(overviewPath, { waitUntil: 'domcontentloaded' });
   const vmIssue = page.locator('[data-attention-board="true"] article').filter({
     hasText: 'Payment gateway service is degraded'

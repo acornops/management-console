@@ -21,3 +21,12 @@ it('does not invent a timestamp for absent telemetry', () => {
   expect(html).toContain('Latest sample: Unknown');
   expect(html).not.toContain('<time');
 });
+
+
+it('labels Windows storage and unavailable Linux metrics without inventing zeroes', () => {
+  const html = renderToStaticMarkup(<VirtualMachineTelemetrySummary osFamily="windows" latestTelemetryPoint={null} />);
+  expect(html).toContain('System volume used');
+  expect(html).toContain('Unavailable on Windows');
+  expect(html).not.toContain('Root disk used');
+  expect(html).not.toContain('0%');
+});

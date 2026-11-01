@@ -1,5 +1,8 @@
 # Completed Execution Plans
 
+- [Agent heartbeat freshness](agent-heartbeat-freshness.md) — Shared connection observation, cached expiry and verified onboarding compatibility.
+
+- [Windows VM console](windows-vm-console.md) — OS-aware registration, immutable read-only Windows host settings, native event channels, and unavailable telemetry labels.
 - [Target deletion completion](2026-10-31-target-delete-latency.md) — Confirmed deletion completes independently of summary refresh, with session and response-order guards.
 
 - [Console control simplification](console-control-simplification.md)
@@ -68,3 +71,5 @@ certification. Each archive note preserves outstanding acceptance or historical 
 - [Workflow, Agent, and trigger affordance polish](workflow-agent-trigger-affordance-polish.md)
 - [Workflow workspace information space](workflow-workspace-information-space.md)
 - [Workspace Overview Redesign](workspace-overview-redesign.md)
+
+- [Windows VM final catch-all](windows-final-catch-all.md) — Scoped audit fixes, redundancy removal and verification evidence.

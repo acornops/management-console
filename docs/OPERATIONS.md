@@ -40,6 +40,23 @@ GET /
   reachable and returns the expected flags. The console intentionally enables
   no fallback authentication method.
 
+## Windows VM onboarding
+
+Windows can be selected in Connect VM only after the control plane confirms availability
+for the current workspace. A disabled Windows option can mean rollout is disabled,
+no qualified release is configured, or discovery is unavailable. Linux onboarding
+remains available during discovery failures. Reopen Connect VM to retry discovery.
+The server still authorizes registration, and installation instructions require
+PowerShell as Administrator. The console does not execute the command.
+
+Availability reflects deployment configuration, not completed native qualification.
+Windows remains an unqualified preview; leave rollout disabled for production
+until the [AgentV qualification gates](https://github.com/acornops/agentv/blob/feat/windows-vm-support/docs/design-docs/windows-qualification-decision.md#unmet-gates) pass.
+
+Windows VM settings show immutable Windows/SCM identity and read-only host access.
+Resources → Logs requests Application or System separately. Linux load average
+and swap are unavailable on Windows; these values must not be interpreted as zero.
+
 ## Browser Incident Support
 
 1. Record the generated browser incident ID and occurrence time.
@@ -143,3 +160,10 @@ The workflow grants write access only to repository contents, pull requests,
 and packages. It uses no repository-stored npm credential.
 
 Workspace suspension requires the member access-state control-plane endpoints before console rollout. A suspended workspace remains in the directory with a safe public explanation. Idle tabs recheck every 15 seconds; HTTP and stream suspension responses trigger immediate revalidation. Refresh access starts a fresh overview after restoration without replaying old actions.
+
+Connection observations expire in the browser even while catalog refresh fails.
+“Disconnected” means no recent accepted heartbeat; it does not mean the host is
+shutdown. “Connection unavailable” means evidence is missing or invalid. A fresh
+backend observation restores connectivity. Stored health, telemetry collection
+and execution authority remain separate. Deploy the heartbeat-aware backend
+before the console; older backends retain legacy status reporting.

@@ -9,7 +9,7 @@ The management console is the operator-facing UI for:
 5. run trace visualization
 6. target tool configuration and cluster/VM onboarding
 
-The UI presents Kubernetes clusters and Virtual Machines as sibling product domains. Kubernetes views keep Kubernetes-specific workload, namespace, pod-log, and write-tool controls. VM views use Linux/systemd VM APIs for registration, host inventory, findings, metrics, logs, MCP Servers, read-only troubleshooting chat, and VM Settings.
+The UI presents Kubernetes clusters and Virtual Machines as sibling product domains. Kubernetes views keep Kubernetes-specific workload, namespace, pod-log, and write-tool controls. VM views use OS-aware VM APIs for registration, host inventory, findings, metrics, logs, MCP Servers, troubleshooting chat, and VM Settings. Linux/systemd retains exact-service restart policies; Windows/SCM exposes read-only host access, Application/System event channels, and server-generated PowerShell installation instructions.
 Workflows are top-level workspace resources with their own chat, run history, definition, and access panels. They are distinct from target chat and runbooks: target chat investigates a cluster or VM, runbooks are target prompt templates, and workflows represent governed workspace automation.
 
 ## High-Level Diagram

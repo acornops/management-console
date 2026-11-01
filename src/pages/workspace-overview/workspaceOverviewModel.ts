@@ -1,7 +1,7 @@
 import type { ControlPlaneIssueItem, ControlPlaneTargetIssueSummary, ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { HealthStatus, type KubernetesCluster } from '@/types';
-import { getVmCatalogStatusLabel, getVmCatalogStatusTone } from '@/pages/virtual-machines/virtualMachineUi';
-import { getEffectiveHealthStatus } from '@/utils/telemetry';
+import { getVmReportedStatus, getVmCatalogStatusLabel, getVmCatalogStatusTone } from '@/pages/virtual-machines/virtualMachineUi';
+import { getAgentConnectionState, getEffectiveHealthStatus } from '@/utils/telemetry';
 import type { StatusBadgeTone } from '@acornops/ui';
 
 export type WorkspaceOverviewSeverity = 'critical' | 'warning' | 'info';
@@ -109,11 +109,11 @@ function issueEvidence(item: ControlPlaneIssueItem): string {
 }
 
 export function isConnectedCluster(cluster: KubernetesCluster): boolean {
-  return cluster.agentConnectionState === 'connected';
+  return getAgentConnectionState(cluster) === 'connected';
 }
 
 export function isConnectedVirtualMachine(virtualMachine: ControlPlaneVirtualMachine): boolean {
-  return virtualMachine.status === 'online' || virtualMachine.status === 'degraded';
+  return getVmReportedStatus(virtualMachine) === 'online' || getVmReportedStatus(virtualMachine) === 'degraded';
 }
 
 function issueDetail(item: ControlPlaneIssueItem, t: OverviewTranslator): string {

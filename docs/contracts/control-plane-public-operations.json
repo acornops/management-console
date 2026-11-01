@@ -108,6 +108,7 @@
   "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/target-insights/export",
   "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools",
   "GET /api/v1/workspaces/{workspaceId}/virtual-machines",
+  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/registration-options",
   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/logs",
   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/metrics/history",

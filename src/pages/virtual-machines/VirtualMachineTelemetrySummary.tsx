@@ -13,11 +13,13 @@ import {
 interface VirtualMachineTelemetrySummaryProps {
   latestTelemetryPoint: VmMetricTimelinePoint | null;
   mode?: 'all' | 'storage';
+  osFamily?: 'linux' | 'windows';
 }
 
 export const VirtualMachineTelemetrySummary: React.FC<VirtualMachineTelemetrySummaryProps> = ({
   latestTelemetryPoint,
-  mode = 'all'
+  mode = 'all',
+  osFamily = 'linux'
 }) => {
   const { t } = useTranslation();
   const memoryDetail = latestTelemetryPoint && latestTelemetryPoint.memoryUsedBytes !== null && latestTelemetryPoint.memoryTotalBytes !== null
@@ -50,12 +52,13 @@ export const VirtualMachineTelemetrySummary: React.FC<VirtualMachineTelemetrySum
     },
     {
       id: 'root-disk',
-      label: t('virtualMachines.overview.rootDiskUsed'),
+      label: t(osFamily === 'windows' ? 'virtualMachines.overview.systemVolumeUsed' : 'virtualMachines.overview.rootDiskUsed'),
       value: formatVmPercent(latestTelemetryPoint?.rootDiskUsedPercent ?? null),
       detail: t('virtualMachines.overview.latestSample'),
       icon: HardDrive
     }
-  ].filter(({ id }) => mode === 'all' || id === 'swap' || id === 'root-disk');
+  ].map((card) => osFamily === 'windows' && (card.id === 'load' || card.id === 'swap')
+    ? { ...card, value: '-', detail: t('virtualMachines.overview.unavailableOnWindows') } : card).filter(({ id }) => mode === 'all' || id === 'swap' || id === 'root-disk');
 
   return (
     <div

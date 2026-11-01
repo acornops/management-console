@@ -848,6 +848,14 @@ export const zh = {
       registering: '注册中…',
       registerFailed: '注册虚拟机失败。',
       continueToInstallAgent: '继续安装 agent',
+      osFamily: '操作系统',
+      linux: 'Linux',
+      windows: 'Windows',
+      windowsReadOnly: 'Windows 仅支持只读访问，无法更改服务。',
+      windowsInstallBody: '在 Windows 虚拟机上以管理员身份运行 PowerShell，执行此命令安装 AcornOps 主机 agent。',
+      checkingPlatforms: '正在检查 Windows 可用性…',
+      platformsUnavailable: '无法确认 Windows 可用性。仍可注册 Linux。',
+      windowsUnavailable: 'Windows 注册不可用。请选择 Linux 或稍后重试。',
       installBody: '在虚拟机上运行此命令，安装 AcornOps 主机 agent。',
       installInstructions: '安装命令',
       sensitiveUntilUsed: '使用前属于敏感信息',
@@ -985,6 +993,8 @@ export const zh = {
       memoryUsed: '内存使用',
       memoryUsedDetail: '{{used}} / {{total}}',
       swapUsed: '交换分区使用',
+      systemVolumeUsed: '系统卷使用',
+      unavailableOnWindows: 'Windows 不提供此指标',
       rootDiskUsed: '根磁盘使用'
     },
     chat: {
@@ -1074,6 +1084,14 @@ export const zh = {
       category: '类别',
       status: '状态',
       detail: '详情',
+      collection: {
+        partial: '采集不完整', permission_denied: '权限被拒绝', unavailable: '采集不可用',
+        timed_out: '采集超时', unsupported: '不支持采集', unknown: '采集状态未知',
+        truncated: '结果已截断，可能缺少其他事件。', omitted: '省略了 {{count}} 条记录。',
+        coverage: '问题发现覆盖范围不完整。', counts: '返回了 {{returned}} 个事件；响应限制前观察到 {{original}} 个事件。',
+        snapshot: '快照：', categories: { host: '主机', filesystems: '卷', services: '服务', processes: '进程', network: '网络' }
+      },
+      eventChannel: '事件通道',
       logTime: '时间',
       logSource: '来源',
       logMessage: '消息',
@@ -1837,6 +1855,7 @@ export const zh = {
     namespaceScopeExcludeCount: '排除 {{count}} 个',
     namespaceScopeCounts: '包含 {{include}} 个 · 排除 {{exclude}} 个',
     connection: {
+      unknown: '连接状态不可用',
       connected: '已连接',
       disconnected: '已断开',
       not_installed: '需要配置'
