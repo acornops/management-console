@@ -426,7 +426,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               ))}
             {retryAfterSeconds > 0 && (
               <p role="status" className="type-caption mt-1 text-status-warning-text">
-                Connection controls unlock in {retryAfterSeconds}s.
+                {t('skillEditor.connectionUnlocks', { count: retryAfterSeconds })}
               </p>
             )}
           </div>

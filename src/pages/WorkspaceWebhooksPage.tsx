@@ -375,8 +375,8 @@ export const WorkspaceWebhooksPage: React.FC<WorkspaceWebhooksPageProps> = ({ wo
               ? t('workspaceWebhooks.loading')
               : hasActiveFilters
               ? t('workspaceWebhooks.filters.showing', {
-                  count: filteredWebhooks.length,
-                  total: visibleWebhooks.length
+                  count: visibleWebhooks.length,
+                  replace: { count: filteredWebhooks.length, total: visibleWebhooks.length }
                 })
               : t('workspaceWebhooks.count', { count: visibleWebhooks.length })
           }

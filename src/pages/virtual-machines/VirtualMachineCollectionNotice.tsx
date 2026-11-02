@@ -24,7 +24,7 @@ export function VirtualMachineCollectionNotice({ label, collection, snapshotTs, 
     {(collection.omittedCount || 0) > 0 && <p>{t(`${prefix}.omitted`, { count: collection.omittedCount })}</p>}
     {collection.findingCoverage === 'incomplete' && <p>{t(`${prefix}.coverage`)}</p>}
     {logs?.truncated && <p>{t(`${prefix}.truncated`)}</p>}
-    {logs?.returned_count !== undefined && logs.original_count !== undefined && <p>{t(`${prefix}.counts`, { returned: logs.returned_count, original: logs.original_count })}</p>}
+    {logs?.returned_count !== undefined && logs.original_count !== undefined && <p>{t(`${prefix}.counts`, { count: logs.returned_count, returned: logs.returned_count, original: logs.original_count })}</p>}
     {snapshotTs && <p>{t(`${prefix}.snapshot`)} <time dateTime={snapshotTs}>{formatUserDateTime(snapshotTs)}</time></p>}
   </div>;
 }

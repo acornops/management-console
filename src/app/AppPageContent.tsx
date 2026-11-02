@@ -513,6 +513,7 @@ export const AppPageContent: React.FC<AppPageContentProps> = ({
               onReplaceWorkspaceVirtualMachines={onReplaceWorkspaceVirtualMachines}
               onUpsertWorkspaceVirtualMachine={onUpsertWorkspaceVirtualMachine}
               onRemoveWorkspaceVirtualMachine={onRemoveWorkspaceVirtualMachine}
+              onRunTargetPrompt={onRunTargetPrompt}
               pendingTargetPrompt={pendingVmTargetPrompt}
               issueSummary={route.kind === 'workspaceVirtualMachineDetail' ? selectedTargetIssueSummary : null}
               onPendingTargetPromptConsumed={onPendingVmTargetPromptConsumed}

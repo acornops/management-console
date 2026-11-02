@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+
 export type WorkflowStatus = 'active' | 'draft' | 'paused';
 export type WorkflowCapabilityMode = 'read_only' | 'read_write';
 export type WorkflowCapabilityRestrictionMode = 'inherit' | 'restrict';
@@ -50,7 +52,7 @@ export interface WorkflowDefinition {
 
 export function getWorkflowDeleteBlocker(workflow: WorkflowDefinition | undefined, canManage: boolean): string {
   if (!workflow || canManage) return '';
-  return 'You need manage_workflows to delete workflows.';
+  return i18n.t('workflowUi.deletePermission');
 }
 
 export type WorkflowLaunchPermissions = Partial<Record<'create_sessions' | 'create_read_only_runs' | 'create_read_write_runs', boolean>>;
@@ -124,17 +126,17 @@ export function getWorkflowLaunchBlocker(
   message: string,
   permissions?: WorkflowLaunchPermissions
 ): string | null {
-  if (workflow.status !== 'active') return 'Activate this workflow before launching it.';
+  if (workflow.status !== 'active') return i18n.t('workflowUi.activateBeforeLaunch');
   if (workflow.readiness?.status && workflow.readiness.status !== 'ready') {
-    return workflow.readiness.reasons[0] || 'Complete workflow setup before launch.';
+    return workflow.readiness.reasons[0] || i18n.t('workflowUi.completeSetup');
   }
-  if (!message.trim()) return 'Add a control message before launching.';
-  if (!permissions?.create_sessions) return 'You need create_sessions to launch workflows.';
+  if (!message.trim()) return i18n.t('workflowUi.messageBeforeLaunch');
+  if (!permissions?.create_sessions) return i18n.t('workflowUi.sessionPermission');
   if (workflow.policy.mode === 'read_write' && !permissions.create_read_write_runs) {
-    return 'You need create_read_write_runs to launch this workflow.';
+    return i18n.t('workflowUi.writeRunPermission');
   }
   if (workflow.policy.mode === 'read_only' && !permissions.create_read_only_runs) {
-    return 'You need create_read_only_runs to launch this workflow.';
+    return i18n.t('workflowUi.readRunPermission');
   }
   return null;
 }

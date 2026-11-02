@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { initializeI18n } from '@/i18n';
 import { WorkflowModeLabel } from './WorkflowStatusUi';
+
+beforeAll(initializeI18n);
 
 describe('WorkflowModeLabel', () => {
   it('presents read-write policy with stronger neutral pill emphasis', () => {

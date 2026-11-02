@@ -39,12 +39,12 @@ describe('workflow sections and Activity', () => {
   });
 
   it('keeps immediate workflow actions in the header and moves trigger management into detail tabs', () => {
-    expect(workflowActions).toContain('aria-label="Selected workflow actions"');
+    expect(workflowActions).toContain("aria-label={t('workflowUi.selectedActions')}");
     expect(workflowActions).toContain('mt-3 flex w-full');
     expect(workflowActions).toContain('sm:justify-end');
     expect(workflowActions).not.toContain('border-t border-ui-border');
     expect(workflowActions).toContain("(primaryAction === 'activate' || launchBlocked) && (");
-    expect(workflowActions).toContain("primaryAction === 'activate' ? 'Inactive' : 'Blocked'");
+    expect(workflowActions).toContain("primaryAction === 'activate' ? t('workflowUi.inactive') : t('agentsWorkflows.agents.readiness.blocked')");
     expect(workflowActions).not.toContain("launchBlocked ? 'Blocked' : 'Ready'");
     expect(workflowActions).not.toContain('Readiness checks passed');
     expect(workflowActions).not.toContain('line-clamp-1');
@@ -66,8 +66,8 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain('titleMeta={<WorkflowModeLabel');
     expect(workflowsPage).not.toContain('Owner: {selectedWorkflow.owner}');
     expect(workflowsPage).not.toContain('density="compact"');
-    expect(workflowDetailTabs).toContain("schedules: 'Schedules'");
-    expect(workflowDetailTabs).toContain("webhooks: 'Webhooks'");
+    expect(workflowDetailTabs).toContain("schedules: 'workflows.sections.schedules'");
+    expect(workflowDetailTabs).toContain("webhooks: 'app.webhooks'");
   });
 
   it('keeps compact workflow navigation discoverable', () => {
@@ -80,7 +80,7 @@ describe('workflow sections and Activity', () => {
 
   it('opens custom workflow creation directly without a template picker', () => {
     expect(workflowChrome).toContain('onClick={onCreate}');
-    expect(workflowChrome).toContain('Add workflow');
+    expect(workflowChrome).toContain("t('workflowUi.add')");
     expect(workflowChrome).not.toContain('ActionMenu');
     expect(workflowChrome).not.toContain('WorkflowRecommendation');
     expect(workflowChrome).not.toContain('Use a template');
@@ -111,7 +111,7 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain('idPrefix="workflow-library-mobile"');
     expect(workflowsPage).toContain('idPrefix="workflow-library-desktop"');
     expect(workflowsPage).toContain('listWidth="wide"');
-    expect(workflowPageComponents).toContain("' · Press / to focus search'");
+    expect(workflowPageComponents).toContain("t('workflowUi.searchShortcut')");
   });
 
   it('keeps workflow inspection and trigger tabs visible, edits agent assignment in Overview, and opens settings through Edit', () => {
@@ -120,7 +120,7 @@ describe('workflow sections and Activity', () => {
     expect(workflowDetailTabs).toContain("workflowInspectionViews: WorkflowView[] = ['overview', 'capabilities', 'schedules', 'webhooks', 'runs']");
     expect(workflowDetailTabs).toContain('<SegmentedTabs<WorkflowView>');
     expect(workflowDetailTabs).toContain('labelSize="compact"');
-    expect(workflowDetailTabs).toContain('Scroll for more sections');
+    expect(workflowDetailTabs).toContain("t('workflowUi.scrollSections')");
     expect(workflowsPage).toContain("activeView === 'overview'");
     expect(workflowsPage).not.toContain("activeView === 'agents'");
     expect(workflowsPage).toContain('<WorkflowAgentAssignmentSection');
@@ -132,7 +132,7 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).not.toContain('usesBoundedWorkflowDetail');
     expect(workflowsPage).toContain("activeView === 'settings'");
     expect(workflowsPage).toContain("selectWorkflowView('settings', selectedWorkflow.id)");
-    expect(workflowsPage).toContain('Back to workflow');
+    expect(workflowsPage).toContain("t('workflowUi.back')");
     expect(workflowsPage).toContain("onReviewCapabilities={() => selectWorkflowView('capabilities'");
     expect(workflowPanels).toContain("t('workflowCoordination.effectiveAccess')");
     expect(workflowOverview).not.toContain('title="Capabilities"');
@@ -140,7 +140,7 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).not.toContain("open={activeView === 'settings'}");
     expect(workflowsPage).toContain('<WorkflowTriggerPanel');
     expect(workflowsPage).toContain('<WorkflowOverviewPanel');
-    expect(workflowPanels).toContain('title="Capabilities"');
+    expect(workflowPanels).toContain("title={t('app.capabilities')}");
     expect(workflowsPage).toContain('<WorkflowRunsPanel');
     expect(workflowPanels).toContain('timelineLayout="flow"');
     expect(workflowPanels).toContain('className="max-w-none"');

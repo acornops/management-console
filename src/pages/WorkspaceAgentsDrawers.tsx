@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { Button } from '@acornops/ui';
 import { CloseButton, Textarea, TextInput } from '@acornops/ui';
@@ -21,14 +22,15 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
   onClose,
   onSave
 }) => {
+  const { t } = useTranslation();
   const [emojiCustomized, setEmojiCustomized] = React.useState(false);
   const nameInputRef = React.useRef<HTMLInputElement>(null);
   const canSave = Boolean(createDraft.name.trim() && createDraft.description.trim());
   const appearanceSummary = emojiCustomized
-    ? `${createDraft.avatarEmoji} chosen by you`
+    ? t('agentUi.emojiChosen', { emoji: createDraft.avatarEmoji })
     : createDraft.name.trim()
-      ? `${createDraft.avatarEmoji} selected from a matching keyword in the name`
-      : `${createDraft.avatarEmoji} is the default. Certain name keywords select another emoji.`;
+      ? t('agentUi.emojiSuggested', { emoji: createDraft.avatarEmoji })
+      : t('agentUi.emojiDefault', { emoji: createDraft.avatarEmoji });
   return (
     <DrawerFrame unframed
       isOpen
@@ -41,10 +43,10 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
       <div className="border-b border-ui-border bg-ui-bg px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="create-agent-title" className="type-section-title">Create agent</h2>
-            <p id="create-agent-description" className="type-caption mt-2 text-ui-text-muted">Describe when people should use this Agent. You can refine how it works and add capabilities later.</p>
+            <h2 id="create-agent-title" className="type-section-title">{t('agentUi.create')}</h2>
+            <p id="create-agent-description" className="type-caption mt-2 text-ui-text-muted">{t('agentUi.createDescription')}</p>
           </div>
-          <CloseButton onClick={onClose} label="Close create agent drawer" className="shrink-0" />
+          <CloseButton onClick={onClose} label={t('agentUi.closeCreate')} className="shrink-0" />
         </div>
       </div>
 
@@ -53,7 +55,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
           <div className="flex items-start gap-3">
             <AgentAvatar emoji={createDraft.avatarEmoji} size="lg" className="mt-6" />
             <label className="min-w-0 flex-1">
-              <span className="type-micro-label">Name <span aria-hidden="true">*</span></span>
+              <span className="type-micro-label">{t('schedules.form.name')} <span aria-hidden="true">*</span></span>
               <TextInput
                 ref={nameInputRef}
                 required
@@ -66,20 +68,20 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
                     avatarEmoji: emojiCustomized ? draft.avatarEmoji : suggestAgentEmoji(name)
                   }));
                 }}
-                placeholder="Kubernetes incident guide"
+                placeholder={t('agentUi.namePlaceholder')}
                 className="mt-2"
               />
             </label>
           </div>
 
           <label className="block">
-            <span className="type-micro-label">Purpose <span aria-hidden="true">*</span></span>
-            <span className="type-caption mt-1 block text-ui-text-muted">Shown in the Agent catalog so people know when to use it.</span>
+            <span className="type-micro-label">{t('agentUi.purpose')} <span aria-hidden="true">*</span></span>
+            <span className="type-caption mt-1 block text-ui-text-muted">{t('agentUi.purposeHelp')}</span>
             <Textarea
               required
               value={createDraft.description}
               onChange={(event) => setCreateDraft((draft) => ({ ...draft, description: event.target.value }))}
-              placeholder="Triage Kubernetes incidents and summarize safe next steps."
+              placeholder={t('agentUi.purposePlaceholder')}
               className="mt-2 min-h-24"
             />
           </label>
@@ -87,7 +89,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
           <details className="group rounded-md border border-ui-border bg-ui-bg">
             <summary className="control-target flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-md px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-control-boundary [&::-webkit-details-marker]:hidden">
               <span>
-                <span className="type-ui block text-ui-text">Customize appearance</span>
+                <span className="type-ui block text-ui-text">{t('agentUi.appearance')}</span>
                 <span className="type-caption mt-0.5 block text-ui-text-muted">{appearanceSummary}</span>
               </span>
               <ICONS.ChevronRight className="h-4 w-4 shrink-0 text-ui-text-muted transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
@@ -99,7 +101,7 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
                   setEmojiCustomized(true);
                   setCreateDraft((draft) => ({ ...draft, avatarEmoji }));
                 }}
-                description="Optional. Choose a different visual identity; status is always shown separately."
+                description={t('agentUi.appearanceHelp')}
               />
             </div>
           </details>
@@ -107,35 +109,35 @@ export const CreateAgentDrawer: React.FC<CreateAgentDrawerProps> = ({
           <details className="group rounded-md border border-ui-border bg-ui-bg">
             <summary className="control-target flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-md px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-control-boundary [&::-webkit-details-marker]:hidden">
               <span>
-                <span className="type-ui block text-ui-text">Customize how the Agent works</span>
-                <span className="type-caption mt-0.5 block text-ui-text-muted">Optional. If empty, the purpose is used as its instructions.</span>
+                <span className="type-ui block text-ui-text">{t('agentUi.customize')}</span>
+                <span className="type-caption mt-0.5 block text-ui-text-muted">{t('agentUi.customizeHelp')}</span>
               </span>
               <ICONS.ChevronRight className="h-4 w-4 shrink-0 text-ui-text-muted transition-transform group-open:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
             </summary>
             <label className="block border-t border-ui-border px-4 py-4">
-              <span className="type-micro-label">Agent instructions</span>
-              <span className="type-caption mt-1 block text-ui-text-muted">Sent to the Agent at the start of each run. Use this for boundaries, process, and response guidance.</span>
+              <span className="type-micro-label">{t('agentUi.instructions')}</span>
+              <span className="type-caption mt-1 block text-ui-text-muted">{t('agentUi.instructionsHelp')}</span>
               <Textarea
                 value={createDraft.instructions}
                 onChange={(event) => setCreateDraft((draft) => ({ ...draft, instructions: event.target.value }))}
-                placeholder="For example: inspect before acting, explain risks, and ask before making changes."
+                placeholder={t('agentUi.instructionsPlaceholder')}
                 className="mt-2"
               />
             </label>
           </details>
 
           <div className="border-t border-ui-border pt-4">
-            <p className="type-ui text-ui-text">Safe defaults are applied automatically</p>
-            <p className="type-caption mt-1 text-ui-text-muted">Restricted trust, approval before changes, and no capabilities until you add them.</p>
+            <p className="type-ui text-ui-text">{t('agentUi.safeDefaults')}</p>
+            <p className="type-caption mt-1 text-ui-text-muted">{t('agentUi.safeDefaultsHelp')}</p>
           </div>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
-        <Button type="button" variant="tertiary" size="sm" onClick={onClose}>Cancel</Button>
+        <Button type="button" variant="tertiary" size="sm" onClick={onClose}>{t('common.cancel')}</Button>
         <Button type="button" variant="primary" size="sm" onClick={onSave} disabled={creatingAgent || !canSave}>
           <ICONS.Plus className="h-4 w-4" />
-          {creatingAgent ? 'Creating...' : 'Create agent'}
+          {creatingAgent ? t('skillEditor.creating') : t('agentUi.create')}
         </Button>
       </div>
     </DrawerFrame>

@@ -120,7 +120,7 @@ export const WorkspaceAgentsCatalog: React.FC<WorkspaceAgentsCatalogProps> = ({
           queryLabel={t('agentsWorkflows.agents.searchLabel')}
           queryPlaceholder={t('agentsWorkflows.agents.searchPlaceholder')}
           queryClearLabel={t('common.clearSearch')}
-          resultSummary={loading ? t('agentsWorkflows.agents.loading') : t('agentsWorkflows.agents.resultCount', { visible: visibleAgents.length, total: agents.length })}
+          resultSummary={loading ? t('agentsWorkflows.agents.loading') : t('agentsWorkflows.agents.resultCount', { visible: visibleAgents.length, total: agents.length, count: agents.length })}
           filters={[createDiscoveryFilterGroup<AgentFocusFilter>({
             id: 'status',
             label: t('common.status'),

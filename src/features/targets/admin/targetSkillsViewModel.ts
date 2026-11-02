@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import type {
   ControlPlaneTargetSkillDetail,
   ControlPlaneTargetSkillsCatalog,
@@ -73,30 +74,30 @@ export function sortDraftFiles(files: SkillDraftFile[]): SkillDraftFile[] {
 
 export function validateSkillFilePath(path: string, files: SkillDraftFile[], currentPath?: string): string | null {
   const trimmedPath = path.trim();
-  if (!trimmedPath) return 'Enter a file path.';
+  if (!trimmedPath) return i18n.t('skillEditor.filePathRequired');
   if (trimmedPath === 'SKILL.md') {
-    return currentPath === 'SKILL.md' ? null : 'SKILL.md already exists.';
+    return currentPath === 'SKILL.md' ? null : i18n.t('skillEditor.mainFileExists');
   }
-  if (!trimmedPath.endsWith('.md')) return 'Skill files must be Markdown files ending in .md.';
+  if (!trimmedPath.endsWith('.md')) return i18n.t('skillEditor.markdownOnly');
   if (trimmedPath.startsWith('/') || trimmedPath.endsWith('/') || trimmedPath.includes('//')) {
-    return 'Enter a valid Markdown file path.';
+    return i18n.t('skillEditor.invalidFilePath');
   }
   const pathSegments = trimmedPath.split('/');
-  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) return 'Enter a valid Markdown file path.';
+  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) return i18n.t('skillEditor.invalidFilePath');
   return files.some((file) => file.path === trimmedPath && file.path !== currentPath)
-    ? 'A file with this path already exists.'
+    ? i18n.t('skillEditor.fileExists')
     : null;
 }
 
 export function validateSkillFolderPath(path: string, files: SkillDraftFile[], folders: string[]): string | null {
   const trimmedPath = path.trim();
-  if (!trimmedPath) return 'Enter a folder path.';
-  if (trimmedPath === 'SKILL.md' || trimmedPath.endsWith('.md')) return 'Folders cannot use Markdown file names.';
+  if (!trimmedPath) return i18n.t('skillEditor.folderPathRequired');
+  if (trimmedPath === 'SKILL.md' || trimmedPath.endsWith('.md')) return i18n.t('skillEditor.folderExtension');
   if (trimmedPath.startsWith('/') || trimmedPath.endsWith('/') || trimmedPath.includes('//')) {
-    return 'Enter a valid folder path.';
+    return i18n.t('skillEditor.invalidFolderPath');
   }
   const pathSegments = trimmedPath.split('/');
-  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) return 'Enter a valid folder path.';
+  if (pathSegments.some((segment) => !segment || segment === '.' || segment === '..')) return i18n.t('skillEditor.invalidFolderPath');
   const existingFolderPaths = new Set(folders);
   files.forEach((file) => {
     const parts = file.path.split('/');
@@ -104,7 +105,7 @@ export function validateSkillFolderPath(path: string, files: SkillDraftFile[], f
       existingFolderPaths.add(parts.slice(0, index + 1).join('/'));
     });
   });
-  return existingFolderPaths.has(trimmedPath) ? 'A folder with this path already exists.' : null;
+  return existingFolderPaths.has(trimmedPath) ? i18n.t('skillEditor.folderExists') : null;
 }
 
 function cleanSkillPathInput(label: string): string {
@@ -152,12 +153,12 @@ export function summarizeBytes(totalBytes: number): string {
 }
 
 export function sourceLabel(skill: ControlPlaneTargetSkillsCatalog['items'][number]): string | null {
-  return skill.source.type === 'git_import' ? 'Git import' : null;
+  return skill.source.type === 'git_import' ? i18n.t('skillEditor.gitImport') : null;
 }
 
 export function syncLabel(skill: ControlPlaneTargetSkillsCatalog['items'][number]): string | null {
   if (skill.source.type !== 'git_import') return null;
-  if (skill.source.syncStatus === 'modified') return 'Locally modified';
-  if (skill.source.syncStatus === 'current') return 'Unmodified';
+  if (skill.source.syncStatus === 'modified') return i18n.t('skillEditor.locallyModified');
+  if (skill.source.syncStatus === 'current') return i18n.t('skillEditor.unmodified');
   return null;
 }

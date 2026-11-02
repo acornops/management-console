@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { SelectOption } from '@acornops/ui';
 import { filterAgentDefinitions, type AgentDefinition } from '@/pages/agents/agentModel';
@@ -102,7 +104,7 @@ export const mapApiAgent = (item: AgentDefinitionApi, workspaceName: string, own
     capabilities: item.capabilities || [],
     readiness: item.readiness || {
       status: item.status === 'active' ? 'ready' : 'needs_setup',
-      reasons: item.status === 'active' ? [] : ['Activate this Agent before starting a conversation.']
+      reasons: item.status === 'active' ? [] : [i18n.t('agentsWorkflows.agents.readiness.activate')]
     },
     templateRef: item.templateRef
   };
@@ -160,34 +162,37 @@ export const shouldRefreshAgentEditDraft = (agentId: string, currentDraft: Agent
 export const getAgentEditChangeSummary = (agent: AgentDefinition, draft: AgentEditDraft): string[] => {
   const changes: string[] = [];
   if (agent.name !== draft.name.trim() || agent.avatarEmoji !== draft.avatarEmoji || agent.description !== draft.description.trim() || agent.instructions !== draft.instructions.trim()) {
-    changes.push('Identity, purpose, or instructions changed');
+    changes.push(i18n.t('agentUi.identityChanged'));
   }
-  if (agent.status !== draft.status) changes.push(`Status will change to ${draft.status}`);
-  if ((agent.ownerUserId || '') !== draft.ownerUserId.trim()) changes.push('Owner changed');
+  if (agent.status !== draft.status) changes.push(i18n.t('agentUi.statusChanged', { status: i18n.t(`agentsWorkflows.agents.status.${draft.status}`) }));
+  if ((agent.ownerUserId || '') !== draft.ownerUserId.trim()) changes.push(i18n.t('agentUi.ownerChanged'));
   if (listValuesChanged(agent.mcpServers, draft.mcpServers) || listValuesChanged(agent.tools, draft.tools) || listValuesChanged(agent.skills, draft.skills)) {
-    changes.push('Capability sources changed');
+    changes.push(i18n.t('agentUi.capabilitiesChanged'));
   }
   return changes;
 };
 
 export const isAgentEditDraftDirty = (agent: AgentDefinition, draft: AgentEditDraft): boolean => getAgentEditChangeSummary(agent, draft).length > 0;
 
-export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
-  <div className="min-w-0">
-    <div className="type-micro-label">{title}</div>
-    <div className="mt-2 grid gap-1">
-      {values.length > 0 ? (
-        values.map((value) => (
-          <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-ui-text-muted [overflow-wrap:anywhere]">
-            {value}
-          </span>
-        ))
-      ) : (
-        <span className="type-caption text-ui-text-muted">No values configured.</span>
-      )}
+export const CapabilityList: React.FC<{ title: string; values: string[] }> = ({ title, values }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="min-w-0">
+      <div className="type-micro-label">{title}</div>
+      <div className="mt-2 grid gap-1">
+        {values.length > 0 ? (
+          values.map((value) => (
+            <span key={value} title={value} className="type-code min-w-0 break-words rounded-md bg-ui-bg px-2 py-1 text-ui-text-muted [overflow-wrap:anywhere]">
+              {value}
+            </span>
+          ))
+        ) : (
+          <span className="type-caption text-ui-text-muted">{t('agentUi.noValues')}</span>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const Notice: React.FC<
   React.PropsWithChildren<{

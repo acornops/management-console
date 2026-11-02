@@ -342,7 +342,7 @@ export const McpServerToolsDialog: React.FC<{
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CollectionResultSummary>{filtersIncomplete
                     ? t(filterLoadFailed || !onLoadAllTools ? 'mcpServers.toolFilterIncomplete' : 'mcpServers.loadingToolsForFilters')
-                    : t('mcpServers.showingTools', { count: filteredTools.length, total: server.toolCounts.total })}</CollectionResultSummary>
+                    : t('mcpServers.showingTools', { count: server.toolCounts.total, replace: { count: filteredTools.length, total: server.toolCounts.total } })}</CollectionResultSummary>
                   {hasActiveFilters && <Button type="button" variant="tertiary" size="sm" onClick={clearFilters}>{t('mcpServers.clearToolFilters')}</Button>}
                   {filtersIncomplete && filterLoadFailed && <Button type="button" variant="secondary" size="sm" onClick={() => setFilterLoadFailed(false)}>{t('mcpServers.retryToolFilters')}</Button>}
                 </div>

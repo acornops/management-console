@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
 import { formatIdentifierLabel } from '@/utils/textFormatting';
@@ -116,9 +117,9 @@ export function getWorkflowAgentCapabilityReview(
         agent?.skillInstallations?.find((skill) => skill.id === skillId)?.name || capabilityDisplayName(skillId)
       )),
       writeAccess: agent ? (() => {
-        if (agent.permissionMode === 'read_only') return 'Writes disabled';
-        if (agent.permissionMode === 'ask_before_changes') return 'Approval required for writes';
-        return 'Routine writes automatic; high-risk changes require approval';
+        if (agent.permissionMode === 'read_only') return i18n.t('workflowUi.writesDisabled');
+        if (agent.permissionMode === 'ask_before_changes') return i18n.t('workflowUi.writesNeedApproval');
+        return i18n.t('workflowUi.routineWrites');
       })() : '',
       missingAgentData: !agent
     };

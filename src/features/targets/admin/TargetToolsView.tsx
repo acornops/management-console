@@ -190,11 +190,11 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
         .map((value) => value.trim())
         .filter(Boolean);
       if (allowedUrlPatterns.length < 1 || allowedUrlPatterns.length > 20) {
-        throw new Error('Configure between 1 and 20 allowed HTTPS URL patterns.');
+        throw new Error(t('skillEditor.urlPatternCount'));
       }
       if (new Set(allowedUrlPatterns).size !== allowedUrlPatterns.length
         || allowedUrlPatterns.some((value) => !value.startsWith('https://'))) {
-        throw new Error('Use unique, complete HTTPS URL patterns, one per line.');
+        throw new Error(t('skillEditor.urlPatternInvalid'));
       }
       return { enabled: draft.enabled, config: { allowedUrlPatterns } };
     }
@@ -497,8 +497,8 @@ export const TargetToolsView: React.FC<TargetToolsViewProps> = ({
             {editingTool.id === 'http.fetch.get' ? (
               <section className="space-y-3">
                 <div>
-                  <h3 className="type-row-title">Allowed URL patterns</h3>
-                  <p className="type-caption mt-1 text-ui-text-muted">Enter one complete HTTPS URL pattern per line. Wildcards are allowed only in the path or query.</p>
+                  <h3 className="type-row-title">{t('skillEditor.urlPatterns')}</h3>
+                  <p className="type-caption mt-1 text-ui-text-muted">{t('skillEditor.urlPatternHelp')}</p>
                 </div>
                 <Textarea
                   id="tool-allowed-url-patterns"

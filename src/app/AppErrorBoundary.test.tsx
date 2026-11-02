@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { initializeI18n } from '@/i18n';
 import { AppErrorBoundary, AppRecoveryScreen } from './AppErrorBoundary';
+
+beforeAll(initializeI18n);
 
 describe('application error boundary', () => {
   it('switches to a safe recovery state', () => {

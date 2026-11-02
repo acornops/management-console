@@ -99,20 +99,20 @@ export const WorkflowAgentAssignmentSection: React.FC<{
       title={t('workflowCoordination.assignmentTitle')}
       description={assignmentDescription}
       action={!isEditingAgentSelection && (
-        <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflows} title={!canManageWorkflows ? 'You need manage_workflows to edit workflow agents.' : undefined}>
+        <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.startEditingAgentSelection(workflow)} disabled={!canManageWorkflows} title={!canManageWorkflows ? t('workflowUi.editAgentsPermission') : undefined}>
           <ICONS.Bot className="h-4 w-4" aria-hidden="true" />
-          Edit agents
+          {t('workflowUi.editAgents')}
         </Button>
       )}
     >
       <div className="mt-4 grid gap-4">
         {agentSelectionError && <InlineAlert tone="danger" aria-live="assertive" className="type-emphasis">{agentSelectionError}</InlineAlert>}
-        {!canManageWorkflows && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">You can inspect assignments. Ask a workspace manager for manage_workflows to change selected agents.</div>}
+        {!canManageWorkflows && <div className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-caption type-emphasis text-ui-text-muted">{t('workflowUi.assignmentPermission')}</div>}
         {isEditingAgentSelection && selectionFeedback && <div role="status" aria-live="polite" aria-atomic="true" className="rounded-md border border-ui-border bg-ui-bg px-3 py-2 type-body type-emphasis text-ui-text">{selectionFeedback}</div>}
         {isEditingAgentSelection && selectedAgentSelectionDraft ? (
           <>
           <fieldset>
-            <legend className="sr-only">Workflow agents</legend>
+            <legend className="sr-only">{t('workflowUi.workflowAgents')}</legend>
             <div className="flex flex-col gap-1 border-b border-ui-border pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span className="type-micro-label text-ui-text-muted">{t('workflowCoordination.selectedAgents')}</span>
               <span className="type-caption type-emphasis text-ui-text-muted">
@@ -147,9 +147,9 @@ export const WorkflowAgentAssignmentSection: React.FC<{
             </div>
           </fieldset>
           <div className="flex justify-end gap-2 border-t border-ui-border pt-4">
-            <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.cancelEditingAgentSelection(workflow)} disabled={savingAgentSelectionId === workflow.id}>Cancel</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => workflowActions.cancelEditingAgentSelection(workflow)} disabled={savingAgentSelectionId === workflow.id}>{t('common.cancel')}</Button>
             <Button type="button" variant="primary" size="sm" onClick={() => void workflowActions.saveAgentSelection()} disabled={!canManageWorkflows || savingAgentSelectionId === workflow.id || selectedAgentSelectionDraft.agentIds.length === 0}>
-              {savingAgentSelectionId === workflow.id ? 'Saving...' : 'Save agents'}
+              {savingAgentSelectionId === workflow.id ? t('skillEditor.saving') : t('workflowUi.saveAgents')}
             </Button>
           </div>
           </>
@@ -261,7 +261,7 @@ export const WorkflowRunsPanel: React.FC<{
   }, [expandedRunLogId, t, workflow.executionMode, workflow.runs]);
 
   return (
-  <WorkflowPanel title="Runs" description="Inspect this workflow's run output, approval pauses, trace events, and coordination details." showHeader={showHeader}>
+  <WorkflowPanel title={t('workflowActivity.title')} description={t('workflowUi.runsDescription')} showHeader={showHeader}>
     {[approvalError, runLogError, cancelRunError].filter(Boolean).map((message) => <InlineAlert key={message} tone="danger" aria-live="assertive" className="type-emphasis">{message}</InlineAlert>)}
     {workflow.runs.length > 0 ? workflow.runs.map((run) => {
       const effectiveRunId = run.runId || run.id;
@@ -288,14 +288,14 @@ export const WorkflowRunsPanel: React.FC<{
                 <div className="flex shrink-0 items-center gap-2">
                   <Button type="button" size="sm" variant="danger" onClick={() => { setStopArmedRunId(''); void workflowActions.stopWorkflowRun(effectiveRunId); }} disabled={cancelRunAction === effectiveRunId}>
                     {cancelRunAction === effectiveRunId ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Square className="h-3.5 w-3.5 fill-current" aria-hidden="true" />}
-                    Confirm stop
+                    {t('workflowUi.confirmStop')}
                   </Button>
-                  <Button type="button" size="sm" variant="secondary" onClick={() => setStopArmedRunId('')} disabled={cancelRunAction === effectiveRunId}>Cancel</Button>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => setStopArmedRunId('')} disabled={cancelRunAction === effectiveRunId}>{t('common.cancel')}</Button>
                 </div>
               ) : (
-                <Button type="button" size="sm" variant="secondary" onClick={() => setStopArmedRunId(effectiveRunId)} aria-label="Stop workflow run" disabled={cancelRunAction === effectiveRunId}>
+                <Button type="button" size="sm" variant="secondary" onClick={() => setStopArmedRunId(effectiveRunId)} aria-label={t('workflowUi.stopRun')} disabled={cancelRunAction === effectiveRunId}>
                   <Square className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
-                  Stop
+                  {t('workflowUi.stop')}
                 </Button>
               )
             )}
@@ -313,7 +313,7 @@ export const WorkflowRunsPanel: React.FC<{
                 <div key={approval.id} className="rounded-md bg-ui-bg p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="type-body type-emphasis text-ui-text">{approval.summary || approval.toolName}</span>
-                    <StatusBadge tone={approval.status === 'approved' ? 'success' : approval.status === 'pending' ? 'warning' : 'neutral'}>{approval.status}</StatusBadge>
+                    <StatusBadge tone={approval.status === 'approved' ? 'success' : approval.status === 'pending' ? 'warning' : 'neutral'}>{t(`approvals.status.${approval.status}`, { defaultValue: formatIdentifierLabel(approval.status) })}</StatusBadge>
                   </div>
                   <div className="mt-3 flex justify-end gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setReviewSelection({ workspaceId: workflow.workspaceId, workflowId: workflow.id, runId: effectiveRunId, approvalId: approval.id })}>{t('approvals.review.action')}</Button>
@@ -335,7 +335,7 @@ export const WorkflowRunsPanel: React.FC<{
               <section className="mt-4 border-t border-ui-border pt-4" aria-label={t('workflowCoordination.traceTitle')}>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h4 className="type-row-title">{t('workflowCoordination.traceTitle')}</h4>
-                  {coordinationByExecutionId[run.id] && <StatusBadge tone={runStatusTone(run.status)}>{formatIdentifierLabel(coordinationByExecutionId[run.id].status)}</StatusBadge>}
+                  {coordinationByExecutionId[run.id] && <StatusBadge tone={runStatusTone(run.status)}>{t(`workflowActivity.status.${coordinationByExecutionId[run.id].status}`, { defaultValue: formatIdentifierLabel(coordinationByExecutionId[run.id].status) })}</StatusBadge>}
                 </div>
                 {coordinationLoadingId === run.id ? (
                   <div role="status" aria-live="polite" className="type-caption mt-3 text-ui-text-muted">{t('workflowCoordination.traceLoading')}</div>
@@ -354,7 +354,7 @@ export const WorkflowRunsPanel: React.FC<{
                           </dl>
                           {child.failure && <div className="type-caption mt-2 break-words text-status-danger-text [overflow-wrap:anywhere]">{child.failure.code}: {child.failure.message}</div>}
                         </div>
-                        <StatusBadge tone={child.status === 'completed' ? 'success' : child.status === 'failed' || child.status === 'cancelled' ? 'danger' : 'neutral'}>{formatIdentifierLabel(child.status)}</StatusBadge>
+                        <StatusBadge tone={child.status === 'completed' ? 'success' : child.status === 'failed' || child.status === 'cancelled' ? 'danger' : 'neutral'}>{t(`workflowActivity.status.${child.status === 'waiting_approval' ? 'waiting_for_approval' : child.status}`, { defaultValue: formatIdentifierLabel(child.status) })}</StatusBadge>
                       </div>
                     ))}
                   </div>
@@ -411,12 +411,13 @@ const AgentCapabilityGroup: React.FC<{
 const AgentToolCapabilityGroup: React.FC<{
   tools: WorkflowAgentCapabilityReview['tools'];
 }> = ({ tools }) => {
+  const { t } = useTranslation();
   const accessOrder = { write: 0, read: 1, unknown: 2 } as const;
   const orderedTools = [...tools].sort((left, right) => accessOrder[left.access] - accessOrder[right.access]);
 
   return (
     <div className="grid min-w-0 gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-      <dt className="type-row-title">Tools</dt>
+      <dt className="type-row-title">{t('app.tools')}</dt>
       <dd className="min-w-0">
         {orderedTools.length > 0 ? (
           <ul className="divide-y divide-ui-border">
@@ -429,19 +430,19 @@ const AgentToolCapabilityGroup: React.FC<{
                 <span className="flex shrink-0 flex-wrap gap-1.5">
                   <StatusBadge tone={tool.access === 'read' ? 'success' : tool.access === 'write' ? 'warning' : 'neutral'}>
                     {tool.access === 'unknown'
-                      ? 'Unclassified'
+                      ? t('workflowUi.unclassified')
                       : tool.access === 'read'
-                        ? 'Read'
+                        ? t('workspaceMcp.read')
                         : tool.requiresApproval
-                          ? 'Write · approval'
-                          : 'Write'}
+                          ? t('workflowUi.writeApproval')
+                          : t('workspaceMcp.write')}
                   </StatusBadge>
                 </span>
               </li>
             ))}
           </ul>
         ) : (
-          <span className="type-ui text-ui-text-muted">None</span>
+          <span className="type-ui text-ui-text-muted">{t('approvals.none')}</span>
         )}
       </dd>
     </div>
@@ -451,8 +452,9 @@ const AgentToolCapabilityGroup: React.FC<{
 const AgentCapabilityReviewList: React.FC<{
   agentReviews: WorkflowAgentCapabilityReview[];
 }> = ({ agentReviews }) => {
+  const { t } = useTranslation();
   if (agentReviews.length === 0) {
-    return <div className="border-y border-ui-border py-4 type-ui text-ui-text-muted">No assigned agents to review.</div>;
+    return <div className="border-y border-ui-border py-4 type-ui text-ui-text-muted">{t('workflowUi.noAgentsReview')}</div>;
   }
   return (
     <div>
@@ -465,12 +467,12 @@ const AgentCapabilityReviewList: React.FC<{
             </h4>
           </div>
           {agent.missingAgentData ? (
-            <div className="type-ui text-ui-text-muted">Agent capability data is not available in the current catalog.</div>
+            <div className="type-ui text-ui-text-muted">{t('workflowUi.agentCapabilityUnavailable')}</div>
           ) : (
             <dl className="min-w-0 divide-y divide-ui-border">
-              <AgentCapabilityGroup label="Write policy" values={agent.writeAccess ? [agent.writeAccess] : []} emptyLabel="Unavailable" />
-              <AgentCapabilityGroup label="MCP servers" values={agent.mcpServers} emptyLabel="None" />
-              <AgentCapabilityGroup label="Skills" values={agent.skills} emptyLabel="None" />
+              <AgentCapabilityGroup label={t('workflowUi.writePolicy')} values={agent.writeAccess ? [agent.writeAccess] : []} emptyLabel={t('workflowActivity.runByUnavailable')} />
+              <AgentCapabilityGroup label={t('workflowUi.mcpServers')} values={agent.mcpServers} emptyLabel={t('approvals.none')} />
+              <AgentCapabilityGroup label={t('app.skills')} values={agent.skills} emptyLabel={t('approvals.none')} />
               <AgentToolCapabilityGroup tools={agent.tools} />
             </dl>
           )}
@@ -492,8 +494,8 @@ export const WorkflowCapabilitiesPanel: React.FC<{
 
   return (
     <WorkflowPanel
-      title="Capabilities"
-      description="Review each selected Agent's write policy, MCP servers, skills, and tools."
+      title={t('app.capabilities')}
+      description={t('workflowUi.capabilitiesDescription')}
       showHeader={showHeader}
     >
       {catalogFailures.length > 0 && (

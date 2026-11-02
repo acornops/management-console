@@ -145,7 +145,8 @@ export const WorkspaceMembersPage: React.FC<WorkspaceMembersPageProps> = ({
     ? t('members.loadedMatchingCount', { count: members.length })
     : t('members.loadedTotalCount', {
         loaded: members.length,
-        total: workspace.memberCount ?? members.length
+        total: workspace.memberCount ?? members.length,
+        count: workspace.memberCount ?? members.length
       });
   const memberEmptyTitle = listError ? t('members.loadFailedTitle') : t(hasMemberFilters ? 'members.emptyFilteredTitle' : 'members.emptyTitle');
   const memberEmptyDescription = listError || t(hasMemberFilters ? 'members.emptyFiltered' : 'members.empty');

@@ -64,11 +64,11 @@ export const WorkspaceWorkflowsPage: React.FC<{
       label: agent.name,
       description: agent.description,
       disabled: agent.status !== 'active' || agent.reviewState !== 'reviewed',
-      disabledReason: agent.status !== 'active' ? 'Agent is not active.' : agent.reviewState !== 'reviewed' ? 'Agent has not been reviewed.' : undefined,
+      disabledReason: agent.status !== 'active' ? t('workflowUi.agentInactive') : agent.reviewState !== 'reviewed' ? t('workflowUi.agentUnreviewed') : undefined,
       provenance: { source: 'agent' as const, agentId: agent.id }
     }));
     return { ...workflowOptions, agents: agentOptions.length > 0 ? agentOptions : workflowOptions.agents };
-  }, [workflowAgents, workflowOptions]);
+  }, [workflowAgents, workflowOptions, t]);
   const [query, setQuery] = useState(initialWorkflowQuery);
   const workflowSearchTags = useMemo(() => uniqueValues(workflows.flatMap((workflow) => workflow.tags)), [workflows]);
   const filteredWorkflows = useMemo(() => filterWorkflowDefinitions(workflows, query), [query, workflows]);
@@ -223,7 +223,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
     }));
     setAgentSelectionError('');
     setEditingAgentSelectionId('');
-  }, [selectedWorkflow?.id, effectiveWorkflowOptions]);
+  }, [selectedWorkflow?.id, workflowAgents, workflowOptions]);
   const selectedWorkflowHasActiveRuns = Boolean(selectedWorkflow?.runs.some((run) => isRunActive(run.status)));
   useWorkflowExecutionDeepLink(activeView, selectedWorkflow, setExpandedRunLogId);
   React.useEffect(() => {
@@ -251,7 +251,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
           });
         }
         setWorkflows((current) => current.map((workflow) => workflow.id === workflowId
-          ? { ...workflow, runs, lastRun: runs[0]?.startedAt || 'No runs yet' }
+          ? { ...workflow, runs, lastRun: runs[0]?.startedAt || t('workflowActivity.emptyAllTitle') }
           : workflow));
       } catch {
         // Preserve the last known run state while a transient refresh fails.
@@ -265,7 +265,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
       mounted = false;
       if (refreshTimer !== undefined) window.clearInterval(refreshTimer);
     };
-  }, [selectedWorkflow?.id, selectedWorkflowHasActiveRuns, workspace.id, workflowCatalogReady]);
+  }, [selectedWorkflow?.id, selectedWorkflowHasActiveRuns, workspace.id, workflowCatalogReady, t]);
   const selectedRunIds = useMemo(() => serverWorkflowRunIds(selectedWorkflow?.runs || []), [selectedWorkflow?.runs]);
   const selectedRunIdsKey = selectedRunIds.join('|');
   React.useEffect(() => {
@@ -308,11 +308,11 @@ export const WorkspaceWorkflowsPage: React.FC<{
     : undefined;
   const isEditingAgentSelection = Boolean(selectedWorkflow && editingAgentSelectionId === selectedWorkflow.id);
   const activeAgentOptions = effectiveWorkflowOptions.agents.filter((agent) => !agent.disabled || selectedAgentSelectionDraft?.agentIds.includes(agent.value));
-  const baseLaunchBlocker = selectedWorkflow ? getWorkflowLaunchBlocker(selectedWorkflow, selectedWorkflow.starterPrompt, workspace.permissions) : 'Select a workflow before launching.';
+  const baseLaunchBlocker = selectedWorkflow ? getWorkflowLaunchBlocker(selectedWorkflow, selectedWorkflow.starterPrompt, workspace.permissions) : t('workflowUi.selectBeforeLaunch');
   const capabilityPreviewEnabled = Boolean(selectedWorkflow && launchDrawerWorkflowId === selectedWorkflow.id);
   const capabilityPreviewState = useWorkflowCapabilityPreview({ workspaceId: workspace.id, workflow: selectedWorkflow, enabled: capabilityPreviewEnabled });
   const launchBlocker = !workflowOptionsReady
-    ? 'Workflow options must load before launching a workflow.'
+    ? t('workflowUi.optionsBeforeLaunch')
     : baseLaunchBlocker || (capabilityPreviewEnabled ? capabilityPreviewState.blocker : null);
   useWorkflowLaunchShortcut({
     blocked: Boolean(launchBlocker),
@@ -375,7 +375,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
         className="min-[1440px]:flex min-[1440px]:min-h-0 min-[1440px]:flex-1 min-[1440px]:flex-col"
       >
       {workflowLoadError && <WorkflowLoadErrorNotice onRetry={() => setWorkflowCatalogReloadKey((value) => value + 1)} />}
-      {workflowOptionsError && <InlineAlert tone="danger" className="mb-4 type-body" title="Workflow options could not be loaded." action={<Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>Retry</Button>}>
+      {workflowOptionsError && <InlineAlert tone="danger" className="mb-4 type-body" title={t('workflowUi.optionsLoadError')} action={<Button type="button" variant="secondary" size="sm" onClick={() => setWorkflowOptionsReloadKey((value) => value + 1)}>{t('common.retry')}</Button>}>
         {workflowOptionsError}
       </InlineAlert>}
       {createPanelOpen && <WorkflowCreateDrawer
@@ -400,7 +400,7 @@ export const WorkspaceWorkflowsPage: React.FC<{
         desktopBreakpoint="wide"
         listWidth="wide"
         showDetailOnCompact={hasExplicitWorkflowSelection}
-        compactBackLabel="Back to workflows"
+        compactBackLabel={t('workflowCatalog.backToLibrary')}
         onCompactBack={() => { const workflowId = selectedWorkflow?.id; clearWorkflowSelection(); if (workflowId) window.requestAnimationFrame(() => workflowRowRefs.current.get(workflowId)?.focus()); }}
         list={<WorkflowLibraryList
           discovery={<WorkflowDiscovery
@@ -454,9 +454,9 @@ export const WorkspaceWorkflowsPage: React.FC<{
                 className="items-center rounded-none border-x-0 border-status-success/20 bg-status-success-soft/40 px-6"
                 action={(
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="secondary" size="sm" onClick={() => void workflowActions.undoLastWorkflowMutation()}>Undo</Button>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => void workflowActions.undoLastWorkflowMutation()}>{t('workflowUi.undo')}</Button>
                     <CloseButton
-                      label="Dismiss workflow update notification"
+                      label={t('workflowUi.dismissUpdate')}
                       onClick={() => {
                         setWorkflowUpdateResult('');
                         setWorkflowUndoCheckpoint(null);
@@ -474,9 +474,9 @@ export const WorkspaceWorkflowsPage: React.FC<{
                 <div className="flex min-h-11 items-center justify-between gap-3 border-b border-ui-border">
                   <Button variant="tertiary" size="sm" onClick={() => selectWorkflowView('overview', selectedWorkflow.id)}>
                     <ICONS.ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                    Back to workflow
+                    {t('workflowUi.back')}
                   </Button>
-                  <span id="workflow-detail-section-settings-tab" className="type-micro-label pr-2 text-ui-text-muted">Workflow settings</span>
+                  <span id="workflow-detail-section-settings-tab" className="type-micro-label pr-2 text-ui-text-muted">{t('workflowUi.settings')}</span>
                 </div>
               ) : (
                 <WorkflowDetailTabs activeView={activeView} workflowName={selectedWorkflow.name} onChange={(view) => selectWorkflowView(view, selectedWorkflow.id)} />

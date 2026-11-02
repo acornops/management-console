@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { initializeI18n } from '@/i18n';
+
+beforeAll(initializeI18n);
 
 import type { AgentDefinition } from '@/pages/agents/agentModel';
 import type { AgentMcpInstallationSnapshotApi } from '@/services/control-plane/agentApi';

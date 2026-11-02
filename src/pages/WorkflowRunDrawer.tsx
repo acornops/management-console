@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { Button, InlineAlert } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
@@ -12,14 +13,15 @@ export function WorkflowLaunchReview({ agents, preview }: {
   agents: WorkflowDefinition['agents'];
   preview: WorkflowCapabilitiesPreview | null;
 }) {
-  return <section className="rounded-md border border-ui-border px-4 py-3" aria-label="Launch review">
+  const { t } = useTranslation();
+  return <section className="rounded-md border border-ui-border px-4 py-3" aria-label={t('workflowUi.launchReview')}>
     <dl className="grid gap-3 type-body">
-      <div><dt className="type-micro-label text-ui-text-muted">Assigned Agents</dt><dd className="mt-1 break-words">{agents.map((agent) => agent.name).join(', ') || 'No assigned Agents'}</dd></div>
-      <div><dt className="type-micro-label text-ui-text-muted">Preview status</dt><dd className="mt-1">{preview ? preview.status === 'ready' ? 'Ready' : 'Blocked · not ready to launch' : 'Unknown until the capability preview loads.'}</dd></div>
-      <div><dt className="type-micro-label text-ui-text-muted">Direct-executor preview scope</dt><dd className="mt-1">{preview ? preview.mode === 'read_only' ? 'Read-only for direct tools' : 'Read/write for direct tools' : 'Unknown until the capability preview loads.'}</dd></div>
-      <div><dt className="type-micro-label text-ui-text-muted">Direct-executor approval gates</dt><dd className="mt-1 break-words">{preview ? preview.approvalRequirements.join(', ') || 'No direct-executor approval gates reported.' : 'Unknown until the capability preview loads.'}</dd></div>
+      <div><dt className="type-micro-label text-ui-text-muted">{t('workflowUi.assignedAgents')}</dt><dd className="mt-1 break-words">{agents.map((agent) => agent.name).join(', ') || t('workflowUi.noAssignedAgents')}</dd></div>
+      <div><dt className="type-micro-label text-ui-text-muted">{t('workflowUi.previewStatus')}</dt><dd className="mt-1">{preview ? preview.status === 'ready' ? t('agentChat.ready') : t('workflowUi.previewBlocked') : t('workflowUi.previewUnknown')}</dd></div>
+      <div><dt className="type-micro-label text-ui-text-muted">{t('workflowUi.directScope')}</dt><dd className="mt-1">{preview ? preview.mode === 'read_only' ? t('workflowUi.directReadOnly') : t('workflowUi.directReadWrite') : t('workflowUi.previewUnknown')}</dd></div>
+      <div><dt className="type-micro-label text-ui-text-muted">{t('workflowUi.directApprovalGates')}</dt><dd className="mt-1 break-words">{preview ? preview.approvalRequirements.join(', ') || t('workflowUi.noDirectGates') : t('workflowUi.previewUnknown')}</dd></div>
     </dl>
-    <p className="mt-3 type-caption text-ui-text-muted">This preview reports direct execution only. Delegated Agent capabilities and approval policies are not reported.</p>
+    <p className="mt-3 type-caption text-ui-text-muted">{t('workflowUi.directPreviewHelp')}</p>
   </section>;
 }
 
@@ -52,6 +54,7 @@ export const WorkflowRunDrawer: React.FC<{
   onClose,
   onLaunch
 }) => {
+  const { t } = useTranslation();
   const writeCapable = Boolean(preview?.tools.write.length);
   const acknowledgementMissing = Boolean(writeCapable && !acknowledged);
   return (
@@ -60,17 +63,17 @@ export const WorkflowRunDrawer: React.FC<{
       width="lg"
       closeDisabled={launching}
       onClose={onClose}
-      title="Run workflow"
+      title={t('workflowUi.runWorkflow')}
       titleId="workflow-run-drawer-title"
-      description={workflow ? `Review the saved prompt and run capabilities for ${workflow.name}.` : undefined}
+      description={workflow ? t('workflowUi.reviewNamed', { name: workflow.name }) : undefined}
       footer={
         <>
           <Button variant="tertiary" onClick={onClose} disabled={launching}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button variant="activation" onClick={onLaunch} disabled={launching || previewing || Boolean(blocker) || acknowledgementMissing} title={blocker || undefined}>
             <ICONS.Send className="h-4 w-4" aria-hidden="true" />
-            {launching ? 'Starting…' : 'Launch workflow'}
+            {launching ? t('workflows.actions.starting') : t('workflowUi.launchWorkflow')}
           </Button>
         </>
       }
@@ -79,7 +82,7 @@ export const WorkflowRunDrawer: React.FC<{
         <div className="grid gap-5">
           <WorkflowLaunchReview agents={workflow.agents} preview={previewing || previewError ? null : preview} />
           <section className="rounded-md border border-ui-border bg-ui-bg px-4 py-3">
-            <div className="type-micro-label text-ui-text-muted">Saved prompt</div>
+            <div className="type-micro-label text-ui-text-muted">{t('workflowUi.savedPrompt')}</div>
             <p className="mt-2 whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
           </section>
 
@@ -87,8 +90,8 @@ export const WorkflowRunDrawer: React.FC<{
             <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-status-warning/30 bg-status-warning-soft px-3 py-3 type-body text-ui-text">
               <Checkbox checked={acknowledged} onChange={(event) => onAcknowledgementChange(event.target.checked)} className="mt-0.5 shrink-0" />
               <span>
-                <strong className="block">Live-system changes are allowed</strong>
-                <span className="type-caption mt-1 block text-ui-text-muted">I understand this workflow can modify live systems.</span>
+                <strong className="block">{t('workflowUi.liveChanges')}</strong>
+                <span className="type-caption mt-1 block text-ui-text-muted">{t('workflowUi.acknowledgeChanges')}</span>
               </span>
             </label>
           )}

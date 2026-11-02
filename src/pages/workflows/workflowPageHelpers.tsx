@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import React from 'react';
 import { Switch } from '@acornops/ui';
 import { buildTraceFromRunEvents, type LiveRunTrace } from '@/features/conversations/presentation';
@@ -170,7 +171,7 @@ export function createFallbackWorkflowOptions(_workflows: WorkflowDefinition[]):
   return {
     agents: [],
     sourceAvailability: {
-      agents: { status: 'unavailable', message: 'Agent catalog has not loaded.' },
+      agents: { status: 'unavailable', message: i18n.t('workflowUi.catalogNotLoaded') },
     }
   };
 }
@@ -220,14 +221,14 @@ function workflowOwnerLabel(
 ): string {
   const createdByUser = workflow.createdByUser;
   if (createdByUser) {
-    return createdByUser.displayName || createdByUser.email || createdByUser.userId || createdByUser.id || fallback?.owner || 'Unknown user';
+    return createdByUser.displayName || createdByUser.email || createdByUser.userId || createdByUser.id || fallback?.owner || i18n.t('workflowUi.unknownUser');
   }
   if (typeof workflow.createdBy === 'string' && workflow.createdBy.trim()) {
     const ownerLabel = ownerLabelsByUserId?.get(workflow.createdBy);
     if (ownerLabel) return ownerLabel;
     return workflow.createdBy === 'system' ? 'AcornOps' : workflow.createdBy;
   }
-  return fallback?.owner || 'Unknown user';
+  return fallback?.owner || i18n.t('workflowUi.unknownUser');
 }
 
 function titleCaseAgentId(agentId: string): string {
@@ -258,7 +259,7 @@ export function mapApiWorkflowToDefinition(
       agentId,
       name: fallbackAgent?.name || agentOptionLabels.get(agentId) || titleCaseAgentId(agentId),
       avatarEmoji: assignedAgent?.avatarEmoji || fallbackAgent?.avatarEmoji,
-      role: executionMode === 'direct' ? 'Direct' : 'AcornOps-coordinated',
+      role: executionMode === 'direct' ? i18n.t('workflowUi.direct') : i18n.t('workflowUi.coordinated'),
       required: true
     };
   });
@@ -266,7 +267,7 @@ export function mapApiWorkflowToDefinition(
     id: workflow.id,
     workspaceId,
     name: workflow.name,
-    description: workflow.description || fallback?.description || 'Workspace-scoped workflow served by control-plane.',
+    description: workflow.description || fallback?.description || i18n.t('workflowUi.defaultDescription'),
     status: workflow.status || 'active',
     createdBy: workflow.createdBy,
     agentIds,
@@ -276,7 +277,7 @@ export function mapApiWorkflowToDefinition(
     readiness: workflow.readiness,
     owner: workflowOwnerLabel(workflow, fallback, ownerLabelsByUserId),
     tags: Array.isArray(workflow.tags) ? workflow.tags : fallback?.tags || [],
-    lastRun: fallback?.lastRun || 'No runs yet',
+    lastRun: fallback?.lastRun || i18n.t('workflowActivity.emptyAllTitle'),
     agents: apiAssignments.length > 0 ? apiAssignments : fallback?.agents || [],
     policy: {
       mode: assignedAgents.some((agent) => agent.permissionMode !== 'read_only') ? 'read_write' : 'read_only',
@@ -310,25 +311,25 @@ export function mapWorkflowRunSummary(run: WorkflowRunSummary): WorkflowDefiniti
   const duration = run.endedAt && startedAt
     ? formatElapsedDuration(startedAt, run.endedAt)
     : terminalWithoutDuration
-      ? 'Duration unavailable'
+      ? i18n.t('workflowActivity.durationUnavailable')
       : startedAt
         ? formatElapsedDuration(startedAt, Date.now())
-        : 'Not started';
+        : i18n.t('workflowActivity.notStarted');
   return {
     id: run.id,
     executionId: run.executionId,
     runId: run.id,
     status,
-    actor: run.createdBy || 'Operator',
+    actor: run.createdBy || i18n.t('chat.roleUser'),
     duration,
     approvals: 0,
     output: run.assistantMessage?.content
       || (status === 'waiting_approval'
-        ? 'Workflow run is waiting for approval.'
+        ? i18n.t('workflowUi.waitingApproval')
         : ['completed', 'failed', 'cancelled', 'needs_review'].includes(status)
-          ? 'No assistant output was recorded.'
-          : 'Workflow run is in progress.'),
-    startedAt: startedAt || 'Unknown'
+          ? i18n.t('workflowUi.noOutput')
+          : i18n.t('workflowUi.inProgress')),
+    startedAt: startedAt || i18n.t('common.unknown')
   };
 }
 

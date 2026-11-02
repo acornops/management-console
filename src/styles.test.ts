@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { initializeI18n } from '@/i18n';
+import { LoginPreview } from '@/pages/login/LoginPreview';
 import {
   addMcpServerAction,
   addClusterModal,
@@ -207,7 +211,9 @@ describe('theme color contract', () => {
     expect(designSystemCheck).toContain('unknown-typography-role');
   });
 
-  it('keeps login anchored to triage instead of decorative SaaS motion', () => {
+  it('keeps login anchored to triage instead of decorative SaaS motion', async () => {
+    await initializeI18n();
+    const illustration = renderToStaticMarkup(createElement(LoginPreview));
     expect(loginPage).toContain('LoginPreview');
     // Theme toggles recolour in place and play a decorative ripple; the illustration
     // is never paused or snapshotted, so it keeps bounding through the switch.
@@ -222,24 +228,9 @@ describe('theme color contract', () => {
     // squirrel bounding after acorns past three ops triage step cards.
     [
       'data-login-visual-variant="hunt-chase"',
-      'collecting ',
-      'for everything ops',
-      'Turn operational knowledge into AI-powered workflows.',
       "order: '01'",
       "order: '02'",
       "order: '03'",
-      'OBSERVE',
-      'CORRELATE',
-      'RESOLVE',
-      'Pod events',
-      'CrashLoopBackOff spike',
-      'Deploy diff',
-      'Memory limit reduced',
-      'Endpoints',
-      'Service path clear',
-      'Restart surge',
-      'Limit change',
-      'Probe healthy',
       '<svg',
       'viewBox="0 0 920 700"',
       'preserveAspectRatio',
@@ -257,6 +248,7 @@ describe('theme color contract', () => {
       'login-hunt-card',
       'login-hunt-bloom'
     ].forEach((needle) => expect(loginPreview).toContain(needle));
+    ["collecting ", "for everything ops", "Turn operational knowledge into AI-powered workflows.", "OBSERVE", "CORRELATE", "RESOLVE", "Pod events", "CrashLoopBackOff spike", "Deploy diff", "Memory limit reduced", "Endpoints", "Service path clear", "Restart surge", "Limit change", "Probe healthy"].forEach((text) => expect(illustration).toContain(text));
     // Colours must resolve through theme tokens (works in light + dark), never hardcoded.
     expect(loginPreview).toContain('rgb(var(--ao-brand-orange');
     expect(loginPreview).toContain('status-warning');
@@ -299,8 +291,8 @@ describe('theme color contract', () => {
     expect(overviewPage).toContain('href={appHref(path)}');
     expect(overviewPage).toContain('handleAppLinkClick(event, path, navigate)');
     expect(overviewPage).toContain('readRecentInvestigation(workspace.id, currentUserId)');
-    expect(traceFooter).toContain('Show run details');
-    expect(traceFooter).toMatch(/const activitySummary =\s*trace\.status === 'connecting'[\s\S]*'Waiting for progress'/);
+    expect(traceFooter).toContain("t('runTrace.showDetails')");
+    expect(traceFooter).toMatch(/const activitySummary =\s*trace\.status === 'connecting'[\s\S]*'runTrace.activity.waitingForProgress'/);
   });
 
   it('keeps the compact assistant rail independent from the primary navigation shell', () => {

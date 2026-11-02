@@ -4,7 +4,7 @@ import { AssistantDockFrame } from '@/app/AssistantDockFrame';
 import { VirtualMachineChatView } from '@/pages/virtual-machines/VirtualMachineChatView';
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import type { Workspace } from '@/types';
-import { AppPaths } from '@/utils/routes';
+import { AppPaths, withAssistantSession } from '@/utils/routes';
 
 interface AppVirtualMachineCopilotPanelProps {
   currentUserId: string;
@@ -50,9 +50,9 @@ export const AppVirtualMachineCopilotPanel: React.FC<AppVirtualMachineCopilotPan
         initialInputValue={initialPrompt}
         displayMode="panel"
         onClose={onClose}
-        onMaximize={() => {
+        onMaximize={(sessionId) => {
           onClose();
-          navigate(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'chat'));
+          navigate(withAssistantSession(AppPaths.workspaceVirtualMachineDetail(workspace.id, vm.id, 'chat'), sessionId));
         }}
         onOpenAiSettings={() => {
           onClose();

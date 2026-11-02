@@ -59,7 +59,7 @@ describe('destructive delete flow contracts', () => {
     });
 
     expect(readSource('src/pages/WorkspaceWorkflowsPage.components.tsx')).toContain(
-      'Type <span className="normal-case type-emphasis text-status-danger-text">{workflowToDelete.name}</span> to confirm'
+      'name: <span className="normal-case type-emphasis text-status-danger-text">{workflowToDelete.name}</span>'
     );
   });
 

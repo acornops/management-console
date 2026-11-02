@@ -1,5 +1,6 @@
+import i18n from '@/i18n';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Button, CloseButton, CollectionState, DialogFrame, DiscoveryFilterBar, IconTile, InlineAlert, MasterDetailEmptyState, MasterDetailListHeader, MasterDetailLoading, MasterDetailRow, StatusBadge, TextInput, masterDetailDiscoverySpacingClass } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { WorkflowMcpCredentialDialog, useWorkflowMcpOAuthFeedback } from '@/pages/WorkflowMcpCredentialDialog';
@@ -15,9 +16,10 @@ export const WorkflowSearchTagSuggestions: React.FC<{
   query: string;
   workflowSearchTags: string[];
   onQueryChange: (query: string) => void;
-}> = ({ query, workflowSearchTags, onQueryChange }) =>
-  workflowSearchTags.length > 0 && query.trim() ? (
-    <div className="flex flex-wrap gap-2 px-1" aria-label="Workflow tag suggestions">
+}> = ({ query, workflowSearchTags, onQueryChange }) => {
+  const { t } = useTranslation();
+  return workflowSearchTags.length > 0 && query.trim() ? (
+    <div className="flex flex-wrap gap-2 px-1" aria-label={t('workflowUi.tagSuggestions')}>
       {workflowSearchTags.slice(0, 8).map((tag) => (
         <Button key={tag} type="button" variant="secondary" size="sm" onClick={() => onQueryChange(appendWorkflowSearchTag(query, tag))} className="px-2.5 py-1.5 sm:min-h-8">
           {tag}
@@ -25,6 +27,7 @@ export const WorkflowSearchTagSuggestions: React.FC<{
       ))}
     </div>
   ) : null;
+};
 export const WorkflowDiscovery: React.FC<{
   embedded?: boolean;
   idPrefix?: string;
@@ -36,6 +39,7 @@ export const WorkflowDiscovery: React.FC<{
   withSpacing?: boolean;
   onQueryChange: (query: string) => void;
 }> = ({ embedded = false, idPrefix = 'workflow-library', ready, query, totalCount, visibleCount, workflowSearchTags, withSpacing = true, onQueryChange }) => {
+  const { t } = useTranslation();
   return !ready || totalCount > 0 || Boolean(query.trim()) ? (
     <div className={`${withSpacing ? masterDetailDiscoverySpacingClass : ''} space-y-3`}>
       <DiscoveryFilterBar
@@ -45,13 +49,13 @@ export const WorkflowDiscovery: React.FC<{
         className={embedded ? undefined : '[&_[data-search-filter-frame-summary=true]>span]:min-h-0'}
         idPrefix={idPrefix}
         query={query}
-        queryLabel="Search workflow library"
-        queryPlaceholder="Search workflows"
-        queryClearLabel="Clear search"
+        queryLabel={t('workflowUi.searchLibrary')}
+        queryPlaceholder={t('workflowUi.search')}
+        queryClearLabel={t('common.clearSearch')}
         queryKeyShortcuts="/"
-        resultSummary={ready ? `${query.trim() ? `${visibleCount} of ${totalCount}` : totalCount} ${totalCount === 1 ? 'workflow' : 'workflows'}${embedded ? ' · Press / to focus search' : ''}` : 'Loading workflows'}
+        resultSummary={ready ? `${query.trim() ? t('workflowUi.resultCount', { visible: visibleCount, count: totalCount }) : t('workflowUi.totalCount', { count: totalCount })}${embedded ? t('workflowUi.searchShortcut') : ''}` : t('workflowUi.loading')}
         filters={[]}
-        clearAllLabel="Clear all"
+        clearAllLabel={t('common.clearAll')}
         onQueryChange={onQueryChange}
         onClearAll={() => onQueryChange('')}
       />
@@ -63,9 +67,9 @@ const workflowAgentMetadata = (agents: WorkflowAgentReference[]) => {
   const names = agents.map((agent) => agent.name.trim()).filter(Boolean);
   const visibleNames = names.slice(0, 2).join(', ');
   return {
-    accessibleLabel: names.length > 0 ? `Assigned agents: ${names.join(', ')}` : 'No assigned agents',
+    accessibleLabel: names.length > 0 ? i18n.t('workflowUi.assignedNames', { names: names.join(', ') }) : i18n.t('workflowUi.noAssignedAgentsLower'),
     fullLabel: names.join(', '),
-    visibleLabel: names.length > 2 ? `${visibleNames} +${names.length - 2}` : visibleNames || 'No assigned agents'
+    visibleLabel: names.length > 2 ? `${visibleNames} +${names.length - 2}` : visibleNames || i18n.t('workflowUi.noAssignedAgentsLower')
   };
 };
 
@@ -80,6 +84,7 @@ export const WorkflowLibraryList: React.FC<{
   onSelectWorkflow: (workflowId: string) => void;
   registerWorkflowRow: (workflowId: string, node: HTMLButtonElement | null) => void;
 }> = ({ discovery, workflows, visibleWorkflows, selectedWorkflow, selectedWorkflowIsExplicit = false, ready, loadError, onSelectWorkflow, registerWorkflowRow }) => {
+  const { t } = useTranslation();
   const rowRefs = React.useRef(new Map<string, HTMLButtonElement>());
   const focusRelativeRow = (workflowId: string, direction: -1 | 1 | 'first' | 'last') => {
     const currentIndex = visibleWorkflows.findIndex((workflow) => workflow.id === workflowId);
@@ -92,10 +97,10 @@ export const WorkflowLibraryList: React.FC<{
     if (nextWorkflow) rowRefs.current.get(nextWorkflow.id)?.focus({ preventScroll: true });
   };
   return (
-    <section aria-label="Workflow library" className="min-w-0 w-full max-w-full">
+    <section aria-label={t('workflowUi.library')} className="min-w-0 w-full max-w-full">
       {discovery && <div className="hidden border-b border-ui-border p-4 min-[1440px]:block">{discovery}</div>}
-      <MasterDetailListHeader>Workflow library</MasterDetailListHeader>
-      {!ready && <MasterDetailLoading>Loading workflows…</MasterDetailLoading>}
+      <MasterDetailListHeader>{t('workflowUi.library')}</MasterDetailListHeader>
+      {!ready && <MasterDetailLoading>{t('workflowUi.loadingEllipsis')}</MasterDetailLoading>}
       {ready && visibleWorkflows.length > 0 && (
         <ul className="divide-y divide-ui-border">
           {visibleWorkflows.map((workflow) => {
@@ -115,7 +120,7 @@ export const WorkflowLibraryList: React.FC<{
                   status={(
                     <span className="flex items-center gap-2">
                       {workflow.status !== 'active' && (
-                        <StatusBadge tone={workflowStatusTone(workflow.status)}>{workflow.status}</StatusBadge>
+                          <StatusBadge tone={workflowStatusTone(workflow.status)}>{t(`workflowUi.status.${workflow.status}`)}</StatusBadge>
                       )}
                       <ICONS.ChevronRight className="h-4 w-4 text-ui-text-muted" aria-hidden="true" />
                     </span>
@@ -134,7 +139,7 @@ export const WorkflowLibraryList: React.FC<{
                   }
                   selected={isSelectedWorkflow}
                   previewed={isCurrentWorkflow}
-                  ariaLabel={`Select workflow ${workflow.name}${isSelectedWorkflow ? ', selected' : ''}`}
+                  ariaLabel={t(isSelectedWorkflow ? 'workflowUi.selectNamedSelected' : 'workflowUi.selectNamed', { name: workflow.name })}
                   onClick={() => onSelectWorkflow(workflow.id)}
                   onKeyDown={(event) => {
                     if (event.key === 'ArrowDown') { event.preventDefault(); focusRelativeRow(workflow.id, 1); }
@@ -148,7 +153,7 @@ export const WorkflowLibraryList: React.FC<{
           })}
         </ul>
       )}
-      {ready && visibleWorkflows.length === 0 && !loadError && <MasterDetailEmptyState title={workflows.length === 0 ? 'No workflows configured.' : 'No workflows match this search.'} description={workflows.length === 0 ? 'Create a workflow with your own Agents, access, and governed run policy.' : 'Clear the search to return to the full workflow library.'} />}
+      {ready && visibleWorkflows.length === 0 && !loadError && <MasterDetailEmptyState title={workflows.length === 0 ? t('workflowUi.emptyTitle') : t('workflowUi.noMatches')} description={workflows.length === 0 ? t('workflowUi.emptyHelp') : t('workflowUi.noMatchesHelp')} />}
     </section>
   );
 };
@@ -162,6 +167,7 @@ export const WorkflowDeleteDialog: React.FC<{
   onDelete: (workflow: WorkflowDefinition) => void;
   setDeleteWorkflowConfirmation: React.Dispatch<React.SetStateAction<string>>;
 }> = ({ workflowToDelete, deleteWorkflowConfirmation, deleteWorkflowError, deletingWorkflowId, onClose, onDelete, setDeleteWorkflowConfirmation }) => {
+  const { t } = useTranslation();
   if (!workflowToDelete) return null;
 
   return (
@@ -173,18 +179,18 @@ export const WorkflowDeleteDialog: React.FC<{
           </IconTile>
           <div>
             <h3 id="delete-workflow-title" className="type-row-title text-ui-text">
-              Delete workflow
+              {t('workflowUi.delete')}
             </h3>
-            <p className="type-caption mt-0.5 type-emphasis text-ui-text-muted">This action cannot be undone.</p>
+            <p className="type-caption mt-0.5 type-emphasis text-ui-text-muted">{t('common.irreversibleAction')}</p>
           </div>
         </div>
-        <CloseButton onClick={onClose} disabled={deletingWorkflowId === workflowToDelete.id} label="Close delete workflow dialog" />
+        <CloseButton onClick={onClose} disabled={deletingWorkflowId === workflowToDelete.id} label={t('workflowUi.closeDelete')} />
       </div>
       <div className="space-y-4 px-5 py-5">
-        <InlineAlert tone="warning" className="type-ui leading-6">Deleting {workflowToDelete.name} removes the workflow definition for future runs. Existing run records and audit events are retained.</InlineAlert>
+        <InlineAlert tone="warning" className="type-ui leading-6">{t('workflowUi.deleteNamed', { name: workflowToDelete.name })}</InlineAlert>
         <div>
           <label htmlFor="delete-workflow-confirmation-input" className="type-label mb-1.5 block px-1">
-            Type <span className="normal-case type-emphasis text-status-danger-text">{workflowToDelete.name}</span> to confirm
+              <Trans i18nKey="workflowUi.confirmName" components={{ name: <span className="normal-case type-emphasis text-status-danger-text">{workflowToDelete.name}</span> }} />
           </label>
           <TextInput id="delete-workflow-confirmation-input" value={deleteWorkflowConfirmation} onChange={(event) => setDeleteWorkflowConfirmation(event.target.value)} disabled={deletingWorkflowId === workflowToDelete.id} autoComplete="off" spellCheck={false} className="focus:border-status-danger/45 focus:ring-status-danger/20" />
         </div>
@@ -196,10 +202,10 @@ export const WorkflowDeleteDialog: React.FC<{
       </div>
       <div className="flex justify-end gap-3 border-t border-ui-border bg-ui-bg px-5 py-4">
         <Button variant="secondary" size="sm" onClick={onClose} disabled={deletingWorkflowId === workflowToDelete.id}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button variant="danger" size="sm" onClick={() => onDelete(workflowToDelete)} disabled={deletingWorkflowId === workflowToDelete.id || deleteWorkflowConfirmation !== workflowToDelete.name}>
-          {deletingWorkflowId === workflowToDelete.id ? 'Deleting...' : 'Delete workflow'}
+          {deletingWorkflowId === workflowToDelete.id ? t('workflowUi.deleting') : t('workflowUi.delete')}
         </Button>
       </div>
     </DialogFrame>
@@ -252,13 +258,14 @@ export const AgentAssignmentList: React.FC<{
   className?: string;
   agents: WorkflowAgentReference[];
   labelForAgent?: string | null | ((agent: WorkflowAgentReference) => string | null);
-}> = ({ className = '', agents, labelForAgent = 'Selected' }) => {
+}> = ({ className = '', agents, labelForAgent }) => {
+  const { t } = useTranslation();
   const rows = agents.map((agent) => ({
     agent,
-    label: typeof labelForAgent === 'function' ? labelForAgent(agent) : labelForAgent
+    label: typeof labelForAgent === 'function' ? labelForAgent(agent) : labelForAgent === undefined ? t('workflowUi.selected') : labelForAgent
   }));
   if (rows.length === 0) {
-    return <div className={`${className} py-3 type-ui text-ui-text-muted`}>No workflow agents selected.</div>;
+    return <div className={`${className} py-3 type-ui text-ui-text-muted`}>{t('workflowUi.noAgentsSelected')}</div>;
   }
   return (
     <div className={`${className} divide-y divide-ui-border`}>
@@ -325,10 +332,10 @@ function workflowWriteAccess(preview: WorkflowCapabilitiesPreview): {
   label: string;
   tone: 'neutral' | 'warning';
 } {
-  if (preview.mode === 'read_only') return { label: 'Disabled', tone: 'neutral' };
-  if (preview.tools.write.length === 0) return { label: 'No write tools', tone: 'neutral' };
-  if (preview.approvalRequirements.length > 0) return { label: 'Approval required', tone: 'warning' };
-  return { label: 'Allowed automatically', tone: 'warning' };
+  if (preview.mode === 'read_only') return { label: i18n.t('workspaceWebhooks.disabled'), tone: 'neutral' };
+  if (preview.tools.write.length === 0) return { label: i18n.t('workflowUi.noWriteTools'), tone: 'neutral' };
+  if (preview.approvalRequirements.length > 0) return { label: i18n.t('dashboard.writeAccessApprovalRequired'), tone: 'warning' };
+  return { label: i18n.t('workflowUi.allowedAutomatically'), tone: 'warning' };
 }
 
 const WorkflowWriteAccessValue: React.FC<{ preview: WorkflowCapabilitiesPreview }> = ({ preview }) => {
@@ -341,8 +348,9 @@ const WorkflowWriteAccessValue: React.FC<{ preview: WorkflowCapabilitiesPreview 
 const WorkflowPreviewToolRows: React.FC<{
   label: string;
   tools: WorkflowCapabilityToolPreview[];
-}> = ({ label, tools }) =>
-  tools.length > 0 ? (
+}> = ({ label, tools }) => {
+  const { t } = useTranslation();
+  return tools.length > 0 ? (
     <div className="grid gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
       <dt className="type-row-title">{label}</dt>
       <dd>
@@ -354,8 +362,8 @@ const WorkflowPreviewToolRows: React.FC<{
                 {tool.description && <span className="type-caption mt-0.5 block text-ui-text-muted">{tool.description}</span>}
               </span>
               <span className="flex shrink-0 flex-wrap gap-1.5">
-                <StatusBadge tone="neutral">{tool.source === 'mcp' ? 'MCP' : 'Built-in'}</StatusBadge>
-                <StatusBadge tone={tool.access === 'write' ? 'warning' : 'success'}>{tool.access}</StatusBadge>
+                <StatusBadge tone="neutral">{tool.source === 'mcp' ? 'MCP' : t('chat.referenceBuiltIn')}</StatusBadge>
+                <StatusBadge tone={tool.access === 'write' ? 'warning' : 'success'}>{t(tool.access === 'write' ? 'workspaceMcp.write' : 'workspaceMcp.read')}</StatusBadge>
               </span>
             </li>
           ))}
@@ -363,6 +371,7 @@ const WorkflowPreviewToolRows: React.FC<{
       </dd>
     </div>
   ) : null;
+};
 
 function visibleMcpAuthRequirements(requirements: WorkflowMcpRequirementPreview[]): WorkflowMcpRequirementPreview[] {
   return requirements.filter((requirement) => Boolean(requirement.serverId));
@@ -462,6 +471,7 @@ export const WorkflowCapabilityLedger: React.FC<{
   error: string;
   onRetry: () => void;
 }> = ({ workspaceId, preview, loading, error, onRetry }) => {
+  const { t } = useTranslation();
   const [credentialRequirement, setCredentialRequirement] = React.useState<WorkflowMcpRequirementPreview | null>(null);
   const oauth = useWorkflowMcpOAuthFeedback({
     workspaceId,
@@ -473,24 +483,24 @@ export const WorkflowCapabilityLedger: React.FC<{
   return (
     <>
       {oauth.feedback && <InlineAlert tone={oauth.feedback.tone} className="mt-4 type-body">{oauth.feedback.message}</InlineAlert>}
-      <section aria-label="Run capabilities" className="mt-4 border-y border-ui-border py-4">
+      <section aria-label={t('workflowUi.runCapabilities')} className="mt-4 border-y border-ui-border py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h4 className="type-row-title">Run capabilities</h4>
-            <p className="type-caption mt-1 text-ui-text-muted">Tools and integrations available to this run. Launch revalidates the scope.</p>
+            <h4 className="type-row-title">{t('workflowUi.runCapabilities')}</h4>
+            <p className="type-caption mt-1 text-ui-text-muted">{t('workflowUi.runCapabilitiesHelp')}</p>
           </div>
-          {preview && preview.status !== 'ready' && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
+          {preview && preview.status !== 'ready' && <StatusBadge tone={previewStatusTone(preview.status)}>{t(`workflowUi.status.${preview.status}`)}</StatusBadge>}
         </div>
         <CollectionState
           phase={loading ? 'loading' : error ? 'error' : 'ready'}
           itemCount={preview ? 1 : 0}
           loading={
             <div role="status" aria-live="polite" className="type-caption mt-4 text-ui-text-muted">
-              Resolving effective tools…
+              {t('workflowUi.resolvingTools')}
             </div>
           }
           error={
-            <InlineAlert tone="danger" className="mt-4 rounded-none border-x-0 px-3 type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetry}>Retry preview</Button>}>
+            <InlineAlert tone="danger" className="mt-4 rounded-none border-x-0 px-3 type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetry}>{t('workflowUi.retryPreview')}</Button>}>
               {error}
             </InlineAlert>
           }
@@ -499,14 +509,14 @@ export const WorkflowCapabilityLedger: React.FC<{
           {preview && !loading && !error && (
             <dl className="mt-4 divide-y divide-ui-border">
               <div className="grid gap-2 py-3 first:pt-0 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="type-row-title">Write access</dt>
+                <dt className="type-row-title">{t('dashboard.writeAccess')}</dt>
                 <dd><WorkflowWriteAccessValue preview={preview} /></dd>
               </div>
               <WorkflowPreviewAuthRow requirements={preview.mcpRequirements} onConnectCredential={setCredentialRequirement} />
-              <WorkflowPreviewToolRows label="Read tools" tools={preview.tools.read} />
-              <WorkflowPreviewToolRows label="Write tools" tools={preview.tools.write} />
-              {preview.directMcpServers.length > 0 && <CapabilityReviewRow label="Direct MCP servers" description="Servers available in the compiled run scope." values={preview.directMcpServers.map((server) => server.name)} emptyLabel="" />}
-              {preview.enabledSkills.length > 0 && <CapabilityReviewRow label="Installed skills" description="Skills enabled in the compiled run scope." values={preview.enabledSkills.map((skill) => skill.name)} emptyLabel="" />}
+              <WorkflowPreviewToolRows label={t('workflowUi.readTools')} tools={preview.tools.read} />
+              <WorkflowPreviewToolRows label={t('workflowUi.writeTools')} tools={preview.tools.write} />
+              {preview.directMcpServers.length > 0 && <CapabilityReviewRow label={t('workflowUi.directMcpServers')} description={t('workflowUi.directMcpHelp')} values={preview.directMcpServers.map((server) => server.name)} emptyLabel="" />}
+              {preview.enabledSkills.length > 0 && <CapabilityReviewRow label={t('workflowUi.installedSkills')} description={t('workflowUi.installedSkillsHelp')} values={preview.enabledSkills.map((skill) => skill.name)} emptyLabel="" />}
             </dl>
           )}
         </CollectionState>
@@ -523,6 +533,7 @@ export const WorkflowCapabilitySummary: React.FC<{
   error: string;
   onRetry: () => void;
 }> = ({ workspaceId, preview, loading, error, onRetry }) => {
+  const { t } = useTranslation();
   const [credentialRequirement, setCredentialRequirement] = React.useState<WorkflowMcpRequirementPreview | null>(null);
   const oauth = useWorkflowMcpOAuthFeedback({
     workspaceId,
@@ -534,17 +545,17 @@ export const WorkflowCapabilitySummary: React.FC<{
   return (
     <>
       {oauth.feedback && <InlineAlert tone={oauth.feedback.tone} className="mt-4 type-body">{oauth.feedback.message}</InlineAlert>}
-      <section aria-label="Capability summary" className="mt-4 rounded-md border border-ui-border bg-ui-surface px-4 py-4 sm:px-5">
+      <section aria-label={t('workflowUi.capabilitySummary')} className="mt-4 rounded-md border border-ui-border bg-ui-surface px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <p className="type-caption max-w-[70ch] text-ui-text-muted">Inherited from selected Agents. Checked again at launch.</p>
-          {preview && preview.status !== 'ready' && <StatusBadge tone={previewStatusTone(preview.status)}>{preview.status}</StatusBadge>}
+          <p className="type-caption max-w-[70ch] text-ui-text-muted">{t('workflowUi.capabilitySummaryHelp')}</p>
+          {preview && preview.status !== 'ready' && <StatusBadge tone={previewStatusTone(preview.status)}>{t(`workflowUi.status.${preview.status}`)}</StatusBadge>}
         </div>
         <CollectionState
           phase={loading ? 'loading' : error ? 'error' : 'ready'}
           itemCount={preview ? 1 : 0}
-          loading={<div role="status" aria-live="polite" className="type-caption mt-4 text-ui-text-muted">Resolving capabilities…</div>}
+          loading={<div role="status" aria-live="polite" className="type-caption mt-4 text-ui-text-muted">{t('workflowUi.resolvingCapabilities')}</div>}
           error={
-            <InlineAlert tone="danger" className="mt-4 rounded-none border-x-0 px-3 type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetry}>Retry</Button>}>
+            <InlineAlert tone="danger" className="mt-4 rounded-none border-x-0 px-3 type-body" action={<Button type="button" variant="secondary" size="sm" onClick={onRetry}>{t('common.retry')}</Button>}>
               {error}
             </InlineAlert>
           }
@@ -553,15 +564,15 @@ export const WorkflowCapabilitySummary: React.FC<{
           {preview && !loading && !error && (
             <dl className="mt-4 grid gap-4">
               <div className="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="type-row-title">Tools</dt>
+                <dt className="type-row-title">{t('app.tools')}</dt>
                 <dd className="flex flex-wrap items-center gap-2 type-ui tabular-nums text-ui-text">
-                  <span>{preview.counts.readTools} read</span>
+                  <span>{t('workflowUi.readCount', { count: preview.counts.readTools })}</span>
                   <span aria-hidden="true" className="text-ui-text-muted">·</span>
-                  <span>{preview.counts.writeTools} write</span>
+                  <span>{t('workflowUi.writeCount', { count: preview.counts.writeTools })}</span>
                 </dd>
               </div>
               <div className="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-5">
-                <dt className="type-row-title">Write access</dt>
+                <dt className="type-row-title">{t('dashboard.writeAccess')}</dt>
                 <dd><WorkflowWriteAccessValue preview={preview} /></dd>
               </div>
               <WorkflowPreviewAuthRow requirements={preview.mcpRequirements} onConnectCredential={setCredentialRequirement} />

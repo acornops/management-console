@@ -1,7 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { initializeI18n } from '@/i18n';
+
+beforeAll(initializeI18n);
 import { en } from '@/i18n/locales/en.js';
 import type { AgentDefinition } from './agents/agentModel';
 import type { WorkflowDefinition } from './workflows/workflowModel';
@@ -284,8 +287,8 @@ describe('WorkflowRunsPanel run identity boundary', () => {
     const html = renderRunsPanel(workflow);
 
     expect(html).toContain('data-empty-state="true"');
-    expect(html).toContain('workflowActivity.emptyWorkflowTitle');
-    expect(html).toContain('workflowActivity.emptyWorkflowDescription');
+    expect(html).toContain('No runs yet');
+    expect(html).toContain('Launch this workflow to create its first run after readiness checks pass.');
     expect(html).not.toContain('No activity yet');
   });
 
@@ -319,7 +322,7 @@ describe('WorkflowRunsPanel run identity boundary', () => {
 
     expect(html).toContain('aria-label="Stop workflow run"');
     expect(html).toContain('Show run details');
-    expect(html).toContain('workflowActivity.status.running');
+    expect(html).toContain('Running');
     expect(html).not.toContain('>Working<');
   });
 
@@ -337,7 +340,7 @@ describe('WorkflowRunsPanel run identity boundary', () => {
 
     expect(html).toContain('<details open=""');
     expect(html).toContain('<summary');
-    expect(html).toContain('workflowActivity.runSummary');
+    expect(html).toContain('Run summary');
     expect(html).toContain('Production is healthy.');
   });
 
@@ -380,10 +383,10 @@ describe('WorkflowRunsPanel run identity boundary', () => {
     expect(waiting.duration).not.toBe('Waiting for approval');
     expect(waiting.duration).toMatch(/^\d+(?:h \d+m|m \d+s|s)$/);
     expect(waiting.output).toBe('Workflow run is waiting for approval.');
-    expect(waitingHtml).toContain('workflowActivity.status.waiting_for_approval');
+    expect(waitingHtml).toContain('Waiting for approval');
     expect(waitingHtml).not.toContain('Workflow run is in progress.');
     expect(waitingHtml).not.toContain('Workflow running');
-    expect(reviewHtml).toContain('workflowActivity.status.needs_review');
+    expect(reviewHtml).toContain('Needs review');
     expect(reviewHtml).not.toContain('Working');
   });
 });
