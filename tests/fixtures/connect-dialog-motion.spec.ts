@@ -10,7 +10,8 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     ]) {
       test(`${target.name} stays visible through the animation handoff`, async ({ page }) => {
         await page.goto(`/workspaces/fixture-workspace/${target.path}`);
-        const trigger = page.getByRole('button', { name: target.name, exact: true });
+        // The catalog may also expose a Connect action while its empty state is visible.
+        const trigger = page.locator('header').getByRole('button', { name: target.name, exact: true });
         await expect(trigger).toBeVisible();
 
         // Exercise both the first opening and a repeat opening with loaded code.
