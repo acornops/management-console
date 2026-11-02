@@ -1,7 +1,5 @@
 # Active Execution Plans
 
-- [Console Bug Reports and Public VM Documentation](2026-11-03-console-bug-reports.md) — Verify and correct localization, counts, trace labels, VM assistant navigation, and stale VM documentation.
-
 - [Graceful Rolling Restarts](2026-10-29-graceful-rolling-restarts.md) — Preserve accepted runs and safely reconnect during planned service restarts.
 
 Reviewed 2026-10-19. Implementation-only plans that have landed are in

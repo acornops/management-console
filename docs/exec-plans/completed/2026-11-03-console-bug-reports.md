@@ -139,8 +139,19 @@ qualification remains outside this change; production rollout stays disabled.
   generated, untracked baseline images were removed. Linux CI must pass before
   main integration; existing baselines are not being regenerated for this fix.
 - Docs structure, Mintlify validation, and link checks pass after the coherence
-  updates. Docs PR #21 also passed CI. Demo pin PR #21 passed CI, including the
-  Ansible check unavailable locally.
+  updates. [Docs PR #21](https://github.com/acornops/docs-website/pull/21) also
+  passed CI. Demo infrastructure CI passed, including the Ansible syntax check
+  unavailable locally.
+- The full local fixture suite passed 338 of 339 cases. Its only failure expected
+  the obsolete text `1 events returned`; the captured page correctly showed
+  `1 event returned`. After correcting that assertion, all three Windows
+  collection-health cases passed. No production code changed in this correction.
+- The full local MCP parity suite passed all 24 cases. Linux CI also passed
+  all five route-snapshot variants and the design-system and MCP parity suites.
+  The final fixture assertion is rechecked in the final PR CI run before merge.
 
-Final browser, Linux CI, release, and live-deployment results are recorded in the
-related PRs and the workspace change-set handoff before completion.
+Source corrections and review are complete. Final Linux CI, release, and live
+verification evidence is linked from
+[console PR #36](https://github.com/acornops/management-console/pull/36) and recorded
+in the workspace change-set handoff. Main integration remains gated on CI;
+release publication precedes the demo image-pin rollout.

@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Console bug reports and public VM documentation](2026-11-03-console-bug-reports.md) — Localization and count fixes, historical trace semantics, VM assistant draft/session preservation, and coherent Windows preview guidance.
+
 - [Agent heartbeat freshness](agent-heartbeat-freshness.md) — Shared connection observation, cached expiry and verified onboarding compatibility.
 
 - [Windows VM console](windows-vm-console.md) — OS-aware registration, immutable read-only Windows host settings, native event channels, and unavailable telemetry labels.
