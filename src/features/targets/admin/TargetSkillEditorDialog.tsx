@@ -86,8 +86,8 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
   const activeFile = files.find((file) => file.path === activeFilePath) || files[0] || null;
   const isCreateNameStep = mode === 'create' && step === 'name';
   const createSteps = [
-    { id: 'name', label: 'Name' },
-    { id: 'files', label: 'Edit files' }
+    { id: 'name', label: t('schedules.form.name') },
+    { id: 'files', label: t('tools.targetInsights.editFiles') }
   ];
 
   const requestDiscard = (action: () => void) => {
@@ -133,13 +133,13 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
         <div className="flex items-start justify-between gap-4 border-b border-ui-border bg-ui-bg px-6 py-4">
           <div className="min-w-0">
             <h3 id="target-skill-editor-title" className="type-panel-title">
-              {mode === 'create' ? 'Create target skill' : detail?.name || (canEditSkills ? 'Edit target skill' : 'View target skill')}
+              {mode === 'create' ? t('skillEditor.createTitle') : detail?.name || (canEditSkills ? t('skillEditor.editTitle') : t('skillEditor.viewTitle'))}
             </h3>
             {mode === 'create' ? (
               <ModalStepIndicator steps={createSteps} currentStepId={step} className="mt-4" />
             ) : (
               <p className="type-caption mt-1 text-ui-text-muted">
-                {detail?.description || (canEditSkills ? 'Edit Markdown context for this target skill.' : 'Inspect Markdown context for this target skill.')}
+                {detail?.description || (canEditSkills ? t('skillEditor.editDescription') : t('skillEditor.viewDescription'))}
               </p>
             )}
           </div>
@@ -147,13 +147,13 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
             {mode === 'edit' && detail?.source.type === 'git_import' && (
               <Button variant="secondary" size="sm" disabled={!canEditSkills || saving} onClick={onReimport}>
                 <RefreshCcw className="h-4 w-4" />
-                Reimport
+                {t('targetSkills.reimport')}
               </Button>
             )}
             <CloseButton
               onClick={guardedClose}
               disabled={saving}
-              aria-label="Close skill editor"
+              aria-label={t('skillEditor.close')}
             />
           </div>
         </div>
@@ -162,16 +162,16 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
         {isCreateNameStep ? (
           <div className="rounded-lg border border-ui-border bg-ui-bg p-5">
             <label className="space-y-1">
-              <span className="type-label px-1">Skill name</span>
+              <span className="type-label px-1">{t('agentsWorkflows.agents.details.capabilities.editSkill.name')}</span>
               <TextInput
                 value={createName}
                 onChange={(event) => onCreateNameChange(event.target.value)}
-                placeholder="Troubleshooting CNPG"
+                placeholder={t('skillEditor.namePlaceholder')}
                 className={skillNameInputClassName}
               />
             </label>
             <p className="type-caption mt-3 text-ui-text-muted">
-              The next step creates a starter SKILL.md. You can edit the YAML header and body before saving.
+              {t('skillEditor.starterHelp')}
             </p>
             {error && (
               <div className="type-caption mt-4 rounded-lg border border-status-danger/25 bg-status-danger-soft px-4 py-3 text-status-danger-text">
@@ -181,7 +181,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           </div>
         ) : loading ? (
           <div className="flex min-h-[26rem] items-center justify-center">
-            <InlineLoadingIndicator label="Loading skill detail" />
+            <InlineLoadingIndicator label={t('skillEditor.loading')} />
           </div>
         ) : (
           <div className="grid min-h-[34rem] gap-0 overflow-hidden rounded-lg border border-ui-border bg-ui-bg lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -226,7 +226,7 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
                 <div className="m-4 rounded-lg border border-status-warning/25 bg-status-warning-soft px-4 py-3 type-body text-status-warning-text">
                   <div className="flex items-center gap-2 type-emphasis">
                     <AlertTriangle className="h-4 w-4" />
-                    Validation issues
+                    {t('skillEditor.validationIssues')}
                   </div>
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     {detail.validationErrors.map((validationError) => (
@@ -254,17 +254,17 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           <>
             <span />
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Cancel</Button>
-              <Button variant="primary" size="sm" onClick={onCreateNameNext} disabled={!createName.trim() || saving}>Next</Button>
+              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>{t('common.cancel')}</Button>
+              <Button variant="primary" size="sm" onClick={onCreateNameNext} disabled={!createName.trim() || saving}>{t('skillEditor.next')}</Button>
             </div>
           </>
         ) : mode === 'create' ? (
           <>
             <span />
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={() => onStepChange('name')} disabled={saving}>Back</Button>
+              <Button variant="secondary" size="sm" onClick={() => onStepChange('name')} disabled={saving}>{t('skillEditor.back')}</Button>
               <Button variant="primary" size="sm" onClick={onSubmit} disabled={!canEditSkills || saving}>
-                {saving ? 'Creating...' : 'Create Skill'}
+                {saving ? t('skillEditor.creating') : t('skillEditor.create')}
               </Button>
             </div>
           </>
@@ -272,16 +272,16 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
           <>
             <span />
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Close</Button>
+              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>{t('common.close')}</Button>
             </div>
           </>
         ) : (
           <>
-            <Button variant="secondary" size="sm" onClick={onReset} disabled={!dirty || saving || loading}>Reset changes</Button>
+            <Button variant="secondary" size="sm" onClick={onReset} disabled={!dirty || saving || loading}>{t('tools.targetInsights.resetChanges')}</Button>
             <div className="flex justify-end gap-3">
-              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>Cancel</Button>
+              <Button variant="secondary" size="sm" onClick={guardedClose} disabled={saving}>{t('common.cancel')}</Button>
               <Button variant="primary" size="sm" onClick={onSubmit} disabled={!canEditSkills || !dirty || saving || loading}>
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? t('skillEditor.saving') : t('common.saveChanges')}
               </Button>
             </div>
           </>
@@ -290,10 +290,10 @@ export const TargetSkillEditorDialog: React.FC<TargetSkillEditorDialogProps> = (
       </DialogFrame>
       {showDiscardDialog && (
         <UnsavedChangesDialog
-          title="Discard unsaved changes?"
-          body="Your unsaved skill edits will be lost. This cannot be undone."
-          cancelLabel="Keep editing"
-          discardLabel="Discard changes"
+          title={t('tools.targetInsights.discardTitle')}
+          body={t('skillEditor.discardBody')}
+          cancelLabel={t('tools.targetInsights.keepEditing')}
+          discardLabel={t('schedules.form.discardConfirm')}
           onCancel={cancelDiscard}
           onDiscard={confirmDiscard}
         />

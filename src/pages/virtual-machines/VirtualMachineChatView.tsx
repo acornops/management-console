@@ -6,7 +6,7 @@ import { toVirtualMachineTargetDescriptor } from '@/features/targets/targetDescr
 import type { ControlPlaneVirtualMachine } from '@/services/controlPlaneApi';
 import { ChatSession, Workspace } from '@/types';
 import { assistantSessionFromLocation } from '@/utils/routes';
-import { useSessionCachedState } from '@/hooks/sessionDataCache';
+import { deleteSessionDataCache, readSessionDataCache, useSessionCachedState, writeSessionDataCache } from '@/hooks/sessionDataCache';
 import { resolveVirtualMachineChatAccess } from '@/pages/virtual-machines/virtualMachineChatAccess';
 
 interface VirtualMachineChatViewProps {
@@ -17,7 +17,7 @@ interface VirtualMachineChatViewProps {
   initialInputValue?: string;
   displayMode?: 'full' | 'panel';
   onClose?: () => void;
-  onMaximize?: () => void;
+  onMaximize?: (sessionId: string | null) => void;
   onOpenAiSettings: () => void;
   onInitialInputConsumed?: () => void;
 }
@@ -60,7 +60,16 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     initialActiveSessionId,
     onUpdateSessions: setChatSessions
   });
+  const maximizedDraftCacheKey = `workspace:${workspace.id}:target:${vm.id}:chat:maximized-draft`;
+  React.useEffect(() => {
+    if (displayMode === 'panel') return;
+    const draft = readSessionDataCache<string>(maximizedDraftCacheKey);
+    if (!draft) return;
+    deleteSessionDataCache(maximizedDraftCacheKey);
+    controller.setInputValue(draft.value);
+  }, [controller.setInputValue, displayMode, maximizedDraftCacheKey]);
   const handledInitialInputRef = React.useRef<string | null>(null);
+  const [pendingInitialInputCount, setPendingInitialInputCount] = React.useState(0);
 
   React.useEffect(() => {
     const prompt = initialInputValue?.trim();
@@ -70,7 +79,10 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
     }
     if (handledInitialInputRef.current === prompt) return;
     handledInitialInputRef.current = prompt;
-    void controller.handleCreateSessionWithInput(prompt);
+    setPendingInitialInputCount((count) => count + 1);
+    void controller.handleCreateSessionWithInput(prompt).finally(() => {
+      setPendingInitialInputCount((count) => count - 1);
+    });
     onInitialInputConsumed?.();
   }, [controller.handleCreateSessionWithInput, initialInputValue, onInitialInputConsumed]);
 
@@ -135,7 +147,10 @@ export const VirtualMachineChatView: React.FC<VirtualMachineChatViewProps> = ({
       isInFlightAssistantPlaceholder={controller.isInFlightAssistantPlaceholder}
       displayMode={displayMode}
       onClose={onClose}
-      onMaximize={onMaximize}
+      onMaximize={onMaximize && !initialInputValue?.trim() && pendingInitialInputCount === 0 ? () => {
+        writeSessionDataCache(maximizedDraftCacheKey, controller.inputValue);
+        onMaximize(controller.activeSessionId);
+      } : undefined}
     />
   );
 };

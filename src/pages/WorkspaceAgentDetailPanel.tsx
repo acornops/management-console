@@ -108,8 +108,8 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               {selectedAgent.status !== 'disabled' && (
                 <DangerZoneRow
                   id="agent-disable-title"
-                  title="Disable Agent"
-                  description="Stops new Agent chats and prevents workflows from assigning this Agent."
+                  title={t('agentUi.disable')}
+                  description={t('agentUi.disableDescription')}
                   headingLevel="h2"
                   action={(
                     <Button ref={disableButtonRef} size="md" variant="secondary" className="w-full sm:w-auto" onClick={() => props.setDisableConfirmAgentId(selectedAgent.id)} disabled={!props.canManageAgents}>
@@ -122,8 +122,8 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               {props.disableConfirmAgentId === selectedAgent.id && (
                 <InlineConfirmation
                   id="agent-disable-confirmation"
-                  title="Disable this Agent?"
-                  description="New Agent chat and workflow execution will be blocked until it is reactivated."
+                  title={t('agentUi.disableTitle')}
+                  description={t('agentUi.disableBody')}
                   tone="warning"
                   cancelLabel={t('common.cancel')}
                   confirmLabel={t('agentsWorkflows.agents.details.confirmDisable')}
@@ -134,8 +134,8 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
               )}
               <DangerZoneRow
                 id="agent-delete-title"
-                title="Delete Agent"
-                description="Deletes this Agent and its manual conversations. Assigned workflows must be updated first."
+                title={t('agentUi.delete')}
+                description={t('agentUi.deleteDescription')}
                 headingLevel="h2"
                 tone="danger"
                 action={(
@@ -152,9 +152,9 @@ export const WorkspaceAgentDetailPanel: React.FC<WorkspaceAgentDetailPanelProps>
       <DestructiveConfirmationDialog
         open={props.deleteConfirmAgentId === selectedAgent.id}
         titleId="agent-delete-confirmation-title"
-        title="Delete this Agent?"
+        title={t('agentUi.deleteTitle')}
         subtitle={t('common.irreversibleAction')}
-        description="This permanently removes the Agent and its conversation history."
+        description={t('agentUi.deleteBody')}
         error={props.deleteError}
         cancelLabel={t('common.cancel')}
         confirmLabel={t('agentsWorkflows.agents.details.deleteAgent')}

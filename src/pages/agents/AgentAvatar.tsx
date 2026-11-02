@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { Button, TextInput } from '@acornops/ui';
 
@@ -84,10 +85,11 @@ export const AgentEmojiPicker: React.FC<{
 }> = ({
   value,
   onChange,
-  label = 'Agent emoji',
-  description = 'Choose a visual identity. Status is always shown separately.',
+  label,
+  description,
   disabled = false
 }) => {
+  const { t } = useTranslation();
   const selectedIsCurated = AGENT_EMOJI_OPTIONS.includes(value as (typeof AGENT_EMOJI_OPTIONS)[number]);
   const [customValue, setCustomValue] = React.useState(selectedIsCurated ? '' : value);
   const [customError, setCustomError] = React.useState('');
@@ -103,18 +105,18 @@ export const AgentEmojiPicker: React.FC<{
 
   return (
     <fieldset disabled={disabled}>
-      <legend className="type-micro-label">{label}</legend>
-      <p className="type-caption mt-1 text-ui-text-muted">{description}</p>
+      <legend className="type-micro-label">{label ?? t('agentUi.emoji')}</legend>
+      <p className="type-caption mt-1 text-ui-text-muted">{description ?? t('agentUi.emojiHelp')}</p>
       <div
         data-agent-emoji-options="true"
         className="mt-3 grid grid-cols-[repeat(auto-fit,2.75rem)] gap-2"
-        aria-label="Suggested Agent emojis"
+        aria-label={t('agentUi.suggestedEmojis')}
       >
         {AGENT_EMOJI_OPTIONS.map((emoji) => (
           <Button
             key={emoji}
             type="button"
-            aria-label={`Use ${emoji} for this Agent`}
+            aria-label={t('agentUi.useEmoji', { emoji })}
             aria-pressed={value === emoji}
             onClick={() => onChange(emoji)}
             variant="secondary"
@@ -131,17 +133,17 @@ export const AgentEmojiPicker: React.FC<{
       </div>
       <div className="mt-4 flex items-end gap-3">
         <div className="shrink-0">
-          <span className="type-caption type-emphasis block text-ui-text">Current</span>
+          <span className="type-caption type-emphasis block text-ui-text">{t('agentUi.currentEmoji')}</span>
           <AgentAvatar emoji={value} size="lg" className="mt-1" />
         </div>
         <label className="block min-w-0 flex-1 sm:max-w-sm">
-          <span className="type-caption type-emphasis text-ui-text">Use another emoji</span>
+          <span className="type-caption type-emphasis text-ui-text">{t('agentUi.anotherEmoji')}</span>
           <TextInput
             value={customValue}
             maxLength={64}
             aria-invalid={Boolean(customError)}
             aria-describedby={customError ? 'agent-custom-emoji-error' : undefined}
-            placeholder="Enter or paste one emoji"
+            placeholder={t('agentUi.emojiPlaceholder')}
             className="mt-1"
             onChange={(event) => {
               const nextValue = event.target.value;
@@ -152,7 +154,7 @@ export const AgentEmojiPicker: React.FC<{
               }
               const normalized = normalizeAgentEmoji(nextValue);
               if (!normalized) {
-                setCustomError('Enter exactly one emoji.');
+                setCustomError(t('agentUi.invalidEmoji'));
                 return;
               }
               setCustomError('');

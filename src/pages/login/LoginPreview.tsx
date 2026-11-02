@@ -1,4 +1,5 @@
 import { type CSSProperties } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 
 /**
  * Login illustration: "Squirrel Chasing Acorns".
@@ -28,10 +29,10 @@ interface StepCard {
 const stepCards: readonly StepCard[] = [
   {
     order: '01',
-    phase: 'OBSERVE',
-    title: 'Pod events',
-    detail: 'CrashLoopBackOff spike',
-    signal: 'Restart surge',
+    phase: 'loginPreview.observe',
+    title: 'loginPreview.podEvents',
+    detail: 'loginPreview.crashLoopSpike',
+    signal: 'loginPreview.restartSurge',
     tone: 'warning',
     x: 380,
     y: 470,
@@ -39,10 +40,10 @@ const stepCards: readonly StepCard[] = [
   },
   {
     order: '02',
-    phase: 'CORRELATE',
-    title: 'Deploy diff',
-    detail: 'Memory limit reduced',
-    signal: 'Limit change',
+    phase: 'loginPreview.correlate',
+    title: 'loginPreview.deployDiff',
+    detail: 'loginPreview.memoryReduced',
+    signal: 'loginPreview.limitChange',
     tone: 'accent',
     x: 524,
     y: 252,
@@ -50,10 +51,10 @@ const stepCards: readonly StepCard[] = [
   },
   {
     order: '03',
-    phase: 'RESOLVE',
-    title: 'Endpoints',
-    detail: 'Service path clear',
-    signal: 'Probe healthy',
+    phase: 'loginPreview.resolve',
+    title: 'loginPreview.endpoints',
+    detail: 'loginPreview.serviceClear',
+    signal: 'loginPreview.probeHealthy',
     tone: 'success',
     x: 656,
     y: 34,
@@ -101,6 +102,7 @@ const acorns = stepCards.map((card, index) => ({
 }));
 
 function StepCardFrame({ card }: { card: StepCard }) {
+  const { t } = useTranslation();
   const width = CARD_RENDER_W;
   const height = CARD_RENDER_H;
   const px = (n: number) => `${n * CARD_SCALE}px`;
@@ -121,14 +123,14 @@ function StepCardFrame({ card }: { card: StepCard }) {
         <div className="flex items-baseline" style={{ gap: px(8) }}>
           <span className="type-emphasis text-accent-readable" style={{ fontSize: px(13) }}>{card.order}</span>
           <span className="type-micro-label" style={{ fontSize: px(9.5) }}>
-            {card.phase}
+            {t(card.phase)}
           </span>
         </div>
-        <div className="type-emphasis text-ui-text" style={{ fontSize: px(15.5) }}>{card.title}</div>
-        <div className="text-ui-text-muted" style={{ fontSize: px(12) }}>{card.detail}</div>
+        <div className="type-emphasis text-ui-text" style={{ fontSize: px(15.5) }}>{t(card.title)}</div>
+        <div className="text-ui-text-muted" style={{ fontSize: px(12) }}>{t(card.detail)}</div>
         <div className="flex items-center" style={{ gap: px(7), marginTop: px(3) }}>
           <span className={`rounded-full ${toneDot[card.tone]}`} style={{ width: px(7), height: px(7) }} />
-          <span className={`type-emphasis ${toneText[card.tone]}`} style={{ fontSize: px(11.5) }}>{card.signal}</span>
+          <span className={`type-emphasis ${toneText[card.tone]}`} style={{ fontSize: px(11.5) }}>{t(card.signal)}</span>
         </div>
       </div>
     </foreignObject>
@@ -141,6 +143,7 @@ export interface LoginPreviewProps {
 }
 
 export function LoginPreview({ showCards = true, showTagline = true }: LoginPreviewProps = {}) {
+  const { t } = useTranslation();
   return (
     <div
       data-login-visual-variant="hunt-chase"
@@ -320,10 +323,10 @@ export function LoginPreview({ showCards = true, showTagline = true }: LoginPrev
       {showTagline && (
         <div className="relative z-[2] max-w-[36rem]">
           <h2 className="type-route-title text-ui-text">
-            collecting <span className="text-accent-strong">acorns</span> for everything ops
+            <Trans i18nKey="loginPreview.tagline" components={{ highlight: <span className="text-accent-strong" /> }} />
           </h2>
           <p className="mt-3 max-w-[31rem] type-panel-title leading-relaxed text-ui-text-muted">
-            Turn operational knowledge into AI-powered workflows.
+            {t('loginPreview.description')}
           </p>
         </div>
       )}

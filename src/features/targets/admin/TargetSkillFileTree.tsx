@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { ChevronDown, FilePlus2, FileText, Folder, FolderPlus, X } from 'lucide-react';
 import {
@@ -45,9 +47,9 @@ function joinPath(parentPath: string, name: string): string {
 
 function validateTreeItemName(value: string, type: FileAction): string | null {
   const trimmedValue = value.trim();
-  if (!trimmedValue) return type === 'file' ? 'Enter a file name.' : 'Enter a folder name.';
+  if (!trimmedValue) return type === 'file' ? i18n.t('skillEditor.fileNameRequired') : i18n.t('skillEditor.folderNameRequired');
   if (trimmedValue.includes('/') || trimmedValue.includes('\\')) {
-    return type === 'file' ? 'Enter a file name. Select a folder first to create files inside it.' : 'Create one folder at a time.';
+    return type === 'file' ? i18n.t('skillEditor.fileNameHelp') : i18n.t('skillEditor.oneFolder');
   }
   return null;
 }
@@ -105,6 +107,7 @@ function buildFileTree(files: SkillDraftFile[], draftFolders: string[] = []): Fi
 }
 
 export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files, activeFilePath, canEditSkills, resetKey, onFilesChange, onActiveFilePathChange }) => {
+  const { t } = useTranslation();
   const [fileAction, setFileAction] = React.useState<FileAction | null>(null);
   const [fileActionValue, setFileActionValue] = React.useState('');
   const [fileActionError, setFileActionError] = React.useState<string | null>(null);
@@ -320,7 +323,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
         onSubmit={submitRename}
         className="rounded-md bg-accent-soft/10 px-2 py-2"
         style={{ marginLeft: `${depth * 1.1}rem` }}
-        aria-label={target.type === 'folder' ? 'Rename folder' : 'Rename file'}
+        aria-label={target.type === 'folder' ? t('skillEditor.renameFolder') : t('skillEditor.renameFile')}
       >
         <div className="flex min-w-0 items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" />
@@ -345,7 +348,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               submitRename();
             }}
             className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 type-caption text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
-            aria-label={target.type === 'folder' ? 'Folder name' : 'File name'}
+            aria-label={target.type === 'folder' ? t('skillEditor.folderName') : t('skillEditor.fileName')}
           />
           <Button
             type="button"
@@ -356,8 +359,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             }}
             onClick={cancelRename}
             className="control-target rounded p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
-            title="Cancel rename"
-            aria-label="Cancel rename"
+            title={t('skillEditor.cancelRename')}
+            aria-label={t('skillEditor.cancelRename')}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -401,7 +404,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
         onSubmit={submitFileAction}
         className="rounded-md bg-accent-soft/10 px-2 py-2"
         style={{ marginLeft: `${depth * 1.1}rem` }}
-        aria-label={fileAction === 'folder' ? 'Create folder' : 'Create file'}
+        aria-label={fileAction === 'folder' ? t('skillEditor.createFolder') : t('skillEditor.createFile')}
       >
         <div className="flex min-w-0 items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 shrink-0 text-accent-strong" />
@@ -426,7 +429,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               submitFileAction();
             }}
             className="min-w-0 flex-1 rounded border border-accent/30 bg-ui-surface px-2 py-1.5 type-caption text-ui-text outline-none focus:border-accent focus:ring-2 focus:ring-accent/15"
-            aria-label={fileAction === 'folder' ? 'Folder path' : 'File path'}
+            aria-label={fileAction === 'folder' ? t('skillEditor.folderPath') : t('skillEditor.filePath')}
           />
           <Button
             type="button"
@@ -437,13 +440,13 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
             }}
             onClick={cancelFileAction}
             className="control-target rounded p-1.5 text-ui-text-muted transition-colors hover:bg-ui-surface hover:text-ui-text"
-            title="Cancel"
-            aria-label="Cancel"
+            title={t('common.cancel')}
+            aria-label={t('common.cancel')}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
         </div>
-        {fileAction === 'folder' && fileActionValue.trim() && <p className="type-caption mt-1 pl-5 text-ui-text-muted">Creates folder {createPreviewPath}.</p>}
+        {fileAction === 'folder' && fileActionValue.trim() && <p className="type-caption mt-1 pl-5 text-ui-text-muted">{t('skillEditor.createsFolderNamed', { name: createPreviewPath })}</p>}
         {fileActionError && <p className="type-caption mt-1 pl-5 text-status-danger-text">{fileActionError}</p>}
       </form>
     );
@@ -472,7 +475,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
                 toggleFolderCollapsed(folder.path);
               }}
               className="control-target rounded p-1 text-current transition-colors hover:bg-ui-surface"
-              aria-label={collapsed ? `Expand ${folder.name}` : `Collapse ${folder.name}`}
+              aria-label={t(collapsed ? 'skillEditor.expandFolder' : 'skillEditor.collapseFolder', { name: folder.name })}
             >
               <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
             </Button>
@@ -499,7 +502,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
     <aside className="flex min-h-0 flex-col border-b border-ui-border bg-ui-bg lg:border-b-0 lg:border-r">
       <div className="border-b border-ui-border px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="type-row-title">Files</h4>
+          <h4 className="type-row-title">{t('targetSkills.filesMetric')}</h4>
           <div className="flex gap-1">
             <Button
               type="button"
@@ -508,8 +511,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
               disabled={!canEditSkills}
               onClick={() => openFileAction('file')}
-              title="Add file"
-              aria-label="Add file"
+              title={t('skillEditor.addFile')}
+              aria-label={t('skillEditor.addFile')}
             >
               <FilePlus2 className="h-3.5 w-3.5" />
             </Button>
@@ -520,8 +523,8 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
               className="control-target rounded-md p-1.5 text-ui-text-muted hover:bg-ui-surface hover:text-ui-text disabled:opacity-50"
               disabled={!canEditSkills}
               onClick={() => openFileAction('folder')}
-              title="Add folder"
-              aria-label="Add folder"
+              title={t('skillEditor.addFolder')}
+              aria-label={t('skillEditor.addFolder')}
             >
               <FolderPlus className="h-3.5 w-3.5" />
             </Button>
@@ -535,7 +538,7 @@ export const TargetSkillFileTree: React.FC<TargetSkillFileTreeProps> = ({ files,
         })}
         {fileAction && !selectedFolderPath && renderInlineCreateRow()}
         {fileTree.files.length === 0 && fileTree.folders.length === 0 ? (
-          <p className="type-caption ml-7 rounded-md px-2 py-1.5 text-ui-text-muted">No supporting files.</p>
+          <p className="type-caption ml-7 rounded-md px-2 py-1.5 text-ui-text-muted">{t('skillEditor.noSupportingFiles')}</p>
         ) : (
           <div className="space-y-1">
             {fileTree.folders.map((folder) => renderFolder(folder, 0))}

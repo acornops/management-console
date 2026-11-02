@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { Button } from '@acornops/ui';
 
@@ -6,13 +7,16 @@ export const AppUnavailableScreen: React.FC<{
   title: string;
   description: string;
   onRetry: () => void;
-}> = ({ logoSrc, title, description, onRetry }) => (
-  <main className="flex min-h-screen items-center justify-center bg-ui-bg px-6 text-ui-text">
-    <section className="w-full max-w-md rounded-xl border border-ui-border bg-ui-surface p-8 text-center shadow-sm">
-      <img src={logoSrc} className="mx-auto h-12 w-12" alt="AcornOps" />
-      <h1 className="type-route-title mt-5 ">{title}</h1>
-      <p className="mt-2 type-body text-ui-text-muted">{description}</p>
-      <Button className="mt-6" variant="primary" onClick={onRetry}>Try again</Button>
-    </section>
-  </main>
-);
+}> = ({ logoSrc, title, description, onRetry }) => {
+  const { t } = useTranslation();
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-ui-bg px-6 text-ui-text">
+      <section className="w-full max-w-md rounded-xl border border-ui-border bg-ui-surface p-8 text-center shadow-sm">
+        <img src={logoSrc} className="mx-auto h-12 w-12" alt="AcornOps" />
+        <h1 className="type-route-title mt-5 ">{title}</h1>
+        <p className="mt-2 type-body text-ui-text-muted">{description}</p>
+        <Button className="mt-6" variant="primary" onClick={onRetry}>{t('appRecovery.retry')}</Button>
+      </section>
+    </main>
+  );
+};

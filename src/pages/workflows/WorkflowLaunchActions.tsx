@@ -30,14 +30,14 @@ export const WorkflowLaunchActions: React.FC<{
   const launchBlocked = primaryAction === 'launch' && Boolean(launchBlocker);
 
   return (
-    <div className="mt-3 flex w-full flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between" aria-label="Selected workflow actions">
+    <div className="mt-3 flex w-full flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between" aria-label={t('workflowUi.selectedActions')}>
       {(primaryAction === 'activate' || launchBlocked) && (
         <div className="flex min-w-0 items-center gap-2" role="status" aria-live="polite" aria-atomic="true">
           <StatusBadge tone="warning">
-            {primaryAction === 'activate' ? 'Inactive' : 'Blocked'}
+            {primaryAction === 'activate' ? t('workflowUi.inactive') : t('agentsWorkflows.agents.readiness.blocked')}
           </StatusBadge>
           <span className="type-caption min-w-0 max-w-2xl break-words text-ui-text-muted">
-            {primaryAction === 'activate' ? 'Activate this workflow before starting a run.' : launchBlocker}
+            {primaryAction === 'activate' ? t('workflowUi.activateBeforeRun') : launchBlocker}
           </span>
         </div>
       )}

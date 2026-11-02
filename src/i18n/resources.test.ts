@@ -91,7 +91,12 @@ function literalTranslationCalls(): TranslationCall[] {
         node.expression.text === 't' &&
         ts.isStringLiteralLike(node.arguments[0])
       ) {
-        const options = node.arguments[1];
+        const callOptions = node.arguments[1];
+        const replace = callOptions && ts.isObjectLiteralExpression(callOptions)
+          ? callOptions.properties.find((property): property is ts.PropertyAssignment =>
+              ts.isPropertyAssignment(property) && property.name.getText(sourceFile) === 'replace')
+          : undefined;
+        const options = replace?.initializer ?? callOptions;
         const optionNames = options && ts.isObjectLiteralExpression(options)
           ? new Set(options.properties.flatMap((property) => {
               if (ts.isShorthandPropertyAssignment(property)) return [property.name.text];

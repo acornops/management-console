@@ -22,6 +22,9 @@
   still prevent unavailable settings from rendering.
 - Keep v1 console payloads bounded: lists use `{ items, nextCursor? }`, large routes lazy-load pages, and cluster detail exposes summary counts instead of full snapshot JSON.
 - Preserve run trace handling for replay, SSE, and terminal states.
+- Run details present informational events as history. A terminal run does not
+  prove that every tool or reasoning summary completed. Preserve explicit
+  outcomes and display unfinished reasoning as partial.
 - Preserve target chat activity resume replay for collaborative message discovery, approval checkpoints, and final assistant commits; fresh streams rely on recent activity/session reads for initial state.
 
 ## Recovery Expectations

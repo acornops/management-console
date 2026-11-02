@@ -399,7 +399,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
     ? <InlineAlert tone="danger">{scheduleError}</InlineAlert>
     : <InlineLoadingIndicator label={t('common.loading')} />;
   const scheduleAnnouncement = schedulePhase === 'ready'
-    ? t('schedules.filters.showing', { count: visibleSchedules.length, total: schedules.length })
+    ? t('schedules.filters.showing', { count: schedules.length, replace: { count: visibleSchedules.length, total: schedules.length } })
     : undefined;
 
   return (
@@ -439,7 +439,7 @@ export const WorkspaceSchedulesPage: React.FC<WorkspaceSchedulesPageProps> = ({
         resultSummary={schedulesPending
           ? t('schedules.loading')
           : hasActiveFilters
-          ? t('schedules.filters.showing', { count: visibleSchedules.length, total: schedules.length })
+          ? t('schedules.filters.showing', { count: schedules.length, replace: { count: visibleSchedules.length, total: schedules.length } })
           : t('schedules.filters.summary', {
               count: schedules.length,
               nextRun: formatScheduleDateTime(summary.nextRunAt, t('schedules.nextRunUnavailable'))

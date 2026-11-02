@@ -414,7 +414,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
         resultSummary={triggersPending
           ? t('eventTriggers.loading')
           : hasActiveFilters
-          ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: triggers.length })
+          ? t('eventTriggers.filters.showing', { count: triggers.length, replace: { count: visibleTriggers.length, total: triggers.length } })
           : t('eventTriggers.count', { count: triggers.length })}
         filters={[
           createDiscoveryFilterGroup<TriggerStatusFilter>({
@@ -509,7 +509,7 @@ export const WorkspaceIncomingWebhooksPage: React.FC<WorkspaceIncomingWebhooksPa
           announcement={phase === 'refreshing'
             ? t('eventTriggers.refreshing')
             : phase === 'ready'
-              ? t('eventTriggers.filters.showing', { count: visibleTriggers.length, total: triggers.length })
+              ? t('eventTriggers.filters.showing', { count: triggers.length, replace: { count: visibleTriggers.length, total: triggers.length } })
               : undefined}
         >
           <div className="divide-y divide-ui-border">

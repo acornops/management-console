@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { createInstance } from 'i18next';
+import { en } from '@/i18n/locales/en.js';
 
 import {
   appendReasoningSummaryDelta,
@@ -14,6 +16,11 @@ import {
   upsertToolCall
 } from '@/features/targets/chat/lib/trace-utils';
 import { LiveRunTrace } from '@/features/targets/chat/types';
+
+const translation = createInstance();
+beforeAll(async () => {
+  await translation.init({ lng: 'en', resources: { en: { translation: en } }, interpolation: { escapeValue: false } });
+});
 
 function createTrace(overrides: Partial<LiveRunTrace> = {}): LiveRunTrace {
   return {
@@ -42,13 +49,13 @@ describe('trace-utils', () => {
   });
 
   it('formats usage details for the trace footer', () => {
-    expect(formatRunUsageDetail({ inputTokens: 8, outputTokens: 3, toolCalls: 1 })).toBe(
+    expect(formatRunUsageDetail({ inputTokens: 8, outputTokens: 3, toolCalls: 1 }, translation.t)).toBe(
       'Tokens: input 8, output 3'
     );
-    expect(formatRunUsageDetail({ inputTokens: 8, outputTokens: 3, toolCalls: 1, reasoningTokens: 0 })).toBe(
+    expect(formatRunUsageDetail({ inputTokens: 8, outputTokens: 3, toolCalls: 1, reasoningTokens: 0 }, translation.t)).toBe(
       'Tokens: input 8, output 3, reasoning 0'
     );
-    expect(formatRunUsageDetail(undefined)).toBeUndefined();
+    expect(formatRunUsageDetail(undefined, translation.t)).toBeUndefined();
     expect(formatTraceFailureDetail(
       'GATEWAY_HTTP_ERROR',
       'llm-gateway returned HTTP 404: {"detail":"Not Found"}'
@@ -129,44 +136,44 @@ describe('trace-utils', () => {
   });
 
   it('derives operator-facing trace activity labels', () => {
-    expect(getTraceActivityLabel(createTrace({ status: 'connecting' }))).toBe('Thinking');
-    expect(getTraceActivityLabel(createTrace({ status: 'completed' }))).toBe('Done');
-    expect(getTraceActivityLabel(createTrace({ status: 'failed' }))).toBe('Could not complete');
-    expect(getTraceActivityLabel(createTrace({ status: 'cancelled' }))).toBe('Cancelled');
+    expect(getTraceActivityLabel(createTrace({ status: 'connecting' }), translation.t)).toBe('Thinking');
+    expect(getTraceActivityLabel(createTrace({ status: 'completed' }), translation.t)).toBe('Done');
+    expect(getTraceActivityLabel(createTrace({ status: 'failed' }), translation.t)).toBe('Could not complete');
+    expect(getTraceActivityLabel(createTrace({ status: 'cancelled' }), translation.t)).toBe('Cancelled');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       steps: [{ id: 'step-1', label: 'Request queued', status: 'info', timestamp: 1 }]
-    }))).toBe('Thinking');
+    }), translation.t)).toBe('Thinking');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       steps: [{ id: 'step-1', label: 'Reviewing context', status: 'info', timestamp: 1 }]
-    }))).toBe('Reviewing context');
+    }), translation.t)).toBe('Reviewing context');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       steps: [{ id: 'step-1', label: 'Thinking started', status: 'info', timestamp: 1 }]
-    }))).toBe('Thinking');
+    }), translation.t)).toBe('Thinking');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       steps: [{ id: 'step-1', label: 'Writing response', status: 'info', timestamp: 1 }]
-    }))).toBe('Writing response');
+    }), translation.t)).toBe('Writing response');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       toolCalls: [{ callId: 'call-1', tool: 'kubectl', status: 'running' }]
-    }))).toBe('Using tools');
+    }), translation.t)).toBe('Using tools');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       skillLoads: [{ skillRef: 'skill_1', name: 'CNPG triage', status: 'loading' }]
-    }))).toBe('Loading skill context');
+    }), translation.t)).toBe('Loading skill context');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       steps: [{ id: 'step-1', label: 'Approval requested: restart_workload', status: 'info', timestamp: 1 }]
-    }))).toBe('Waiting for approval');
+    }), translation.t)).toBe('Waiting for approval');
     expect(getTraceActivityLabel(createTrace({
       status: 'running',
       steps: [
         { id: 'step-1', label: 'Approval requested: restart_workload', status: 'info', timestamp: 1 },
         { id: 'step-2', label: 'Approval granted: restart_workload', status: 'success', timestamp: 2 }
       ]
-    }))).toBe('Working');
+    }), translation.t)).toBe('Working');
   });
 });

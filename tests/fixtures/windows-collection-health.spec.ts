@@ -66,7 +66,7 @@ test('synthetic Windows HTTP 200 failures and partial logs stay visible across c
   await page.getByRole('button', { name: 'Refresh logs', exact: true }).click();
   await expect(page.getByText('Retained partial event', { exact: true })).toBeVisible();
   await expect(page.getByText('Results truncated; additional events may be missing.', { exact: true })).toBeVisible();
-  await expect(page.getByText('1 events returned; 3 observed before the response limit.', { exact: true })).toBeVisible();
+  await expect(page.getByText('1 event returned; 3 observed before the response limit.', { exact: true })).toBeVisible();
   await page.evaluate(() => { (window as any).windowsCollections.delay = true; });
   await page.getByRole('button', { name: 'Refresh logs', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).windowsCollections.pending.length)).toBe(2);

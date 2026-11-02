@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 import type { Workspace } from '@/types';
@@ -10,12 +11,15 @@ export const WorkflowTriggerPanel: React.FC<{
   activeView: Extract<WorkflowView, 'schedules' | 'webhooks'>;
   workflow: WorkflowDefinition;
   workspace: Workspace;
-}> = ({ activeView, workflow, workspace }) => (
-  <React.Suspense fallback={<p className="p-5 type-body text-ui-text-muted" role="status">Loading {activeView}…</p>}>
-    {activeView === 'schedules' ? (
-      <WorkspaceSchedulesPage embedded constrainedWorkflowId={workflow.id} workspace={workspace} />
-    ) : (
-      <WorkspaceIncomingWebhooksPage embedded constrainedWorkflowId={workflow.id} workspace={workspace} />
-    )}
-  </React.Suspense>
-);
+}> = ({ activeView, workflow, workspace }) => {
+  const { t } = useTranslation();
+  return (
+    <React.Suspense fallback={<p className="p-5 type-body text-ui-text-muted" role="status">{t(activeView === 'schedules' ? 'schedules.loading' : 'eventTriggers.loading')}</p>}>
+      {activeView === 'schedules' ? (
+        <WorkspaceSchedulesPage embedded constrainedWorkflowId={workflow.id} workspace={workspace} />
+      ) : (
+        <WorkspaceIncomingWebhooksPage embedded constrainedWorkflowId={workflow.id} workspace={workspace} />
+      )}
+    </React.Suspense>
+  );
+};

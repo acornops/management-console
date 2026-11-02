@@ -1,7 +1,10 @@
 import React from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { motion, useReducedMotion } from 'framer-motion';
 import { BookOpen, ChevronRight, CircleDashed, MessageSquare, Wrench } from 'lucide-react';
 import { formatRunUsageDetail, getTraceActivityLabel } from '@/features/targets/chat/lib/trace-utils';
+import { localizeTraceTimelineEvent } from '@/features/targets/chat/lib/trace-presentation';
 import { LiveRunTrace, RunTraceTimelineEvent } from '@/features/targets/chat/types';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { controlPlaneApi } from '@/services/controlPlaneApi';
@@ -74,29 +77,34 @@ function buildTimelineEvents(trace: LiveRunTrace): RunTraceTimelineEvent[] {
   ].sort((left, right) => left.timestamp - right.timestamp);
 }
 
-function getTimelineEventMeta(event: RunTraceTimelineEvent): string {
+function getTimelineEventMeta(event: RunTraceTimelineEvent, isRunInProgress: boolean, t: TFunction): string {
   if (event.type === 'reasoning') {
     const source = [event.provider, event.model].filter(Boolean).join(' / ');
-    const status = event.status === 'unavailable' ? 'Unavailable' : event.status === 'completed' ? 'Completed' : 'Live';
+    const status = event.status === 'unavailable'
+      ? t('runTrace.status.unavailable')
+      : event.status === 'completed'
+        ? t('runTrace.status.completed')
+        : isRunInProgress ? t('runTrace.status.live') : t('runTrace.status.partial');
     return [source, status].filter(Boolean).join(' · ');
   }
 
   if (event.type === 'tool') {
-    if (event.status === 'success') return 'Function tool · Done';
-    if (event.status === 'error') return 'Function tool · Attention';
-    if (event.status === 'info') return 'Function tool · Running';
-    return 'Function tool';
+    if (event.status === 'success') return t('runTrace.toolMeta.done');
+    if (event.status === 'error') return t('runTrace.toolMeta.attention');
+    if (event.status === 'info') return t('runTrace.toolMeta.event');
+    return t('runTrace.toolMeta.default');
   }
 
   if (event.type === 'skill') {
-    if (event.status === 'success') return 'Skill context · Loaded';
-    if (event.status === 'error') return 'Skill context · Unavailable';
-    return 'Skill context';
+    if (event.status === 'success') return t('runTrace.skillMeta.loaded');
+    if (event.status === 'error') return t('runTrace.skillMeta.unavailable');
+    return t('runTrace.skillMeta.default');
   }
 
-  if (event.status === 'success') return 'Done';
-  if (event.status === 'error') return 'Attention';
-  return 'Progress';
+  if (event.status === 'success') return t('runTrace.status.done');
+  if (event.status === 'error') return t('runTrace.status.attention');
+  // Informational entries record history; they do not describe active work.
+  return t('runTrace.status.event');
 }
 
 function getTimelineEventToneClass(event: RunTraceTimelineEvent): string {
@@ -114,30 +122,32 @@ function getTimelineMarkerClass(event: RunTraceTimelineEvent): string {
   return 'bg-accent';
 }
 
-function formatCountedLabel(count: number, singular: string, plural: string): string {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
-function formatCompactSkillSummary(skillLoads: LiveRunTrace['skillLoads'] = []): string | undefined {
+function formatCompactSkillSummary(
+  skillLoads: LiveRunTrace['skillLoads'] = [],
+  isRunInProgress: boolean,
+  t: TFunction
+): string | undefined {
   if (skillLoads.length === 0) return undefined;
 
   const loaded = skillLoads.filter((skillLoad) => skillLoad.status === 'loaded').length;
   const failed = skillLoads.filter((skillLoad) => skillLoad.status === 'failed').length;
   const loading = skillLoads.filter((skillLoad) => skillLoad.status === 'loading').length;
   const parts = [
-    loaded > 0 ? `${formatCountedLabel(loaded, 'skill context', 'skill contexts')} loaded` : undefined,
-    failed > 0 ? `${formatCountedLabel(failed, 'skill context', 'skill contexts')} unavailable` : undefined,
-    loading > 0 ? `${formatCountedLabel(loading, 'skill context', 'skill contexts')} loading` : undefined
+    loaded > 0 ? t('runTrace.skillContextsLoaded', { count: loaded }) : undefined,
+    failed > 0 ? t('runTrace.skillContextsUnavailable', { count: failed }) : undefined,
+    loading > 0 ? isRunInProgress
+      ? t('runTrace.skillContextsLoading', { count: loading })
+      : t('runTrace.skillContextsUnrecorded', { count: loading }) : undefined
   ].filter(Boolean);
 
   return parts.join(', ');
 }
 
-function getFullResultErrorMessage(error: unknown): string {
+function getFullResultErrorMessage(error: unknown, t: TFunction): string {
   if (error instanceof ControlPlaneRequestError && error.status === 404) {
-    return 'The full result is no longer available.';
+    return t('runTrace.fullResultExpired');
   }
-  return 'Could not load the full result. Try again.';
+  return t('runTrace.fullResultLoadFailed');
 }
 
 /**
@@ -155,19 +165,21 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
   timelineLayout = 'contained',
   className
 }) => {
+  const { t } = useTranslation();
   const contentId = React.useId();
   const shouldReduceMotion = useReducedMotion();
-  const isInProgress = activeOverride ?? (trace.status === 'connecting' || trace.status === 'running');
-  const statusLabel = activityLabelOverride || getTraceActivityLabel(trace);
+  const isRunInProgress = trace.status === 'connecting' || trace.status === 'running';
+  const isInProgress = activeOverride ?? isRunInProgress;
+  const statusLabel = activityLabelOverride || getTraceActivityLabel(trace, t);
   const completedToolCalls = trace.toolCalls.filter((toolCall) => toolCall.status === 'completed').length;
   const skillLoads = trace.skillLoads || [];
   const reasoningSummaryCount = trace.reasoningSummaries?.length || 0;
   const compactReasoningSummary = isInProgress && !suppressCompactReasoningSummary ? trace.activeReasoningSummary?.trim() : '';
   const hasCompactReasoningSummary = Boolean(compactReasoningSummary);
   const shouldShowCompactStatusLabel = hasCompactReasoningSummary || !isInProgress || !suppressCompactReasoningSummary;
-  const compactStatusLabel = hasCompactReasoningSummary ? 'Working through' : statusLabel;
-  const usageDetail = formatRunUsageDetail(trace.usage);
-  const timelineEvents = buildTimelineEvents(trace);
+  const compactStatusLabel = hasCompactReasoningSummary ? t('runTrace.activity.workingThrough') : statusLabel;
+  const usageDetail = formatRunUsageDetail(trace.usage, t);
+  const timelineEvents = buildTimelineEvents(trace).map(event => localizeTraceTimelineEvent(event, t));
   const timelineScrollRef = React.useRef<HTMLDivElement>(null);
   const latestTimelineEventRef = React.useRef<HTMLDivElement>(null);
   const shouldFollowLatestRef = React.useRef(true);
@@ -204,36 +216,38 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
         const viewerLimit = 100_000;
         setArtifactView({
           callId: toolCall.callId,
-          content: serialized.length > viewerLimit ? `${serialized.slice(0, viewerLimit)}\n\n[Viewer limited to ${viewerLimit.toLocaleString()} characters]` : serialized
+          content: serialized.length > viewerLimit ? `${serialized.slice(0, viewerLimit)}\n\n${t('runTrace.viewerLimit', { count: viewerLimit })}` : serialized
         });
       } catch (error) {
         if (artifactRequestRef.current !== requestId) return;
         setArtifactView({
           callId: toolCall.callId,
-          error: getFullResultErrorMessage(error)
+          error: getFullResultErrorMessage(error, t)
         });
       }
     },
-    [artifactView?.callId, runId]
+    [artifactView?.callId, runId, t]
   );
   const latestTimelineEventKey = timelineEvents.at(-1)
     ? [timelineEvents.at(-1)?.id, timelineEvents.at(-1)?.timestamp, timelineEvents.at(-1)?.status, timelineEvents.at(-1)?.detail || ''].join(':')
     : '';
-  const compactToolSummary = trace.toolCalls.length > 0 ? `${completedToolCalls} of ${trace.toolCalls.length} function calls complete` : 'No function tool calls';
-  const compactSkillSummary = formatCompactSkillSummary(skillLoads);
+  const compactToolSummary = trace.toolCalls.length > 0
+    ? t('runTrace.functionCallsComplete', { count: trace.toolCalls.length, completed: completedToolCalls })
+    : t('runTrace.noFunctionCalls');
+  const compactSkillSummary = formatCompactSkillSummary(skillLoads, isRunInProgress, t);
   const activitySummary =
     trace.status === 'connecting'
-      ? 'Waiting for progress'
+      ? t('runTrace.activity.waitingForProgress')
       : [
-          `${trace.steps.length} steps`,
-          reasoningSummaryCount > 0 ? `${reasoningSummaryCount} summaries` : undefined,
+          t('runTrace.steps', { count: trace.steps.length }),
+          reasoningSummaryCount > 0 ? t('runTrace.summaries', { count: reasoningSummaryCount }) : undefined,
           compactSkillSummary,
           compactToolSummary,
           trace.status === 'completed' ? usageDetail : undefined
         ]
           .filter(Boolean)
           .join(' · ');
-  const disclosureLabel = isExpanded ? 'Hide run details' : 'Show run details';
+  const disclosureLabel = isExpanded ? t('runTrace.hideDetails') : t('runTrace.showDetails');
   const disclosureSummary = hasCompactReasoningSummary ? compactReasoningSummary : activitySummary;
   const statusDotClass = trace.status === 'completed' ? 'bg-status-success' : trace.status === 'failed' || trace.status === 'cancelled' ? 'bg-status-danger' : 'bg-accent';
 
@@ -326,8 +340,8 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                           <p className="type-caption min-w-0 truncate text-ui-text" title={event.label}>
                             {event.label}
                           </p>
-                          <span className={`type-micro-label max-w-[45%] shrink truncate ${getTimelineEventToneClass(event)}`} title={getTimelineEventMeta(event)}>
-                            {getTimelineEventMeta(event)}
+                          <span className={`type-micro-label max-w-[45%] shrink truncate ${getTimelineEventToneClass(event)}`} title={getTimelineEventMeta(event, isRunInProgress, t)}>
+                            {getTimelineEventMeta(event, isRunInProgress, t)}
                           </span>
                         </div>
                         {event.detail && <p className="type-caption mt-0.5 whitespace-pre-wrap break-words text-ui-text-muted">{event.detail}</p>}
@@ -338,19 +352,19 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
               ) : (
                 <div className="type-caption flex items-center gap-2 px-3 py-2">
                   <CircleDashed className="h-3.5 w-3.5" />
-                  No run activity has been recorded for this message.
+                  {t('runTrace.empty')}
                 </div>
               )}
               {artifactCalls.length > 0 && (
                 <div className="border-t border-ui-border px-3 py-2.5">
-                  <p className="type-micro-label text-ui-text-muted">Full tool results</p>
+                  <p className="type-micro-label text-ui-text-muted">{t('runTrace.fullResults')}</p>
                   <div className="mt-1 divide-y divide-ui-border">
                     {artifactCalls.map((toolCall) => (
                       <div key={toolCall.callId} className="py-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="type-caption truncate text-ui-text">{toolCall.tool}</p>
-                            {!toolCall.artifact && <p className="type-caption text-ui-text-muted">Full result unavailable</p>}
+                            {!toolCall.artifact && <p className="type-caption text-ui-text-muted">{t('runTrace.fullResultUnavailable')}</p>}
                           </div>
                           {toolCall.artifact && (
                             <Button
@@ -361,14 +375,14 @@ export const TraceFooter: React.FC<TraceFooterProps> = ({
                               className="control-target min-h-9 px-3"
                               aria-expanded={artifactView?.callId === toolCall.callId}
                             >
-                              {artifactView?.callId === toolCall.callId ? 'Hide full result' : 'View full result'}
+                              {artifactView?.callId === toolCall.callId ? t('runTrace.hideFullResult') : t('runTrace.viewFullResult')}
                             </Button>
                           )}
                         </div>
                         {artifactView?.callId === toolCall.callId && (
                           <div className="mt-2 border-t border-ui-border pt-2">
                             {artifactView.loading ? (
-                              <p className="type-caption text-ui-text-muted">Loading full result…</p>
+                              <p className="type-caption text-ui-text-muted">{t('runTrace.loadingFullResult')}</p>
                             ) : artifactView.error ? (
                               <p className="type-caption text-status-danger-text">{artifactView.error}</p>
                             ) : (

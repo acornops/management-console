@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import type { WorkflowDefinition } from '@/pages/workflows/workflowModel';
 import { previewWorkflowCapabilities, type WorkflowCapabilitiesPreview } from '@/services/control-plane/workflowApi';
@@ -7,19 +8,20 @@ export function useWorkflowCapabilityPreview(input: {
   workflow?: WorkflowDefinition;
   enabled: boolean;
 }) {
+  const { t } = useTranslation();
   const [preview, setPreview] = React.useState<WorkflowCapabilitiesPreview | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const [retryKey, setRetryKey] = React.useState(0);
   const requestRef = React.useRef(0);
   const blocker = loading
-    ? 'Wait for the capability check to finish.'
+    ? t('workflowUi.waitCapabilityCheck')
     : error
-      ? 'Retry the capability check before launch.'
+      ? t('workflowUi.retryCapabilityCheck')
       : !preview
-        ? 'Wait for the capability check to finish.'
+        ? t('workflowUi.waitCapabilityCheck')
         : preview.status === 'blocked'
-        ? 'The capability check is blocked.'
+        ? t('workflowUi.capabilityBlocked')
         : null;
 
   React.useEffect(() => {
@@ -43,14 +45,14 @@ export function useWorkflowCapabilityPreview(input: {
       .then((response) => {
         if (requestRef.current !== requestId) return;
         if (response.workflowId !== workflow.id || response.mode !== workflow.policy.mode) {
-          setError('The capability check is stale. Retry before launch.');
+          setError('workflowUi.capabilityStale');
           return;
         }
         setPreview(response);
       })
       .catch(() => {
         if (requestRef.current !== requestId) return;
-        setError('The capability check could not be loaded. Retry before launching this workflow.');
+        setError('workflowUi.capabilityFailed');
       })
       .finally(() => {
         if (requestRef.current === requestId) setLoading(false);
@@ -62,5 +64,5 @@ export function useWorkflowCapabilityPreview(input: {
     };
   }, [input.enabled, input.workspaceId, input.workflow?.id, input.workflow?.policy.mode, retryKey]);
 
-  return { preview, loading, error, blocker, retry: () => setRetryKey((value) => value + 1) };
+  return { preview, loading, error: error ? t(error) : '', blocker, retry: () => setRetryKey((value) => value + 1) };
 }

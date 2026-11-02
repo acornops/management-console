@@ -15,7 +15,10 @@ export function IssuePagination({ collection, total }: {
       {collection.error && <InlineAlert tone="warning" className="mb-3">{t('issues.pagination.loadError')}</InlineAlert>}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="type-caption text-ui-text-muted" role="status">
-          {t(hasCurrentTotal ? 'issues.pagination.loadedOf' : 'issues.pagination.loaded', { count: collection.items.length, total })}
+          {t(hasCurrentTotal ? 'issues.pagination.loadedOf' : 'issues.pagination.loaded', {
+            count: hasCurrentTotal ? total : collection.items.length,
+            replace: { count: collection.items.length, total }
+          })}
         </p>
         {collection.error ? (
           <Button variant="secondary" size="sm" onClick={() => void collection.retry()} disabled={busy}>{t('common.retry')}</Button>

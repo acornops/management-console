@@ -7,12 +7,12 @@ describe('trace footer polish contracts', () => {
     expect(traceFooter).toContain('type-caption mt-0.5 whitespace-pre-wrap break-words text-ui-text-muted');
     expect(traceFooter).not.toContain('line-clamp-4');
     expect(traceFooter).not.toContain('title={event.detail}');
-    expect(traceFooter).toContain('Full tool results');
-    expect(traceFooter).toContain('View full result');
-    expect(traceFooter).toContain('Hide full result');
-    expect(traceFooter).toContain('Full result unavailable');
+    expect(traceFooter).toContain("t('runTrace.fullResults')");
+    expect(traceFooter).toContain("t('runTrace.viewFullResult')");
+    expect(traceFooter).toContain("t('runTrace.hideFullResult')");
+    expect(traceFooter).toContain("t('runTrace.fullResultUnavailable')");
     expect(traceFooter).toContain('error instanceof ControlPlaneRequestError && error.status === 404');
-    expect(traceFooter).toContain('Could not load the full result. Try again.');
+    expect(traceFooter).toContain("t('runTrace.fullResultLoadFailed')");
     expect(traceFooter).not.toContain("error instanceof Error ? error.message");
     expect(traceFooter).not.toContain('Full redacted results');
     expect(traceFooter).not.toContain('expires ${new Date');

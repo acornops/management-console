@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useMemo, useState } from 'react';
 import { SelectOption } from '@acornops/ui';
 import { type AgentDefinition } from '@/pages/agents/agentModel';
@@ -28,6 +29,7 @@ import { AgentDefinitionSettingsSection } from '@/pages/agents/AgentDefinitionSe
 import { useAgentOwnerOptions } from '@/pages/agents/useAgentOwnerOptions';
 
 export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ workspace, currentUserId, isDark, routeState, navigate }) => {
+  const { t } = useTranslation();
   const urlSearch = useUrlSearchState();
   const initialUrlSearch = React.useMemo(() => new URLSearchParams(window.location.search), []);
   const agentCatalogCacheKey = `workspace:${workspace.id}:agents`;
@@ -224,9 +226,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'disabled' });
       updateSelectedAgent(selectedAgent.id, () => mapApiAgent(updated, workspace.name, ownerLabelsByUserId));
       setDisableConfirmAgentId('');
-      setLocalNotice({ tone: 'success', message: 'Agent disabled. Existing workflow assignments still reference it until you update them.' });
+      setLocalNotice({ tone: 'success', message: t('agentUi.disabled') });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not disable this agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : t('agentUi.disableFailed') });
     } finally {
       setUpdatingAgentId('');
     }
@@ -238,9 +240,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     try {
       const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { status: 'active' });
       updateSelectedAgent(selectedAgent.id, () => mapApiAgent(updated, workspace.name, ownerLabelsByUserId));
-      setLocalNotice({ tone: 'success', message: 'Agent reactivated.' });
+      setLocalNotice({ tone: 'success', message: t('agentUi.reactivated') });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not reactivate this agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : t('agentUi.reactivateFailed') });
     } finally {
       setUpdatingAgentId('');
     }
@@ -257,7 +259,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setSelectedAgentId(nextAgent?.id || '');
       navigate(AppPaths.workspaceAgents(workspace.id), { replace: true });
       setDeleteConfirmAgentId('');
-      setLocalNotice({ tone: 'success', message: 'Agent deleted.' });
+      setLocalNotice({ tone: 'success', message: t('agentUi.deleted') });
     } catch (error) {
       const dependentWorkflows = error instanceof ControlPlaneRequestError && Array.isArray(error.details?.workflows)
         ? error.details.workflows
@@ -268,8 +270,8 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setLocalNotice({
         tone: 'danger',
         message: dependentWorkflows.length > 0
-          ? `Remove this Agent from ${dependentWorkflows.join(', ')} before deleting it.`
-          : error instanceof Error ? error.message : 'Could not delete this agent.'
+          ? t('agentUi.removeAssignments', { names: dependentWorkflows.join(', ') })
+          : error instanceof Error ? error.message : t('agentUi.deleteFailed')
       });
     } finally {
       setUpdatingAgentId('');
@@ -292,11 +294,11 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const mapped = mapApiAgent(created, workspace.name, ownerLabelsByUserId);
       setAgents((current) => [mapped, ...current.filter((agent) => agent.id !== mapped.id)]);
       setSelectedAgentId(mapped.id);
-      setLocalNotice({ tone: 'success', message: 'Agent saved with restricted trust and Ask before changes permission mode.' });
+      setLocalNotice({ tone: 'success', message: t('agentUi.saved') });
       updateUrlSearch({ panel: null });
       resetCreateAgentDraft();
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not save this agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : t('agentUi.saveFailed') });
     } finally {
       setCreatingAgent(false);
     }
@@ -313,10 +315,10 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       setSelectedAgentId(mapped.id);
       editDraftSourceRef.current = { agentId: mapped.id, draft };
       setEditDraft(draft);
-      setLocalNotice({ tone: 'success', message: `Duplicated ${agent.name} as a draft.` });
+      setLocalNotice({ tone: 'success', message: t('agentUi.duplicated', { name: agent.name }) });
       navigate(AppPaths.workspaceAgentDetail(workspace.id, mapped.id, 'settings'));
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not duplicate this agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : t('agentUi.duplicateFailed') });
     } finally {
       setDuplicatingAgentId('');
     }
@@ -346,9 +348,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const savedDraft = createAgentEditDraft(mapped);
       editDraftSourceRef.current = { agentId: mapped.id, draft: savedDraft };
       setEditDraft(savedDraft);
-      setLocalNotice({ tone: 'success', message: 'Agent updated. Review affected workflows before the next run.' });
+      setLocalNotice({ tone: 'success', message: t('agentUi.updated') });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update this agent.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : t('agentUi.updateFailed') });
     } finally {
       setUpdatingAgentId('');
     }
@@ -361,9 +363,9 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       const updated = await updateWorkspaceAgent(workspace.id, selectedAgent.id, { permissionMode });
       const mapped = mapApiAgent(updated, workspace.name, ownerLabelsByUserId);
       setAgents((current) => current.map((agent) => agent.id === mapped.id ? mapped : agent));
-      setLocalNotice({ tone: 'success', message: 'Agent permission mode updated.' });
+      setLocalNotice({ tone: 'success', message: t('agentUi.permissionUpdated') });
     } catch (error) {
-      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : 'Could not update the Agent permission mode.' });
+      setLocalNotice({ tone: 'danger', message: error instanceof Error ? error.message : t('agentUi.permissionFailed') });
     } finally {
       setUpdatingAgentId('');
     }
@@ -371,13 +373,13 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
   const feedback = (
     <>
       {agentLoadError && (
-        <Notice title="Some live data is unavailable" actionLabel="Retry all" onAction={() => { setAgentCatalogReloadKey((value) => value + 1); }}>
-          <details><summary className="cursor-pointer">Fallback data keeps the catalog available. Show details</summary><ul className="mt-2 list-disc pl-5"><li>Agent definitions may be stale.</li></ul></details>
+        <Notice title={t('agentsWorkflows.agents.unavailable')} actionLabel={t('agentsWorkflows.agents.retryAll')} onAction={() => { setAgentCatalogReloadKey((value) => value + 1); }}>
+          <details><summary className="cursor-pointer">{t('agentUi.fallbackHelp')}</summary><ul className="mt-2 list-disc pl-5"><li>{t('agentUi.staleDefinitions')}</li></ul></details>
         </Notice>
       )}
       {!canManageAgents && (
         <div className="mb-4 rounded-md border border-ui-border bg-ui-surface px-3 py-2 type-caption type-emphasis text-ui-text-muted">
-          You can inspect agents. Ask a workspace manager for manage_agents permission to create or change them.
+          {t('agentUi.managePermission')}
         </div>
       )}
       {localNotice && (
@@ -400,13 +402,13 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
       )}
       {discardRequest && (
         <UnsavedChangesDialog
-          title="Discard unsaved agent changes?"
+          title={t('agentUi.discardTitle')}
           body={discardRequest.panel === 'create'
-            ? 'The agent name, emoji, assignment purpose, and instructions will be lost.'
-            : `Your unsaved changes to ${editingAgent?.name || 'this agent'} will be lost.`}
-          cancelLabel="Keep editing"
-          discardLabel="Discard changes"
-          closeLabel="Close discard confirmation"
+            ? t('agentUi.discardBody')
+            : t('agentUi.discardNamed', { name: editingAgent?.name || t('agentUi.thisAgent') })}
+          cancelLabel={t('tools.targetInsights.keepEditing')}
+          discardLabel={t('schedules.form.discardConfirm')}
+          closeLabel={t('agentUi.closeDiscard')}
           onCancel={cancelDiscard}
           onDiscard={discardChanges}
         />
@@ -464,7 +466,7 @@ export const WorkspaceAgentsPage: React.FC<WorkspaceAgentsPageProps> = ({ worksp
     />
   ) : (
     <div role="status" className="type-body type-emphasis flex h-full items-center justify-center bg-ui-bg text-ui-text-muted">
-      {agentCatalogReady ? 'Agent not found.' : 'Loading Agent...'}
+      {agentCatalogReady ? t('agentUi.notFound') : t('agentUi.loading')}
     </div>
   );
 

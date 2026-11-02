@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { LiveRunTrace, RunTraceReasoningSummary, RunTraceSkillLoad, RunTraceStatus, RunTraceStep, RunTraceTimelineEvent, RunTraceToolCall, RunTraceUsage } from '@/features/targets/chat/types';
 import { createLocalMessageId } from '@/features/targets/chat/lib/helpers';
 import { formatRunFailureMessage } from '@/features/targets/chat/lib/session-utils';
@@ -44,10 +45,15 @@ export function parseRunUsage(value: unknown): RunTraceUsage | undefined {
   };
 }
 
-export function formatRunUsageDetail(usage: RunTraceUsage | undefined): string | undefined {
+export function formatRunUsageDetail(usage: RunTraceUsage | undefined, t: TFunction): string | undefined {
   if (!usage) return undefined;
-  const reasoning = usage.reasoningTokens !== undefined ? `, reasoning ${usage.reasoningTokens}` : '';
-  return `Tokens: input ${usage.inputTokens}, output ${usage.outputTokens}${reasoning}`;
+  return usage.reasoningTokens !== undefined
+    ? t('runTrace.usageWithReasoning', {
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        reasoningTokens: usage.reasoningTokens
+      })
+    : t('runTrace.usage', { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens });
 }
 
 function normalizeReasoningText(text: string): string {
@@ -220,11 +226,11 @@ export function appendReasoningUnavailable(
   };
 }
 
-export function getTraceActivityLabel(trace: LiveRunTrace): string {
-  if (trace.status === 'completed') return 'Done';
-  if (trace.status === 'failed') return 'Could not complete';
-  if (trace.status === 'cancelled') return 'Cancelled';
-  if (trace.status === 'connecting') return 'Thinking';
+export function getTraceActivityLabel(trace: LiveRunTrace, t: TFunction): string {
+  if (trace.status === 'completed') return t('runTrace.activity.done');
+  if (trace.status === 'failed') return t('runTrace.activity.failed');
+  if (trace.status === 'cancelled') return t('runTrace.activity.cancelled');
+  if (trace.status === 'connecting') return t('runTrace.activity.thinking');
 
   let hasUnresolvedApproval = false;
   for (let index = trace.steps.length - 1; index >= 0; index -= 1) {
@@ -241,20 +247,20 @@ export function getTraceActivityLabel(trace: LiveRunTrace): string {
       break;
     }
   }
-  if (hasUnresolvedApproval) return 'Waiting for approval';
+  if (hasUnresolvedApproval) return t('runTrace.activity.waitingForApproval');
 
-  if ((trace.skillLoads || []).some((skillLoad) => skillLoad.status === 'loading')) return 'Loading skill context';
-  if (trace.toolCalls.some((toolCall) => toolCall.status === 'running')) return 'Using tools';
+  if ((trace.skillLoads || []).some((skillLoad) => skillLoad.status === 'loading')) return t('runTrace.activity.loadingSkillContext');
+  if (trace.toolCalls.some((toolCall) => toolCall.status === 'running')) return t('runTrace.activity.usingTools');
 
   const latestStep = trace.steps.at(-1)?.label || '';
-  if (latestStep === 'Reviewing context' || latestStep === 'Context ready') return 'Reviewing context';
-  if (latestStep === 'Thinking' || latestStep === 'Thinking started') return 'Thinking';
-  if (latestStep === 'Writing response' || latestStep === 'Response ready') return 'Writing response';
+  if (latestStep === 'Reviewing context' || latestStep === 'Context ready') return t('runTrace.activity.reviewingContext');
+  if (latestStep === 'Thinking' || latestStep === 'Thinking started') return t('runTrace.activity.thinking');
+  if (latestStep === 'Writing response' || latestStep === 'Response ready') return t('runTrace.activity.writingResponse');
   if (latestStep === 'Request queued' || latestStep === 'Submitting request' || latestStep === 'Conversation ready') {
-    return 'Thinking';
+    return t('runTrace.activity.thinking');
   }
 
-  return 'Working';
+  return t('runTrace.activity.working');
 }
 
 /**

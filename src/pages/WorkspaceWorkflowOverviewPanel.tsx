@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 import {
@@ -15,10 +16,11 @@ export const WorkflowOverviewPanel: React.FC<{
   agentAssignment,
   showHeader
 }) => {
+  const { t } = useTranslation();
   return (
-    <WorkflowPanel title="Overview" description="Review the execution setup and prompt before launch." showHeader={showHeader}>
+    <WorkflowPanel title={t('app.overview')} description={t('workflowUi.overviewDescription')} showHeader={showHeader}>
       {agentAssignment}
-      <WorkflowSection title="Prompt" description="Instructions sent to assigned Agents when a run starts.">
+      <WorkflowSection title={t('workflowUi.promptLabel')} description={t('workflowUi.promptDescription')}>
         <div className="mt-3 rounded-md border border-ui-border bg-ui-bg px-4 py-3">
           <p className="whitespace-pre-wrap break-words type-body text-ui-text">{workflow.starterPrompt}</p>
         </div>

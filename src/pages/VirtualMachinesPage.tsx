@@ -23,9 +23,7 @@ import {
   getVmStatusLabel,
   type VmConnectionFilter
 } from '@/pages/virtual-machines/virtualMachineUi';
-import {
-  type VmMetricLoadState
-} from '@/pages/virtual-machines/VirtualMachineMetrics';
+import type { VmMetricLoadState } from '@/pages/virtual-machines/VirtualMachineMetrics';
 import { VirtualMachineTelemetryPanel } from '@/pages/virtual-machines/VirtualMachineTelemetryPanel';
 import { AddVirtualMachineModal } from '@/pages/virtual-machines/AddVirtualMachineModal';
 import { VirtualMachineAdminView } from '@/pages/virtual-machines/VirtualMachineAdminView';
@@ -39,7 +37,7 @@ import { useVirtualMachineListRefresh } from '@/pages/virtual-machines/useVirtua
 import { useVirtualMachineIssueSummaries } from '@/pages/virtual-machines/useVirtualMachineIssueSummaries';
 import { useVirtualMachineAgentSetup } from '@/pages/virtual-machines/useVirtualMachineAgentSetup';
 import { getSelectedVmTargetPrompt, shouldClearPendingVmTargetPrompt } from '@/pages/virtual-machines/virtualMachineTargetPrompt';
-import type { PendingVmTargetPrompt } from '@/pages/target-prompts/targetPromptModel';
+import type { PendingVmTargetPrompt, TargetPromptRequest } from '@/pages/target-prompts/targetPromptModel';
 import { useVisibilityAwareRefresh } from '@/hooks/useVisibilityAwareRefresh';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { useCapabilityCatalogCache } from '@/features/targets/admin/useCapabilityCatalogCache';
@@ -61,6 +59,7 @@ interface VirtualMachinesPageProps {
   onReplaceWorkspaceVirtualMachines: (workspaceId: string, nextVirtualMachines: ControlPlaneVirtualMachine[]) => void;
   onUpsertWorkspaceVirtualMachine: (workspaceId: string, virtualMachine: ControlPlaneVirtualMachine) => void;
   onRemoveWorkspaceVirtualMachine: (workspaceId: string, virtualMachineId: string) => void;
+  onRunTargetPrompt: (request: TargetPromptRequest) => void;
   pendingTargetPrompt?: PendingVmTargetPrompt | null;
   issueSummary?: ControlPlaneTargetIssueSummary | null;
   onPendingTargetPromptConsumed?: () => void;
@@ -92,6 +91,7 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   onReplaceWorkspaceVirtualMachines,
   onUpsertWorkspaceVirtualMachine,
   onRemoveWorkspaceVirtualMachine,
+  onRunTargetPrompt,
   pendingTargetPrompt,
   issueSummary,
   onPendingTargetPromptConsumed
@@ -121,7 +121,6 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
   const [metricHistoryByVmId, setMetricHistoryByVmId] = useSessionCachedState<Record<string, ControlPlaneVirtualMachineMetricHistoryPoint[]>>(`workspace:${workspace.id}:virtual-machine-card-metrics`, {});
   const [metricLoadStateByVmId, setMetricLoadStateByVmId] = useSessionCachedState<Record<string, VmMetricLoadState>>(`workspace:${workspace.id}:virtual-machine-card-metric-states`, {});
   const [metricHistoryStatus, setMetricHistoryStatus] = React.useState<'idle' | 'loading' | 'ready' | 'error'>(() => hasSessionDataCacheValue(metricHistoryCacheKey) ? 'ready' : 'idle');
-  const [pendingChatPrompt, setPendingChatPrompt] = React.useState('');
   const [resourceCategory, setResourceCategory] = React.useState<VmResourceCategory>('all');
   const activeCatalogState = route.kind === 'workspaceVirtualMachines' ? route : route.catalogState;
   const query = activeCatalogState?.q ?? '';
@@ -415,9 +414,13 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
       source: issue.objectName || issue.objectKind || issue.reason || t('virtualMachines.overview.hostSource'),
       message: issue.summary
     });
-    setPendingChatPrompt(prompt);
-    navigate(vmDetailPath(selected.id, 'chat'));
-  }, [navigate, selected, t, vmDetailPath]);
+    onRunTargetPrompt({
+      workspaceId: workspace.id,
+      targetId: selected.id,
+      targetType: 'virtual_machine',
+      prompt
+    });
+  }, [onRunTargetPrompt, selected, t, workspace.id]);
   const retryVmMetricHistory = React.useCallback(async () => {
     if (!selectedTargetId) return;
     setMetricHistoryStatus('loading');
@@ -557,12 +560,9 @@ export const VirtualMachinesPage: React.FC<VirtualMachinesPageProps> = ({
         workspace={workspace}
         currentUserId={currentUserId}
         isDark={isDark}
-        initialInputValue={selectedTargetPrompt || pendingChatPrompt}
+        initialInputValue={selectedTargetPrompt}
         onOpenAiSettings={() => navigate(AppPaths.workspaceAiSettings(workspace.id, getCurrentAppPath()))}
-        onInitialInputConsumed={() => {
-          if (selectedTargetPrompt) onPendingTargetPromptConsumed?.();
-          setPendingChatPrompt('');
-        }}
+        onInitialInputConsumed={onPendingTargetPromptConsumed}
       />
     );
   }

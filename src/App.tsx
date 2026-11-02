@@ -451,7 +451,7 @@ const App: React.FC = () => {
     return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
   }
   if (!user && sessionBootstrapState === 'unavailable') {
-    return <AppUnavailableScreen logoSrc={logoSrc} title="Console temporarily unavailable" description="The control plane could not restore your session. Check your connection and try again." onRetry={() => void bootstrapSession()} />;
+    return <AppUnavailableScreen logoSrc={logoSrc} title={t('appRecovery.unavailableTitle')} description={t('appRecovery.unavailableBody')} onRetry={() => void bootstrapSession()} />;
   }
   if (route.kind === 'externalIntegrationLink' && (user || route.status || !route.token)) {
     return <ExternalIntegrationLinkRouteScreen
@@ -467,7 +467,7 @@ const App: React.FC = () => {
       return <AppSessionRestoringScreen logoSrc={logoSrc} label={t('common.loading')} />;
     }
     if (authConfigState.status === 'unavailable') {
-      return <AppUnavailableScreen logoSrc={logoSrc} title="Sign-in configuration unavailable" description="Sign-in options could not be loaded safely. No authentication method is enabled until the configuration is available." onRetry={authConfigState.retry} />;
+      return <AppUnavailableScreen logoSrc={logoSrc} title={t('appRecovery.signInTitle')} description={t('appRecovery.signInBody')} onRetry={authConfigState.retry} />;
     }
     return (
       <LoginPage
