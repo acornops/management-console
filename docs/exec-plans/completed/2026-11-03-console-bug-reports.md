@@ -155,3 +155,18 @@ verification evidence is linked from
 [console PR #36](https://github.com/acornops/management-console/pull/36) and recorded
 in the workspace change-set handoff. Main integration remains gated on CI;
 release publication precedes the demo image-pin rollout.
+
+## Release qualification follow-up
+
+PR and main CI passed all 339 fixtures. The `.47` tag gate then caught an
+existing ambiguous locator in `connect-dialog-motion.spec.ts`: both the page
+header and a catalog empty state offered `Connect VM`. Playwright rejected the
+click before animation assertions ran. Both buttons intentionally use the same
+registration action; the application did not fail its motion checks.
+
+Scope the test trigger to the page header, preserving first/repeat opening,
+opacity handoff, input focus, Escape dismissal, and trigger-focus checks. A fresh
+read-only review approved this narrow test correction. All 20 focused repetitions
+passed under Node.js 22.23.4 with two workers. The failed `.47` tag is retained
+unchanged; its GitHub release was not published. A fresh release candidate
+includes the test fix.
