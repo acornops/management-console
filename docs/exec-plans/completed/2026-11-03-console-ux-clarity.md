@@ -58,3 +58,23 @@ adding a new resource-events destination is a separate, larger improvement.
 - Original control-plane `npm run openapi:check` also reports pre-existing generated-document drift. Current branch API artifacts were generated separately for handoff; the original docs checkout was not overwritten.
 
 `validate:full` was not run: affected browser specs provide the required visual coverage; the repository policy reserves the full browser matrix for broad changes/release readiness. No live deployment, write-action execution, or pod-log change was performed.
+
+## Final integration review — 2026-11-03
+
+The subsequent pod-log guidance change is recorded in
+[its own completed plan](2026-11-03-pod-log-guidance.md). Fresh console
+`VITE_APP_DATA_MODE=control-plane npm run validate` passed all 1,336 tests and
+required checks. All 78 tests in the approval-outcomes, approval-review,
+workflow-ux and log-investigation fixture specs passed with `FIXTURE_APP_PORT=4192`
+and `--retries=0`.
+
+Final independent review identified one producer edge case: an OIDC display
+name can contain an email. The control plane now omits email-shaped actor labels;
+the existing ID fallback handles them without console behavior changes.
+The reviewer approved the fix, backed by real-database regressions.
+
+The control plane has been integrated with current upstream Windows/heartbeat
+changes. Its generated public API reference can now be refreshed without
+unrelated drift: only the approval schema additions differ from docs-website
+main. Platform contract checking passes with the current AgentV contract files;
+the older original AgentV checkout is left untouched.

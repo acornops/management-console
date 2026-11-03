@@ -37,6 +37,8 @@ The management console is the browser client for the control-plane API. Keep thi
   in review. The console checks each enriched user ID against the recorded
   actor, labels missing names explicitly, and keeps decision and execution
   separate. Missing execution state is shown as Unknown, never success.
+  The producer omits email-shaped actor labels, including OIDC email fallbacks;
+  the same missing-name/ID presentation applies.
   These additions are backward compatible; deploy the control plane first
   to populate names and outcomes. Permission checks and decision requests
   are unchanged.
