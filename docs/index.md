@@ -31,6 +31,8 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 
 ## Plans And Debt
 
+- [Pod log failure guidance](/docs/exec-plans/completed/2026-11-03-pod-log-guidance.md)
+
 - [Target deletion completion](/docs/exec-plans/completed/2026-10-31-target-delete-latency.md)
 
 - [Plans](/docs/PLANS.md)
