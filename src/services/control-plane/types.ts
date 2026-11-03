@@ -607,7 +607,14 @@ export interface ControlPlaneRunEvent {
   payload: Record<string, unknown>;
 }
 
-export interface ControlPlaneRunToolApproval {
+export interface ControlPlaneApprovalPresentation {
+  requestedByUser?: { id: string; displayName: string };
+  decidedByUser?: { id: string; displayName: string };
+  workspaceName?: string;
+  targetName?: string;
+}
+
+export interface ControlPlaneRunToolApproval extends ControlPlaneApprovalPresentation {
   id: string;
   runId: string;
   workspaceId: string;

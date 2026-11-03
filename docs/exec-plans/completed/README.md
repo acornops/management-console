@@ -2,6 +2,10 @@
 
 - [Metric chart tick precision](2026-11-03-metric-chart-ticks.md) — Match readable y-axis labels to gridline values.
 
+- [Pod log failure guidance](2026-11-03-pod-log-guidance.md) — Scoped startup guidance and selected-container context; request behavior unchanged.
+
+- [Console UX clarity](2026-11-03-console-ux-clarity.md) — Approval identities/outcomes, assigned tools, and localized VM log layout.
+
 - [Console bug reports and public VM documentation](2026-11-03-console-bug-reports.md) — Localization and count fixes, historical trace semantics, VM assistant draft/session preservation, and coherent Windows preview guidance.
 
 - [Agent heartbeat freshness](agent-heartbeat-freshness.md) — Shared connection observation, cached expiry and verified onboarding compatibility.

@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircle2, FileText, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
+import { CheckCircle2, FileText, Info, Loader2, Pause, Play, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineAlert, StatusBadge } from '@acornops/ui';
 import { Select, SelectOption } from '@acornops/ui';
 import { Checkbox } from '@acornops/ui';
 import { formatControlPlaneError } from '@/services/control-plane/errorFormatting';
+import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { ControlPlanePodLogs } from '@/services/controlPlaneApi';
 import { DetailRow, ResourceMetricInline, SidePanel } from '@/features/kubernetes-cluster-detail/components/workloads/resourceExplorerLayout';
 import {
@@ -36,7 +37,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
   const { t } = useTranslation();
   const [activeDetailTab, setActiveDetailTab] = useState<WorkloadDetailTab>('details');
   const [podLogs, setPodLogs] = useState<ControlPlanePodLogs | null>(null);
-  const [podLogsError, setPodLogsError] = useState<string | null>(null);
+  const [podLogsError, setPodLogsError] = useState<{ message: string; containerNotStarted: boolean } | null>(null);
   const [isPodLogsLoading, setIsPodLogsLoading] = useState(false);
   const [isFollowingLogs, setIsFollowingLogs] = useState(false);
   const [logContainer, setLogContainer] = useState('');
@@ -49,6 +50,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
   const manualInFlightRef = useRef(false);
   const logViewportRef = useRef<HTMLPreElement>(null);
   const pendingLogViewportRef = useRef<LogViewportSnapshot | null>(null);
+  const detailsTabRef = useRef<HTMLButtonElement>(null);
 
   const selectedPodContainers = useMemo(() => (selectedWorkload?.type === 'Pod' ? selectedWorkload.containers || [] : []), [selectedWorkload]);
   const canShowLogs = Boolean(selectedWorkload?.type === 'Pod' && canReadPodLogs && onLoadPodLogs);
@@ -93,12 +95,13 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
       } catch (error) {
         if (logsRequestIdRef.current !== requestId) return;
         const message = formatControlPlaneError(error, t('workloads.logLoadFailed'), { area: 'cluster' });
-        setPodLogsError(message);
+        const containerNotStarted = error instanceof ControlPlaneRequestError && error.code === 'POD_LOGS_UNAVAILABLE';
+        setPodLogsError({ message, containerNotStarted });
         if (mode === 'follow') {
           followFailuresRef.current += 1;
           if (followFailuresRef.current >= 3) {
             setIsFollowingLogs(false);
-            setPodLogsError(t('workloads.followStopped', { message }));
+            setPodLogsError({ message: t('workloads.followStopped', { message }), containerNotStarted });
           }
         }
       } finally {
@@ -175,6 +178,8 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
     ? parseDateTime(podLogs.fetchedAt) ? t('workloads.fetchedAt', { time: formatUserDateTime(podLogs.fetchedAt) }) : t('loadedLogs.unknownFetchTime')
     : t('workloads.notLoaded');
   const loadedScope = t('loadedLogs.podScope', { count: podLogs?.tailLines ?? logTailLines });
+  const logContainerStatus = selectedWorkload?.containerStatuses?.find((container) => container.name === logContainer);
+  const waitingContainerStatus = logContainerStatus?.state === 'waiting' ? logContainerStatus : undefined;
 
   return (
     <SidePanel isOpen={Boolean(selectedWorkload)} onClose={closeDrawer} title={t('workloads.drawerTitle', { name: selectedWorkload?.name || '' })}>
@@ -184,6 +189,7 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
             {(['details', 'logs'] as WorkloadDetailTab[]).map((tab) => (
               <Button
                 key={tab}
+                ref={tab === 'details' ? detailsTabRef : undefined}
                 type="button"
                 variant="tertiary"
                 onClick={() => setActiveDetailTab(tab)}
@@ -365,8 +371,26 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                 </div>
 
                 {podLogsError && (
-                  <InlineAlert tone="danger" className="rounded-none border-x-0 type-body type-emphasis leading-6">
-                    <span>{podLogsError}{podLogs && <span className="block">{t('loadedLogs.stale')}</span>}</span>
+                  <InlineAlert
+                    tone={podLogsError.containerNotStarted ? 'neutral' : 'danger'}
+                    icon={podLogsError.containerNotStarted ? <Info className="h-4 w-4" /> : undefined}
+                    className="rounded-none border-x-0 type-body type-emphasis leading-6"
+                  >
+                    <p>{podLogsError.message}</p>
+                    {podLogs && <p>{t('loadedLogs.stale')}</p>}
+                    {waitingContainerStatus && <p className="mt-2 break-words">{t('workloads.logContainerState', {
+                      container: waitingContainerStatus.name,
+                      state: getContainerStatusLabel(waitingContainerStatus)
+                    })}</p>}
+                    {podLogsError.containerNotStarted && <p className="mt-2">{t('workloads.logsNotStartedHelp')}</p>}
+                    {(podLogsError.containerNotStarted || waitingContainerStatus) && (
+                      <Button type="button" variant="secondary" size="sm" className="mt-3" onClick={() => {
+                        setActiveDetailTab('details');
+                        detailsTabRef.current?.focus();
+                      }}>
+                        {t('workloads.viewContainerDetails')}
+                      </Button>
+                    )}
                   </InlineAlert>
                 )}
 
@@ -406,7 +430,8 @@ export const WorkloadDetailsDrawer: React.FC<WorkloadDetailsDrawerProps> = ({ se
                   >
                     {isPodLogsLoading && !podLogs ? t('workloads.loadingLogs') : podLogs?.logs?.trim()
                       ? <HighlightedLogText content={podLogs.logs} query={logQuery} />
-                      : podLogs ? t('workloads.noLogs') : t('workloads.notLoaded')}
+                      : podLogs ? t('workloads.noLogs') : podLogsError?.containerNotStarted
+                        ? t('controlPlaneErrors.podLogsUnavailable') : t('workloads.notLoaded')}
                   </pre>
                 </div>
               </>

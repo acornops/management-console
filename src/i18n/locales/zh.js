@@ -704,6 +704,10 @@ export const zh = {
     }
   },
   approvals: {
+    identity: {
+      nameUnavailable: '名称不可用', copyId: '复制{{label}} ID', copied: '已复制 ID。',
+      copyFailed: '无法复制，请选择并复制 ID。'
+    },
     review: {
       title: '审核审批', action: '审核', unavailable: '暂无信息',
       kind: '操作类型', gate: '工作流审批关卡', tool: '工具操作', toolName: '准确的工具名称',
@@ -771,6 +775,7 @@ export const zh = {
     system: '系统',
     acornOps: 'AcornOps',
     sources: {
+      interactive_tool: '交互式工具', unknown: '未知来源',
       target_tool: '目标工具',
       automaticInvestigation: '自动调查',
       workflow_gate: '工作流门控',
@@ -2532,6 +2537,9 @@ export const zh = {
     loadingLogs: '正在加载日志…',
     noLogs: '此 Pod 未返回日志。',
     logLoadFailed: '加载 Pod 日志失败。',
+    logContainerState: '{{container}} 最近上报的状态：{{state}}。',
+    logsNotStartedHelp: '查看容器详情中的启动状态，待容器启动后刷新日志。',
+    viewContainerDetails: '查看容器详情',
     followStopped: '{{message}} 多次失败后已停止跟随。',
     uid: 'UID',
     desiredReplicas: '期望副本数',
@@ -3641,6 +3649,9 @@ export const zh = {
     targetLabel: '目标',
     agentLabel: 'Agent',
     reviewWorkflowAccess: '检查工作流访问权限',
+    assignedTools: '已分配工具',
+    unknownToolCount: '{{count}} 个分类未知工具',
+    assignedToolsDescription: '工具分类来自已分配的 Agent。每次运行前都会检查权限。',
     effectiveAccess: '有效访问权限',
     readOnly: '只读',
     readWrite: '读写',

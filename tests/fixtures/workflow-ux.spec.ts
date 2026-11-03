@@ -47,9 +47,9 @@ test('default workflows open editable settings inline without creating a copy', 
   await expect(page.getByLabel('Selected workflow actions').getByText('Readiness checks passed', { exact: false })).toHaveCount(0);
   await expect(page.getByText('Read/write policy', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Execution setup', exact: true })).toBeVisible();
-  await expect(page.getByText('Effective access', { exact: true })).toBeVisible();
-  await expect(page.getByText(/^Read\/write · \d+ tools?/)).toBeVisible();
-  await expect(page.getByText('Inherited from assigned Agents and revalidated before every run.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Assigned tools', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^\d+ read · \d+ write · \d+ unknown/)).toBeVisible();
+  await expect(page.getByText('Tool classifications from assigned Agents. Permissions are checked before every run.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'View access', exact: true })).toBeVisible();
   await expect(page.getByText('Documents create, Infrastructure diagnostics read, Infrastructure remediation write', { exact: true })).toHaveCount(0);
   await expect(page.getByText('AcornOps-coordinated', { exact: true })).toHaveCount(0);
@@ -194,8 +194,8 @@ test('workflow detail keeps primary navigation lean across contextual and compac
   await expect(page.getByText('Scroll for more sections', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Execution setup', exact: true })).toBeVisible();
   await expect(page.getByText('This workflow coordinates 2 assigned Agents as peers.', { exact: true })).toBeVisible();
-  await expect(page.getByText('Effective access', { exact: true })).toBeVisible();
-  await expect(page.getByText('Inherited from assigned Agents and revalidated before every run.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Assigned tools', { exact: true })).toBeVisible();
+  await expect(page.getByText('Tool classifications from assigned Agents. Permissions are checked before every run.', { exact: true })).toBeVisible();
   await expect(page.getByText('Choose one Agent for a direct run, or multiple Agents to coordinate.', { exact: true })).toHaveCount(0);
   await expect(page.getByText('AcornOps will coordinate work across 2 selected agents.', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit agents', exact: true }).click();

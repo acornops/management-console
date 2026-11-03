@@ -33,10 +33,13 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 
 - [Metric chart tick precision](/docs/exec-plans/completed/2026-11-03-metric-chart-ticks.md)
 
+- [Pod log failure guidance](/docs/exec-plans/completed/2026-11-03-pod-log-guidance.md)
+
 - [Target deletion completion](/docs/exec-plans/completed/2026-10-31-target-delete-latency.md)
 
 - [Plans](/docs/PLANS.md)
 - [Active Plans](/docs/exec-plans/active/README.md)
+- [Console UX clarity](/docs/exec-plans/completed/2026-11-03-console-ux-clarity.md)
 - [Completed Plans](/docs/exec-plans/completed/README.md)
 - [Windows VM console](/docs/exec-plans/completed/windows-vm-console.md)
 - [Mobile Navigation and Chat Polish](/docs/exec-plans/completed/mobile-navigation-chat-polish.md)

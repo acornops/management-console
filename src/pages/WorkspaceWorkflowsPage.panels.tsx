@@ -73,10 +73,10 @@ export const WorkflowAgentAssignmentSection: React.FC<{
       ? t('workflowCoordination.directAssignmentDescription', { name: workflow.agents[0].name })
       : t('workflowCoordination.coordinatedAssignmentDescription', { count: workflow.agents.length });
   const capabilitySummary = getWorkflowCapabilityOverviewSummary(workflow, agents);
-  const toolCount = capabilitySummary.tools.read + capabilitySummary.tools.write + capabilitySummary.tools.unknown;
-  const accessSummary = [
-    t(`workflowCoordination.${workflow.policy.mode === 'read_only' ? 'readOnly' : 'readWrite'}`),
-    t('agentsWorkflows.agents.capabilityCounts.tool', { count: toolCount }),
+  const assignedToolsSummary = [
+    t('workflowUi.readCount', { count: capabilitySummary.tools.read }),
+    t('workflowUi.writeCount', { count: capabilitySummary.tools.write }),
+    t('workflowCoordination.unknownToolCount', { count: capabilitySummary.tools.unknown }),
     ...(capabilitySummary.mcpServers.length > 0
       ? [t('agentsWorkflows.agents.capabilityCounts.mcpServer', { count: capabilitySummary.mcpServers.length })]
       : []),
@@ -161,15 +161,15 @@ export const WorkflowAgentAssignmentSection: React.FC<{
         {!isEditingAgentSelection && (
           <div className="flex flex-col gap-3 border-t border-ui-border pt-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <div className="type-ui text-ui-text-muted">{t('workflowCoordination.effectiveAccess')}</div>
-              <div className="mt-1 break-words type-ui text-ui-text [overflow-wrap:anywhere]">{accessSummary}</div>
+              <div className="type-ui text-ui-text-muted">{t('workflowCoordination.assignedTools')}</div>
+              <div className="mt-1 break-words type-ui text-ui-text [overflow-wrap:anywhere]">{assignedToolsSummary}</div>
               <p className="mt-1 max-w-[70ch] type-caption text-ui-text-muted">
                 {capabilitySummary.missingAgentCount > 0
                   ? t('workflowCoordination.accessSummaryIncomplete', {
                       count: capabilitySummary.missingAgentCount,
                       total: capabilitySummary.agentCount
                     })
-                  : t('workflowCoordination.accessSummaryDescription')}
+                  : t('workflowCoordination.assignedToolsDescription')}
               </p>
             </div>
             <Button type="button" variant="secondary" size="sm" className="shrink-0" onClick={onReviewCapabilities}>

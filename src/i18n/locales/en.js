@@ -704,6 +704,10 @@ export const en = {
     }
   },
   approvals: {
+    identity: {
+      nameUnavailable: 'Name unavailable', copyId: 'Copy {{label}} ID', copied: 'ID copied.',
+      copyFailed: 'Could not copy. Select and copy the ID.'
+    },
     review: {
       title: 'Review approval', action: 'Review', unavailable: 'Not available',
       kind: 'Action type', gate: 'Workflow gate', tool: 'Tool action', toolName: 'Exact tool name',
@@ -771,6 +775,7 @@ export const en = {
     system: 'System',
     acornOps: 'AcornOps',
     sources: {
+      interactive_tool: 'Interactive tool', unknown: 'Unknown source',
       target_tool: 'Target tool',
       automaticInvestigation: 'Automatic investigation',
       workflow_gate: 'Workflow gate',
@@ -2532,6 +2537,9 @@ export const en = {
     loadingLogs: 'Loading logs…',
     noLogs: 'No logs returned for this pod.',
     logLoadFailed: 'Failed loading pod logs.',
+    logContainerState: 'Latest reported state for {{container}}: {{state}}.',
+    logsNotStartedHelp: 'Check the container details for its startup state, then refresh logs after it starts.',
+    viewContainerDetails: 'View container details',
     followStopped: '{{message}} Follow stopped after repeated failures.',
     uid: 'UID',
     desiredReplicas: 'Desired Replicas',
@@ -3641,6 +3649,9 @@ export const en = {
     targetLabel: 'Target',
     agentLabel: 'Agent',
     reviewWorkflowAccess: 'Review workflow access',
+    assignedTools: 'Assigned tools',
+    unknownToolCount: '{{count}} unknown',
+    assignedToolsDescription: 'Tool classifications from assigned Agents. Permissions are checked before every run.',
     effectiveAccess: 'Effective access',
     readOnly: 'Read only',
     readWrite: 'Read/write',
