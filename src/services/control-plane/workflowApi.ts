@@ -277,7 +277,8 @@ export interface WorkflowSchedulePreview {
   errors: Array<{ field: string; message: string }>;
 }
 
-export interface WorkspaceApprovalInboxRow {
+export interface WorkspaceApprovalInboxRow extends Pick<ControlPlaneRunToolApproval,
+  'requestedByUser' | 'decidedByUser' | 'workspaceName' | 'targetName' | 'targetId' | 'targetType' | 'executionStatus'> {
   approvalId: string;
   runId: string;
   source: 'interactive_tool' | 'workflow_gate' | 'agent_gate' | 'agent_tool' | 'workflow_tool';

@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, DialogFrame, InlineAlert, InlineLoadingIndicator, StatusBadge } from '@acornops/ui';
+import { Button, DialogFrame, InlineAlert, InlineLoadingIndicator } from '@acornops/ui';
 import { X } from 'lucide-react';
 import { decideWorkflowRunApproval, listWorkflowRunApprovals, selectWorkflowApprovalReview, type WorkflowRunApproval } from '@/services/control-plane/workflowApi';
 import { ControlPlaneRequestError } from '@/services/control-plane/http';
 import { formatUserDateTime } from '@/utils/dateTime';
 import { AppPaths } from '@/utils/routes';
 import { formatApprovalArguments } from '@/utils/approvalArguments';
+import { ApprovalIdentity, ApprovalOutcome, approvalUserName } from './ApprovalPresentation';
 
 interface ApprovalReviewDialogProps {
   workspaceId: string;
@@ -35,26 +36,30 @@ export function ApprovalReviewContent({ approval, canDecide, busy, onDecide, now
   const date = (value?: string) => formatUserDateTime(value, { fallback: unavailable });
   const enabled = canDecideApprovalReview(approval, canDecide, busy, now);
   const expired = approval.status === 'pending' && Date.parse(approval.expiresAt) <= now;
-  const facts = [
+  const identity = (label: string, id?: string, name?: string) => <ApprovalIdentity
+    id={id} name={name} label={label} showId fallback={id ? undefined : unavailable} />;
+  const facts: Array<[string, React.ReactNode]> = [
     [t('approvals.review.kind'), t(`approvals.review.${approval.approvalKind === 'pre_step' ? 'gate' : 'tool'}`)],
     [t('approvals.review.toolName'), approval.toolRef?.toolName || approval.toolName],
-    ...(approval.toolRef?.serverId ? [[t('approvals.review.mcpServer'), approval.toolRef.serverId]] : []),
-    [t('approvals.review.workspace'), approval.workspaceId],
-    [t('approvals.table.target'), [approval.targetType, approval.targetId].filter(Boolean).join(': ') || unavailable],
-    [t('approvals.table.requestedBy'), approval.requestedBy || unavailable],
+    ...(approval.toolRef?.serverId ? [[t('approvals.review.mcpServer'), identity(t('approvals.review.mcpServer'), approval.toolRef.serverId)] as [string, React.ReactNode]] : []),
+    [t('approvals.review.workspace'), identity(t('approvals.review.workspace'), approval.workspaceId, approval.workspaceName)],
+    [t('approvals.table.target'), <React.Fragment key="target">
+      {identity(t('approvals.table.target'), approval.targetId, approval.targetName)}
+      {approval.targetType && <span className="mt-1 block type-caption text-ui-text-muted">{t(`chat.targetMentionTypes.${approval.targetType}`, { defaultValue: approval.targetType })}</span>}
+    </React.Fragment>],
+    [t('approvals.table.requestedBy'), identity(t('approvals.table.requestedBy'), approval.requestedBy, approvalUserName(approval.requestedBy, approval.requestedByUser))],
     [t('approvals.review.requestedAt'), date(approval.createdAt)],
     [t('approvals.table.expires'), date(approval.expiresAt)],
-    [t('approvals.review.execution'), approval.executionStatus ? t(`approvals.review.executionStatus.${approval.executionStatus}`) : unavailable],
     ...(approval.status !== 'pending' ? [
-      [t('approvals.review.decidedBy'), approval.decidedBy || unavailable],
-      [t('approvals.review.decidedAt'), date(approval.decidedAt)]
+      [t('approvals.review.decidedBy'), identity(t('approvals.review.decidedBy'), approval.decidedBy, approvalUserName(approval.decidedBy, approval.decidedByUser))] as [string, React.ReactNode],
+      [t('approvals.review.decidedAt'), date(approval.decidedAt)] as [string, React.ReactNode]
     ] : [])
   ];
   return <>
     <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
         <p className="min-w-0 break-words type-body text-ui-text">{approval.summary || unavailable}</p>
-        <StatusBadge tone={approval.status === 'approved' ? 'success' : approval.status === 'pending' ? 'warning' : 'neutral'}>{t(`approvals.status.${expired ? 'expired' : approval.status}`)}</StatusBadge>
+        <ApprovalOutcome status={expired ? 'expired' : approval.status} executionStatus={approval.executionStatus} />
       </div>
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         {facts.map(([label, value]) => <div key={label} className="min-w-0">

@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Console UX clarity](2026-11-03-console-ux-clarity.md) — Approval identities/outcomes, assigned tools, and localized VM log layout.
+
 - [Console bug reports and public VM documentation](2026-11-03-console-bug-reports.md) — Localization and count fixes, historical trace semantics, VM assistant draft/session preservation, and coherent Windows preview guidance.
 
 - [Agent heartbeat freshness](agent-heartbeat-freshness.md) — Shared connection observation, cached expiry and verified onboarding compatibility.

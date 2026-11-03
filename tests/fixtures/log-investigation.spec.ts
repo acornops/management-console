@@ -5,7 +5,7 @@ const clusterPath = '/workspaces/fixture-workspace/kubernetes-clusters/fixture-c
 const vmPath = '/workspaces/fixture-workspace/virtual-machines/fixture-vm/resources';
 const logText = Array.from({ length: 90 }, (_, i) => `2026-07-15T08:29:58Z line ${i} ${i === 30 ? 'Error [x]\ncontinuation ' + 'z'.repeat(400) : 'worker output'}`).join('\n');
 
-async function installLogs(page: Page, options: { empty?: boolean; fail?: boolean; notStarted?: boolean; missingTime?: boolean; sourceTimes?: boolean } = {}) {
+async function installLogs(page: Page, options: { empty?: boolean; fail?: boolean; notStarted?: boolean; missingTime?: boolean; sourceTimes?: boolean; longSource?: boolean } = {}) {
   await page.addInitScript(({ options, logText }) => {
     const originalFetch = window.fetch.bind(window);
     const state = { requests: 0, fail: Boolean(options.fail), empty: Boolean(options.empty), delayed: false, pending: [] as Array<() => void> };
@@ -24,7 +24,7 @@ async function installLogs(page: Page, options: { empty?: boolean; fail?: boolea
           ? { code: 'POD_LOGS_UNAVAILABLE', message: 'No logs yet; this container has not started.', retryable: false }
           : { code: 'UNAVAILABLE', message: 'Unavailable', retryable: true } } : isPod
           ? { name: 'payments-worker-7c5b9f-demo', namespace: 'production', container, logs: state.empty ? '' : `${container} request ${state.requests}\n${logText}`, tailLines: Number(url.searchParams.get('tailLines')), previous: url.searchParams.get('previous') === 'true', fetchedAt: options.missingTime ? '' : '2026-07-15T08:30:00Z' }
-          : { entries: state.empty ? [] : [{ entryId: 'one', timestamp: options.missingTime ? '' : options.sourceTimes ? '2026-07-15T08:30:00.123456Z' : '2026-07-15T08:30:00Z', source: 'system', message: `VM Error [x] request ${state.requests}\n${'long'.repeat(100)}` }, { entryId: 'two', timestamp: options.sourceTimes ? '2026-07-15T10:20:00.654321+02:00' : '2026-07-15T08:20:00Z', source: 'journald', message: 'Unmatched loaded entry' }] };
+          : { entries: state.empty ? [] : [{ entryId: 'one', timestamp: options.missingTime ? '' : options.sourceTimes ? '2026-07-15T08:30:00.123456Z' : '2026-07-15T08:30:00Z', source: options.longSource ? 'system/' + 'long-source-'.repeat(20) : 'system', message: `VM Error [x] request ${state.requests}\n${'long'.repeat(100)}` }, { entryId: 'two', timestamp: options.sourceTimes ? '2026-07-15T10:20:00.654321+02:00' : '2026-07-15T08:20:00Z', source: 'journald', message: 'Unmatched loaded entry' }] };
         const response = () => new Response(JSON.stringify(body), { status: state.fail ? options.notStarted ? 409 : 503 : 200, headers: { 'content-type': 'application/json' } });
         if (state.delayed) return new Promise<Response>(resolve => { state.pending.push(() => resolve(response())); });
         return Promise.resolve(response());
@@ -71,6 +71,79 @@ test('VM exports distinguish Singapore display time from original timestamp offs
     expect(await readFile(path!, 'utf8')).toBe(copied);
   } finally { await context.close(); }
 });
+
+for (const language of ['en', 'zh']) {
+  test(`VM timestamp, source and message remain separate across widths in ${language}`, async ({ browser, baseURL }, testInfo) => {
+    const context = await browser.newContext({ baseURL, timezoneId: 'Asia/Singapore', locale: 'en-US', reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    try {
+      await page.addInitScript((language) => {
+        localStorage.setItem('app_language', language);
+        localStorage.setItem('acornops_profile_preferences:test-user%40fixture.acornops.dev:language', language);
+      }, language);
+      await installLogs(page, { sourceTimes: true, longSource: true });
+      await page.goto(vmPath);
+      await page.getByRole('tab', { name: language === 'en' ? /^Logs/ : /^日志/ }).click();
+      await page.evaluate(() => document.fonts.ready);
+      const panel = page.getByRole('tabpanel');
+      const entry = panel.locator('article').first();
+      const timestamp = entry.locator('time');
+      await expect(timestamp.locator('span')).toHaveText(language === 'en'
+        ? ['Jul 15, 2026', '4:30 PM GMT+8']
+        : ['2026年7月15日', 'GMT+8 16:30']);
+      await expect(timestamp).toHaveAttribute('datetime', '2026-07-15T08:30:00.123456Z');
+
+      for (const [width, textScale] of [[1440, 1], [900, 1], [390, 1], [1440, 2]]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.evaluate(async (textScale) => {
+          document.documentElement.style.fontSize = `${textScale * 100}%`;
+          await new Promise(requestAnimationFrame);
+          await new Promise(requestAnimationFrame);
+          await document.fonts.ready;
+        }, textScale);
+        const source = entry.locator(':scope > span').first();
+        const message = entry.locator(':scope > span').last();
+        await expect(source).toContainText('long-source-');
+        await expect(message).toContainText('VM Error [x]');
+        const { timeBox, sourceBox, messageBox, sourceHeaderBox, overflowingText } = await entry.evaluate((row) => {
+          const cells = Array.from(row.children);
+          const [timeBox, sourceBox, messageBox] = cells.map(cell => cell.getBoundingClientRect().toJSON());
+          const sourceHeaderBox = row.previousElementSibling!.children[1].getBoundingClientRect().toJSON();
+          const overflowingText = cells.flatMap((cell, index) => {
+            const bounds = cell.getBoundingClientRect();
+            const range = document.createRange();
+            const nodes = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+            while (nodes.nextNode()) {
+              const text = nodes.currentNode;
+              for (let offset = 0; offset < (text.textContent?.length || 0); offset++) {
+                if (/\s/.test(text.textContent![offset])) continue;
+                range.setStart(text, offset);
+                range.setEnd(text, offset + 1);
+                const rect = range.getBoundingClientRect();
+                if (rect.left < bounds.left - 1 || rect.right > bounds.right + 1) {
+                  return [{ index, cellWidth: bounds.width, left: rect.left - bounds.left, right: rect.right - bounds.right }];
+                }
+              }
+            }
+            return [];
+          });
+          return { timeBox, sourceBox, messageBox, sourceHeaderBox, overflowingText };
+        });
+        if (width >= 900) {
+          expect(timeBox.x + timeBox.width).toBeLessThanOrEqual(sourceBox.x);
+          expect(sourceBox.x + sourceBox.width).toBeLessThanOrEqual(messageBox.x);
+          expect(Math.abs(sourceHeaderBox.x - sourceBox.x), `Source alignment at ${width}px and ${textScale * 100}% text`).toBeLessThanOrEqual(1);
+        } else {
+          expect(timeBox.y + timeBox.height).toBeLessThanOrEqual(sourceBox.y);
+          expect(sourceBox.y + sourceBox.height).toBeLessThanOrEqual(messageBox.y);
+        }
+        expect(overflowingText, `Text containment at ${width}px and ${textScale * 100}% text`).toEqual([]);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await panel.screenshot({ path: testInfo.outputPath(`vm-logs-${language}-${width}-${textScale * 100}.png`) });
+      }
+    } finally { await context.close(); }
+  });
+}
 
 test('pod find preserves loaded output, scroll and paused state; copy/download use only loaded data', async ({ page }) => {
   await installLogs(page);

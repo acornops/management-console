@@ -19,14 +19,31 @@ import {
   formInputClassName
 } from '@acornops/ui';
 import { ResourceCategoryTabs } from '@/components/common/ResourceCategoryTabs';
-import { formatUserDateTime, getUserTimeZone } from '@/utils/dateTime';
+import { formatUserDate, formatUserDateTime, formatUserTime, getUserTimeZone, parseDateTime } from '@/utils/dateTime';
 import { LoadedLogTools } from '@/components/common/LoadedLogTools';
 import { formatVmLoadedLogs } from './virtualMachineLogContent';
 import { TextInput } from '@acornops/ui';
 import { DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 
 const virtualMachineLogGridClass =
-  'md:grid-cols-[11rem_minmax(0,12rem)_minmax(0,1fr)]';
+  'md:grid-cols-[minmax(0,min(10rem,25%))_minmax(0,min(12rem,25%))_minmax(0,1fr)] md:gap-x-4';
+
+function VmLogTimestamp({ timestamp, unknownLabel, locale, timeZone }: {
+  timestamp: string;
+  unknownLabel: string;
+  locale: string;
+  timeZone: string;
+}) {
+  const className = 'type-code min-w-0 break-words text-ui-text-muted [overflow-wrap:anywhere]';
+  if (!parseDateTime(timestamp)) return <span className={className}>{unknownLabel}</span>;
+  const options = { locale, timeZone };
+  return (
+    <time dateTime={timestamp} className={className}>
+      <span className="block">{formatUserDate(timestamp, options)}</span>
+      <span className="block">{formatUserTime(timestamp, { ...options, includeTimeZone: true })}</span>
+    </time>
+  );
+}
 
 export type VmResourceCategory = 'all' | 'services' | 'processes' | 'network' | 'logs';
 
@@ -155,7 +172,9 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
   onCategoryChange,
   onRetry
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage || i18n.language;
+  const logTimeZone = getUserTimeZone();
   const inventoryNotices = osFamily === 'windows' && activeCategory !== 'logs' ? inventoryCollectionNotices(inventoryCollection, activeCategory) : [];
   const logState = logCollectionState(logsCollection);
   const logsIncomplete = osFamily === 'windows' && (isIncompleteCollection(logState) || logsCollection?.truncated === true);
@@ -190,7 +209,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
         matchesSearch(logQuery, [
           entry.entryId,
           entry.timestamp,
-          formatUserDateTime(String(entry.timestamp || ''), { fallback: t('loadedLogs.unknownTime') }),
+          formatUserDateTime(String(entry.timestamp || ''), { locale, timeZone: logTimeZone, fallback: t('loadedLogs.unknownTime') }),
           entry.source,
           entry.source || t('loadedLogs.unknownSource'),
           entry.unit,
@@ -198,7 +217,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
           entry.message
         ])
       ),
-    [logs, logQuery, t]
+    [logs, logQuery, locale, logTimeZone, t]
   );
   const counts = React.useMemo(
     () => ({
@@ -242,7 +261,7 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
             <LoadedLogTools query={logQuery} onQueryChange={setLogQuery} matchCount={filteredLogs.length}
               content={formatVmLoadedLogs(logs, t('loadedLogs.unknownTime'), t('loadedLogs.unknownSource'))}
               source={`${t('loadedLogs.source', { source: vmName })}${logsError ? `\n${t('loadedLogs.stale')}` : ''}`}
-              scope={t('loadedLogs.vmScope', { count: logs.length, timezone: getUserTimeZone() })}
+              scope={t('loadedLogs.vmScope', { count: logs.length, timezone: logTimeZone })}
               disabled={isLogsLoading}
             />
             <Button type="button" variant="secondary" size="sm" onClick={onRetry} disabled={isLogsLoading} className="justify-self-start">
@@ -301,10 +320,10 @@ export const VirtualMachineResourcesView: React.FC<VirtualMachineResourcesViewPr
                   <DataTableGridHeaderCell>{t('virtualMachines.resources.logMessage')}</DataTableGridHeaderCell>
                 </DataTableGridHeader>
                 {filteredLogs.map((entry, index) => (
-                  <article key={String(entry.entryId || index)} className={`grid gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 lg:px-8 lg:py-6 ${virtualMachineLogGridClass}`}>
-                    <span className="type-code text-ui-text-muted">{formatUserDateTime(String(entry.timestamp || ''), { fallback: t('loadedLogs.unknownTime') })}</span>
-                    <span className="type-row-title min-w-0 break-words">{[entry.source, entry.channel, entry.unit].filter(Boolean).map(String).join(' / ') || t('loadedLogs.unknownSource')}</span>
-                    <span className="type-body min-w-0 whitespace-pre-wrap break-words">{String(entry.message || '')}</span>
+                  <article key={String(entry.entryId || index)} className={`grid min-w-0 gap-2 border-b border-ui-border px-4 py-5 last:border-b-0 sm:px-6 lg:px-8 lg:py-6 ${virtualMachineLogGridClass}`}>
+                    <VmLogTimestamp timestamp={String(entry.timestamp || '')} unknownLabel={t('loadedLogs.unknownTime')} locale={locale} timeZone={logTimeZone} />
+                    <span className="type-row-title min-w-0 break-words [overflow-wrap:anywhere]">{[entry.source, entry.channel, entry.unit].filter(Boolean).map(String).join(' / ') || t('loadedLogs.unknownSource')}</span>
+                    <span className="type-body min-w-0 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{String(entry.message || '')}</span>
                   </article>
                 ))}
               </div>

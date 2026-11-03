@@ -30,6 +30,16 @@ The management console is the browser client for the control-plane API. Keep thi
   built-in AcornOps destinations during rolling upgrades.
 - Paginated list responses use `{ items, nextCursor? }`.
 - The workspace approval inbox additionally exposes `pendingCount`, the total pending approvals across target-tool and workflow-gate sources before pagination and independently of the list filter. The console treats a missing or invalid count from an older producer as unavailable.
+- Approval inbox and run-review responses may include `requestedByUser` and
+  `decidedByUser` (`id`, `displayName`), `workspaceName`, and `targetName`.
+  Inbox rows also expose optional target identity and `executionStatus`.
+  Names are presentation-only; stable IDs remain authoritative and copyable
+  in review. The console checks each enriched user ID against the recorded
+  actor, labels missing names explicitly, and keeps decision and execution
+  separate. Missing execution state is shown as Unknown, never success.
+  These additions are backward compatible; deploy the control plane first
+  to populate names and outcomes. Permission checks and decision requests
+  are unchanged.
 - Inbox and workflow-run approval decisions share an on-demand review of the
   existing `GET /api/v1/runs/{runId}/approvals` browser response. The selected
   approval must match its exact ID, run and workspace and include tool identity

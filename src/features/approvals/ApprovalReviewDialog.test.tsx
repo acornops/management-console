@@ -23,6 +23,32 @@ async function render(override: Partial<WorkflowRunApproval> = {}) {
 }
 
 describe('informed approval review', () => {
+  it('shows readable approval identities while retaining exact IDs for inspection', async () => {
+    const html = await render({
+      requestedBy: 'requester-1', requestedByUser: { id: 'requester-1', displayName: 'Alex Chen' },
+      decidedBy: 'decider-1', decidedByUser: { id: 'decider-1', displayName: 'Sam Lee' },
+      workspaceName: 'Operations', targetName: 'Production cluster',
+      toolRef: { serverId: 'server-1', toolName: 'scale_workload' },
+      status: 'approved', executionStatus: 'failed'
+    });
+    for (const value of ['Alex Chen', 'Sam Lee', 'Operations', 'Production cluster',
+      'requester-1', 'decider-1', 'workspace-1', 'cluster-1', 'server-1']) expect(html).toContain(value);
+    expect(html).toContain('Copy Requested by ID');
+    expect(html).toContain('Decision');
+    expect(html).toContain('Approved');
+    expect(html).toContain('Failed');
+  });
+
+  it('does not present absent execution data as successful or trust a mismatched identity', async () => {
+    const html = await render({ status: 'approved', executionStatus: undefined,
+      requestedBy: 'requester-1', requestedByUser: { id: 'other-user', displayName: 'Wrong person' } });
+    expect(html).toContain('Execution status');
+    expect(html).toContain('Unknown');
+    expect(html).toContain('requester-1');
+    expect(html).not.toContain('Wrong person');
+    expect(html).not.toContain('Succeeded');
+  });
+
   it('shows the canonical MCP tool and server from the existing approval reference', async () => {
     const alias = 'm_40ad20abc2fe4669a5d259107c56cc55_scale_workload_ca829ba628';
     const html = await render({ toolName: alias,

@@ -12,7 +12,6 @@ import { IconTile } from '@acornops/ui';
 import { InlineLoadingIndicator } from '@acornops/ui';
 import { CollectionLoadingSkeleton } from '@acornops/ui';
 import { PageHeader, PageShell } from '@acornops/ui';
-import { StatusBadge } from '@acornops/ui';
 import { ICONS } from '@/constants';
 import { Workspace } from '@/types';
 import {
@@ -27,6 +26,7 @@ import type { NavigateOptions } from '@/hooks/useAppRouter';
 import { DataTable, DataTableBody, DataTableCell, DataTableRow } from '@acornops/ui';
 import { hasSessionDataCacheValue, useSessionCachedState } from '@/hooks/sessionDataCache';
 import { ApprovalReviewDialog } from '@/features/approvals/ApprovalReviewDialog';
+import { ApprovalIdentity, ApprovalOutcome, approvalUserName } from '@/features/approvals/ApprovalPresentation';
 
 interface WorkspaceApprovalsPageProps {
   workspace: Workspace;
@@ -52,16 +52,10 @@ function isToday(value?: string): boolean {
     && date.getDate() === now.getDate();
 }
 
-function approvalTone(status: WorkspaceApprovalInboxRow['status']): React.ComponentProps<typeof StatusBadge>['tone'] {
-  if (status === 'pending') return 'warning';
-  if (status === 'approved') return 'success';
-  return 'neutral';
-}
-
 function sourceLabel(approval: WorkspaceApprovalInboxRow, t: TFunction): string {
   if (approval.sessionOrigin === 'auto_triage') return t('approvals.sources.automaticInvestigation');
   const { source } = approval;
-  return t(`approvals.sources.${source}`);
+  return t(`approvals.sources.${source}`, { defaultValue: t('approvals.sources.unknown') });
 }
 
 export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
@@ -297,8 +291,12 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                     <div className="min-w-0">
                       <p className="type-micro-label text-ui-text-muted">{t('approvals.table.approval')}</p>
                       <h3 className="mt-1 break-words type-row-title text-ui-text">{approval.summary}</h3>
+                      {approval.targetId && <div className="mt-2 type-caption text-ui-text-muted">
+                        <span>{t('approvals.table.target')}: </span>
+                        <ApprovalIdentity id={approval.targetId} name={approval.targetName} label={t('approvals.table.target')} />
+                      </div>}
                     </div>
-                    <StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge>
+                    <ApprovalOutcome status={approval.status} executionStatus={approval.executionStatus} />
                   </div>
                   <dl className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
                     <div className="min-w-0">
@@ -311,7 +309,9 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                     <div className="min-w-0">
                       <dt className="type-micro-label text-ui-text-muted">{t('approvals.table.requestedBy')}</dt>
                       <dd className="mt-1 break-words type-body text-ui-text">
-                        {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : approval.requestedBy || t('approvals.system')}
+                        {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : <ApprovalIdentity
+                          id={approval.requestedBy} name={approvalUserName(approval.requestedBy, approval.requestedByUser)}
+                          label={t('approvals.table.requestedBy')} fallback={approval.requestedBy ? undefined : t('approvals.system')} />}
                       </dd>
                     </div>
                     <div className="min-w-0">
@@ -353,17 +353,25 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                   );
                   return (
                     <DataTableRow key={approval.approvalId} data-focused-approval={isFocusedApproval || undefined} className={`type-body ${isFocusedApproval ? 'bg-accent-soft/40 ring-1 ring-inset ring-accent/30' : 'bg-ui-surface'}`}>
-                      <DataTableCell as="th" scope="row" density="dense" className="type-emphasis text-ui-text">{approval.summary}</DataTableCell>
+                      <DataTableCell as="th" scope="row" density="dense" className="text-ui-text">
+                        <span className="type-emphasis">{approval.summary}</span>
+                        {approval.targetId && <div className="mt-2 type-caption text-ui-text-muted">
+                          <span>{t('approvals.table.target')}: </span>
+                          <ApprovalIdentity id={approval.targetId} name={approval.targetName} label={t('approvals.table.target')} />
+                        </div>}
+                      </DataTableCell>
                       <DataTableCell density="dense" className="type-ui text-ui-text">
                         <span className="block">{approval.sessionTitle || approval.workflowId || sourceLabel(approval, t)}</span>
                         <span className="mt-1 block type-caption text-ui-text-muted">{approval.runId}</span>
                       </DataTableCell>
                       <DataTableCell density="dense" className="text-ui-text-muted">
-                        {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : approval.requestedBy || t('approvals.system')}
+                        {approval.sessionOrigin === 'auto_triage' ? t('approvals.acornOps') : <ApprovalIdentity
+                          id={approval.requestedBy} name={approvalUserName(approval.requestedBy, approval.requestedByUser)}
+                          label={t('approvals.table.requestedBy')} fallback={approval.requestedBy ? undefined : t('approvals.system')} />}
                       </DataTableCell>
                       <DataTableCell density="dense" className="type-emphasis text-ui-text">{sourceLabel(approval, t)}</DataTableCell>
                       <DataTableCell density="dense" className="text-ui-text-muted">{formatDateTime(approval.expiresAt, t('approvals.none'))}</DataTableCell>
-                      <DataTableCell density="dense"><StatusBadge tone={approvalTone(approval.status)}>{t(`approvals.status.${approval.status}`)}</StatusBadge></DataTableCell>
+                      <DataTableCell density="dense"><ApprovalOutcome status={approval.status} executionStatus={approval.executionStatus} /></DataTableCell>
                       <DataTableCell density="dense">
                         <div className="flex gap-2">
                           <Button size="sm" variant="secondary" onClick={() => reviewApproval(approval)}>

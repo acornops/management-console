@@ -140,10 +140,14 @@ describe('WorkflowCapabilitySummary', () => {
 });
 
 describe('Workflow execution setup', () => {
-  it('summarizes inherited access with assigned Agents and leaves details to the Capabilities tab', async () => {
+  it.each([
+    { name: 'all-read tools under a read/write policy', mixedTools: false, missingAgent: false },
+    { name: 'read, write, and unclassified tools', mixedTools: true, missingAgent: false },
+    { name: 'an unavailable assigned Agent', mixedTools: false, missingAgent: true }
+  ])('summarizes assigned tool classifications for $name', async ({ mixedTools, missingAgent }) => {
     const translation = createInstance();
     await translation.init({ resources: { en: { translation: en } }, lng: 'en' });
-    const workflow = {
+    const workflow: WorkflowDefinition = {
       ...workflowWithRun({
       id: 'run-1',
       status: 'completed',
@@ -153,6 +157,8 @@ describe('Workflow execution setup', () => {
       output: '',
       startedAt: 'Just now'
       }),
+      policy: { mode: 'read_write', approvals: [] },
+      agentIds: missingAgent ? ['agent-1', 'agent-missing'] : ['agent-1'],
       agents: [{ agentId: 'agent-1', name: 'Infrastructure Agent', role: 'Direct', required: true }]
     };
     const agent: AgentDefinition = {
@@ -167,6 +173,13 @@ describe('Workflow execution setup', () => {
       }],
       readiness: { status: 'ready', reasons: [] }
     };
+    if (mixedTools) {
+      agent.tools.push('restart_service', 'unclassified_tool');
+      agent.capabilities.push({
+        source: 'builtin_tool', resourceType: 'virtual_machine', resourceScope: 'host', toolId: 'restart_service',
+        operation: 'write', requiresApproval: true
+      });
+    }
 
     const html = renderToStaticMarkup(
       <I18nextProvider i18n={translation}>
@@ -193,9 +206,15 @@ describe('Workflow execution setup', () => {
     expect(html).toContain('<h4 class="type-panel-title">Execution setup</h4>');
     expect(html).toContain('Infrastructure Agent');
     expect(html).toContain('type-ui leading-6 text-ui-text');
-    expect(html).toContain('<div class="type-ui text-ui-text-muted">Effective access</div>');
-    expect(html).toContain('Read only · 1 tool · 1 MCP server · 1 skill');
-    expect(html).toContain('Inherited from assigned Agents and revalidated before every run.');
+    expect(html).toContain('Assigned tools');
+    expect(html).toContain(mixedTools
+      ? '1 read · 1 write · 1 unknown · 1 MCP server · 1 skill'
+      : '1 read · 0 write · 0 unknown · 1 MCP server · 1 skill');
+    expect(html).not.toContain('Effective access');
+    expect(html).not.toContain('Read/write ·');
+    expect(html).toContain(missingAgent
+      ? '1 of 2 assigned Agent records is unavailable, so this summary may be incomplete.'
+      : 'Tool classifications from assigned Agents. Permissions are checked before every run.');
     expect(html).toContain('View access');
     expect(html).not.toContain('Infrastructure diagnostics read');
     expect(html).not.toContain('Operations MCP');

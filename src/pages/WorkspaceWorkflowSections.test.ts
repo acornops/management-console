@@ -134,7 +134,6 @@ describe('workflow sections and Activity', () => {
     expect(workflowsPage).toContain("selectWorkflowView('settings', selectedWorkflow.id)");
     expect(workflowsPage).toContain("t('workflowUi.back')");
     expect(workflowsPage).toContain("onReviewCapabilities={() => selectWorkflowView('capabilities'");
-    expect(workflowPanels).toContain("t('workflowCoordination.effectiveAccess')");
     expect(workflowOverview).not.toContain('title="Capabilities"');
     expect(workflowsPage).not.toContain("open={activeView === 'runs'}");
     expect(workflowsPage).not.toContain("open={activeView === 'settings'}");
