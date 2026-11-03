@@ -296,7 +296,9 @@ export const WorkspaceApprovalsPage: React.FC<WorkspaceApprovalsPageProps> = ({
                         <ApprovalIdentity id={approval.targetId} name={approval.targetName} label={t('approvals.table.target')} />
                       </div>}
                     </div>
-                    <ApprovalOutcome status={approval.status} executionStatus={approval.executionStatus} />
+                    <div className="shrink-0">
+                      <ApprovalOutcome status={approval.status} executionStatus={approval.executionStatus} />
+                    </div>
                   </div>
                   <dl className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
                     <div className="min-w-0">

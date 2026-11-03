@@ -78,3 +78,18 @@ changes. Its generated public API reference can now be refreshed without
 unrelated drift: only the approval schema additions differ from docs-website
 main. Platform contract checking passes with the current AgentV contract files;
 the older original AgentV checkout is left untouched.
+
+## Release browser follow-up
+
+The full Linux release matrix found outdated approval and VM-log route images.
+Screenshot inspection also exposed a mobile fallback execution badge extending
+15 pixels beyond its card. A focused browser regression failed on that geometry
+before the fix. Reserving the outcome column's intrinsic width in the existing
+mobile card fixes the clipping without changing the desktop table or shared badge.
+
+All three approval-outcome browser tests pass in the isolated Playwright 1.61.1
+Linux image. Refreshed only the approval inbox, focused approval and VM-log route
+baselines across the five existing viewports/themes, after inspecting the
+intended identity/outcome and timestamp changes. Independent source/test review
+found no actionable issue. The full main CI and tag release gates remain required
+before publishing the console image.

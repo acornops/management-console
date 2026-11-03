@@ -1,5 +1,18 @@
 import { expect, test } from '@playwright/test';
 
+test('mobile approval outcomes stay inside their card when execution status is unknown', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/workspaces/fixture-workspace/approvals');
+  const card = page.locator('[data-approval-layout="mobile"] > li').first();
+  const outcome = card.getByText('Unknown', { exact: true });
+  await expect(outcome).toBeVisible();
+  const cardBounds = await card.boundingBox();
+  const outcomeBounds = await outcome.boundingBox();
+  expect(cardBounds).not.toBeNull();
+  expect(outcomeBounds).not.toBeNull();
+  expect(outcomeBounds!.x + outcomeBounds!.width).toBeLessThanOrEqual(cardBounds!.x + cardBounds!.width);
+});
+
 for (const width of [1680, 390]) {
   test(`approval history separates decision from execution and resolves identities at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
