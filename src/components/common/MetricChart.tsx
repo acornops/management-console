@@ -77,7 +77,18 @@ export const MetricChart: React.FC<{
   }
 
   const maxObservedValue = Math.max(...points.map((point) => point.value), 0);
-  const maxValue = Math.max(maxObservedValue * 1.12, 1);
+  const minimumMaxValue = Math.max(maxObservedValue * 1.12, 1);
+  // Aim for four intervals, rounding the step and upper bound up to keep headroom.
+  const stepExponent = Math.floor(Math.log10(minimumMaxValue / 4));
+  const stepMagnitude = 10 ** stepExponent;
+  const stepMultiplier = [1, 2, 2.5, 5, 10].find((step) => step * stepMagnitude >= minimumMaxValue / 4) ?? 10;
+  const tickStep = stepMultiplier * stepMagnitude;
+  const tickCount = Math.ceil(minimumMaxValue / tickStep);
+  const maxValue = tickCount * tickStep;
+  const ticks = Array.from({ length: tickCount + 1 }, (_, index) => index * tickStep);
+  const tickFormatter = new Intl.NumberFormat(i18n.language, {
+    maximumFractionDigits: Math.max(0, -stepExponent + (stepMultiplier === 2.5 ? 1 : 0)),
+  });
   const coords = points.map((point, index) => {
     const x = points.length === 1
       ? width / 2
@@ -102,10 +113,10 @@ export const MetricChart: React.FC<{
       </div>
       <div className="h-[180px] w-full sm:h-[200px]">
         <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full overflow-visible" aria-hidden="true" focusable="false">
-          {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
-            const y = plotTop + (1 - tick) * plotHeight;
-            const valueLabel = (maxValue * tick).toFixed(maxValue >= 10 ? 0 : 1);
-            const label = tick === 0 ? '0' : formatMetricValue(valueLabel);
+          {ticks.map((tick) => {
+            const y = plotTop + (1 - tick / maxValue) * plotHeight;
+            const valueLabel = tickFormatter.format(tick);
+            const label = tick === 0 ? valueLabel : formatMetricValue(valueLabel);
             return (
               <g key={tick}>
                 <line x1={plotLeft} y1={y} x2={plotRight} y2={y} stroke="var(--ao-border)" strokeDasharray="3 3" />

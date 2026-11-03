@@ -31,6 +31,8 @@ This `docs/` tree is the repository-local system of record for agent-readable de
 
 ## Plans And Debt
 
+- [Metric chart tick precision](/docs/exec-plans/completed/2026-11-03-metric-chart-ticks.md)
+
 - [Target deletion completion](/docs/exec-plans/completed/2026-10-31-target-delete-latency.md)
 
 - [Plans](/docs/PLANS.md)

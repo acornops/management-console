@@ -1,5 +1,7 @@
 # Completed Execution Plans
 
+- [Metric chart tick precision](2026-11-03-metric-chart-ticks.md) — Match readable y-axis labels to gridline values.
+
 - [Console bug reports and public VM documentation](2026-11-03-console-bug-reports.md) — Localization and count fixes, historical trace semantics, VM assistant draft/session preservation, and coherent Windows preview guidance.
 
 - [Agent heartbeat freshness](agent-heartbeat-freshness.md) — Shared connection observation, cached expiry and verified onboarding compatibility.
